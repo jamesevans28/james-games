@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 40">
+  <!-- Cartoon arrow: thick stroke, rounded -->
+  <defs>
+    <linearGradient id="shaft" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="100%" stop-color="#fde047"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="#0b0b0b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 20 H240"/>
+    <path d="M240 20 L220 8 M240 20 L220 32"/>
+  </g>
+  <g fill="url(#shaft)" stroke="#0b0b0b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="10" y="12" width="230" height="16" rx="8"/>
+    <path d="M240 20 L220 8 L295 20 L220 32 Z"/>
+  </g>
+</svg>

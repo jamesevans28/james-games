@@ -1,0 +1,41 @@
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Prevent rubber-banding scroll from interfering with games on mobile */
+body {
+  margin: 0;
+  overscroll-behavior: contain;
+  background: #000;
+}
+
+/* The container that our Phaser games mount into */
+#game-container {
+  position: relative;
+  overflow: hidden;
+  /* Disable default gesture handling to reduce scrolling on touch */
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+/* Make Phaser canvas fill the container without affecting layout height */
+#game-container canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* Generic 9:16 portrait frame for games (no Tailwind needed) */
+.game-frame {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 540px;
+  aspect-ratio: 9 / 16;
+  background: #000;
+  margin-inline: auto;
+}

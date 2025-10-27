@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ensure root takes full height; body classes are in index.html */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Override browser default body margin (typically 8px) */
+body {
+  margin: 0;
+  font-family: "Fredoka", Arial, Helvetica, sans-serif;
+}
+
+/* Phaser canvas fills the game container */
+#game-container {
+  position: relative;
+  overflow: hidden;
+}
+#game-container canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* Remove tap highlight color on mobile for links/buttons to avoid purple highlight */
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --header-h: 56px;
+}
+.game-screen {
+  height: calc(100dvh - var(--header-h));
+  height: calc(100vh - var(--header-h)); /* fallback */
+  width: 100vw;
+  min-height: 0; /* prevent flex child overflow issues */
+}
+
+/* Alternative: pin the game area using fixed positioning under the header */
+.game-stage {
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+}
