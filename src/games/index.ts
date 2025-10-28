@@ -17,4 +17,14 @@ export const games: GameMeta[] = [
       return { mount: mod.mount };
     },
   },
+  {
+    id: "snapadile",
+    title: "Snapadile",
+    description: "Tap the crocs before they reach your raft. More and faster crocs over time.",
+    thumbnail: "/assets/logo.png",
+    load: async () => {
+      const mod = await import("./snapadile/index");
+      return { mount: mod.mount };
+    },
+  },
 ];

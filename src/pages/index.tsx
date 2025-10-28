@@ -1,10 +1,18 @@
 import { useNavigate } from "react-router-dom";
+import Seo from "../components/Seo";
 import { games } from "../games";
 
 export default function GameHub() {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center px-4 py-6">
+      <Seo
+        title="Free Online Games | Play Skill, Reflex & Arcade Games at Games4James"
+        description="Play free online games made by James! Fun, fast, skill-based games you can play instantly on your phone or browser. Join Games4James today and test your reflexes."
+        url="https://games4james.com/"
+        canonical="https://games4james.com/"
+        image="https://games4james.com/assets/logo.png"
+      />
       {/* Logo at the top */}
       <div className="mt-2 mb-4 max-w-full">
         <img

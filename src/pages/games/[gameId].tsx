@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { games } from "../../games";
 import GameHeader from "./GameHeader";
 import { trackGameStart } from "../../utils/analytics";
+import Seo from "../../components/Seo";
 
 export default function PlayGame() {
   const { gameId } = useParams();
@@ -39,6 +40,20 @@ export default function PlayGame() {
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
+      <Seo
+        title={meta ? `${meta.title} — Play Free at Games4James` : "Play Free Games at Games4James"}
+        description={
+          meta?.description ||
+          "Play free online games made by James. Fun, fast, skill-based games you can play instantly on your phone or browser."
+        }
+        url={`https://games4james.com/games/${meta?.id ?? ""}`}
+        canonical={`https://games4james.com/games/${meta?.id ?? ""}`}
+        image={
+          meta?.thumbnail
+            ? `https://games4james.com${meta.thumbnail}`
+            : "https://games4james.com/assets/logo.png"
+        }
+      />
       <GameHeader title={meta?.title ?? "Unknown Game"} />
 
       {error ? (
