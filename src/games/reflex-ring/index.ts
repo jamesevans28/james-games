@@ -7,7 +7,7 @@ export function mount(container: HTMLElement) {
     width: 540,
     height: 960,
     parent: container,
-    backgroundColor: "#000000",
+    transparent: true,
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,

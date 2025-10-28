@@ -21,10 +21,7 @@ body {
   overflow: hidden;
 }
 #game-container canvas {
-  position: absolute;
-  inset: 0;
-  width: 100% !important;
-  height: 100% !important;
+  /* Let Phaser Scale manager control CSS size to preserve aspect ratio */
   display: block;
 }
 
@@ -52,4 +49,9 @@ button {
   right: 0;
   bottom: 0;
   width: 100vw;
+  /* Use the app background image stretched to edges */
+  background-image: url("/assets/bg.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }

@@ -1,6 +1,13 @@
 import Phaser from "phaser";
 import { trackGameStart } from "../../utils/analytics";
 
+// Angle spacing constraints for new target placement (degrees)
+// Tweak these to tune how far the next highlight can appear from the last angle.
+// Note: due to circular geometry, the effective maximum separation using shortest arc is 180°.
+// If you set a value > 180, it will be clamped to 180 internally.
+const MIN_TARGET_SEPARATION_DEG = 40;
+const MAX_TARGET_SEPARATION_DEG = 250;
+
 export default class ReflexRingGame extends Phaser.Scene {
   private centerX!: number;
   private centerY!: number;
@@ -9,6 +16,7 @@ export default class ReflexRingGame extends Phaser.Scene {
   private arrowContainer!: Phaser.GameObjects.Container;
   private currentAngle = 0; // radians
   private angularVelocity = 1.5; // rad/s
+  private maxSpeed = 5;
 
   private targetAngle = 0; // radians
   private segmentWidth = Phaser.Math.DegToRad(28);
@@ -19,6 +27,15 @@ export default class ReflexRingGame extends Phaser.Scene {
   private score = 0;
   private best = 0;
   private scoreText!: Phaser.GameObjects.Text;
+
+  // Track pass-through logic for target wedge
+  private inWedgePrev = false;
+  private tappedThisWedge = false;
+  private gameOver = false;
+
+  // DOM tap forwarding (to capture taps outside the canvas inside the game container)
+  private parentEl: HTMLElement | null = null;
+  private domPointerHandler?: (ev: PointerEvent) => void;
 
   constructor() {
     super("ReflexRingGame");
@@ -36,10 +53,7 @@ export default class ReflexRingGame extends Phaser.Scene {
     this.centerY = Math.floor(height / 2);
     this.radius = Math.floor(Math.min(width, height) * 0.35);
 
-    // Background using PNG image
-    const bg = this.add.image(0, 0, "rr-bg").setOrigin(0).setDepth(-10);
-    const scale = Math.max(width / bg.width, height / bg.height);
-    bg.setScale(scale);
+    // Background now handled by DOM/CSS to fully cover viewport; Phaser canvas is transparent
 
     // Ring with cartoon ticks
     this.ringGraphics = this.add.graphics();
@@ -100,14 +114,50 @@ export default class ReflexRingGame extends Phaser.Scene {
     // Initial target
     this.pickNewTargetAngle(this.currentAngle);
 
-    // Input
+    // Input: in-canvas tap
     this.input.on("pointerdown", this.handleTap, this);
+
+    // Input: capture taps on the full game container (outside canvas letterbox)
+    this.parentEl = this.game.canvas.parentElement as HTMLElement | null;
+    this.domPointerHandler = (ev: PointerEvent) => {
+      // Avoid double trigger when the tap is directly on the canvas
+      if (ev.target instanceof HTMLCanvasElement) return;
+      // Ignore if the scene is in game over state; restart is handled via scene input
+      if (this.gameOver) return;
+      this.handleTap();
+    };
+    if (this.parentEl && this.domPointerHandler) {
+      this.parentEl.addEventListener("pointerdown", this.domPointerHandler, { passive: true });
+    }
+
+    // Clean up DOM listener on shutdown
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      if (this.parentEl && this.domPointerHandler) {
+        this.parentEl.removeEventListener("pointerdown", this.domPointerHandler);
+      }
+      this.domPointerHandler = undefined;
+      this.parentEl = null;
+    });
   }
 
   update(_time: number, delta: number): void {
     const dt = delta / 1000;
     this.currentAngle = Phaser.Math.Angle.Wrap(this.currentAngle + this.angularVelocity * dt);
     this.arrowContainer.rotation = this.currentAngle;
+
+    // Detect entering/exiting the target wedge to fail the run if player doesn't tap in time
+    const inWedgeNow = this.isWithinWedge(this.currentAngle, this.targetAngle, this.segmentWidth);
+    if (!this.inWedgePrev && inWedgeNow) {
+      // Just entered the wedge for this pass
+      this.tappedThisWedge = false;
+    }
+    if (this.inWedgePrev && !inWedgeNow) {
+      // Exited the wedge; if not tapped during this pass -> game over
+      if (!this.tappedThisWedge && !this.gameOver) {
+        this.onGameOver();
+      }
+    }
+    this.inWedgePrev = inWedgeNow;
   }
 
   private drawWedge(angle: number): void {
@@ -139,11 +189,16 @@ export default class ReflexRingGame extends Phaser.Scene {
   private handleTap(): void {
     const within = this.isWithinWedge(this.currentAngle, this.targetAngle, this.segmentWidth);
     if (within) {
-      this.score += 1;
+      // check for perfect hit
+      const isPerfect = this.isPerfectHit(this.currentAngle, this.targetAngle);
+
+      //update score
+      this.score += isPerfect ? 2 : 1;
       this.scoreText.setText(this.makeScoreText());
 
+      //update speed
       const speed = Math.abs(this.angularVelocity);
-      const next = Math.min(speed * 1.03, 6);
+      const next = Math.min(speed * 1.03, this.maxSpeed);
       this.angularVelocity = -Math.sign(this.angularVelocity || 1) * next;
 
       // Flash the wedge for feedback
@@ -154,6 +209,15 @@ export default class ReflexRingGame extends Phaser.Scene {
         yoyo: true,
       });
 
+      // Show perfect popup if centered enough
+      if (isPerfect) {
+        const tip = this.getArrowTipPosition();
+        this.showPerfectPopup(tip.x, tip.y);
+      }
+
+      // Mark that we tapped during this wedge pass
+      this.tappedThisWedge = true;
+
       this.pickNewTargetAngle(this.targetAngle);
     } else {
       this.onGameOver();
@@ -161,7 +225,15 @@ export default class ReflexRingGame extends Phaser.Scene {
   }
 
   private onGameOver(): void {
+    if (this.gameOver) return;
+    this.gameOver = true;
     this.input.off("pointerdown", this.handleTap, this);
+    // Stop arrow rotation while in game-over state
+    this.angularVelocity = 0;
+
+    // Camera effects
+    this.cameras.main.shake(250, 0.01);
+    this.cameras.main.flash(120, 255, 50, 50);
 
     // Update best
     if (this.score > this.best) {
@@ -201,7 +273,11 @@ export default class ReflexRingGame extends Phaser.Scene {
       this.score = 0;
       this.scoreText.setText(this.makeScoreText());
       this.currentAngle = 0;
+      // Resume arrow rotation for a fresh run
       this.angularVelocity = 1.5;
+      this.gameOver = false;
+      this.inWedgePrev = false;
+      this.tappedThisWedge = false;
       this.pickNewTargetAngle(this.currentAngle);
       this.input.on("pointerdown", this.handleTap, this);
       this.input.off("pointerdown", restart);
@@ -209,7 +285,10 @@ export default class ReflexRingGame extends Phaser.Scene {
       trackGameStart("reflex-ring", "Reflex Ring");
     };
 
-    this.input.once("pointerdown", restart);
+    // Add a short delay before allowing restart to avoid accidental taps
+    this.time.delayedCall(1000, () => {
+      this.input.once("pointerdown", restart);
+    });
   }
 
   private isWithinWedge(angle: number, wedgeCenter: number, wedgeWidth: number): boolean {
@@ -217,17 +296,67 @@ export default class ReflexRingGame extends Phaser.Scene {
     return Math.abs(diff) <= (wedgeWidth * 1.2) / 2;
   }
 
+  // Perfect hit is a tighter window around the wedge center
+  private isPerfectHit(angle: number, wedgeCenter: number): boolean {
+    const diff = Math.abs(Phaser.Math.Angle.Wrap(angle - wedgeCenter));
+    const perfectWindow = this.segmentWidth * 0.15; // ~15% of segment width
+    return diff <= perfectWindow / 2;
+  }
+
+  // Compute the world position of the arrow tip (slightly inside the ring)
+  private getArrowTipPosition(): { x: number; y: number } {
+    const tipRadius = this.radius - 8;
+    return {
+      x: this.centerX + Math.cos(this.currentAngle) * tipRadius,
+      y: this.centerY + Math.sin(this.currentAngle) * tipRadius,
+    };
+  }
+
+  private showPerfectPopup(x: number, y: number): void {
+    const txt = this.add
+      .text(x, y, "Perfect", {
+        fontFamily: "Fredoka, Arial Black, Arial, sans-serif",
+        fontSize: "24px",
+        color: "#ffd166",
+        stroke: "#000000",
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5)
+      .setDepth(1000)
+      .setAlpha(0.95);
+
+    this.tweens.add({
+      targets: txt,
+      y: y - 24,
+      alpha: 0,
+      duration: 500,
+      ease: "Cubic.EaseIn",
+      onComplete: () => txt.destroy(),
+    });
+  }
+
   private pickNewTargetAngle(avoidNear: number): void {
-    const minSeparation = this.segmentWidth * 2;
+    const minSep = Phaser.Math.DegToRad(MIN_TARGET_SEPARATION_DEG);
+    // Clamp to 180° max effectively, since shortest angular distance is in [0, PI]
+    const maxSep = Phaser.Math.DegToRad(Math.min(MAX_TARGET_SEPARATION_DEG, 180));
+
     let tries = 0;
     let candidate = Phaser.Math.FloatBetween(0, Phaser.Math.PI2);
 
-    while (tries++ < 30 && this.isWithinWedge(candidate, avoidNear, minSeparation)) {
+    const isValid = (ang: number) => {
+      const delta = Math.abs(Phaser.Math.Angle.Wrap(ang - avoidNear)); // [0, PI]
+      return delta >= minSep && delta <= maxSep;
+    };
+
+    while (tries++ < 50 && !isValid(candidate)) {
       candidate = Phaser.Math.FloatBetween(0, Phaser.Math.PI2);
     }
 
     this.targetAngle = candidate;
     this.drawWedge(this.targetAngle);
+    // Reset per-pass state so the player gets a fresh chance on the new segment
+    this.inWedgePrev = false;
+    this.tappedThisWedge = false;
   }
 
   private makeScoreText(): string {
