@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://games4james.com/sitemap.xml
