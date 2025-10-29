@@ -27,4 +27,15 @@ export const games: GameMeta[] = [
       return { mount: mod.mount };
     },
   },
+  {
+    id: "car-crash",
+    title: "Car Crash",
+    description:
+      "Switch lanes to dodge incoming cars. Step-based movement with growing difficulty.",
+    thumbnail: "/assets/logo.png",
+    load: async () => {
+      const mod = await import("./car-crash/index");
+      return { mount: mod.mount };
+    },
+  },
 ];

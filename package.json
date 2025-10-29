@@ -26,6 +26,7 @@
     "dev-nolog": "vite --config vite/config.dev.mjs",
     "build-nolog": "vite build --config vite/config.prod.mjs",
     "generate-snapadile-assets": "node scripts/generate-snapadile-assets.mjs",
+    "generate-car-crash-assets": "node scripts/generate-car-crash-assets.mjs",
     "generate-sitemap": "node scripts/generate-sitemap.mjs"
   },
   "dependencies": {

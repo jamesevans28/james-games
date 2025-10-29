@@ -33,6 +33,8 @@ jobs:
 
       - name: Generate assets (optional)
         run: |
+          npm run generate-snapadile-assets --if-present
+          npm run generate-car-crash-assets --if-present
           npm run generate-sitemap --if-present
 
       - name: Build
