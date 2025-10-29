@@ -343,6 +343,20 @@ export default class CarCrashScene extends Phaser.Scene {
     makeBtn(width - (pad + BTN_RADIUS), height - (pad + BTN_RADIUS), "uiRight", () =>
       this.moveRight()
     );
+
+    // Large invisible hit zones for easier taps: left/right halves of the screen
+    // They sit behind the visible buttons (lower depth) and only trigger outside the button area
+    const leftZone = this.add
+      .zone(width * 0.25, height * 0.5, width * 0.5, height)
+      .setDepth(5)
+      .setInteractive();
+    leftZone.on("pointerdown", () => this.moveLeft());
+
+    const rightZone = this.add
+      .zone(width * 0.75, height * 0.5, width * 0.5, height)
+      .setDepth(5)
+      .setInteractive();
+    rightZone.on("pointerdown", () => this.moveRight());
   }
 
   private addKeyboard() {
