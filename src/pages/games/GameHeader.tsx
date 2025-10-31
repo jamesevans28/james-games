@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 interface Props {
   title: string;
   brand?: string;
+  leaderboardTo?: string; // route to leaderboard page
 }
 
-export default function GameHeader({ title, brand = "James Games" }: Props) {
+export default function GameHeader({ title, brand = "James Games", leaderboardTo }: Props) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-14">
       <div
@@ -36,7 +37,26 @@ export default function GameHeader({ title, brand = "James Games" }: Props) {
           <div className="text-[10px] opacity-80 leading-none">{brand}</div>
         </div>
 
-        <div className="w-[84px]" />
+        <div className="w-[84px] flex justify-end">
+          {leaderboardTo && (
+            <Link
+              to={leaderboardTo}
+              className="inline-flex items-center gap-2 rounded-full bg-white/15 hover:bg-white/25 transition-colors px-3 py-1.5"
+              aria-label="Open leaderboard"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M4 14h4v6H4v-6zm6-10h4v16h-4V4zm6 6h4v10h-4V10z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="text-sm font-medium">Top 10</span>
+            </Link>
+          )}
+        </div>
       </div>
     </header>
   );

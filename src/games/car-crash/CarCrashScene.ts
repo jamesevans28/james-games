@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { getUserName } from "../../utils/user";
+import { postHighScore } from "../../lib/api";
 
 const GAME_ID = "car-crash";
 const STORAGE_BEST_KEY = `${GAME_ID}-best`;
@@ -399,6 +401,10 @@ export default class CarCrashScene extends Phaser.Scene {
     if (this.score > this.best) {
       this.best = this.score;
       localStorage.setItem(STORAGE_BEST_KEY, String(this.best));
+      const name = getUserName();
+      if (name) {
+        postHighScore({ name, gameId: GAME_ID, score: this.best }).catch(() => {});
+      }
     }
 
     // Screen effect

@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 import { trackGameStart } from "../../utils/analytics";
+import { getUserName } from "../../utils/user";
+import { postHighScore } from "../../lib/api";
 
 // Angle spacing constraints for new target placement (degrees)
 // Tweak these to tune how far the next highlight can appear from the last angle.
@@ -239,6 +241,11 @@ export default class ReflexRingGame extends Phaser.Scene {
     if (this.score > this.best) {
       this.best = this.score;
       localStorage.setItem("reflex-ring-best", String(this.best));
+      const name = getUserName();
+      if (name) {
+        // Submit asynchronously; no await to avoid blocking UI
+        postHighScore({ name, gameId: "reflex-ring", score: this.best }).catch(() => {});
+      }
     }
 
     const overlay = this.add.rectangle(

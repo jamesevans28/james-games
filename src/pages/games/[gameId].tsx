@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { games } from "../../games";
 import GameHeader from "./GameHeader";
 import { trackGameStart } from "../../utils/analytics";
+import { getUserName, setUserName } from "../../utils/user";
+import NameDialog from "../../components/NameDialog";
 import Seo from "../../components/Seo";
 
 export default function PlayGame() {
@@ -10,8 +12,10 @@ export default function PlayGame() {
   const meta = useMemo(() => games.find((g) => g.id === gameId), [gameId]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [askName, setAskName] = useState(false);
 
   useEffect(() => {
+    if (!getUserName()) setAskName(true);
     let cleanup: (() => void) | null = null;
 
     const start = async () => {
@@ -54,7 +58,10 @@ export default function PlayGame() {
             : "https://games4james.com/assets/logo.png"
         }
       />
-      <GameHeader title={meta?.title ?? "Unknown Game"} />
+      <GameHeader
+        title={meta?.title ?? "Unknown Game"}
+        leaderboardTo={meta ? `/leaderboard/${meta.id}` : undefined}
+      />
 
       {error ? (
         <div className="p-4 text-red-400">{error}</div>
@@ -66,6 +73,17 @@ export default function PlayGame() {
             className="relative w-full h-full overflow-hidden bg-black"
           />
         </div>
+      )}
+      {askName && (
+        <NameDialog
+          initialValue={""}
+          onCancel={() => setAskName(false)}
+          onSave={(v) => {
+            const t = v.trim();
+            if (t) setUserName(t);
+            setAskName(false);
+          }}
+        />
       )}
     </div>
   );

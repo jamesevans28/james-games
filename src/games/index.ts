@@ -11,7 +11,7 @@ export const games: GameMeta[] = [
     id: "reflex-ring",
     title: "Reflex Ring",
     description: "Tap precisely as the arrow hits the highlighted segment. Speeds up over time.",
-    thumbnail: "/assets/star.png",
+    thumbnail: "/assets/reflex-ring/thumbnail.svg",
     load: async () => {
       const mod = await import("./reflex-ring/index");
       return { mount: mod.mount };
@@ -21,7 +21,7 @@ export const games: GameMeta[] = [
     id: "snapadile",
     title: "Snapadile",
     description: "Tap the crocs before they reach your raft. More and faster crocs over time.",
-    thumbnail: "/assets/logo.png",
+    thumbnail: "/assets/snapadile/thumbnail.svg",
     load: async () => {
       const mod = await import("./snapadile/index");
       return { mount: mod.mount };
@@ -32,7 +32,7 @@ export const games: GameMeta[] = [
     title: "Car Crash",
     description:
       "Switch lanes to dodge incoming cars. Step-based movement with growing difficulty.",
-    thumbnail: "/assets/logo.png",
+    thumbnail: "/assets/car-crash/thumbnail.svg",
     load: async () => {
       const mod = await import("./car-crash/index");
       return { mount: mod.mount };

@@ -1,3 +1,5 @@
+import { getUserName } from "../../utils/user";
+import { postHighScore } from "../../lib/api";
 import Phaser from "phaser";
 
 interface Croc extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
@@ -21,7 +23,7 @@ export default class SnapadileScene extends Phaser.Scene {
   private minSpawnInterval = 300;
   private difficultyTimer?: Phaser.Time.TimerEvent;
   private maxConcurrent = 1;
-  private rippleTimer?: Phaser.Time.TimerEvent; // kept for potential future control
+  // private rippleTimer?: Phaser.Time.TimerEvent; // reserved for future control
 
   private crocs!: Phaser.Physics.Arcade.Group;
   private occupiedSpawns = new Set<string>();
@@ -92,7 +94,7 @@ export default class SnapadileScene extends Phaser.Scene {
     });
 
     // Water ripples near the raft for ambience
-    this.rippleTimer = this.time.addEvent({
+    this.time.addEvent({
       delay: 900,
       loop: true,
       callback: () => this.spawnRipple(this.center.x, this.center.y),
@@ -311,6 +313,10 @@ export default class SnapadileScene extends Phaser.Scene {
     if (this.score > this.best) {
       this.best = this.score;
       localStorage.setItem("snapadile-best", String(this.best));
+      const name = getUserName();
+      if (name) {
+        postHighScore({ name, gameId: "snapadile", score: this.best }).catch(() => {});
+      }
     }
 
     // Delay before allowing restart to avoid accidental taps

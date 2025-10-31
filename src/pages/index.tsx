@@ -1,11 +1,31 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Seo from "../components/Seo";
 import { games } from "../games";
+import { getUserName, setUserName } from "../utils/user";
+import NameDialog from "../components/NameDialog";
 
 export default function GameHub() {
   const navigate = useNavigate();
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [name, setName] = useState<string>(getUserName() || "");
+
+  useEffect(() => {
+    // Prompt for name on first visit if not set
+    if (!getUserName()) {
+      setShowNameDialog(true);
+    }
+  }, []);
+
+  const handleSaveName = (value: string) => {
+    const v = value.trim();
+    if (v.length === 0) return;
+    setUserName(v);
+    setName(v);
+    setShowNameDialog(false);
+  };
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center px-4 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex flex-col items-center px-6 py-8">
       <Seo
         title="Free Online Games | Play Skill, Reflex & Arcade Games at Games4James"
         description="Play free online games made by James! Fun, fast, skill-based games you can play instantly on your phone or browser. Join Games4James today and test your reflexes."
@@ -13,37 +33,61 @@ export default function GameHub() {
         canonical="https://games4james.com/"
         image="https://games4james.com/assets/logo.png"
       />
-      {/* Logo at the top */}
-      <div className="mt-2 mb-4 max-w-full">
+      
+      {/* Logo */}
+      <div className="mb-8 text-center">
         <img
           src="/assets/shared/logo_square.png"
           alt="James Games"
-          className="block max-w-full h-auto w-24 md:w-28 rounded-xl shadow-[0_6px_20px_rgba(0,0,0,0.35)] ring-1 ring-white/10 mx-auto"
+          className="block max-w-[300px] w-48 h-auto rounded-3xl shadow-2xl mx-auto ring-2 ring-purple-400/50"
         />
       </div>
 
-      <p className="text-xs uppercase tracking-[0.2em] text-white/70 mb-5">Tap a game to play</p>
+      {/* Screen Name Button */}
+      <div className="w-full max-w-6xl flex justify-end mb-8">
+        <button
+          type="button"
+          onClick={() => setShowNameDialog(true)}
+          className="text-sm font-bold px-6 py-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-purple-500/50 transition-all transform hover:scale-105"
+        >
+          {name ? `👋 Hi, ${name}` : "Set Screen Name"}
+        </button>
+      </div>
 
-      {/* Simple, inviting game buttons */}
-      <div className="mx-auto px-3 sm:px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full max-w-4xl">
+      {/* Game Cards Grid - 1 col mobile, 2 col tablet, 4 col desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 w-full max-w-6xl">
         {games.map((g) => (
-          <button
+          <div
             key={g.id}
-            type="button"
+            className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl hover:shadow-purple-500/30 transition-all transform hover:scale-105 cursor-pointer border border-purple-500/20"
             onClick={() => navigate(`/games/${g.id}`)}
-            className="text-left w-full m-3 rounded-3xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-white/30 px-5 py-5 shadow-[0_6px_20px_rgba(0,0,0,0.25)]"
-            aria-label={`Open ${g.title}`}
           >
-            <div className="text-2xl md:text-3xl font-extrabold tracking-wide text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
-              {g.title}
+            {/* Game Thumbnail */}
+            <div
+              className="h-48 bg-cover bg-center"
+              style={{ backgroundImage: `url(${g.thumbnail || '/assets/logo.png'})` }}
+              title={g.title}
+            />
+            
+            {/* Game Info */}
+            <div className="p-5">
+              <h3 className="text-xl font-bold mb-2 text-white">{g.title}</h3>
+              <p className="text-gray-300 text-sm mb-4 leading-relaxed">{g.description}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-purple-400 font-semibold text-sm">Play Now →</span>
+              </div>
             </div>
-            <div className="mt-1 h-1 w-12 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-sky-500 opacity-70" />
-            {g.description && (
-              <div className="text-sm text-white/70 mt-1 leading-snug">{g.description}</div>
-            )}
-          </button>
+          </div>
         ))}
       </div>
+
+      {showNameDialog && (
+        <NameDialog
+          initialValue={name}
+          onCancel={() => setShowNameDialog(false)}
+          onSave={handleSaveName}
+        />
+      )}
     </div>
   );
 }
