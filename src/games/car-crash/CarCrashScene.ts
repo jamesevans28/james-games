@@ -397,13 +397,17 @@ export default class CarCrashScene extends Phaser.Scene {
     if (this.gameOver) return;
     this.gameOver = true;
 
-    // Best
+    // Best (local)
     if (this.score > this.best) {
       this.best = this.score;
       localStorage.setItem(STORAGE_BEST_KEY, String(this.best));
+    }
+
+    // Submit this run score (always)
+    {
       const name = getUserName();
-      if (name) {
-        postHighScore({ name, gameId: GAME_ID, score: this.best }).catch(() => {});
+      if (name && this.score > 0) {
+        postHighScore({ name, gameId: GAME_ID, score: this.score }).catch(() => {});
       }
     }
 

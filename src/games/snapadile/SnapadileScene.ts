@@ -309,13 +309,17 @@ export default class SnapadileScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(20);
 
-    // Update best score
+    // Update best score (local)
     if (this.score > this.best) {
       this.best = this.score;
       localStorage.setItem("snapadile-best", String(this.best));
+    }
+
+    // Submit this run score (always)
+    {
       const name = getUserName();
-      if (name) {
-        postHighScore({ name, gameId: "snapadile", score: this.best }).catch(() => {});
+      if (name && this.score > 0) {
+        postHighScore({ name, gameId: "snapadile", score: this.score }).catch(() => {});
       }
     }
 

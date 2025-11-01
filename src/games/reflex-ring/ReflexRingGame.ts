@@ -25,6 +25,15 @@ export default class ReflexRingGame extends Phaser.Scene {
 
   private wedgeGraphics!: Phaser.GameObjects.Graphics;
   private ringGraphics!: Phaser.GameObjects.Graphics;
+  private wedgeColor: number = 0xff3d81;
+  private readonly wedgePalette: number[] = [
+    0x22e3ff, // cyan
+    0xffd166, // warm yellow
+    0xff6b6b, // coral
+    0x7cfc00, // lime
+    0x9d4edd, // purple
+    0x00f5d4, // aqua mint
+  ];
 
   private score = 0;
   private best = 0;
@@ -57,14 +66,14 @@ export default class ReflexRingGame extends Phaser.Scene {
 
     // Background now handled by DOM/CSS to fully cover viewport; Phaser canvas is transparent
 
-    // Ring with cartoon ticks
+    // Ring with cartoon ticks (bold outline + inner stroke)
     this.ringGraphics = this.add.graphics();
-    this.ringGraphics.lineStyle(8, 0x0b0b0b, 1);
-    this.ringGraphics.strokeCircle(this.centerX, this.centerY, this.radius + 2);
-    this.ringGraphics.lineStyle(10, 0xffffff, 1);
+    this.ringGraphics.lineStyle(12, 0x0b0b0b, 1);
+    this.ringGraphics.strokeCircle(this.centerX, this.centerY, this.radius + 3);
+    this.ringGraphics.lineStyle(12, 0xffffff, 1);
     this.ringGraphics.strokeCircle(this.centerX, this.centerY, this.radius);
-    // Tick marks every 30 degrees
-    this.ringGraphics.lineStyle(6, 0x0b0b0b, 0.6);
+    // Tick marks every 30 degrees (cartoon black)
+    this.ringGraphics.lineStyle(6, 0x0b0b0b, 0.9);
     for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
       const r1 = this.radius - 12;
       const r2 = this.radius + 6;
@@ -75,21 +84,52 @@ export default class ReflexRingGame extends Phaser.Scene {
       this.ringGraphics.lineBetween(x1, y1, x2, y2);
     }
 
-    // Arrow (cartoon shapes) in a container so we can rotate from center
+    // Arrow (cartoon) in a container so we can rotate from center
     this.arrowContainer = this.add.container(this.centerX, this.centerY);
-    const shaftHeight = 15; // keep consistent with visual thickness
-    const headLength = 241;
-    const headHalfWidth = shaftHeight / 2; // match head base height to shaft height for perfect centering
-    // Keep the tip just shy of the ring by subtracting a small margin
-    const shaftWidth = this.radius - headLength - 8;
-    // const shaft = this.add.rectangle(0, 0, shaftWidth, shaftHeight, 0xfde047).setOrigin(0, 0.5);
-    // shaft.setStrokeStyle(4, 0x0b0b0b, 1);
-    // Position the triangle so its flat base (x=0) meets the shaft end (x=shaftWidth)
+    const margin = 12;
+    const shaftHeight = Math.max(10, Math.floor(this.radius * 0.08));
+    const headLength = Math.max(18, Math.floor(this.radius * 0.2));
+    const shaftLength = this.radius - margin;
+    const shaftWidth = Math.max(12, shaftLength - headLength);
+    const headHalfWidth = Math.floor(shaftHeight * 0.7);
+
+    // Shadow (offset)
+    const shadowShaft = this.add
+      .rectangle(3, 3, shaftWidth, shaftHeight, 0x000000, 0.35)
+      .setOrigin(0, 0.5);
+    const shadowHead = this.add
+      .triangle(
+        shaftWidth + 3,
+        3,
+        0,
+        -headHalfWidth,
+        0,
+        headHalfWidth,
+        headLength,
+        0,
+        0x000000,
+        0.35
+      )
+      .setOrigin(0, 0.5);
+
+    // Main arrow
+    const shaft = this.add.rectangle(0, 0, shaftWidth, shaftHeight, 0xffd400).setOrigin(0, 0.5);
+    shaft.setStrokeStyle(4, 0x0b0b0b, 1);
     const head = this.add
-      .triangle(shaftWidth, 0, 0, -headHalfWidth, 0, shaftHeight, headLength, 0, 0xfef08a)
-      .setOrigin(0, 0);
+      .triangle(
+        shaftWidth,
+        0,
+        0,
+        -headHalfWidth,
+        0,
+        headHalfWidth,
+        headLength,
+        0,
+        0xfff275
+      )
+      .setOrigin(0, 0.5);
     head.setStrokeStyle(4, 0x0b0b0b, 1);
-    this.arrowContainer.add([head]);
+    this.arrowContainer.add([shadowShaft, shadowHead, shaft, head]);
 
     // Wedge graphics layer
     this.wedgeGraphics = this.add.graphics();
@@ -164,13 +204,14 @@ export default class ReflexRingGame extends Phaser.Scene {
 
   private drawWedge(angle: number): void {
     this.wedgeGraphics.clear();
-    this.wedgeGraphics.fillStyle(0xffccff, 0.6);
+    this.wedgeGraphics.fillStyle(this.wedgeColor, 0.85);
     const start = angle - this.segmentWidth / 2;
     const end = angle + this.segmentWidth / 2;
     this.wedgeGraphics.slice(this.centerX, this.centerY, this.radius, start, end, true);
     this.wedgeGraphics.fillPath();
 
-    this.wedgeGraphics.lineStyle(2, 0x333333, 0.9);
+    // Thick cartoon outline
+    this.wedgeGraphics.lineStyle(4, 0x0b0b0b, 1);
     this.wedgeGraphics.beginPath();
     this.wedgeGraphics.arc(this.centerX, this.centerY, this.radius, start, end, false);
     this.wedgeGraphics.lineBetween(
@@ -237,15 +278,17 @@ export default class ReflexRingGame extends Phaser.Scene {
     this.cameras.main.shake(250, 0.01);
     this.cameras.main.flash(120, 255, 50, 50);
 
-    // Update best
+    // Update best (local)
     if (this.score > this.best) {
       this.best = this.score;
       localStorage.setItem("reflex-ring-best", String(this.best));
-      const name = getUserName();
-      if (name) {
-        // Submit asynchronously; no await to avoid blocking UI
-        postHighScore({ name, gameId: "reflex-ring", score: this.best }).catch(() => {});
-      }
+    }
+
+    // Submit this run score (always)
+    const name = getUserName();
+    if (name && this.score > 0) {
+      // Submit asynchronously; no await to avoid blocking UI
+      postHighScore({ name, gameId: "reflex-ring", score: this.score }).catch(() => {});
     }
 
     const overlay = this.add.rectangle(
@@ -359,8 +402,10 @@ export default class ReflexRingGame extends Phaser.Scene {
       candidate = Phaser.Math.FloatBetween(0, Phaser.Math.PI2);
     }
 
-    this.targetAngle = candidate;
-    this.drawWedge(this.targetAngle);
+  this.targetAngle = candidate;
+  // Pick a vibrant color for the next wedge
+  this.wedgeColor = this.wedgePalette[Phaser.Math.Between(0, this.wedgePalette.length - 1)];
+  this.drawWedge(this.targetAngle);
     // Reset per-pass state so the player gets a fresh chance on the new segment
     this.inWedgePrev = false;
     this.tappedThisWedge = false;
