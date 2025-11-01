@@ -13,6 +13,8 @@ env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   S3_BUCKET: ${{ vars.S3_BUCKET }}
   CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+  LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
+  TABLE_NAME: ${{ vars.TABLE_NAME }}
 
 jobs:
   build-and-deploy:
@@ -39,6 +41,8 @@ jobs:
 
       - name: Build
         run: npm run build-nolog
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -77,3 +81,32 @@ jobs:
           aws cloudfront create-invalidation \
             --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
+
+      # --- Backend (Lambda) deploy ---
+      - name: Build backend (Lambda)
+        working-directory: app
+        run: |
+          npm ci || npm install
+          npm run build
+
+      - name: Package Lambda bundle
+        if: ${{ env.LAMBDA_FUNCTION_NAME != '' }}
+        working-directory: app
+        run: |
+          rm -f bundle.zip
+          zip -r bundle.zip dist node_modules package.json package-lock.json
+
+      - name: Deploy Lambda code
+        if: ${{ env.LAMBDA_FUNCTION_NAME != '' }}
+        working-directory: app
+        run: |
+          aws lambda update-function-code \
+            --function-name "${{ env.LAMBDA_FUNCTION_NAME }}" \
+            --zip-file fileb://bundle.zip
+
+      - name: (Optional) Update Lambda env
+        if: ${{ env.LAMBDA_FUNCTION_NAME != '' && env.TABLE_NAME != '' }}
+        run: |
+          aws lambda update-function-configuration \
+            --function-name "${{ env.LAMBDA_FUNCTION_NAME }}" \
+            --environment "Variables={TABLE_NAME=${{ env.TABLE_NAME }},AWS_NODEJS_CONNECTION_REUSE_ENABLED=1}"

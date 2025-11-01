@@ -33,7 +33,7 @@ export default function GameHub() {
         canonical="https://games4james.com/"
         image="https://games4james.com/assets/logo.png"
       />
-      
+
       {/* Logo */}
       <div className="mb-8 text-center">
         <img
@@ -65,10 +65,10 @@ export default function GameHub() {
             {/* Game Thumbnail */}
             <div
               className="h-48 bg-cover bg-center"
-              style={{ backgroundImage: `url(${g.thumbnail || '/assets/logo.png'})` }}
+              style={{ backgroundImage: `url(${g.thumbnail || "/assets/logo.png"})` }}
               title={g.title}
             />
-            
+
             {/* Game Info */}
             <div className="p-5">
               <h3 className="text-xl font-bold mb-2 text-white">{g.title}</h3>
