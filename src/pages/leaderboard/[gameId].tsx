@@ -20,7 +20,7 @@ export default function LeaderboardPage() {
     const load = async () => {
       if (!gameId) return;
       try {
-  const res = await getTopScores(gameId, 25);
+        const res = await getTopScores(gameId, 25);
         setRows(res);
       } catch (e) {
         console.error(e);
@@ -82,9 +82,13 @@ export default function LeaderboardPage() {
                 >
                   <div className="flex items-center gap-3">
                     <span className="w-7 text-white/70 font-mono">{i + 1}.</span>
-                    <span className={"font-semibold " + (isMe ? "text-amber-300" : "")}>{r.name}</span>
+                    <span className={"font-semibold " + (isMe ? "text-amber-300" : "")}>
+                      {r.name}
+                    </span>
                   </div>
-                  <div className={"text-right font-mono " + (isMe ? "text-amber-200" : "")}>{r.score}</div>
+                  <div className={"text-right font-mono " + (isMe ? "text-amber-200" : "")}>
+                    {r.score}
+                  </div>
                 </li>
               );
             })}

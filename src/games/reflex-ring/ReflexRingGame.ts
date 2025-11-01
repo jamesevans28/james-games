@@ -116,17 +116,7 @@ export default class ReflexRingGame extends Phaser.Scene {
     const shaft = this.add.rectangle(0, 0, shaftWidth, shaftHeight, 0xffd400).setOrigin(0, 0.5);
     shaft.setStrokeStyle(4, 0x0b0b0b, 1);
     const head = this.add
-      .triangle(
-        shaftWidth,
-        0,
-        0,
-        -headHalfWidth,
-        0,
-        headHalfWidth,
-        headLength,
-        0,
-        0xfff275
-      )
+      .triangle(shaftWidth, 0, 0, -headHalfWidth, 0, headHalfWidth, headLength, 0, 0xfff275)
       .setOrigin(0, 0.5);
     head.setStrokeStyle(4, 0x0b0b0b, 1);
     this.arrowContainer.add([shadowShaft, shadowHead, shaft, head]);
@@ -402,10 +392,10 @@ export default class ReflexRingGame extends Phaser.Scene {
       candidate = Phaser.Math.FloatBetween(0, Phaser.Math.PI2);
     }
 
-  this.targetAngle = candidate;
-  // Pick a vibrant color for the next wedge
-  this.wedgeColor = this.wedgePalette[Phaser.Math.Between(0, this.wedgePalette.length - 1)];
-  this.drawWedge(this.targetAngle);
+    this.targetAngle = candidate;
+    // Pick a vibrant color for the next wedge
+    this.wedgeColor = this.wedgePalette[Phaser.Math.Between(0, this.wedgePalette.length - 1)];
+    this.drawWedge(this.targetAngle);
     // Reset per-pass state so the player gets a fresh chance on the new segment
     this.inWedgePrev = false;
     this.tappedThisWedge = false;
