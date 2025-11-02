@@ -53,7 +53,7 @@ export default function GameHeader({ title, brand = "James Games", leaderboardTo
                   strokeLinejoin="round"
                 />
               </svg>
-              <span className="text-sm font-medium">Top 10</span>
+              <span className="text-sm font-medium">Top 25</span>
             </Link>
           )}
         </div>

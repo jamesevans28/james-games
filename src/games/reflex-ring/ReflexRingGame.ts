@@ -117,7 +117,7 @@ export default class ReflexRingGame extends Phaser.Scene {
     shaft.setStrokeStyle(4, 0x0b0b0b, 1);
     const head = this.add
       .triangle(shaftWidth, 0, 0, -headHalfWidth, 0, headHalfWidth, headLength, 0, 0xfff275)
-      .setOrigin(0, 0.5);
+      .setOrigin(0, 0);
     head.setStrokeStyle(4, 0x0b0b0b, 1);
     this.arrowContainer.add([shadowShaft, shadowHead, shaft, head]);
 
@@ -339,7 +339,7 @@ export default class ReflexRingGame extends Phaser.Scene {
   // Perfect hit is a tighter window around the wedge center
   private isPerfectHit(angle: number, wedgeCenter: number): boolean {
     const diff = Math.abs(Phaser.Math.Angle.Wrap(angle - wedgeCenter));
-    const perfectWindow = this.segmentWidth * 0.15; // ~15% of segment width
+    const perfectWindow = this.segmentWidth * 0.2; // ~15% of segment width
     return diff <= perfectWindow / 2;
   }
 

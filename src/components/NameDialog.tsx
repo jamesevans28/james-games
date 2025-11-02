@@ -26,7 +26,7 @@ export default function NameDialog({ initialValue = "", onSave, onCancel }: Prop
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="e.g. SpeedySam"
-          maxLength={24}
+          maxLength={15}
           className="w-full rounded-lg border border-black/20 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
         <div className="mt-4 flex items-center justify-end gap-2">
