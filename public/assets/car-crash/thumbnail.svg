@@ -1,1 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><rect width="100" height="100" fill="#334155" /><text x="50" y="55" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Car Crash</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="320" height="180" role="img" aria-label="Car Crash thumbnail">
+  <rect width="100%" height="100%" rx="12" fill="#0b1220"/>
+  <!-- grass -->
+  <rect x="0" y="0" width="40" height="180" fill="#16a34a"/>
+  <rect x="280" y="0" width="40" height="180" fill="#16a34a"/>
+  <!-- road -->
+  <rect x="40" y="12" width="240" height="156" rx="6" fill="#374151"/>
+  <!-- lane dashes -->
+  <g stroke="#f8fafc" stroke-width="6" stroke-linecap="round">
+    <line x1="120" y1="20" x2="120" y2="40"/>
+    <line x1="200" y1="20" x2="200" y2="40"/>
+    <line x1="120" y1="70" x2="120" y2="90"/>
+    <line x1="200" y1="70" x2="200" y2="90"/>
+    <line x1="120" y1="120" x2="120" y2="140"/>
+    <line x1="200" y1="120" x2="200" y2="140"/>
+  </g>
+  <!-- player car (top-down) -->
+  <g transform="translate(140,110)">
+    <rect x="-18" y="-26" width="36" height="52" rx="6" fill="#ef4444" stroke="#9b1c1c" stroke-width="3"/>
+    <rect x="-12" y="-10" width="24" height="18" rx="3" fill="#fff" opacity="0.9"/>
+    <circle cx="-10" cy="18" r="4" fill="#0f172a"/>
+    <circle cx="10" cy="18" r="4" fill="#0f172a"/>
+  </g>
+</svg>

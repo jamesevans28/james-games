@@ -1,1 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><rect width="100" height="100" fill="#1e293b" /><text x="50" y="55" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Snapadile</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="320" height="180" role="img" aria-label="Snapadile thumbnail">
+  <rect width="100%" height="100%" rx="12" fill="#083344"/>
+  <!-- water band -->
+  <rect x="0" y="110" width="320" height="70" fill="#0ea5a0" opacity="0.12"/>
+  <!-- croc head -->
+  <g transform="translate(40,30) scale(1.2)">
+    <ellipse cx="60" cy="60" rx="70" ry="42" fill="#16a34a" stroke="#166534" stroke-width="6"/>
+    <rect x="18" y="58" width="84" height="18" fill="#0b6f3a"/>
+    <!-- teeth -->
+    <g fill="#fff">
+      <polygon points="30,70 36,78 42,70"/>
+      <polygon points="46,70 52,78 58,70"/>
+      <polygon points="62,70 68,78 74,70"/>
+      <polygon points="78,70 84,78 90,70"/>
+    </g>
+    <!-- eye -->
+    <circle cx="40" cy="36" r="8" fill="#fff"/>
+    <circle cx="42" cy="36" r="4" fill="#083344"/>
+  </g>
+</svg>

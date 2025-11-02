@@ -6,7 +6,7 @@ interface Props {
   leaderboardTo?: string; // route to leaderboard page
 }
 
-export default function GameHeader({ title, brand = "James Games", leaderboardTo }: Props) {
+export default function GameHeader({ title, brand = "games4james.com", leaderboardTo }: Props) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-14">
       <div
