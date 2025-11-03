@@ -35,8 +35,8 @@ export async function getTopScores(gameId: string, limit = 10) {
     new QueryCommand({
       TableName: TABLE_NAME,
       IndexName: SCORE_GSI,
-      KeyConditionExpression: 'gameId = :g',
-      ExpressionAttributeValues: { ':g': gameId },
+      KeyConditionExpression: "gameId = :g",
+      ExpressionAttributeValues: { ":g": gameId },
       ScanIndexForward: false, // highest score first
       Limit: fetchLimit,
     })
@@ -49,8 +49,8 @@ export async function getTopScores(gameId: string, limit = 10) {
     const sa = Number(a.score ?? 0);
     const sb = Number(b.score ?? 0);
     if (sb !== sa) return sb - sa; // score desc
-    const ca = a.createdAt || '';
-    const cb = b.createdAt || '';
+    const ca = a.createdAt || "";
+    const cb = b.createdAt || "";
     if (ca < cb) return -1;
     if (ca > cb) return 1;
     return 0;
