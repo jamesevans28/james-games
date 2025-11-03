@@ -55,7 +55,7 @@ export default function GameHub() {
       </div>
 
       {/* Game Cards Grid - 1 col mobile, 2 col tablet, 4 col desktop */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 w-full max-w-6xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-6xl">
         {games.map((g) => (
           <div
             key={g.id}
