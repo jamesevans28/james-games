@@ -131,7 +131,7 @@ In GitHub → Settings → Secrets and variables → Actions:
 
 Push to `main` or run the workflow manually. The workflow will:
 
-- Install dependencies and build with Vite (`npm run build-nolog`)
+- Install dependencies and build with Vite (`npm run build`)
 - `aws s3 sync dist/ s3://$S3_BUCKET --delete`
 - Re-upload `index.html` with `Cache-Control: no-store` to avoid stale HTML
 - Optionally create a CloudFront invalidation

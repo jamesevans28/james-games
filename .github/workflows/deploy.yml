@@ -40,7 +40,7 @@ jobs:
           npm run generate-sitemap --if-present
 
       - name: Build
-        run: npm run build-nolog
+        run: npm run build
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
 
