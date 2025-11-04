@@ -6,10 +6,12 @@ import RootLayout from "./components/RootLayout";
 import SWUpdatePrompt from "./components/SWUpdatePrompt";
 import InstallPWA from "./components/InstallPWA";
 import IOSInstallHint from "./components/IOSInstallHint";
+import SplashScreen from "./components/SplashScreen";
 
 export default function App() {
   return (
     <BrowserRouter>
+      <SplashScreen />
       <SWUpdatePrompt />
       <InstallPWA />
       <IOSInstallHint />

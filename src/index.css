@@ -32,6 +32,40 @@ button {
 :root {
   --header-h: 56px;
 }
+/* Theme colors */
+:root {
+  --color-primary: #4aa3ff; /* relaxing blue */
+  --color-primary-hover: #2f90ff;
+  --color-secondary: #6b7280; /* neutral secondary */
+  --btn-radius: 8px;
+}
+
+/* Button helpers */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--btn-radius);
+  font-weight: 700;
+}
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+}
+.btn-secondary {
+  background-color: var(--color-secondary);
+  color: white;
+}
+.btn-outline {
+  background: white;
+  color: black;
+  border: 1px solid #e5e7eb;
+}
 .game-screen {
   height: calc(100dvh - var(--header-h));
   height: calc(100vh - var(--header-h)); /* fallback */

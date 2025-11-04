@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Seo from "../components/Seo";
-import { games } from "../games";
+import { games, GameMeta } from "../games";
 import { getUserName, setUserName } from "../utils/user";
 import NameDialog from "../components/NameDialog";
 
@@ -24,8 +24,52 @@ export default function GameHub() {
     setName(v);
     setShowNameDialog(false);
   };
+
+  // Filter games into recently added and most popular
+  const { recentGames, popularGames } = useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const recent: GameMeta[] = [];
+    const popular: GameMeta[] = [];
+
+    games.forEach((game) => {
+      if (game.createdAt) {
+        const createdDate = new Date(game.createdAt);
+        if (createdDate >= sevenDaysAgo) {
+          recent.push(game);
+        } else {
+          popular.push(game);
+        }
+      } else {
+        // Games without createdAt go to popular
+        popular.push(game);
+      }
+    });
+
+    return { recentGames: recent, popularGames: popular };
+  }, []);
+
+  const GameCard = ({ game }: { game: GameMeta }) => (
+    <div
+      className="bg-white rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => navigate(`/games/${game.id}`)}
+    >
+      {/* Game Thumbnail */}
+      <div
+        className="aspect-square bg-cover bg-center"
+        style={{ backgroundImage: `url(${game.thumbnail || "/assets/logo.png"})` }}
+        title={game.title}
+      />
+
+      {/* Game Info */}
+      <div className="px-3 py-2">
+        <h3 className="text-sm font-semibold truncate">{game.title}</h3>
+      </div>
+    </div>
+  );
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex flex-col items-center px-6 py-8">
+    <div className="min-h-screen bg-white text-black flex flex-col">
       <Seo
         title="Free Online Games | Play Skill, Reflex & Arcade Games at Games4James"
         description="Play free online games made by James! Fun, fast, skill-based games you can play instantly on your phone or browser. Join Games4James today and test your reflexes."
@@ -34,51 +78,36 @@ export default function GameHub() {
         image="https://games4james.com/assets/logo.png"
       />
 
-      {/* Logo */}
-      <div className="mb-8 text-center">
-        <img
-          src="/assets/shared/logo_square.png"
-          alt="James Games"
-          className="block max-w-[300px] w-48 h-auto rounded-3xl shadow-2xl mx-auto ring-2 ring-purple-400/50"
-        />
-      </div>
+      {/* Header */}
+      <header className="w-full border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+          <h1 className="text-lg font-extrabold tracking-tight">Games 4 James</h1>
+          <button type="button" onClick={() => setShowNameDialog(true)} className="btn btn-outline">
+            {name ? `Hi, ${name}` : "Set Screen Name"}
+          </button>
+        </div>
+      </header>
 
-      {/* Screen Name Button */}
-      <div className="w-full max-w-6xl flex justify-end mb-8">
-        <button
-          type="button"
-          onClick={() => setShowNameDialog(true)}
-          className="text-sm font-bold px-6 py-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-purple-500/50 transition-all transform hover:scale-105"
-        >
-          {name ? `👋 Hi, ${name}` : "Set Screen Name"}
-        </button>
-      </div>
-
-      {/* Game Cards Grid - 1 col mobile, 2 col tablet, 4 col desktop */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-6xl">
-        {games.map((g) => (
-          <div
-            key={g.id}
-            className="bg-slate-800/50 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl hover:shadow-purple-500/30 transition-all transform hover:scale-105 cursor-pointer border border-purple-500/20"
-            onClick={() => navigate(`/games/${g.id}`)}
-          >
-            {/* Game Thumbnail */}
-            <div
-              className="h-48 bg-cover bg-center"
-              style={{ backgroundImage: `url(${g.thumbnail || "/assets/logo.png"})` }}
-              title={g.title}
-            />
-
-            {/* Game Info */}
-            <div className="p-5">
-              <h3 className="text-xl font-bold mb-2 text-white">{g.title}</h3>
-              <p className="text-gray-300 text-sm mb-4 leading-relaxed">{g.description}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-purple-400 font-semibold text-sm">Play Now →</span>
-              </div>
-            </div>
+      {/* Recently Added Section */}
+      {recentGames.length > 0 && (
+        <div className="w-full max-w-6xl mx-auto px-4 py-6">
+          <h2 className="text-xl font-bold mb-4 text-black">Recently Added</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+            {recentGames.map((game) => (
+              <GameCard key={game.id} game={game} />
+            ))}
           </div>
-        ))}
+        </div>
+      )}
+
+      {/* Most Popular Section */}
+      <div className="w-full max-w-6xl mx-auto px-4 py-6">
+        <h2 className="text-xl font-bold mb-4 text-black">Most Popular</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+          {popularGames.map((game) => (
+            <GameCard key={game.id} game={game} />
+          ))}
+        </div>
       </div>
 
       {showNameDialog && (

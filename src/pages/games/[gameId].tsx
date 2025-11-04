@@ -77,7 +77,7 @@ export default function PlayGame() {
   }, [playing, meta]);
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className="min-h-screen bg-white text-black flex flex-col">
       <Seo
         title={meta ? `${meta.title} — Play Free at Games4James` : "Play Free Games at Games4James"}
         description={

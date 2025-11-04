@@ -33,7 +33,7 @@ export default function LeaderboardPage() {
   }, [gameId]);
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className="min-h-screen bg-white text-black flex flex-col">
       <Seo
         title={meta ? `${meta.title} Leaderboard — Games4James` : "Leaderboard — Games4James"}
         description={`Top scores for ${meta?.title ?? "this game"} on Games4James.`}
@@ -42,10 +42,10 @@ export default function LeaderboardPage() {
         image={"https://games4james.com/assets/logo.png"}
       />
       <header className="fixed top-0 left-0 right-0 z-50 h-14">
-        <div className="h-full flex items-center justify-between px-3 bg-gradient-to-r from-fuchsia-600 via-purple-600 to-sky-600 text-white shadow-lg border-b border-white/20">
+        <div className="h-full flex items-center justify-between px-3 bg-white text-black border-b border-gray-200">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 rounded-full bg-white/15 hover:bg-white/25 transition-colors px-3 py-1.5"
+            className="inline-flex items-center rounded-md px-3 py-1.5"
             aria-label="Close leaderboard"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -56,43 +56,41 @@ export default function LeaderboardPage() {
                 strokeLinecap="round"
               />
             </svg>
-            <span className="text-sm font-medium">Close</span>
           </button>
           <div className="text-center pointer-events-none select-none">
-            <div className="text-lg font-extrabold drop-shadow-sm">Top 25</div>
-            <div className="text-[10px] opacity-80 leading-none">{meta?.title ?? "Game"}</div>
+            <div className="text-lg font-extrabold">{meta?.title ?? "Game"}</div>
           </div>
           <div className="w-[84px]" />
         </div>
       </header>
       <div className="pt-16 pb-6 px-4 max-w-xl w-full mx-auto">
-        {loading && <div className="text-white/80">Loading…</div>}
-        {error && <div className="text-red-400">{error}</div>}
+        {loading && <div className="text-gray-700">Loading…</div>}
+        {error && <div className="text-red-600">{error}</div>}
         {!loading && !error && (
-          <ol className="rounded-2xl overflow-hidden bg-white/5 border border-white/10">
+          <ol className="rounded-lg overflow-hidden bg-white border border-gray-200">
             {rows.map((r, i) => {
               const isMe = myName && r.name === myName;
               return (
                 <li
                   key={`${r.name}-${i}`}
                   className={
-                    "flex items-center justify-between px-4 py-3 border-b border-white/10 last:border-b-0 " +
-                    (isMe ? "bg-amber-400/10 ring-1 ring-amber-300/30" : "")
+                    "flex items-center justify-between px-4 py-3 border-b border-gray-200 last:border-b-0 " +
+                    (isMe ? "bg-amber-50" : "")
                   }
                 >
                   <div className="flex items-center gap-3">
-                    <span className="w-7 text-white/70 font-mono">{i + 1}.</span>
-                    <span className={"font-semibold " + (isMe ? "text-amber-300" : "")}>
+                    <span className="w-7 text-gray-500 font-mono">{i + 1}.</span>
+                    <span className={"font-semibold " + (isMe ? "text-amber-700" : "")}>
                       {r.name}
                     </span>
                   </div>
-                  <div className={"text-right font-mono " + (isMe ? "text-amber-200" : "")}>
+                  <div className={"text-right font-mono " + (isMe ? "text-amber-700" : "")}>
                     {r.score}
                   </div>
                 </li>
               );
             })}
-            {rows.length === 0 && <div className="px-4 py-6 text-white/60">No scores yet.</div>}
+            {rows.length === 0 && <div className="px-4 py-6 text-gray-500">No scores yet.</div>}
           </ol>
         )}
       </div>
