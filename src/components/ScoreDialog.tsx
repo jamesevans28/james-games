@@ -14,12 +14,35 @@ export default function ScoreDialog({
   onViewLeaderboard,
 }: Props) {
   if (!open) return null;
+  const phrases = [
+    "Great job!",
+    "Awesome!",
+    "Fantastic!",
+    "Well done!",
+    "Impressive!",
+    "Outstanding!",
+    "Superb!",
+    "Excellent!",
+    "Brilliant!",
+    "Amazing!",
+    "Incredible!",
+    "Spectacular!",
+    "Marvelous!",
+    "Terrific!",
+    "Splendid!",
+    "Wonderful!",
+    "Fabulous!",
+    "Stunning!",
+    "Phenomenal!",
+    "Epic!",
+  ];
+  const phrase = phrases[(score ?? 0) % phrases.length];
   return (
     <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative w-full sm:w-auto sm:min-w-[320px] max-w-md mx-3 mb-6 sm:mb-0 rounded-lg overflow-hidden border border-gray-200 bg-white shadow-xl">
         <div className="px-5 py-4 border-b border-gray-200">
-          <div className="text-lg font-extrabold text-black">Nice run!</div>
+          <div className="text-lg font-extrabold text-black">{phrase}</div>
           <div className="text-gray-600 text-sm">Your score</div>
         </div>
         <div className="px-5 py-6">

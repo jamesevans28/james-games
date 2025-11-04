@@ -1,6 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 
 export async function postHighScore(args: { name: string; gameId: string; score: number }) {
+  if (args.name === "JamesTest") return;
   if (!API_BASE) return; // allow front-end to work without backend configured
   const res = await fetch(`${API_BASE}/scores`, {
     method: "POST",
