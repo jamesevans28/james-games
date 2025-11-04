@@ -366,6 +366,19 @@ export default class FlashBashGame extends Phaser.Scene {
           })
           .setOrigin(0.5)
           .setDepth(12);
+        this.time.delayedCall(1000, () => {
+          if (this.goText) {
+            this.tweens.add({
+              targets: this.goText,
+              alpha: 0,
+              duration: 500,
+              onComplete: () => {
+                this.goText?.destroy();
+                this.goText = undefined;
+              }
+            });
+          }
+        });
         return;
       }
       const index = this.sequence[i];
@@ -529,7 +542,7 @@ export default class FlashBashGame extends Phaser.Scene {
     // brief pause before restart
     this.isPlayerTurn = false;
     this.timerTween?.stop();
-    this.time.delayedCall(1000, () => this.scene.restart());
+    // this.time.delayedCall(1000, () => this.scene.restart());
   }
 
   revealButtonShapes() {
