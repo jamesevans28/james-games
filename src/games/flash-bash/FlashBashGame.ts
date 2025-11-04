@@ -375,7 +375,7 @@ export default class FlashBashGame extends Phaser.Scene {
               onComplete: () => {
                 this.goText?.destroy();
                 this.goText = undefined;
-              }
+              },
             });
           }
         });
