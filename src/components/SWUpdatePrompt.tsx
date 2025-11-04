@@ -4,6 +4,7 @@ import { useRegisterSW } from "virtual:pwa-register/react";
 export default function SWUpdatePrompt() {
   const [show, setShow] = useState(false);
   const [banner, setBanner] = useState<"offline" | "update" | null>(null);
+  const [skipUpdateOnce, setSkipUpdateOnce] = useState(false);
 
   const { needRefresh, offlineReady, updateServiceWorker } = useRegisterSW({
     onRegisteredSW() {
@@ -15,6 +16,28 @@ export default function SWUpdatePrompt() {
     },
   });
 
+  // If we just clicked Reload for an update, suppress the update banner once after reload
+  useEffect(() => {
+    if (sessionStorage.getItem("pwa:updateReloading") === "1") {
+      sessionStorage.removeItem("pwa:updateReloading");
+      setSkipUpdateOnce(true);
+    }
+    // Also listen for controllerchange; when the new SW takes control, hide the banner
+    const onControllerChange = () => {
+      setShow(false);
+      setBanner(null);
+      // brief suppression window to avoid immediate re-show if checks re-run
+      const until = Date.now() + 15000; // 15s
+      try {
+        localStorage.setItem("pwa:updateSuppressUntil", String(until));
+      } catch {}
+    };
+    navigator.serviceWorker?.addEventListener?.("controllerchange", onControllerChange);
+    return () => {
+      navigator.serviceWorker?.removeEventListener?.("controllerchange", onControllerChange);
+    };
+  }, []);
+
   useEffect(() => {
     const offlineDismissed = sessionStorage.getItem("pwa:offlineDismissed") === "1";
     if (offlineReady && !offlineDismissed) {
@@ -25,11 +48,18 @@ export default function SWUpdatePrompt() {
 
   useEffect(() => {
     const updateDismissed = sessionStorage.getItem("pwa:updateDismissed") === "1";
-    if (needRefresh && !updateDismissed) {
+    let suppressed = false;
+    try {
+      const until = Number(localStorage.getItem("pwa:updateSuppressUntil") || "0");
+      suppressed = until > Date.now();
+    } catch {
+      suppressed = false;
+    }
+    if (needRefresh && !updateDismissed && !skipUpdateOnce && !suppressed) {
       setBanner("update");
       setShow(true);
     }
-  }, [needRefresh]);
+  }, [needRefresh, skipUpdateOnce]);
 
   if (!show) return null;
 
@@ -43,6 +73,17 @@ export default function SWUpdatePrompt() {
     sessionStorage.setItem("pwa:updateDismissed", "1");
     setShow(false);
     setBanner(null);
+  };
+
+  const reloadToUpdate = () => {
+    // Mark that we triggered a reload due to update; suppress banner once on reload
+    sessionStorage.setItem("pwa:updateReloading", "1");
+    // Add a short suppression window across full reload in case sessionStorage is lost
+    try {
+      const until = Date.now() + 15000; // 15s
+      localStorage.setItem("pwa:updateSuppressUntil", String(until));
+    } catch {}
+    updateServiceWorker(true);
   };
 
   return (
@@ -69,7 +110,7 @@ export default function SWUpdatePrompt() {
             </button>
             <button
               className="px-3 py-1.5 rounded-md bg-emerald-600 text-white"
-              onClick={() => updateServiceWorker(true)}
+              onClick={reloadToUpdate}
             >
               Reload
             </button>
