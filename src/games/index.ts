@@ -60,4 +60,17 @@ export const games: GameMeta[] = [
       return { mount: mod.mount };
     },
   },
+  {
+    id: "flash-bash",
+    title: "Flash Bash",
+    description:
+      "Watch the sequence of colored shapes, then mimic them before time runs out. Sequences get longer!",
+    thumbnail: "/assets/flash-bash/thumbnail.svg",
+    createdAt: "2025-11-04T00:00:00.000Z",
+    updatedAt: "2025-11-04T00:00:00.000Z",
+    load: async () => {
+      const mod = await import("./flash-bash/index");
+      return { mount: mod.mount };
+    },
+  },
 ];
