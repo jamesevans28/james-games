@@ -98,9 +98,7 @@ export default function PlayGame() {
       />
 
       {error && <div className="p-4 text-red-400">{error}</div>}
-      {!playing && meta && !error && (
-        <GameLanding meta={meta} onPlay={() => setPlaying(true)} />
-      )}
+      {!playing && meta && !error && <GameLanding meta={meta} onPlay={() => setPlaying(true)} />}
       {playing && (
         <div className="game-stage">
           <div

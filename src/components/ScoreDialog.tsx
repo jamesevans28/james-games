@@ -6,7 +6,13 @@ type Props = {
   onViewLeaderboard?: () => void;
 };
 
-export default function ScoreDialog({ open, score, onClose, onPlayAgain, onViewLeaderboard }: Props) {
+export default function ScoreDialog({
+  open,
+  score,
+  onClose,
+  onPlayAgain,
+  onViewLeaderboard,
+}: Props) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center">

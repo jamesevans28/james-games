@@ -41,7 +41,10 @@ export default function GameLanding({ meta, onPlay }: Props) {
 
   const handleShare = async () => {
     const shareUrl = `${location.origin}/games/${meta.id}`;
-    const scoreText = myBest && myBest > 0 ? `Can you beat my top score of ${myBest} in ${meta.title}?` : `Play ${meta.title} — can you get a new high score?`;
+    const scoreText =
+      myBest && myBest > 0
+        ? `Can you beat my top score of ${myBest} in ${meta.title}?`
+        : `Play ${meta.title} — can you get a new high score?`;
     const data: ShareData = {
       title: `${meta.title} — Games4James`,
       text: `${scoreText} ${shareUrl}`,
@@ -115,16 +118,17 @@ export default function GameLanding({ meta, onPlay }: Props) {
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") navigate(`/leaderboard/${meta.id}`);
+                          if (e.key === "Enter" || e.key === " ")
+                            navigate(`/leaderboard/${meta.id}`);
                         }}
                       >
-                        <span className="truncate mr-3">{i + 1}. {r.name}</span>
+                        <span className="truncate mr-3">
+                          {i + 1}. {r.name}
+                        </span>
                         <span className="font-mono">{r.score}</span>
                       </li>
                     ))}
-                    {top.length === 0 && (
-                      <li className="text-white/60">No scores yet.</li>
-                    )}
+                    {top.length === 0 && <li className="text-white/60">No scores yet.</li>}
                   </ol>
                 )}
               </div>
