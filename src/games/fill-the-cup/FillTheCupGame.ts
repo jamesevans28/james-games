@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { getUserName } from "../../utils/user";
 import { postHighScore } from "../../lib/api";
+import { dispatchGameOver } from "../../utils/gameEvents";
 
 const GAME_ID = "fill-the-cup" as const;
 
@@ -454,6 +455,11 @@ export default class FillTheCupGame extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(1001);
+
+    // Notify shell
+    try {
+      dispatchGameOver({ gameId: GAME_ID, score: this.score, ts: Date.now() });
+    } catch {}
 
     this.time.delayedCall(900, () => {
       this.input.once("pointerdown", () => {

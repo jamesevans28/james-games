@@ -20,3 +20,11 @@ export function trackGameStart(gameId: string, gameName: string) {
     game_name: gameName,
   });
 }
+
+export function trackShare(gameId: string, gameName: string, score?: number) {
+  gaEvent("share", {
+    game_id: gameId,
+    game_name: gameName,
+    score: typeof score === "number" ? score : undefined,
+  });
+}

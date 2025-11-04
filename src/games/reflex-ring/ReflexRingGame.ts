@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { trackGameStart } from "../../utils/analytics";
 import { getUserName } from "../../utils/user";
 import { postHighScore } from "../../lib/api";
+import { dispatchGameOver } from "../../utils/gameEvents";
 
 // Angle spacing constraints for new target placement (degrees)
 // Tweak these to tune how far the next highlight can appear from the last angle.
@@ -325,7 +326,12 @@ export default class ReflexRingGame extends Phaser.Scene {
       trackGameStart("reflex-ring", "Reflex Ring");
     };
 
-    // Add a short delay before allowing restart to avoid accidental taps
+    // Notify shell to return to landing
+    try {
+      dispatchGameOver({ gameId: "reflex-ring", score: this.score, ts: Date.now() });
+    } catch {}
+
+    // Add a short delay before allowing restart to avoid accidental taps (kept for in-canvas flow)
     this.time.delayedCall(1000, () => {
       this.input.once("pointerdown", restart);
     });

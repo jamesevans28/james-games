@@ -1,24 +1,53 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { games } from "../../games";
 import GameHeader from "./GameHeader";
 import { trackGameStart } from "../../utils/analytics";
 import { getUserName, setUserName } from "../../utils/user";
 import NameDialog from "../../components/NameDialog";
 import Seo from "../../components/Seo";
+import GameLanding from "../../components/GameLanding";
+import ScoreDialog from "../../components/ScoreDialog";
+import { onGameOver } from "../../utils/gameEvents";
 
 export default function PlayGame() {
   const { gameId } = useParams();
+  const navigate = useNavigate();
   const meta = useMemo(() => games.find((g) => g.id === gameId), [gameId]);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const destroyRef = useRef<null | (() => void)>(null);
   const [error, setError] = useState<string | null>(null);
   const [askName, setAskName] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [showScore, setShowScore] = useState(false);
+  const [lastScore, setLastScore] = useState<number | null>(null);
 
   useEffect(() => {
     if (!getUserName()) setAskName(true);
-    let cleanup: (() => void) | null = null;
+    // Listen for game over to return to landing and show score dialog
+    const off = onGameOver((d) => {
+      if (!meta || d.gameId !== meta.id) return;
+      // Unmount the game and show dialog
+      if (destroyRef.current) {
+        try {
+          destroyRef.current();
+        } catch {}
+        destroyRef.current = null;
+      }
+      setPlaying(false);
+      setLastScore(d.score);
+      setShowScore(true);
+    });
+    return () => {
+      off?.();
+    };
+  }, [meta]);
 
-    const start = async () => {
+  // Mount/unmount when playing toggles
+  useEffect(() => {
+    let canceled = false;
+    const doMount = async () => {
+      if (!playing) return;
       if (!meta) {
         setError("Game not found");
         return;
@@ -26,21 +55,26 @@ export default function PlayGame() {
       if (!containerRef.current) return;
       try {
         const mod = await meta.load();
+        if (canceled) return;
         const { destroy } = mod.mount(containerRef.current);
-        // Track initial game start when the game is mounted
+        destroyRef.current = destroy;
         trackGameStart(meta.id, meta.title);
-        cleanup = destroy;
       } catch (e) {
         console.error(e);
         setError("Failed to load game");
       }
     };
-
-    start();
+    doMount();
     return () => {
-      if (cleanup) cleanup();
+      canceled = true;
+      if (destroyRef.current) {
+        try {
+          destroyRef.current();
+        } catch {}
+        destroyRef.current = null;
+      }
     };
-  }, [meta]);
+  }, [playing, meta]);
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -63,9 +97,11 @@ export default function PlayGame() {
         leaderboardTo={meta ? `/leaderboard/${meta.id}` : undefined}
       />
 
-      {error ? (
-        <div className="p-4 text-red-400">{error}</div>
-      ) : (
+      {error && <div className="p-4 text-red-400">{error}</div>}
+      {!playing && meta && !error && (
+        <GameLanding meta={meta} onPlay={() => setPlaying(true)} />
+      )}
+      {playing && (
         <div className="game-stage">
           <div
             ref={containerRef}
@@ -85,6 +121,16 @@ export default function PlayGame() {
           }}
         />
       )}
+      <ScoreDialog
+        open={showScore}
+        score={lastScore}
+        onClose={() => setShowScore(false)}
+        onPlayAgain={() => {
+          setShowScore(false);
+          setPlaying(true);
+        }}
+        onViewLeaderboard={meta ? () => navigate(`/leaderboard/${meta.id}`) : undefined}
+      />
     </div>
   );
 }

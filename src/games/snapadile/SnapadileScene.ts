@@ -1,5 +1,6 @@
 import { getUserName } from "../../utils/user";
 import { postHighScore } from "../../lib/api";
+import { dispatchGameOver } from "../../utils/gameEvents";
 import Phaser from "phaser";
 
 interface Croc extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
@@ -322,6 +323,11 @@ export default class SnapadileScene extends Phaser.Scene {
         postHighScore({ name, gameId: "snapadile", score: this.score }).catch(() => {});
       }
     }
+
+    // Notify shell
+    try {
+      dispatchGameOver({ gameId: "snapadile", score: this.score, ts: Date.now() });
+    } catch {}
 
     // Delay before allowing restart to avoid accidental taps
     this.time.delayedCall(1000, () => {
