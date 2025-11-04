@@ -16,6 +16,7 @@ export default function PlayGame() {
   const meta = useMemo(() => games.find((g) => g.id === gameId), [gameId]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const destroyRef = useRef<null | (() => void)>(null);
+  const mountingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [askName, setAskName] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -24,17 +25,10 @@ export default function PlayGame() {
 
   useEffect(() => {
     if (!getUserName()) setAskName(true);
-    // Listen for game over to return to landing and show score dialog
+    // Listen for game over and show score dialog over the running game
     const off = onGameOver((d) => {
       if (!meta || d.gameId !== meta.id) return;
-      // Unmount the game and show dialog
-      if (destroyRef.current) {
-        try {
-          destroyRef.current();
-        } catch {}
-        destroyRef.current = null;
-      }
-      setPlaying(false);
+      // Keep the game mounted so it's visible in the background
       setLastScore(d.score);
       setShowScore(true);
     });
@@ -44,25 +38,41 @@ export default function PlayGame() {
   }, [meta]);
 
   // Mount/unmount when playing toggles
-  useEffect(() => {
-    let canceled = false;
-    const doMount = async () => {
-      if (!playing) return;
+  // Helper to mount the game immediately
+  const mountGame = async () => {
+    if (mountingRef.current) return;
+    mountingRef.current = true;
+    try {
       if (!meta) {
         setError("Game not found");
         return;
       }
       if (!containerRef.current) return;
-      try {
-        const mod = await meta.load();
-        if (canceled) return;
-        const { destroy } = mod.mount(containerRef.current);
-        destroyRef.current = destroy;
-        trackGameStart(meta.id, meta.title);
-      } catch (e) {
-        console.error(e);
-        setError("Failed to load game");
+      const mod = await meta.load();
+      // Destroy any previous instance first
+      if (destroyRef.current) {
+        try {
+          destroyRef.current();
+        } catch {}
+        destroyRef.current = null;
       }
+      const { destroy } = mod.mount(containerRef.current);
+      destroyRef.current = destroy;
+      trackGameStart(meta.id, meta.title);
+    } catch (e) {
+      console.error(e);
+      setError("Failed to load game");
+    } finally {
+      mountingRef.current = false;
+    }
+  };
+
+  useEffect(() => {
+    let canceled = false;
+    const doMount = async () => {
+      if (!playing) return;
+      if (canceled) return;
+      await mountGame();
     };
     doMount();
     return () => {
@@ -122,10 +132,22 @@ export default function PlayGame() {
       <ScoreDialog
         open={showScore}
         score={lastScore}
-        onClose={() => setShowScore(false)}
+        onClose={() => {
+          // Close dialog and return to game landing: unmount game and stop playing
+          setShowScore(false);
+          if (destroyRef.current) {
+            try {
+              destroyRef.current();
+            } catch {}
+            destroyRef.current = null;
+          }
+          setPlaying(false);
+        }}
         onPlayAgain={() => {
           setShowScore(false);
           setPlaying(true);
+          // Immediately start a new game instance
+          void mountGame();
         }}
         onViewLeaderboard={meta ? () => navigate(`/leaderboard/${meta.id}`) : undefined}
       />

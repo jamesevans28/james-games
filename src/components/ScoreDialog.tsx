@@ -15,7 +15,7 @@ export default function ScoreDialog({
 }: Props) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative w-full sm:w-auto sm:min-w-[320px] max-w-md mx-3 mb-6 sm:mb-0 rounded-lg overflow-hidden border border-gray-200 bg-white shadow-xl">
         <div className="px-5 py-4 border-b border-gray-200">
