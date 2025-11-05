@@ -73,4 +73,17 @@ export const games: GameMeta[] = [
       return { mount: mod.mount };
     },
   },
+  {
+    id: "ho-ho-home-delivery",
+    title: "Ho Ho Home Delivery",
+    description:
+      "Drop presents into chimneys from Santa's sleigh. Nail the landing, avoid misses. 3 lives!",
+    thumbnail: "/assets/ho-ho-home-delivery/thumbnail.svg",
+    createdAt: "2025-11-05T00:00:00.000Z",
+    updatedAt: "2025-11-05T00:00:00.000Z",
+    load: async () => {
+      const mod = await import("./ho-ho-home-delivery/index");
+      return { mount: mod.mount };
+    },
+  },
 ];

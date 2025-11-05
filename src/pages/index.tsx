@@ -27,8 +27,8 @@ export default function GameHub() {
 
   // Filter games into recently added and most popular
   const { recentGames, popularGames } = useMemo(() => {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const fourDaysAgo = new Date();
+    fourDaysAgo.setDate(fourDaysAgo.getDate() - 4);
 
     const recent: GameMeta[] = [];
     const popular: GameMeta[] = [];
@@ -36,7 +36,7 @@ export default function GameHub() {
     games.forEach((game) => {
       if (game.createdAt) {
         const createdDate = new Date(game.createdAt);
-        if (createdDate >= sevenDaysAgo) {
+        if (createdDate >= fourDaysAgo) {
           recent.push(game);
         } else {
           popular.push(game);
@@ -46,6 +46,9 @@ export default function GameHub() {
         popular.push(game);
       }
     });
+
+    // Sort recent games by createdAt descending (most recent first)
+    recent.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
 
     return { recentGames: recent, popularGames: popular };
   }, []);
