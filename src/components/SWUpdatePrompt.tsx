@@ -3,10 +3,9 @@ import { useRegisterSW } from "virtual:pwa-register/react";
 
 export default function SWUpdatePrompt() {
   const [show, setShow] = useState(false);
-  const [banner, setBanner] = useState<"offline" | "update" | null>(null);
   const [skipUpdateOnce, setSkipUpdateOnce] = useState(false);
 
-  const { needRefresh, offlineReady, updateServiceWorker } = useRegisterSW({
+  const { needRefresh, updateServiceWorker } = useRegisterSW({
     onRegisteredSW() {
       // no-op
     },
@@ -25,7 +24,6 @@ export default function SWUpdatePrompt() {
     // Also listen for controllerchange; when the new SW takes control, hide the banner
     const onControllerChange = () => {
       setShow(false);
-      setBanner(null);
       // brief suppression window to avoid immediate re-show if checks re-run
       const until = Date.now() + 15000; // 15s
       try {
@@ -39,14 +37,6 @@ export default function SWUpdatePrompt() {
   }, []);
 
   useEffect(() => {
-    const offlineDismissed = sessionStorage.getItem("pwa:offlineDismissed") === "1";
-    if (offlineReady && !offlineDismissed) {
-      setBanner("offline");
-      setShow(true);
-    }
-  }, [offlineReady]);
-
-  useEffect(() => {
     const updateDismissed = sessionStorage.getItem("pwa:updateDismissed") === "1";
     let suppressed = false;
     try {
@@ -56,23 +46,15 @@ export default function SWUpdatePrompt() {
       suppressed = false;
     }
     if (needRefresh && !updateDismissed && !skipUpdateOnce && !suppressed) {
-      setBanner("update");
       setShow(true);
     }
   }, [needRefresh, skipUpdateOnce]);
 
   if (!show) return null;
 
-  const closeOffline = () => {
-    sessionStorage.setItem("pwa:offlineDismissed", "1");
-    setShow(false);
-    setBanner(null);
-  };
-
   const closeUpdate = () => {
     sessionStorage.setItem("pwa:updateDismissed", "1");
     setShow(false);
-    setBanner(null);
   };
 
   const reloadToUpdate = () => {
@@ -84,39 +66,29 @@ export default function SWUpdatePrompt() {
       localStorage.setItem("pwa:updateSuppressUntil", String(until));
     } catch {}
     updateServiceWorker(true);
+    // Force reload to ensure update takes effect
+    window.location.reload();
   };
 
   return (
     <div className="fixed inset-x-0 bottom-3 mx-auto w-[92%] max-w-md rounded-xl bg-neutral-900/90 backdrop-blur px-4 py-3 shadow-lg border border-neutral-700 text-sm z-50">
-      {banner === "offline" ? (
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-neutral-100">App is ready to work offline</span>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-neutral-100">New version available</span>
+        <div className="flex gap-2">
           <button
             className="px-3 py-1.5 rounded-md bg-neutral-700 text-white"
-            onClick={closeOffline}
+            onClick={closeUpdate}
           >
-            Close
+            Later
+          </button>
+          <button
+            className="px-3 py-1.5 rounded-md bg-emerald-600 text-white"
+            onClick={reloadToUpdate}
+          >
+            Reload
           </button>
         </div>
-      ) : (
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-neutral-100">New version available</span>
-          <div className="flex gap-2">
-            <button
-              className="px-3 py-1.5 rounded-md bg-neutral-700 text-white"
-              onClick={closeUpdate}
-            >
-              Later
-            </button>
-            <button
-              className="px-3 py-1.5 rounded-md bg-emerald-600 text-white"
-              onClick={reloadToUpdate}
-            >
-              Reload
-            </button>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
