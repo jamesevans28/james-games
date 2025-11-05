@@ -33,8 +33,12 @@ export default class HoHoHomeDeliveryGame extends Phaser.Scene {
     const h = this.scale.height;
     this.groundY = Math.min(920, h - 40);
 
-    // Background sky
-    this.cameras.main.setBackgroundColor("#021024");
+    // Background gradient
+    const bg = this.add.graphics();
+    bg.fillGradientStyle(0x021024, 0x021024, 0x87ceeb, 0x87ceeb, 1);
+    bg.fillRect(0, 0, w, h);
+    bg.setDepth(-100);
+
     // Snow/star particles
     this.createSnow();
 
@@ -242,8 +246,8 @@ export default class HoHoHomeDeliveryGame extends Phaser.Scene {
 
     // Chimney position on roof
     const chimneyOffsetX = Phaser.Math.Between(-houseWidth / 4, houseWidth / 4);
-    const chimneyHeight = 40;
-    const chimneyWidth = 34;
+    const chimneyHeight = 48;
+    const chimneyWidth = 40;
     const chimneyY = -houseHeight - 6; // sits slightly into roof
     const chimneyX = chimneyOffsetX;
     const chimney = this.add
@@ -338,10 +342,14 @@ export default class HoHoHomeDeliveryGame extends Phaser.Scene {
   }
 
   private createPresent(x: number, y: number) {
-    // Larger present texture (40x40) for visibility
-    if (!this.textures.exists("present")) {
+    // Random color for present body
+    const colors = [0xff6666, 0x66ff66, 0x6666ff, 0xffff66, 0xff66ff, 0x66ffff];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const textureKey = "present_" + color.toString(16);
+
+    if (!this.textures.exists(textureKey)) {
       const g = this.add.graphics();
-      g.fillStyle(0xff6666, 1);
+      g.fillStyle(color, 1);
       g.fillRect(0, 0, 36, 36);
       g.lineStyle(4, 0xffffff, 1);
       g.strokeRect(0, 0, 36, 36);
@@ -349,10 +357,19 @@ export default class HoHoHomeDeliveryGame extends Phaser.Scene {
       g.lineStyle(3, 0xffffff, 1);
       g.strokeLineShape(new Phaser.Geom.Line(18, -2, 18, 38));
       g.strokeLineShape(new Phaser.Geom.Line(-2, 18, 38, 18));
-      g.generateTexture("present", 40, 40);
+      // Bow
+      g.fillStyle(0xffffff, 1);
+      g.fillCircle(15, -2, 4);
+      g.fillCircle(21, -2, 4);
+      g.fillRect(16, -4, 4, 4);
+      g.lineStyle(2, 0x000000, 1);
+      g.strokeCircle(15, -2, 4);
+      g.strokeCircle(21, -2, 4);
+      g.strokeRect(16, -4, 4, 4);
+      g.generateTexture(textureKey, 40, 40);
       g.destroy();
     }
-    const img = this.physics.add.image(x, y, "present");
+    const img = this.physics.add.image(x, y, textureKey);
     // Make collision circle bigger and visible falling
     img.setCircle(18, 1, 1);
     img.setBounce(0.12);
@@ -365,7 +382,6 @@ export default class HoHoHomeDeliveryGame extends Phaser.Scene {
     img.setDepth(5);
     return img;
   }
-
   private onPresentIntoChimney(present: Phaser.Physics.Arcade.Image, zone: any) {
     if (!present.active) return;
     const isBad = !!zone.getData?.("isBad");
