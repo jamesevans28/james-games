@@ -114,7 +114,7 @@ export default function SignupPage() {
             </div>
           </label>
 
-          <label className="block">
+          {/* <label className="block">
             <div className="text-sm font-semibold">Email (optional)</div>
             <input
               value={email}
@@ -125,7 +125,7 @@ export default function SignupPage() {
             {triedSubmit && validationErrors.email && (
               <div className="text-red-600 text-sm mt-1">{validationErrors.email}</div>
             )}
-          </label>
+          </label> */}
 
           <label className="block">
             <div className="text-sm font-semibold">Screen name</div>
