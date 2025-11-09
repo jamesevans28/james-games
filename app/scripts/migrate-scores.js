@@ -1,10 +1,8 @@
-// Migration script: copy legacy scores into the new scores table shape.
-// Usage: run with tsx in the app/ folder, ensuring AWS credentials and env are set.
+#!/usr/bin/env node
+// Migration script (JS): copy legacy scores into the new scores table shape.
+// Usage: run with node in the app/ folder, ensuring AWS credentials and env are set.
 // Example:
-//   SCORES_TABLE=games4james-scores SCORE_GSI_NAME=GameScoresByScore tsx scripts/migrate-scores.ts
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const process: any;
+//   SCORES_TABLE=games4james-scores LEGACY_SCORES_TABLE=games4james-gamescores node scripts/migrate-scores.js --limit=1
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
@@ -15,17 +13,13 @@ const TARGET_TABLE = process.env.SCORES_TABLE || "games4james-scores";
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
-// Adapt legacy row { gameId, score, name, createdAt } into the new scores schema.
-// New table expects PK=gameId and SK=id so we generate a UUID for id.
-function adaptLegacy(legacy: any) {
+function adaptLegacy(legacy) {
   const id = randomUUID();
   return {
     gameId: legacy.gameId,
     id,
     score: Number(legacy.score || 0),
     createdAt: legacy.createdAt || new Date().toISOString(),
-    // These records were created before user profiles existed. Keep the original
-    // name in `screenNameSnapshot` so leaderboards can show something useful.
     userId: undefined,
     screenNameSnapshot: legacy.name ? String(legacy.name) : undefined,
     avatarSnapshot: null,
@@ -34,9 +28,8 @@ function adaptLegacy(legacy: any) {
 }
 
 async function main() {
-  // Parse CLI args: --limit=N and --dry-run
   const argv = process.argv.slice(2);
-  let limit: number | undefined = undefined;
+  let limit;
   let dryRun = false;
   for (const a of argv) {
     if (a.startsWith("--limit=")) {
@@ -50,7 +43,7 @@ async function main() {
   if (limit) console.log(`Limit set: ${limit} rows`);
   if (dryRun) console.log("Running in dry-run mode (no writes)");
 
-  let lastKey: any | undefined = undefined;
+  let lastKey = undefined;
   let moved = 0;
   let scanned = 0;
   do {
@@ -61,10 +54,7 @@ async function main() {
     for (const row of items) {
       scanned++;
       const item = adaptLegacy(row);
-      // Log the first adapted item for verification
-      if (scanned === 1) {
-        console.log("Sample adapted item:", JSON.stringify(item, null, 2));
-      }
+      if (scanned === 1) console.log("Sample adapted item:", JSON.stringify(item, null, 2));
       if (!dryRun) {
         await ddb.send(new PutCommand({ TableName: TARGET_TABLE, Item: item }));
       }
