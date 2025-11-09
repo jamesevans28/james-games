@@ -5,7 +5,7 @@ export function setSessionCookies(
   tokens: { id_token: string; access_token: string; refresh_token?: string; expires_in: number }
 ) {
   const secure = true;
-  const sameSite: any = "lax";
+  const sameSite: any = "none";
   const maxAge = tokens.expires_in * 1000; // ms
   res.cookie("idToken", tokens.id_token, { httpOnly: true, secure, sameSite, maxAge, path: "/" });
   res.cookie("accessToken", tokens.access_token, {
