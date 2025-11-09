@@ -16,7 +16,7 @@ router.get("/me", requireAuth, me);
 router.post("/email", requireAuth, startEmailUpdate);
 router.post("/email/verify", requireAuth, verifyEmail);
 router.post("/screen-name", requireAuth, changeScreenName);
-router.patch("/preferences", requireAuth, updatePreferences);
+router.post("/preferences", requireAuth, updatePreferences);
 router.patch("/settings", requireAuth, updateSettings); // unified settings endpoint (screenName for now)
 
 // Public minimal profile by id

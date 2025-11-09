@@ -82,7 +82,7 @@ export async function verifyEmail(code: string) {
 export async function updatePreferences(data: Record<string, any>) {
   if (!API_BASE) return { ok: false } as any;
   const res = await fetch(`${API_BASE}/users/preferences`, {
-    method: "PATCH",
+    method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify(data),
