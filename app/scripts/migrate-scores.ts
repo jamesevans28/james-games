@@ -75,7 +75,9 @@ async function main() {
     if (limit && moved >= limit) break;
     lastKey = result.LastEvaluatedKey;
   } while (lastKey);
-  console.log(`Done. Scanned ${scanned} rows. Migrated ${moved} rows.` + (dryRun ? " (dry-run)" : ""));
+  console.log(
+    `Done. Scanned ${scanned} rows. Migrated ${moved} rows.` + (dryRun ? " (dry-run)" : "")
+  );
 }
 
 main().catch((e) => {
