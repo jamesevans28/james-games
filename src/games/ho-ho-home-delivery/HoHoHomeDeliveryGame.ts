@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
-import { postHighScore } from "../../lib/api";
 
 const GAME_ID = "ho-ho-home-delivery";
 
@@ -444,11 +443,7 @@ export default class HoHoHomeDeliveryGame extends Phaser.Scene {
     this.scrollSpeed = 0;
     // Disable input
     this.input.removeAllListeners();
-    // Post score and dispatch event
-    const playerName = (localStorage.getItem("playerName") || "Player").slice(0, 20);
-    try {
-      postHighScore({ name: playerName, gameId: GAME_ID, score: this.score }).catch(() => {});
-    } catch {}
+    // Dispatch event only; ScoreDialog will handle posting
     dispatchGameOver({ gameId: GAME_ID, score: this.score, ts: Date.now() });
     // Pause scene so visuals stay put under dialog
     this.scene.pause();

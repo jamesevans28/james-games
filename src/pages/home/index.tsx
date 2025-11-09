@@ -1,9 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import Seo from "../components/Seo";
-import { games, GameMeta } from "../games";
-import { getUserName, setUserName } from "../utils/user";
-import NameDialog from "../components/NameDialog";
+import Seo from "../../components/Seo";
+import { games, GameMeta } from "../../games";
+import { getUserName, setUserName } from "../../utils/user";
+// import NameDialog from "../../components/NameDialog";
+// useSession removed — currently not needed on the home page
 
 export default function GameHub() {
   const navigate = useNavigate();
@@ -81,16 +82,6 @@ export default function GameHub() {
         image="https://games4james.com/assets/logo.png"
       />
 
-      {/* Header */}
-      <header className="w-full border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <h1 className="text-lg font-extrabold tracking-tight">Games 4 James</h1>
-          <button type="button" onClick={() => setShowNameDialog(true)} className="btn btn-outline">
-            {name ? `Hi, ${name}` : "Set Screen Name"}
-          </button>
-        </div>
-      </header>
-
       {/* Recently Added Section */}
       {recentGames.length > 0 && (
         <div className="w-full max-w-6xl mx-auto px-4 py-6">
@@ -113,13 +104,13 @@ export default function GameHub() {
         </div>
       </div>
 
-      {showNameDialog && (
+      {/* {showNameDialog && (
         <NameDialog
           initialValue={name}
           onCancel={() => setShowNameDialog(false)}
           onSave={handleSaveName}
         />
-      )}
+      )} */}
     </div>
   );
 }

@@ -1,7 +1,5 @@
 import Phaser from "phaser";
 import { trackGameStart } from "../../utils/analytics";
-import { getUserName } from "../../utils/user";
-import { postHighScore } from "../../lib/api";
 import { dispatchGameOver } from "../../utils/gameEvents";
 
 // Angle spacing constraints for new target placement (degrees)
@@ -275,12 +273,7 @@ export default class ReflexRingGame extends Phaser.Scene {
       localStorage.setItem("reflex-ring-best", String(this.best));
     }
 
-    // Submit this run score (always)
-    const name = getUserName();
-    if (name && this.score > 0) {
-      // Submit asynchronously; no await to avoid blocking UI
-      postHighScore({ name, gameId: "reflex-ring", score: this.score }).catch(() => {});
-    }
+    // Score submission is handled by the React ScoreDialog via dispatchGameOver event
 
     const overlay = this.add.rectangle(
       this.centerX,

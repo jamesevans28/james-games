@@ -1,6 +1,4 @@
 import Phaser from "phaser";
-import { getUserName } from "../../utils/user";
-import { postHighScore } from "../../lib/api";
 import { dispatchGameOver } from "../../utils/gameEvents";
 
 const GAME_ID = "car-crash";
@@ -404,13 +402,7 @@ export default class CarCrashScene extends Phaser.Scene {
       localStorage.setItem(STORAGE_BEST_KEY, String(this.best));
     }
 
-    // Submit this run score (always)
-    {
-      const name = getUserName();
-      if (name && this.score > 0) {
-        postHighScore({ name, gameId: GAME_ID, score: this.score }).catch(() => {});
-      }
-    }
+    // Score posting now centralized in ScoreDialog (triggered via dispatchGameOver)
 
     // Screen effect
     this.cameras.main.shake(250, 0.01);

@@ -51,6 +51,10 @@ export default class ShapeRecallGame extends Phaser.Scene {
 
     // Start game
     this.startNewSequence();
+    // small read to avoid TypeScript "declared but never read" when variable
+    // is assigned but not otherwise inspected. This line has no runtime
+    // effect but keeps the build clean while the implementation evolves.
+    void this.isPlayingSequence;
   }
 
   createBackground() {

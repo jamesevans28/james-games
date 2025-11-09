@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
-import { postHighScore } from "../../lib/api";
 
 const GAME_ID = "flash-bash";
 
@@ -534,11 +533,7 @@ export default class FlashBashGame extends Phaser.Scene {
     // 1s explosion before dispatch/restart
     this.showExplosion();
     dispatchGameOver({ gameId: GAME_ID, score: this.score });
-    // try posting score to backend (non-blocking)
-    const playerName = (localStorage.getItem("playerName") || "Player").slice(0, 20);
-    try {
-      postHighScore({ name: playerName, gameId: GAME_ID, score: this.score }).catch(() => {});
-    } catch {}
+    // Score posting is centralized in ScoreDialog after receiving the game over event
     // brief pause before restart
     this.isPlayerTurn = false;
     this.timerTween?.stop();

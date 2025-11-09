@@ -4,8 +4,9 @@ import { games } from "../../games";
 import { getTopScores } from "../../lib/api";
 import { getUserName } from "../../utils/user";
 import Seo from "../../components/Seo";
+import { ProfileAvatar } from "../../components/profile";
 
-type ScoreRow = { name: string; score: number; createdAt?: string };
+type ScoreRow = { screenName: string; avatar: number; score: number; createdAt?: string };
 
 export default function LeaderboardPage() {
   const { gameId } = useParams();
@@ -69,19 +70,65 @@ export default function LeaderboardPage() {
         {!loading && !error && (
           <ol className="rounded-lg overflow-hidden bg-white border border-gray-200">
             {rows.map((r, i) => {
-              const isMe = myName && r.name === myName;
+              const isMe = myName && r.screenName === myName;
+              const medal = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : null;
+              const medalColors: Record<string, { ring: string; badge: string; text: string }> = {
+                gold: { ring: "#fbbf24", badge: "#f59e0b", text: "#b45309" },
+                silver: { ring: "#e5e7eb", badge: "#9ca3af", text: "#4b5563" },
+                bronze: { ring: "#d97706", badge: "#92400e", text: "#78350f" },
+              };
+              const avatarSize = medal ? 44 : 28;
               return (
                 <li
-                  key={`${r.name}-${i}`}
+                  key={`${r.screenName}-${i}`}
                   className={
                     "flex items-center justify-between px-4 py-3 border-b border-gray-200 last:border-b-0 " +
-                    (isMe ? "bg-amber-50" : "")
+                    (isMe
+                      ? "bg-amber-50"
+                      : medal === "gold"
+                      ? "bg-yellow-50"
+                      : medal === "silver"
+                      ? "bg-gray-50"
+                      : medal === "bronze"
+                      ? "bg-orange-50"
+                      : "")
                   }
                 >
                   <div className="flex items-center gap-3">
                     <span className="w-7 text-gray-500 font-mono">{i + 1}.</span>
-                    <span className={"font-semibold " + (isMe ? "text-amber-700" : "")}>
-                      {r.name}
+                    <div className="relative flex items-center">
+                      <ProfileAvatar
+                        user={{ avatar: r.avatar }}
+                        size={avatarSize}
+                        borderWidth={medal ? 3 : 2}
+                        strokeWidth={medal ? 2 : 1}
+                        borderColor={medal ? medalColors[medal].ring : isMe ? "#f59e0b" : "#3b82f6"}
+                        title={r.screenName}
+                      />
+                      {medal && (
+                        <span
+                          className="absolute -bottom-1 -right-1 inline-flex items-center justify-center rounded-full text-[10px] font-bold shadow"
+                          style={{
+                            backgroundColor: medalColors[medal].badge,
+                            color: "#fff",
+                            width: 18,
+                            height: 18,
+                            border: "2px solid #000",
+                          }}
+                          aria-label={`${medal} medal`}
+                        >
+                          {medal === "gold" ? "🥇" : medal === "silver" ? "🥈" : "🥉"}
+                        </span>
+                      )}
+                    </div>
+                    <span
+                      className={
+                        "font-semibold truncate max-w-[140px] " +
+                        (isMe ? "text-amber-700" : medal ? `text-[${medalColors[medal].text}]` : "")
+                      }
+                      title={r.screenName}
+                    >
+                      {r.screenName}
                     </span>
                   </div>
                   <div className={"text-right font-mono " + (isMe ? "text-amber-700" : "")}>

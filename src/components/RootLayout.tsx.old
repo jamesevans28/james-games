@@ -1,8 +1,10 @@
 import { Outlet } from "react-router-dom";
+import AuthBanner from "./AuthBanner";
 
 export default function RootLayout() {
   return (
     <div className="min-h-screen w-full bg-white text-black font-sans">
+      <AuthBanner />
       <main className="w-full h-full">
         <Outlet />
       </main>

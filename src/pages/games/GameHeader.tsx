@@ -31,7 +31,7 @@ export default function GameHeader({ title, brand = "games4james.com", leaderboa
           <div className="text-[10px] text-gray-500 leading-none">{brand}</div>
         </div>
 
-        <div className="w-[84px] flex justify-end">
+        <div className="flex items-center gap-2">
           {leaderboardTo && (
             <Link
               to={leaderboardTo}

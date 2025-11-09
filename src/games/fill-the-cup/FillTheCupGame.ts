@@ -1,6 +1,4 @@
 import Phaser from "phaser";
-import { getUserName } from "../../utils/user";
-import { postHighScore } from "../../lib/api";
 import { dispatchGameOver } from "../../utils/gameEvents";
 
 const GAME_ID = "fill-the-cup" as const;
@@ -428,10 +426,7 @@ export default class FillTheCupGame extends Phaser.Scene {
       localStorage.setItem(`${GAME_ID}-best`, String(this.best));
     }
 
-    const name = getUserName();
-    if (name && this.score > 0) {
-      postHighScore({ name, gameId: GAME_ID, score: this.score }).catch(() => {});
-    }
+    // Score submission handled centrally by ScoreDialog after game over event
 
     // Overlay
     const w = this.scale.width,

@@ -1,5 +1,3 @@
-import { getUserName } from "../../utils/user";
-import { postHighScore } from "../../lib/api";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import Phaser from "phaser";
 
@@ -316,13 +314,7 @@ export default class SnapadileScene extends Phaser.Scene {
       localStorage.setItem("snapadile-best", String(this.best));
     }
 
-    // Submit this run score (always)
-    {
-      const name = getUserName();
-      if (name && this.score > 0) {
-        postHighScore({ name, gameId: "snapadile", score: this.score }).catch(() => {});
-      }
-    }
+    // Score submission is handled by ScoreDialog after game over
 
     // Notify shell
     try {

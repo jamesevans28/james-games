@@ -1,16 +1,19 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { trackShare } from "../utils/analytics";
-import { GameMeta } from "../games";
-import { getTopScores } from "../lib/api";
-import { getUserName } from "../utils/user";
-import { onGameOver } from "../utils/gameEvents";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthProvider";
+import { trackShare } from "../../utils/analytics";
+import { GameMeta } from "../../games";
+import { getTopScores } from "../../lib/api";
+import { getUserName } from "../../utils/user";
+import { onGameOver } from "../../utils/gameEvents";
+import { ProfileAvatar } from "../../components/profile";
 
 type Props = {
   meta: GameMeta;
   onPlay: () => void;
 };
 
-type ScoreRow = { name: string; score: number; createdAt?: string };
+type ScoreRow = { screenName: string; avatar: number; score: number; createdAt?: string };
 
 // Global cache for leaderboards to avoid refetching on every load
 const leaderboardCache = new Map<string, { data: ScoreRow[]; timestamp: number }>();
@@ -121,7 +124,7 @@ export default function GameLanding({ meta, onPlay }: Props) {
             <p className="text-gray-600 text-sm leading-relaxed">{meta.description}</p>
           )}
           {/* Leaderboard Top 3 + 4-10 */}
-          <LeaderboardSection top={top} loading={loading} error={error} />
+          <LeaderboardSection top={top} loading={loading} error={error} myBest={myBest} />
 
           {/* metadata list */}
           <div className="mt-6">
@@ -190,12 +193,20 @@ function LeaderboardSection({
   top,
   loading,
   error,
+  myBest,
 }: {
   top: ScoreRow[];
   loading: boolean;
   error: string | null;
+  myBest: number;
 }) {
   const userName = useMemo(() => (getUserName ? getUserName() : ""), []);
+  const { user } = useAuth();
+
+  // Debugging: log leaderboard inputs so we can trace why nothing renders
+  // (some runtime environments may return unexpected shapes)
+  // eslint-disable-next-line no-console
+  console.debug("LeaderboardSection", { top, loading, error, userName, user });
 
   if (loading) return <div className="mt-4 text-gray-600">Loading…</div>;
   if (error) return <div className="mt-4 text-red-600">{error}</div>;
@@ -205,15 +216,60 @@ function LeaderboardSection({
   const second = top[1];
   const third = top[2];
 
+  // Find the user's top score within the current leaderboard (first occurrence is the highest)
+  const userMatchName = String(user?.screenName || userName || "").toLowerCase();
+  const userTopRow = top.find((r) => (r?.screenName || "").toLowerCase() === userMatchName);
+
   // Layout: 2nd - 1st - 3rd (middle taller)
   return (
     <div className="mt-4">
       {/* Top 3 boxes */}
       <div className="flex items-end gap-3">
-        <TopBox pos={2} row={second} tall={false} medal="silver" />
-        <TopBox pos={1} row={first} tall={true} medal="gold" />
-        <TopBox pos={3} row={third} tall={false} medal="bronze" />
+        <TopBox
+          pos={2}
+          row={second}
+          tall={false}
+          medal="silver"
+          isUserBest={
+            !!userTopRow &&
+            second?.score === userTopRow.score &&
+            (second?.screenName || "").toLowerCase() === userMatchName
+          }
+        />
+        <TopBox
+          pos={1}
+          row={first}
+          tall={true}
+          medal="gold"
+          isUserBest={
+            !!userTopRow &&
+            first?.score === userTopRow.score &&
+            (first?.screenName || "").toLowerCase() === userMatchName
+          }
+        />
+        <TopBox
+          pos={3}
+          row={third}
+          tall={false}
+          medal="bronze"
+          isUserBest={
+            !!userTopRow &&
+            third?.score === userTopRow.score &&
+            (third?.screenName || "").toLowerCase() === userMatchName
+          }
+        />
       </div>
+
+      {/* If visitor is not logged in, show hint about logging in to record scores */}
+      {!user && (
+        <div className="mt-3 p-3 rounded border border-yellow-200 bg-yellow-50 text-yellow-800 text-sm">
+          To record your scores you need to be logged in.{" "}
+          <Link to="/login" className="underline">
+            Sign in
+          </Link>{" "}
+          or create an account.
+        </div>
+      )}
 
       {/* Positions 4 - 10 */}
       <div className="mt-4">
@@ -223,15 +279,18 @@ function LeaderboardSection({
         >
           {top.slice(3, 10).map((r, i) => {
             const rank = 4 + i;
-            const isYou = r?.name && userName && r.name.toLowerCase() === userName.toLowerCase();
+            const isYou =
+              !!userTopRow &&
+              r?.score === userTopRow.score &&
+              (r?.screenName || "").toLowerCase() === userMatchName;
             return (
               <li
-                key={`${r?.name ?? "anon"}-${rank}`}
+                key={`${r?.screenName ?? "anon"}-${rank}`}
                 className="flex items-center justify-between px-3 py-2 text-sm"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="text-gray-500 font-mono w-6">#{rank}</span>
-                  <span className="truncate text-black">{r?.name ?? "—"}</span>
+                  <span className="truncate text-black">{r?.screenName ?? "—"}</span>
                   {isYou && (
                     <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 border border-blue-200">
                       your top score
@@ -244,6 +303,18 @@ function LeaderboardSection({
           })}
         </ol>
       </div>
+
+      {/* If the user is logged in but none of their scores made the top leaderboard,
+            show their personal best so they know what to try to beat. */}
+      {user && !userTopRow && myBest > 0 && (
+        <div className="mt-4 p-3 rounded border border-gray-200 bg-white text-sm text-gray-700">
+          <div className="font-semibold">Your personal best</div>
+          <div className="mt-2 text-2xl font-bold">{myBest}</div>
+          <div className="mt-1 text-xs text-gray-500">
+            Keep playing to submit this score to the leaderboards.
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -253,11 +324,13 @@ function TopBox({
   row,
   tall,
   medal,
+  isUserBest,
 }: {
   pos: 1 | 2 | 3;
   row?: ScoreRow;
   tall: boolean;
   medal: "gold" | "silver" | "bronze";
+  isUserBest?: boolean;
 }) {
   const medalBg =
     medal === "gold"
@@ -269,20 +342,34 @@ function TopBox({
   const tagText = medal === "bronze" ? "text-white" : "text-gray-900";
 
   return (
-    <div className="flex-1">
+    <div className="flex-1 min-w-0">
       <div
         className={`rounded-lg border border-gray-200 p-3 flex flex-col items-center justify-between ${
           tall ? "min-h-48" : "min-h-40"
         }`}
         style={{ background: `linear-gradient(to top, ${medalBg} 0%, transparent 60%)` }}
       >
-        <div className="w-full flex flex-col items-center">
+        <div className="w-full flex flex-col items-center min-w-0">
           <div className="text-xs text-gray-500 font-semibold">#{pos}</div>
-          <div className="mt-2 h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 font-semibold uppercase">
-            {row?.name ? row.name.charAt(0) : "?"}
+          <div className="mt-2">
+            <ProfileAvatar
+              user={{ avatar: row?.avatar ?? 1 }}
+              size={tall ? 56 : 44}
+              borderWidth={2}
+              strokeWidth={2}
+              borderColor={"#ffffff"}
+              strokeColor={"#000000"}
+              title={row?.screenName ?? "Player"}
+            />
           </div>
-          <div className="mt-2 text-sm font-medium text-black truncate max-w-full text-center">
-            {row?.name ?? "—"}
+          <div className="mt-2 text-sm font-medium text-black truncate max-w-full text-center min-w-0">
+            <span className="truncate block max-w-full">{row?.screenName ?? "—"}</span>
+            {/** show small badge for user's top score */}
+            {isUserBest && (
+              <div className="mt-1 inline-block px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700 rounded-full">
+                your top score
+              </div>
+            )}
           </div>
         </div>
         <div className="mt-3 self-stretch flex justify-center">

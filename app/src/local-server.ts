@@ -1,8 +1,6 @@
-import { app } from "./index.js";
-// Minimal declaration for Node workspace-free typing
-declare const process: any;
+// DEPRECATED: local-server entrypoint replaced by modular startup in `index.ts`.
 
-const port = Number(process.env.PORT || 8787);
-app.listen(port, () => {
-  console.log(`Local API server listening on http://localhost:${port}`);
-});
+/* eslint-disable @typescript-eslint/no-empty-function */
+export function deprecatedLocalServer() {}
+
+export {};
