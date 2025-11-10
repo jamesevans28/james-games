@@ -22,7 +22,8 @@ export default function AvatarSelectPage() {
     if (!user || selected !== null) return;
     const av = (user as any)?.avatar as number | undefined;
     // If user's current avatar is excluded, default to 1, otherwise use their avatar or 1
-    const defaultAvatar = (typeof av === "number" && av >= 1 && av <= TOTAL && !EXCLUDED_AVATARS.includes(av)) ? av : 1;
+    const defaultAvatar =
+      typeof av === "number" && av >= 1 && av <= TOTAL && !EXCLUDED_AVATARS.includes(av) ? av : 1;
     setSelected(defaultAvatar);
   }, [user, selected]);
 
@@ -74,7 +75,7 @@ export default function AvatarSelectPage() {
       <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
         {Array.from({ length: TOTAL })
           .map((_, i) => i + 1)
-          .filter(id => !EXCLUDED_AVATARS.includes(id))
+          .filter((id) => !EXCLUDED_AVATARS.includes(id))
           .map((id) => {
             const isSelected = selected === id;
             return (
