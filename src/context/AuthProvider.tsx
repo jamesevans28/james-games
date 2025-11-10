@@ -63,7 +63,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading = true to prevent premature redirects
   const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
 
   // NOTE: We intentionally do NOT call `/me` on mount. The app should only
@@ -84,17 +84,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       const body = await res.json();
-      if (body?.user) {
+
+      // Handle both response formats: { user: {...} } or { ... } (user data directly)
+      const userData = body?.user || body;
+
+      if (userData?.userId) {
         setUser({
-          userId: body.user.userId,
-          screenName: body.user.screenName ?? null,
-          email: body.user.email ?? null,
-          emailProvided: body.user.emailProvided ?? false,
-          validated: body.user.validated ?? false,
+          userId: userData.userId,
+          screenName: userData.screenName ?? null,
+          email: userData.email ?? null,
+          emailProvided: userData.emailProvided ?? false,
+          validated: userData.validated ?? false,
           avatar:
-            typeof body.user.avatar === "number"
-              ? body.user.avatar
-              : Number(body.user.avatar) || null,
+            typeof userData.avatar === "number" ? userData.avatar : Number(userData.avatar) || null,
         });
         return;
       }
@@ -105,24 +107,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [apiBase]);
 
   // Attempt to restore an existing session once on mount. This will call the
-  // protected `/me` endpoint and expects the backend to accept HttpOnly
-  // cookies and refresh the session/refresh token as needed. We do this once
-  // so returning users stay signed in without needing to manually sign in.
+  // protected `/auth/refresh` endpoint which will refresh tokens if needed and
+  // return success if a valid session exists. We do this once so returning users
+  // stay signed in without needing to manually sign in.
   //
   // Assumptions:
   // - The backend stores refresh tokens or session state in HttpOnly cookies.
-  // - Calling `/me` will either return the user (200) and extend the session,
-  //   or return 401/204 when no valid session exists.
-  // If your backend exposes a dedicated lightweight `/auth/session` or
-  // `/auth/refresh` endpoint you may prefer to call that instead.
+  // - Calling `/auth/refresh` will refresh expired access tokens and return 200
+  //   if a valid refresh token exists, or 401 if the session has expired.
+  // After successful refresh, we call `/me` to get the user data.
   useEffect(() => {
     let mounted = true;
     (async () => {
-      setLoading(true);
+      // loading is already true from initial state
       try {
-        await fetchMe();
+        // First try to refresh the session
+        const refreshRes = await fetch(`${apiBase}/auth/refresh`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if (refreshRes.ok) {
+          // Session refreshed successfully, update timestamp and get user data
+          localStorage.setItem(STORAGE_KEY, String(Date.now()));
+          await fetchMe();
+        } else {
+          // No valid session, clear user
+          setUser(null);
+        }
+      } catch (err) {
+        // Network error, clear user
+        setUser(null);
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     })();
     return () => {

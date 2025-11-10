@@ -6,7 +6,13 @@ import { useAuth } from "../context/AuthProvider";
 export function RequireAuth({ children }: { children: ReactElement }) {
   const { user, loading } = useAuth();
   const loc = useLocation();
-  if (loading) return null; // or a spinner
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
   if (!user) {
     return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
   }
@@ -19,7 +25,13 @@ export function RequireAuth({ children }: { children: ReactElement }) {
 export function RequireValidated({ children }: { children: ReactElement }) {
   const { user, loading } = useAuth();
   const loc = useLocation();
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
   if (!user) return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
   if (!user.validated) {
     return (

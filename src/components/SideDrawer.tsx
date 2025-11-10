@@ -35,11 +35,11 @@ export default function SideDrawer({ open, onClose, isAuthenticated }: Props) {
         aria-modal="true"
       >
         {/* Header: full-width logo */}
-        <div className="border-b border-gray-200 h-40">
+        <div className="border-b border-gray-200 h-34 flex items-center justify-center">
           <img
             src="/assets/shared/logo_square.png"
             alt="Games4James"
-            className="w-full h-38 object-cover"
+            className="w-40 h-30 object-cover"
           />
         </div>
 

@@ -4,7 +4,7 @@ import { useSession } from "../../hooks/useSession";
 import { useAuth } from "../../context/AuthProvider";
 import { updatePreferences } from "../../lib/api";
 
-const TOTAL = 25;
+const TOTAL = 64;
 
 export default function AvatarSelectPage() {
   const { user } = useSession();
@@ -51,7 +51,7 @@ export default function AvatarSelectPage() {
   }, []);
 
   return (
-    <div className="p-4 max-w-screen-md mx-auto">
+    <div className="p-4 mt-5 max-w-screen-md mx-auto">
       <h2 className="text-xl font-semibold mb-4">Choose your avatar</h2>
       <p className="mb-4 text-sm text-gray-600">
         Tap an avatar to select it. Your selection will be saved to your profile.
@@ -66,7 +66,7 @@ export default function AvatarSelectPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
         {Array.from({ length: TOTAL }).map((_, i) => {
           const id = i + 1;
           const isSelected = selected === id;
