@@ -13,8 +13,9 @@ export default defineConfig({
       devOptions: { enabled: true },
       includeAssets: ["favicon.svg", "favicon.png"],
       workbox: {
-        // Don't precache anything in dev mode
+        // Don't precache anything in dev mode; explicitly ignore logo to avoid duplicate entries when switching modes
         globPatterns: [],
+        globIgnores: ["**/assets/shared/logo_square.png"],
         runtimeCaching: [
           {
             // Same-origin API (if proxied or served under /api)

@@ -28,6 +28,9 @@ export default defineConfig({
       includeAssets: ["favicon.svg", "favicon.png"],
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,mp3,ogg,ttf,woff2}"],
+        // Avoid duplicate precache entries: manifest icons are already injected,
+        // so ignore them in the glob scan to prevent add-to-cache-list conflicts.
+        globIgnores: ["**/assets/shared/logo_square.png"],
         // allow slightly larger assets in precache to include updated logo
         maximumFileSizeToCacheInBytes: 3145728, // 3 MiB
         runtimeCaching: [
