@@ -4,7 +4,10 @@ import { useSession } from "../../hooks/useSession";
 import { useAuth } from "../../context/AuthProvider";
 import { updatePreferences } from "../../lib/api";
 
-const TOTAL = 64;
+const TOTAL = 89;
+
+// Avatar numbers to exclude from selection
+const EXCLUDED_AVATARS = [26];
 
 export default function AvatarSelectPage() {
   const { user } = useSession();
@@ -18,7 +21,9 @@ export default function AvatarSelectPage() {
     // Only set once we have a user and only on initial load.
     if (!user || selected !== null) return;
     const av = (user as any)?.avatar as number | undefined;
-    setSelected(typeof av === "number" && av >= 1 && av <= TOTAL ? av : 1);
+    // If user's current avatar is excluded, default to 1, otherwise use their avatar or 1
+    const defaultAvatar = (typeof av === "number" && av >= 1 && av <= TOTAL && !EXCLUDED_AVATARS.includes(av)) ? av : 1;
+    setSelected(defaultAvatar);
   }, [user, selected]);
 
   const handleSelect = useCallback(
@@ -67,34 +72,36 @@ export default function AvatarSelectPage() {
       )}
 
       <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-        {Array.from({ length: TOTAL }).map((_, i) => {
-          const id = i + 1;
-          const isSelected = selected === id;
-          return (
-            <button
-              key={id}
-              onClick={() => handleSelect(id)}
-              className={`p-0 relative rounded-md focus:outline-none ${
-                isSelected ? "ring-4 ring-blue-400" : ""
-              }`}
-              aria-pressed={isSelected}
-              disabled={saving}
-              style={{ width: 72, height: 72 }}
-            >
-              <ProfileAvatar
-                user={{ avatar: id }}
-                size={72}
-                borderWidth={3}
-                borderColor={isSelected ? "#2563eb" : "#e5e7eb"}
-              />
-              {isSelected && (
-                <span className="absolute -top-1 -right-1 bg-white rounded-full px-1 text-xs shadow">
-                  ✓
-                </span>
-              )}
-            </button>
-          );
-        })}
+        {Array.from({ length: TOTAL })
+          .map((_, i) => i + 1)
+          .filter(id => !EXCLUDED_AVATARS.includes(id))
+          .map((id) => {
+            const isSelected = selected === id;
+            return (
+              <button
+                key={id}
+                onClick={() => handleSelect(id)}
+                className={`p-0 relative rounded-md focus:outline-none ${
+                  isSelected ? "ring-4 ring-blue-400" : ""
+                }`}
+                aria-pressed={isSelected}
+                disabled={saving}
+                style={{ width: 72, height: 72 }}
+              >
+                <ProfileAvatar
+                  user={{ avatar: id }}
+                  size={72}
+                  borderWidth={3}
+                  borderColor={isSelected ? "#2563eb" : "#e5e7eb"}
+                />
+                {isSelected && (
+                  <span className="absolute -top-1 -right-1 bg-white rounded-full px-1 text-xs shadow">
+                    ✓
+                  </span>
+                )}
+              </button>
+            );
+          })}
       </div>
     </div>
   );
