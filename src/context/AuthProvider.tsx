@@ -222,6 +222,102 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [fetchMe]
   );
 
+  // --- Automatic periodic refresh -------------------------------------------------
+  // Goal: keep the user logged in indefinitely even while idle by proactively
+  // invoking a protected endpoint (`/me`) which triggers server-side token
+  // refresh (attachUser middleware). Because tokens are stored in HttpOnly
+  // cookies we cannot read expiry client-side; we assume a 60m access token
+  // lifespan and refresh every 50m. Multi‑tab coordination prevents refresh
+  // storms: whichever tab performs the refresh broadcasts to others.
+  // We also refresh shortly after regaining focus if the scheduled time has
+  // passed.
+  // Tokens updated: access/id tokens are 1 day, refresh token is 365 days.
+  // Schedule a proactive refresh before the 1-day access token expires.
+  // Use 23 hours so we refresh ~1 hour before expiry.
+  const REFRESH_INTERVAL_MS = 23 * 60 * 60 * 1000; // 23 hours
+  const MIN_SPACING_MS = 5 * 60 * 1000; // 5 minutes debounce between tabs
+  const STORAGE_KEY = "auth:lastRefresh"; // localStorage timestamp key
+  const bcRef = React.useRef<BroadcastChannel | null>(null);
+  const intervalRef = React.useRef<number | null>(null);
+
+  const performScheduledRefresh = useCallback(async () => {
+    // If not signed in skip.
+    if (!user) return;
+    const last = Number(localStorage.getItem(STORAGE_KEY) || 0);
+    const now = Date.now();
+    if (now - last < MIN_SPACING_MS) return; // another tab refreshed recently
+    try {
+      // Call proactive refresh endpoint; if it succeeds update timestamp & broadcast.
+      const res = await fetch(`${apiBase}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (res.ok) {
+        localStorage.setItem(STORAGE_KEY, String(Date.now()));
+        bcRef.current?.postMessage({ type: "refreshed", at: Date.now() });
+        // Optionally refresh user profile silently to reflect any changes.
+        await refreshSession({ silent: true });
+      } else if (res.status === 401) {
+        // Refresh failed (maybe refresh token expired) — clear user locally.
+        setUser(null);
+      }
+    } catch {
+      // Ignore network failures (offline); will retry later.
+    }
+  }, [user, apiBase, refreshSession]);
+
+  // Listen for broadcasts from other tabs so each tab stays in sync.
+  useEffect(() => {
+    bcRef.current = new BroadcastChannel("auth-refresh");
+    const bc = bcRef.current;
+    bc.onmessage = (ev) => {
+      if (ev?.data?.type === "refreshed") {
+        // Update local timestamp; no need to call /me again.
+        localStorage.setItem(STORAGE_KEY, String(ev.data.at || Date.now()));
+      }
+    };
+    return () => {
+      bc.close();
+    };
+  }, []);
+
+  // Set up periodic timer.
+  useEffect(() => {
+    // Clear any existing interval first.
+    if (intervalRef.current) window.clearInterval(intervalRef.current);
+    // Start interval only if user is signed in.
+    if (user) {
+      intervalRef.current = window.setInterval(() => {
+        void performScheduledRefresh();
+      }, REFRESH_INTERVAL_MS);
+    }
+    return () => {
+      if (intervalRef.current) window.clearInterval(intervalRef.current);
+    };
+  }, [user, performScheduledRefresh]);
+
+  // On visibilitychange / focus, if we've crossed the interval boundary and
+  // haven't refreshed recently, trigger a refresh to avoid expiry after long
+  // idle periods or sleeping the laptop. Use a larger catch-up margin for day-long
+  // tokens: refresh if we're within ~10 minutes of the scheduled refresh time.
+  useEffect(() => {
+    function onVisibilityOrFocus() {
+      if (!user) return;
+      const last = Number(localStorage.getItem(STORAGE_KEY) || 0);
+      const now = Date.now();
+      if (now - last > REFRESH_INTERVAL_MS - 10 * 60 * 1000) {
+        void performScheduledRefresh();
+      }
+    }
+    window.addEventListener("visibilitychange", onVisibilityOrFocus);
+    window.addEventListener("focus", onVisibilityOrFocus);
+    return () => {
+      window.removeEventListener("visibilitychange", onVisibilityOrFocus);
+      window.removeEventListener("focus", onVisibilityOrFocus);
+    };
+  }, [user, performScheduledRefresh]);
+  // -------------------------------------------------------------------------------
+
   const value = useMemo<AuthContextType>(
     () => ({ user, loading, signUp, signIn, signOut, refreshSession }),
     [user, loading, signUp, signIn, signOut, refreshSession]

@@ -59,17 +59,23 @@ export async function localSignIn(username: string, password: string) {
  * Use the refresh token to obtain new ID / Access tokens from Cognito.
  * Returns the AuthenticationResult object from Cognito (may include a new RefreshToken).
  */
-export async function refreshAuthTokens(refreshToken: string) {
+export async function refreshAuthTokens(refreshToken: string, username?: string) {
   if (!refreshToken) throw new Error("no refresh token provided");
   const params: any = {
     AuthFlow: "REFRESH_TOKEN_AUTH",
     ClientId: config.cognito.clientId,
     AuthParameters: { REFRESH_TOKEN: refreshToken },
   };
-  // SECRET_HASH is optional for refresh in many setups; include only if configured and available
-  // Note: some Cognito clients require SECRET_HASH + USERNAME for refresh. That would need the username.
+  // If the App Client is configured with a secret, Cognito requires SECRET_HASH
+  // (and often USERNAME) even for refresh flows. Compute and attach SECRET_HASH
+  // when we have a username available.
   if (config.cognito.clientSecret) {
-    // Can't compute SECRET_HASH without username here. Many setups accept refresh without SECRET_HASH.
+    if (!username) {
+      throw new Error("username required for refresh when clientSecret is configured");
+    }
+    params.AuthParameters.SECRET_HASH = computeSecretHash(username);
+    // Some Cognito setups require USERNAME parameter on refresh flows.
+    params.AuthParameters.USERNAME = username;
   }
   const resp: any = await cognitoClient.send(new InitiateAuthCommand(params));
   return resp.AuthenticationResult;

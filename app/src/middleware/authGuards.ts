@@ -24,16 +24,21 @@ export async function attachUser(req: Request, res: Response, next: NextFunction
     // Token verify failed (likely expired). Attempt refresh flow using refreshToken cookie.
     try {
       const refreshToken = (req as any).cookies?.refreshToken as string | undefined;
+      const username = (req as any).cookies?.authUsername as string | undefined;
       if (refreshToken) {
-        const newTokens: any = await refreshAuthTokens(refreshToken);
+        const newTokens: any = await refreshAuthTokens(refreshToken, username);
         if (newTokens?.IdToken && newTokens?.AccessToken) {
           // Persist refreshed tokens in cookies. Use returned RefreshToken if present, otherwise keep existing.
-          setSessionCookies(res, {
-            id_token: newTokens.IdToken,
-            access_token: newTokens.AccessToken,
-            refresh_token: newTokens.RefreshToken || refreshToken,
-            expires_in: newTokens.ExpiresIn || 3600,
-          });
+          setSessionCookies(
+            res,
+            {
+              id_token: newTokens.IdToken,
+              access_token: newTokens.AccessToken,
+              refresh_token: newTokens.RefreshToken || refreshToken,
+              expires_in: newTokens.ExpiresIn || 3600,
+            },
+            username
+          );
           // Verify the new id token and attach user
           const payload = await verifyIdToken(newTokens.IdToken);
           // @ts-ignore

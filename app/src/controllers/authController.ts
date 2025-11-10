@@ -5,6 +5,7 @@ import {
   getLoginUrl,
   getLogoutUrl,
   verifyIdToken,
+  refreshAuthTokens,
 } from "../services/authService.js";
 import { config } from "../config/index.js";
 import { setSessionCookies, clearSessionCookies } from "../utils/cookies.js";
@@ -21,12 +22,16 @@ export async function signup(req: Request, res: Response) {
     const tokens = signinResp.AuthenticationResult;
     if (!tokens?.IdToken || !tokens?.AccessToken)
       return res.status(401).json({ error: "Authentication failed" });
-    setSessionCookies(res, {
-      id_token: tokens.IdToken,
-      access_token: tokens.AccessToken,
-      refresh_token: tokens.RefreshToken,
-      expires_in: tokens.ExpiresIn,
-    });
+    setSessionCookies(
+      res,
+      {
+        id_token: tokens.IdToken,
+        access_token: tokens.AccessToken,
+        refresh_token: tokens.RefreshToken,
+        expires_in: tokens.ExpiresIn,
+      },
+      username
+    );
     try {
       const payload: any = await verifyIdToken(tokens.IdToken);
       // Reserve a unique screen name (may append #NNNN if needed)
@@ -51,12 +56,16 @@ export async function signin(req: Request, res: Response) {
     const tokens = signinResp.AuthenticationResult;
     if (!tokens?.IdToken || !tokens?.AccessToken)
       return res.status(401).json({ error: "Authentication failed" });
-    setSessionCookies(res, {
-      id_token: tokens.IdToken,
-      access_token: tokens.AccessToken,
-      refresh_token: tokens.RefreshToken,
-      expires_in: tokens.ExpiresIn,
-    });
+    setSessionCookies(
+      res,
+      {
+        id_token: tokens.IdToken,
+        access_token: tokens.AccessToken,
+        refresh_token: tokens.RefreshToken,
+        expires_in: tokens.ExpiresIn,
+      },
+      username
+    );
     res.json({ ok: true });
   } catch (e: any) {
     res.status(401).json({ error: e?.message || "signin failed" });
@@ -76,4 +85,32 @@ export function logout(req: Request, res: Response) {
   const next = typeof req.query?.next === "string" ? req.query.next : undefined;
   const dest = next || config.appBaseUrl || "/";
   res.redirect(dest);
+}
+
+// Proactive refresh endpoint. Uses the refreshToken HttpOnly cookie to obtain
+// new Id / Access tokens from Cognito. Always attempts refresh; does not wait
+// for existing tokens to expire so the client can keep sessions alive
+// indefinitely with periodic calls.
+export async function refresh(req: Request, res: Response) {
+  try {
+    const refreshToken = (req as any).cookies?.refreshToken as string | undefined;
+    const username = (req as any).cookies?.authUsername as string | undefined;
+    if (!refreshToken) return res.status(401).json({ error: "no_refresh_token" });
+    const tokens: any = await refreshAuthTokens(refreshToken, username);
+    if (!tokens?.IdToken || !tokens?.AccessToken)
+      return res.status(401).json({ error: "refresh_failed" });
+    setSessionCookies(
+      res,
+      {
+        id_token: tokens.IdToken,
+        access_token: tokens.AccessToken,
+        refresh_token: tokens.RefreshToken || refreshToken,
+        expires_in: tokens.ExpiresIn || 3600,
+      },
+      username
+    );
+    return res.json({ ok: true });
+  } catch (e: any) {
+    return res.status(401).json({ error: e?.message || "refresh_failed" });
+  }
 }
