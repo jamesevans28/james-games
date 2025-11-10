@@ -36,7 +36,9 @@ export default defineConfig({
         runtimeCaching: [
           {
             urlPattern: ({ url }) =>
-              url.origin === self.location.origin && url.pathname.startsWith("/api/"),
+              url.origin === self.location.origin &&
+              url.pathname.startsWith("/api/") &&
+              !url.pathname.startsWith("/api/auth/"), // Don't cache auth endpoints
             handler: "NetworkFirst",
             options: {
               cacheName: "api-cache",

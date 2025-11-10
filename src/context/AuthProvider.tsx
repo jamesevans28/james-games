@@ -122,20 +122,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // loading is already true from initial state
       try {
         // First try to refresh the session
+        console.log("AuthProvider: Attempting session restoration");
         const refreshRes = await fetch(`${apiBase}/auth/refresh`, {
           method: "POST",
           credentials: "include",
+          // Add timeout for mobile/PWA contexts
+          signal: AbortSignal.timeout(10000), // 10 second timeout
         });
+        console.log("AuthProvider: /auth/refresh response:", refreshRes.status);
         if (refreshRes.ok) {
           // Session refreshed successfully, update timestamp and get user data
           localStorage.setItem(STORAGE_KEY, String(Date.now()));
+          console.log("AuthProvider: Refresh successful, fetching user data");
           await fetchMe();
         } else {
+          console.log("AuthProvider: Refresh failed with status:", refreshRes.status);
           // No valid session, clear user
           setUser(null);
         }
       } catch (err) {
-        // Network error, clear user
+        console.error("AuthProvider: Session restoration error:", err);
+        // Network error or timeout, clear user
         setUser(null);
       } finally {
         if (mounted) {
@@ -265,21 +272,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const now = Date.now();
     if (now - last < MIN_SPACING_MS) return; // another tab refreshed recently
     try {
+      console.log("AuthProvider: Performing scheduled refresh");
       // Call proactive refresh endpoint; if it succeeds update timestamp & broadcast.
       const res = await fetch(`${apiBase}/auth/refresh`, {
         method: "POST",
         credentials: "include",
+        // Add timeout for mobile/PWA contexts
+        signal: AbortSignal.timeout(8000), // 8 second timeout
       });
+      console.log("AuthProvider: Scheduled refresh response:", res.status);
       if (res.ok) {
         localStorage.setItem(STORAGE_KEY, String(Date.now()));
         bcRef.current?.postMessage({ type: "refreshed", at: Date.now() });
         // Optionally refresh user profile silently to reflect any changes.
         await refreshSession({ silent: true });
       } else if (res.status === 401) {
+        console.log("AuthProvider: Scheduled refresh failed with 401, clearing user");
         // Refresh failed (maybe refresh token expired) — clear user locally.
         setUser(null);
+      } else {
+        console.log("AuthProvider: Scheduled refresh failed with status:", res.status);
       }
-    } catch {
+    } catch (err) {
+      console.error("AuthProvider: Scheduled refresh error:", err);
       // Ignore network failures (offline); will retry later.
     }
   }, [user, apiBase, refreshSession]);

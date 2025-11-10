@@ -5,8 +5,10 @@ export function setSessionCookies(
   tokens: { id_token: string; access_token: string; refresh_token?: string; expires_in: number },
   username?: string
 ) {
+  // For PWA compatibility, use 'lax' instead of 'none' to avoid issues with mobile/PWA contexts
+  // 'lax' allows cookies to be sent on top-level navigation while maintaining security
   const secure = true;
-  const sameSite: any = "none";
+  const sameSite: any = "lax";
   const maxAge = tokens.expires_in * 1000; // ms
   res.cookie("idToken", tokens.id_token, { httpOnly: true, secure, sameSite, maxAge, path: "/" });
   res.cookie("accessToken", tokens.access_token, {
