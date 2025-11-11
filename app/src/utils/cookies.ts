@@ -10,14 +10,27 @@ export function setSessionCookies(
   const secure = true;
   const sameSite: any = "lax";
   const maxAge = tokens.expires_in * 1000; // ms
-  res.cookie("idToken", tokens.id_token, { httpOnly: true, secure, sameSite, maxAge, path: "/" });
+
+  // Add domain for better mobile compatibility
+  const domain = process.env.NODE_ENV === "production" ? ".games4james.com" : undefined;
+
+  res.cookie("idToken", tokens.id_token, {
+    httpOnly: true,
+    secure,
+    sameSite,
+    maxAge,
+    path: "/",
+    ...(domain && { domain }),
+  });
   res.cookie("accessToken", tokens.access_token, {
     httpOnly: true,
     secure,
     sameSite,
     maxAge,
     path: "/",
+    ...(domain && { domain }),
   });
+
   if (tokens.refresh_token) {
     // Persist refresh token for 365 days so returning users stay signed in
     // even after long idle periods. Note: Cognito's refresh-token TTL must
@@ -29,6 +42,7 @@ export function setSessionCookies(
       sameSite,
       maxAge: refreshMaxAge,
       path: "/",
+      ...(domain && { domain }),
     });
     // Persist a small username cookie (httpOnly) so server-side refresh can
     // compute SECRET_HASH when the App Client requires a client secret.
@@ -39,6 +53,7 @@ export function setSessionCookies(
         sameSite,
         maxAge: refreshMaxAge,
         path: "/",
+        ...(domain && { domain }),
       });
     }
   }

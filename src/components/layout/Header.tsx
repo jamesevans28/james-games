@@ -11,17 +11,16 @@ export default function Header() {
     <header className="w-full border-b border-gray-200">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img
-            src="/assets/shared/logo_square.png"
-            alt="Games4James"
-            className="w-10 h-10 rounded"
-          />
           <Link
             to="/"
             onClick={() => setDrawerOpen(false)}
             className="text-lg font-extrabold tracking-tight hover:opacity-80 focus:outline-none"
           >
-            Games 4 James
+            <img
+              src="/assets/shared/logo_square.png"
+              alt="Games4James"
+              className="w-12 h-12 rounded"
+            />
           </Link>
         </div>
         <button

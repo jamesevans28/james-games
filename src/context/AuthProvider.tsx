@@ -66,6 +66,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true); // Start with loading = true to prevent premature redirects
   const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
 
+  // Detect if running in PWA context
+  const isPWA = React.useMemo(() => {
+    return (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true ||
+      document.referrer.includes("android-app://")
+    );
+  }, []);
+
+  // Detect if running on mobile
+  const isMobile = React.useMemo(() => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+  }, []);
+
   // NOTE: We intentionally do NOT call `/me` on mount. The app should only
   // call protected backend endpoints when it knows a session exists. This
   // avoids unnecessary protected calls that would return 401 when the user
@@ -81,6 +97,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch(`${apiBase}/me`, { credentials: "include" });
       if (!res.ok) {
         setUser(null);
+        // Clear localStorage backup on auth failure
+        if (isMobile || isPWA) {
+          localStorage.removeItem("auth:session");
+        }
         return;
       }
       const body = await res.json();
@@ -89,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userData = body?.user || body;
 
       if (userData?.userId) {
-        setUser({
+        const userObj = {
           userId: userData.userId,
           screenName: userData.screenName ?? null,
           email: userData.email ?? null,
@@ -97,14 +117,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           validated: userData.validated ?? false,
           avatar:
             typeof userData.avatar === "number" ? userData.avatar : Number(userData.avatar) || null,
-        });
+        };
+        setUser(userObj);
+
+        // Backup session to localStorage for mobile/PWA resilience
+        if (isMobile || isPWA) {
+          localStorage.setItem(
+            "auth:session",
+            JSON.stringify({
+              user: userObj,
+              timestamp: Date.now(),
+            })
+          );
+        }
+
         return;
       }
     } catch (err) {
       // network or parse error: clear user
+      setUser(null);
+      if (isMobile || isPWA) {
+        localStorage.removeItem("auth:session");
+      }
     }
     setUser(null);
-  }, [apiBase]);
+  }, [apiBase, isMobile, isPWA]);
 
   // Attempt to restore an existing session once on mount. This will call the
   // protected `/auth/refresh` endpoint which will refresh tokens if needed and
@@ -137,11 +174,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await fetchMe();
         } else {
           console.log("AuthProvider: Refresh failed with status:", refreshRes.status);
+
+          // For mobile/PWA, try to restore from localStorage backup
+          if ((isMobile || isPWA) && refreshRes.status !== 200) {
+            console.log("AuthProvider: Trying localStorage fallback");
+            try {
+              const backup = localStorage.getItem("auth:session");
+              if (backup) {
+                const { user: backupUser, timestamp } = JSON.parse(backup);
+                // Only use backup if it's less than 24 hours old
+                if (Date.now() - timestamp < 24 * 60 * 60 * 1000 && backupUser?.userId) {
+                  console.log("AuthProvider: Restored from localStorage backup");
+                  setUser(backupUser);
+                  // Try to refresh in background to get fresh tokens
+                  setTimeout(() => {
+                    fetch(`${apiBase}/auth/refresh`, {
+                      method: "POST",
+                      credentials: "include",
+                    }).catch(() => {
+                      // Ignore background refresh failures
+                    });
+                  }, 1000);
+                  return;
+                } else {
+                  // Backup is too old, remove it
+                  localStorage.removeItem("auth:session");
+                }
+              }
+            } catch (e) {
+              console.error("AuthProvider: Error parsing localStorage backup:", e);
+              localStorage.removeItem("auth:session");
+            }
+          }
+
           // No valid session, clear user
           setUser(null);
         }
       } catch (err) {
         console.error("AuthProvider: Session restoration error:", err);
+
+        // For mobile/PWA, try localStorage fallback even on network errors
+        if (isMobile || isPWA) {
+          console.log("AuthProvider: Network error, trying localStorage fallback");
+          try {
+            const backup = localStorage.getItem("auth:session");
+            if (backup) {
+              const { user: backupUser, timestamp } = JSON.parse(backup);
+              // Only use backup if it's less than 12 hours old for network errors
+              if (Date.now() - timestamp < 12 * 60 * 60 * 1000 && backupUser?.userId) {
+                console.log("AuthProvider: Restored from localStorage backup (offline mode)");
+                setUser(backupUser);
+                return;
+              } else {
+                localStorage.removeItem("auth:session");
+              }
+            }
+          } catch (e) {
+            console.error("AuthProvider: Error parsing localStorage backup:", e);
+            localStorage.removeItem("auth:session");
+          }
+        }
+
         // Network error or timeout, clear user
         setUser(null);
       } finally {
@@ -155,7 +248,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
     // run only once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isMobile, isPWA]);
 
   const signUp = useCallback(
     async ({
@@ -224,6 +317,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ignore network errors — we still clear client state
     }
     setUser(null);
+    // Clear localStorage backup on sign out
+    localStorage.removeItem("auth:session");
   }, [apiBase]);
 
   // Hosted UI is not used in this project. Keep the API surface small and
@@ -258,8 +353,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // passed.
   // Tokens updated: access/id tokens are 1 day, refresh token is 365 days.
   // Schedule a proactive refresh before the 1-day access token expires.
-  // Use 23 hours so we refresh ~1 hour before expiry.
-  const REFRESH_INTERVAL_MS = 23 * 60 * 60 * 1000; // 23 hours
+  // Use 23 hours for desktop, 8 hours for mobile/PWA to ensure sessions persist
+  const REFRESH_INTERVAL_MS = isMobile || isPWA ? 8 * 60 * 60 * 1000 : 23 * 60 * 60 * 1000; // 8 hours for mobile/PWA, 23 hours for desktop
   const MIN_SPACING_MS = 5 * 60 * 1000; // 5 minutes debounce between tabs
   const STORAGE_KEY = "auth:lastRefresh"; // localStorage timestamp key
   const bcRef = React.useRef<BroadcastChannel | null>(null);
