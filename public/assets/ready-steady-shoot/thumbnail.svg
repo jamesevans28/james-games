@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="360" viewBox="0 0 540 360" role="img" aria-label="Ready Steady Shoot thumbnail (no text)">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7cc7ff"/>
+      <stop offset="100%" stop-color="#6bbcff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky background -->
+  <rect x="0" y="0" width="540" height="360" fill="url(#sky)"/>
+
+  <!-- Sun -->
+  <circle cx="80" cy="76" r="26" fill="#FFE066" />
+
+  <!-- Clouds -->
+  <g fill="#ffffff" opacity="0.9">
+    <circle cx="200" cy="86" r="16"/>
+    <circle cx="220" cy="92" r="20"/>
+    <circle cx="182" cy="94" r="14"/>
+    <circle cx="360" cy="72" r="14"/>
+    <circle cx="378" cy="78" r="18"/>
+    <circle cx="346" cy="80" r="12"/>
+  </g>
+
+  <!-- Court (concrete) -->
+  <rect x="0" y="250" width="540" height="110" fill="#808080"/>
+  <g stroke="#ffffff" stroke-width="3" opacity="0.8" fill="none">
+    <rect x="24" y="260" width="492" height="80"/>
+    <line x1="270" y1="260" x2="270" y2="340"/>
+    <circle cx="270" cy="300" r="30"/>
+  </g>
+
+  <!-- Hoop and backboard (right) aligned to game style -->
+  <!-- Layout constants mirrored from game: rimRadius~24 -->
+  <g transform="translate(0,0)">
+    <!-- Rim center approx (x=420, y=200) scaled to thumbnail -->
+    <g id="hoop" stroke-linecap="round">
+      <!-- Backboard (vertical white rectangle) aligned with physics center -->
+      <rect x="448" y="140" width="18" height="120" fill="#ffffff"/>
+
+      <!-- Mount bracket: horizontal bar to right edge and vertical pole down at edge -->
+      <rect x="448" y="170" width="92" height="8" fill="#666666"/>
+      <rect x="532" y="170" width="8" height="60" fill="#666666"/>
+
+      <!-- Rim (horizontal line) -->
+      <line x1="396" y1="200" x2="444" y2="200" stroke="#ff6600" stroke-width="6"/>
+
+      <!-- Net (trapezoid with vertical strings) -->
+      <g stroke="#ffffff" stroke-width="2" opacity="0.8">
+        <!-- Net bounds -->
+        <polyline points="400,203 440,203 432,232 408,232 400,203" fill="none"/>
+        <!-- Vertical strings -->
+        <line x1="404" y1="203" x2="410" y2="232"/>
+        <line x1="412" y1="203" x2="416" y2="232"/>
+        <line x1="420" y1="203" x2="420" y2="232"/>
+        <line x1="428" y1="203" x2="424" y2="232"/>
+        <line x1="436" y1="203" x2="430" y2="232"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- Ball (with basketball seams) -->
+  <g transform="translate(130,292)">
+    <circle cx="0" cy="0" r="16" fill="#f97316"/>
+    <circle cx="0" cy="0" r="16" fill="none" stroke="#000000" stroke-width="2"/>
+    <g stroke="#000000" stroke-width="2" fill="none">
+      <line x1="0" y1="-16" x2="0" y2="16"/>
+      <line x1="-16" y1="0" x2="16" y2="0"/>
+      <path d="M -16,0 A 16 16 0 0 0 0,-16"/>
+      <path d="M 16,0 A 16 16 0 0 0 0,-16"/>
+      <path d="M -16,0 A 16 16 0 0 1 0,16"/>
+      <path d="M 16,0 A 16 16 0 0 1 0,16"/>
+    </g>
+  </g>
+
+  <!-- Subtle arc to suggest shot path -->
+  <path d="M140,292 C 220,220 320,210 400,200" fill="none" stroke="#22c55e" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+</svg>
