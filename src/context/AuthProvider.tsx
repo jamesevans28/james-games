@@ -94,7 +94,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const fetchMe = useCallback(async () => {
     try {
-      const res = await fetch(`${apiBase}/me`, { credentials: "include" });
+      const res = await fetch(`${apiBase}/me`, {
+        credentials: "include",
+        cache: "no-store", // Bypass all caches for auth endpoints
+      });
       if (!res.ok) {
         setUser(null);
         // Clear localStorage backup on auth failure
@@ -157,12 +160,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
     (async () => {
       // loading is already true from initial state
+
+      // First, clear any stale service worker caches for auth endpoints
+      if ("caches" in window) {
+        try {
+          const cacheKeys = await caches.keys();
+          for (const key of cacheKeys) {
+            if (key.includes("api-cache") || key.includes("api-external-cache")) {
+              const cache = await caches.open(key);
+              const requests = await cache.keys();
+              for (const request of requests) {
+                if (request.url.includes("/auth/") || request.url.includes("/me")) {
+                  await cache.delete(request);
+                  console.log("Cleared stale auth cache:", request.url);
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Error clearing auth caches:", e);
+        }
+      }
+
       try {
         // First try to refresh the session
         console.log("AuthProvider: Attempting session restoration");
         const refreshRes = await fetch(`${apiBase}/auth/refresh`, {
           method: "POST",
           credentials: "include",
+          cache: "no-store", // Bypass all caches
           // Add timeout for mobile/PWA contexts
           signal: AbortSignal.timeout(10000), // 10 second timeout
         });
@@ -424,63 +450,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user, performScheduledRefresh]);
 
-  // On visibilitychange / focus, if we've crossed the interval boundary and
-  // haven't refreshed recently, trigger a refresh to avoid expiry after long
-  // idle periods or sleeping the laptop. Use a larger catch-up margin for day-long
-  // tokens: refresh if we're within ~10 minutes of the scheduled refresh time.
-  // For mobile/PWA: Always attempt refresh when becoming visible to combat aggressive cookie clearing.
+  // On visibilitychange / focus: For desktop, only refresh if needed based on time.
+  // For mobile/PWA: Use a debounced check to avoid aggressive re-checking that clears sessions.
   useEffect(() => {
+    let timeoutId: number | null = null;
+
     async function onVisibilityOrFocus() {
       // Check if document is actually visible
       if (document.hidden) return;
 
-      console.log("AuthProvider: Visibility change detected, document now visible");
+      // Clear any pending timeout
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+        timeoutId = null;
+      }
 
-      // For mobile/PWA: Always try to refresh session when app becomes visible
+      console.log("AuthProvider: Visibility change detected");
+
+      // For mobile/PWA: Debounce the check to avoid rapid re-checks
       if (isMobile || isPWA) {
-        console.log("AuthProvider: Mobile/PWA detected, attempting session restoration");
+        // Wait 500ms before checking - this prevents rapid-fire checks that can clear the session
+        timeoutId = window.setTimeout(async () => {
+          console.log("AuthProvider: Mobile/PWA debounced check");
 
-        // First check if we have a user - if not, try localStorage restore immediately
-        if (!user) {
-          console.log("AuthProvider: No user, trying localStorage restore");
-          try {
-            const backup = localStorage.getItem("auth:session");
-            if (backup) {
-              const { user: backupUser, timestamp } = JSON.parse(backup);
-              // Use backup if less than 24 hours old
-              if (Date.now() - timestamp < 24 * 60 * 60 * 1000 && backupUser?.userId) {
-                console.log("AuthProvider: Restoring from localStorage");
-                setUser(backupUser);
+          // Only check if we don't have a user
+          if (!user) {
+            console.log("AuthProvider: No user, trying localStorage restore");
+            try {
+              const backup = localStorage.getItem("auth:session");
+              if (backup) {
+                const { user: backupUser, timestamp } = JSON.parse(backup);
+                if (Date.now() - timestamp < 24 * 60 * 60 * 1000 && backupUser?.userId) {
+                  console.log("AuthProvider: Restoring from localStorage");
+                  setUser(backupUser);
+                }
               }
+            } catch (e) {
+              console.error("AuthProvider: Error restoring from localStorage:", e);
             }
-          } catch (e) {
-            console.error("AuthProvider: Error restoring from localStorage:", e);
           }
-        }
 
-        // Always attempt a background refresh to validate/refresh tokens
-        console.log("AuthProvider: Attempting background token refresh");
-        try {
-          const refreshRes = await fetch(`${apiBase}/auth/refresh`, {
-            method: "POST",
-            credentials: "include",
-            signal: AbortSignal.timeout(5000),
-          });
-          console.log("AuthProvider: Background refresh response:", refreshRes.status);
-          if (refreshRes.ok) {
-            localStorage.setItem(STORAGE_KEY, String(Date.now()));
-            // Silently fetch user data to ensure we're in sync
-            await fetchMe();
-          } else if (refreshRes.status === 401) {
-            // Tokens expired, clear user
-            console.log("AuthProvider: Tokens expired (401), clearing session");
-            setUser(null);
-            localStorage.removeItem("auth:session");
-          }
-        } catch (err) {
-          console.error("AuthProvider: Background refresh error:", err);
-          // Don't clear user on network errors - keep offline session
-        }
+          // Don't aggressively refresh on every visibility change - rely on the periodic refresh instead
+        }, 500);
       } else {
         // Desktop behavior: only refresh if needed based on time
         if (!user) return;
@@ -494,14 +505,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     window.addEventListener("visibilitychange", onVisibilityOrFocus);
     window.addEventListener("focus", onVisibilityOrFocus);
-    window.addEventListener("resume", onVisibilityOrFocus); // Cordova/PWA event
 
     return () => {
+      if (timeoutId) window.clearTimeout(timeoutId);
       window.removeEventListener("visibilitychange", onVisibilityOrFocus);
       window.removeEventListener("focus", onVisibilityOrFocus);
-      window.removeEventListener("resume", onVisibilityOrFocus);
     };
-  }, [user, performScheduledRefresh, isMobile, isPWA, apiBase, fetchMe]);
+  }, [user, performScheduledRefresh, isMobile, isPWA]);
   // -------------------------------------------------------------------------------
 
   const value = useMemo<AuthContextType>(

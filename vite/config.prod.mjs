@@ -26,7 +26,10 @@ export default defineConfig({
       registerType: "autoUpdate",
       injectRegister: "auto",
       includeAssets: ["favicon.svg", "favicon.png"],
+      // Disable update prompts - only update silently in background
       workbox: {
+        skipWaiting: false, // Don't auto-activate new SW, let it wait
+        clientsClaim: false, // Don't take control immediately
         globPatterns: ["**/*.{js,css,html,ico,png,svg,mp3,ogg,ttf,woff2}"],
         // Avoid duplicate precache entries: manifest icons are already injected,
         // so ignore them in the glob scan to prevent add-to-cache-list conflicts.
@@ -35,10 +38,21 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 3145728, // 3 MiB
         runtimeCaching: [
           {
+            // Completely bypass cache for auth endpoints
+            urlPattern: ({ url }) =>
+              (url.origin === self.location.origin ||
+                url.origin === "https://api.games4james.com") &&
+              (url.pathname.startsWith("/api/auth/") ||
+                url.pathname === "/me" ||
+                url.pathname === "/api/me"),
+            handler: "NetworkOnly", // Never cache auth/user endpoints
+          },
+          {
             urlPattern: ({ url }) =>
               url.origin === self.location.origin &&
               url.pathname.startsWith("/api/") &&
-              !url.pathname.startsWith("/api/auth/"), // Don't cache auth endpoints
+              !url.pathname.startsWith("/api/auth/") &&
+              url.pathname !== "/me", // Already handled above
             handler: "NetworkFirst",
             options: {
               cacheName: "api-cache",
@@ -52,7 +66,7 @@ export default defineConfig({
             handler: "NetworkFirst",
             options: {
               cacheName: "api-external-cache",
-              networkTimeoutSeconds: 3,
+              networkTimeoutSeconds: 5,
               cacheableResponse: { statuses: [0, 200] },
               expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 },
             },

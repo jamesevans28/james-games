@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 
 export default function SWUpdatePrompt() {
   const [show, setShow] = useState(false);
   const [skipUpdateOnce, setSkipUpdateOnce] = useState(false);
+  const lastUpdateCheck = useRef<number>(0);
 
   const { needRefresh, updateServiceWorker } = useRegisterSW({
     onRegisteredSW() {
@@ -45,7 +46,20 @@ export default function SWUpdatePrompt() {
     } catch {
       suppressed = false;
     }
-    if (needRefresh && !updateDismissed && !skipUpdateOnce && !suppressed) {
+
+    // Debounce update checks - only show if at least 30 seconds since last check
+    // This prevents false positives when SW is still initializing
+    const now = Date.now();
+    const timeSinceLastCheck = now - lastUpdateCheck.current;
+
+    if (
+      needRefresh &&
+      !updateDismissed &&
+      !skipUpdateOnce &&
+      !suppressed &&
+      timeSinceLastCheck > 30000
+    ) {
+      lastUpdateCheck.current = now;
       setShow(true);
     }
   }, [needRefresh, skipUpdateOnce]);
