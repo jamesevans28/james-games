@@ -428,22 +428,80 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // haven't refreshed recently, trigger a refresh to avoid expiry after long
   // idle periods or sleeping the laptop. Use a larger catch-up margin for day-long
   // tokens: refresh if we're within ~10 minutes of the scheduled refresh time.
+  // For mobile/PWA: Always attempt refresh when becoming visible to combat aggressive cookie clearing.
   useEffect(() => {
-    function onVisibilityOrFocus() {
-      if (!user) return;
-      const last = Number(localStorage.getItem(STORAGE_KEY) || 0);
-      const now = Date.now();
-      if (now - last > REFRESH_INTERVAL_MS - 10 * 60 * 1000) {
-        void performScheduledRefresh();
+    async function onVisibilityOrFocus() {
+      // Check if document is actually visible
+      if (document.hidden) return;
+
+      console.log("AuthProvider: Visibility change detected, document now visible");
+
+      // For mobile/PWA: Always try to refresh session when app becomes visible
+      if (isMobile || isPWA) {
+        console.log("AuthProvider: Mobile/PWA detected, attempting session restoration");
+
+        // First check if we have a user - if not, try localStorage restore immediately
+        if (!user) {
+          console.log("AuthProvider: No user, trying localStorage restore");
+          try {
+            const backup = localStorage.getItem("auth:session");
+            if (backup) {
+              const { user: backupUser, timestamp } = JSON.parse(backup);
+              // Use backup if less than 24 hours old
+              if (Date.now() - timestamp < 24 * 60 * 60 * 1000 && backupUser?.userId) {
+                console.log("AuthProvider: Restoring from localStorage");
+                setUser(backupUser);
+              }
+            }
+          } catch (e) {
+            console.error("AuthProvider: Error restoring from localStorage:", e);
+          }
+        }
+
+        // Always attempt a background refresh to validate/refresh tokens
+        console.log("AuthProvider: Attempting background token refresh");
+        try {
+          const refreshRes = await fetch(`${apiBase}/auth/refresh`, {
+            method: "POST",
+            credentials: "include",
+            signal: AbortSignal.timeout(5000),
+          });
+          console.log("AuthProvider: Background refresh response:", refreshRes.status);
+          if (refreshRes.ok) {
+            localStorage.setItem(STORAGE_KEY, String(Date.now()));
+            // Silently fetch user data to ensure we're in sync
+            await fetchMe();
+          } else if (refreshRes.status === 401) {
+            // Tokens expired, clear user
+            console.log("AuthProvider: Tokens expired (401), clearing session");
+            setUser(null);
+            localStorage.removeItem("auth:session");
+          }
+        } catch (err) {
+          console.error("AuthProvider: Background refresh error:", err);
+          // Don't clear user on network errors - keep offline session
+        }
+      } else {
+        // Desktop behavior: only refresh if needed based on time
+        if (!user) return;
+        const last = Number(localStorage.getItem(STORAGE_KEY) || 0);
+        const now = Date.now();
+        if (now - last > REFRESH_INTERVAL_MS - 10 * 60 * 1000) {
+          void performScheduledRefresh();
+        }
       }
     }
+
     window.addEventListener("visibilitychange", onVisibilityOrFocus);
     window.addEventListener("focus", onVisibilityOrFocus);
+    window.addEventListener("resume", onVisibilityOrFocus); // Cordova/PWA event
+
     return () => {
       window.removeEventListener("visibilitychange", onVisibilityOrFocus);
       window.removeEventListener("focus", onVisibilityOrFocus);
+      window.removeEventListener("resume", onVisibilityOrFocus);
     };
-  }, [user, performScheduledRefresh]);
+  }, [user, performScheduledRefresh, isMobile, isPWA, apiBase, fetchMe]);
   // -------------------------------------------------------------------------------
 
   const value = useMemo<AuthContextType>(
