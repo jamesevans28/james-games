@@ -89,12 +89,25 @@ export const games: GameMeta[] = [
   {
     id: "ready-steady-shoot",
     title: "Ready Steady Shoot",
-    description: "Hold to pick angle, hold to pick power, then release to shoot. Swish for 2 points! 3 lives.",
+    description:
+      "Hold to pick angle, hold to pick power, then release to shoot. Swish for 2 points! 3 lives.",
     thumbnail: "/assets/ready-steady-shoot/thumbnail.svg",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     load: async () => {
       const mod = await import("./ready-steady-shoot/index");
+      return { mount: mod.mount };
+    },
+  },
+  {
+    id: "paddle-pop",
+    title: "Paddle Pop",
+    description: "Deflect the marble, collect power-ups, hit bonus discs, avoid falling obstacles.",
+    thumbnail: "/assets/paddle-pop/thumbnail.svg",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    load: async () => {
+      const mod = await import("./paddle-pop/index");
       return { mount: mod.mount };
     },
   },
