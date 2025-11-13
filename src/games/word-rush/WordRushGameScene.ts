@@ -27,6 +27,9 @@ export default class WordRushGameScene extends Phaser.Scene {
   private inputText!: Phaser.GameObjects.Text;
   private selectedLettersText!: Phaser.GameObjects.Text;
   private giveUpButton!: Phaser.GameObjects.Container;
+  private keyboardButton!: Phaser.GameObjects.Container;
+  private isKeyboardCompactLayout = false;
+  private mobileInputElement: HTMLInputElement | null = null;
   private tiles: TileData[] = [];
   private currentInput: string = "";
   private gameActive: boolean = false;
@@ -103,7 +106,7 @@ export default class WordRushGameScene extends Phaser.Scene {
 
     // Input display
     this.inputText = this.add
-      .text(PLAY_WIDTH / 2, PLAY_HEIGHT - 180, "", {
+      .text(PLAY_WIDTH / 2 - 30, PLAY_HEIGHT - 180, "", {
         fontFamily: "Arial, sans-serif",
         fontSize: "32px",
         fontStyle: "bold",
@@ -135,10 +138,47 @@ export default class WordRushGameScene extends Phaser.Scene {
 
     // Give up button
     this.createGiveUpButton();
+
+    // Keyboard toggle button (small icon next to input) - mobile only
+    if (this.isMobileDevice()) {
+      this.createKeyboardButton();
+    }
+  }
+
+  private createKeyboardButton() {
+    this.keyboardButton = this.add.container(PLAY_WIDTH / 2 + 180, PLAY_HEIGHT - 180);
+
+    const bg = this.add.rectangle(0, 0, 44, 44, 0x111827, 0.9);
+    bg.setStrokeStyle(2, 0x4b5563);
+
+    // Simple keyboard glyph
+    const icon = this.add.text(0, 1, "⌨", {
+      fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+      fontSize: "26px",
+      color: "#e5e7eb",
+    }).setOrigin(0.5);
+
+    this.keyboardButton.add([bg, icon]);
+    this.keyboardButton.setSize(44, 44);
+    this.keyboardButton.setInteractive({ useHandCursor: true });
+
+    this.keyboardButton.on("pointerdown", () => {
+      if (!this.gameActive) return;
+      this.focusMobileInput();
+    });
+
+    this.keyboardButton.on("pointerover", () => {
+      bg.setFillStyle(0x1f2937, 0.95);
+    });
+
+    this.keyboardButton.on("pointerout", () => {
+      bg.setFillStyle(0x111827, 0.9);
+    });
   }
 
   private createGiveUpButton() {
-    this.giveUpButton = this.add.container(PLAY_WIDTH / 2, PLAY_HEIGHT - 30);
+    // Leave a little padding at the bottom of the screen
+    this.giveUpButton = this.add.container(PLAY_WIDTH / 2, PLAY_HEIGHT - 40);
 
     const bg = this.add.rectangle(0, 0, 200, 50, 0xef4444);
     bg.setStrokeStyle(3, 0x991b1b);
@@ -320,7 +360,7 @@ export default class WordRushGameScene extends Phaser.Scene {
     const answer = this.currentAnswer;
     const words = answer.split(" ");
 
-    let startY = 200;
+  let startY = this.isKeyboardCompactLayout ? 140 : 200;
     const tileSize = 50;
     const tileSpacing = 8;
     const wordSpacing = 30;
@@ -477,15 +517,24 @@ export default class WordRushGameScene extends Phaser.Scene {
     inputElement.type = "text";
     inputElement.autocomplete = "off";
     inputElement.autocapitalize = "characters";
-    inputElement.style.position = "absolute";
+    inputElement.style.position = "fixed";
+    inputElement.style.bottom = "0";
+    inputElement.style.left = "50%";
+    inputElement.style.transform = "translateX(-50%)";
     inputElement.style.opacity = "0";
-    inputElement.style.pointerEvents = "none";
-    inputElement.style.left = "-9999px";
+    inputElement.style.height = "1px";
+    inputElement.style.width = "1px";
+    inputElement.style.border = "none";
+    inputElement.style.background = "transparent";
+    inputElement.style.zIndex = "99999";
     document.body.appendChild(inputElement);
 
-    // Focus the input to show keyboard
+    this.mobileInputElement = inputElement;
+
+    // Focus the input to show keyboard (must be triggered by user gesture on some browsers,
+    // so this initial focus may be ignored on mobile but works as a best-effort)
     setTimeout(() => {
-      inputElement.focus();
+      this.focusMobileInput();
     }, 100);
 
     // Listen to input changes
@@ -510,7 +559,7 @@ export default class WordRushGameScene extends Phaser.Scene {
       }
 
       // Keep input synced
-      target.value = this.currentInput;
+  target.value = this.currentInput;
     });
 
     // Handle enter key on mobile
@@ -523,7 +572,7 @@ export default class WordRushGameScene extends Phaser.Scene {
     // Refocus if keyboard closes
     const refocus = () => {
       if (this.gameActive) {
-        setTimeout(() => inputElement.focus(), 100);
+        setTimeout(() => this.focusMobileInput(), 150);
       }
     };
 
@@ -532,8 +581,26 @@ export default class WordRushGameScene extends Phaser.Scene {
     // Cleanup on scene shutdown
     this.events.once("shutdown", () => {
       inputElement.removeEventListener("blur", refocus);
-      document.body.removeChild(inputElement);
+      if (this.mobileInputElement) {
+        document.body.removeChild(this.mobileInputElement);
+        this.mobileInputElement = null;
+      }
     });
+  }
+
+  private isMobileDevice(): boolean {
+    if (typeof navigator === "undefined") return false;
+    const ua = navigator.userAgent || navigator.vendor || "";
+    return /android|iphone|ipad|ipod|iemobile|opera mini/i.test(ua);
+  }
+
+  private focusMobileInput() {
+    if (!this.mobileInputElement) return;
+
+    // Try to focus via a short timeout to align with user gesture
+    setTimeout(() => {
+      this.mobileInputElement?.focus();
+    }, 0);
   }
 
   private updateInputDisplay() {
