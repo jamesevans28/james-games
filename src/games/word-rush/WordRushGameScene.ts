@@ -670,20 +670,23 @@ export default class WordRushGameScene extends Phaser.Scene {
     const keyboardY = PLAY_HEIGHT - 200;
     this.onScreenKeyboard = this.add.container(PLAY_WIDTH / 2, keyboardY);
 
-    const keyWidth = 43;
-    const keyHeight = 58;
+    const keyWidth = 40;
+    const keyHeight = 56;
     const keySpacing = 6;
 
-    // QWERTY layout rows
+    // QWERTY layout rows with space bar
     const rows = [
       ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
       ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-      ['BACKSPACE', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'ENTER']
+      ['BACKSPACE', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'ENTER'],
+      ['SPACE']
     ];
 
     rows.forEach((row, rowIndex) => {
       const rowWidth = row.reduce((sum, key) => {
-        const width = (key === 'BACKSPACE' || key === 'ENTER') ? keyWidth * 1.5 : keyWidth;
+        let width = keyWidth;
+        if (key === 'BACKSPACE' || key === 'ENTER') width = keyWidth * 1.4;
+        if (key === 'SPACE') width = keyWidth * 5;
         return sum + width + keySpacing;
       }, -keySpacing);
 
@@ -691,8 +694,13 @@ export default class WordRushGameScene extends Phaser.Scene {
       const rowY = rowIndex * (keyHeight + keySpacing);
 
       row.forEach((key) => {
-        const isSpecial = key === 'BACKSPACE' || key === 'ENTER';
-        const width = isSpecial ? keyWidth * 1.5 : keyWidth;
+        let width = keyWidth;
+        
+        if (key === 'BACKSPACE' || key === 'ENTER') {
+          width = keyWidth * 1.4;
+        } else if (key === 'SPACE') {
+          width = keyWidth * 5;
+        }
 
         // Create key container
         const keyContainer = this.add.container(startX + width / 2, rowY);
@@ -702,8 +710,19 @@ export default class WordRushGameScene extends Phaser.Scene {
         bg.setStrokeStyle(1, 0x565758);
 
         // Key label
-        const label = key === 'BACKSPACE' ? '⌫' : key === 'ENTER' ? '↵' : key;
-        const fontSize = isSpecial ? '28px' : '20px';
+        let label = key;
+        let fontSize = '20px';
+        if (key === 'BACKSPACE') {
+          label = '⌫';
+          fontSize = '26px';
+        } else if (key === 'ENTER') {
+          label = '↵';
+          fontSize = '26px';
+        } else if (key === 'SPACE') {
+          label = '';
+          fontSize = '16px';
+        }
+        
         const keyText = this.add.text(0, 0, label, {
           fontFamily: "Arial, sans-serif",
           fontSize: fontSize,
@@ -728,6 +747,9 @@ export default class WordRushGameScene extends Phaser.Scene {
             }
           } else if (key === 'ENTER') {
             this.checkAnswer();
+          } else if (key === 'SPACE') {
+            this.currentInput += ' ';
+            this.updateInputDisplay();
           } else {
             // Regular letter
             this.currentInput += key;
