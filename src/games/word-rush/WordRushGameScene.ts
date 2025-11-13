@@ -50,6 +50,7 @@ export default class WordRushGameScene extends Phaser.Scene {
     this.createUI();
     this.startLevel();
     this.setupKeyboardInput();
+    this.createMobileKeyboardInput();
   }
 
   private createBackground() {
@@ -467,6 +468,71 @@ export default class WordRushGameScene extends Phaser.Scene {
         this.currentInput += key;
         this.updateInputDisplay();
       }
+    });
+  }
+
+  private createMobileKeyboardInput() {
+    // Create an invisible HTML input to trigger mobile keyboard
+    const inputElement = document.createElement("input");
+    inputElement.type = "text";
+    inputElement.autocomplete = "off";
+    inputElement.autocapitalize = "characters";
+    inputElement.style.position = "absolute";
+    inputElement.style.opacity = "0";
+    inputElement.style.pointerEvents = "none";
+    inputElement.style.left = "-9999px";
+    document.body.appendChild(inputElement);
+
+    // Focus the input to show keyboard
+    setTimeout(() => {
+      inputElement.focus();
+    }, 100);
+
+    // Listen to input changes
+    inputElement.addEventListener("input", (e) => {
+      if (!this.gameActive) return;
+
+      const target = e.target as HTMLInputElement;
+      const value = target.value.toUpperCase();
+
+      // Handle input
+      if (value.length > this.currentInput.length) {
+        // Character added
+        const newChar = value[value.length - 1];
+        if (/^[A-Z ]$/.test(newChar)) {
+          this.currentInput += newChar;
+          this.updateInputDisplay();
+        }
+      } else if (value.length < this.currentInput.length) {
+        // Character removed (backspace)
+        this.currentInput = this.currentInput.slice(0, -1);
+        this.updateInputDisplay();
+      }
+
+      // Keep input synced
+      target.value = this.currentInput;
+    });
+
+    // Handle enter key on mobile
+    inputElement.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && this.gameActive) {
+        this.checkAnswer();
+      }
+    });
+
+    // Refocus if keyboard closes
+    const refocus = () => {
+      if (this.gameActive) {
+        setTimeout(() => inputElement.focus(), 100);
+      }
+    };
+
+    inputElement.addEventListener("blur", refocus);
+
+    // Cleanup on scene shutdown
+    this.events.once("shutdown", () => {
+      inputElement.removeEventListener("blur", refocus);
+      document.body.removeChild(inputElement);
     });
   }
 
