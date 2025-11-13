@@ -111,4 +111,16 @@ export const games: GameMeta[] = [
       return { mount: mod.mount };
     },
   },
+  {
+    id: "word-rush",
+    title: "Word Rush with Tom",
+    description: "Guess words and phrases with your selected letters. 2-minute timer per level!",
+    thumbnail: "/assets/word-rush/thumbnail.svg",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    load: async () => {
+      const mod = await import("./word-rush/index");
+      return { mount: mod.mount };
+    },
+  },
 ];
