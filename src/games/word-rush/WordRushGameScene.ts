@@ -164,7 +164,12 @@ export default class WordRushGameScene extends Phaser.Scene {
 
     this.keyboardButton.on("pointerdown", () => {
       if (!this.gameActive) return;
-      this.focusMobileInput();
+      
+      // Stop event propagation to ensure this is treated as a user gesture
+      if (this.mobileInputElement) {
+        this.mobileInputElement.focus({ preventScroll: true });
+        this.mobileInputElement.click();
+      }
     });
 
     this.keyboardButton.on("pointerover", () => {
@@ -512,30 +517,36 @@ export default class WordRushGameScene extends Phaser.Scene {
   }
 
   private createMobileKeyboardInput() {
-    // Create an invisible HTML input to trigger mobile keyboard
+    // Create an HTML input to trigger mobile keyboard
+    // Make it visually hidden but still focusable by not using display:none or visibility:hidden
     const inputElement = document.createElement("input");
     inputElement.type = "text";
     inputElement.autocomplete = "off";
     inputElement.autocapitalize = "characters";
+    inputElement.inputMode = "text";
     inputElement.style.position = "fixed";
-    inputElement.style.bottom = "0";
-    inputElement.style.left = "50%";
-    inputElement.style.transform = "translateX(-50%)";
-    inputElement.style.opacity = "0";
-    inputElement.style.height = "1px";
+    inputElement.style.bottom = "0px";
+    inputElement.style.left = "0px";
     inputElement.style.width = "1px";
+    inputElement.style.height = "1px";
+    inputElement.style.opacity = "0.01"; // Barely visible but not completely hidden
+    inputElement.style.fontSize = "16px"; // Prevents iOS zoom on focus
     inputElement.style.border = "none";
+    inputElement.style.outline = "none";
     inputElement.style.background = "transparent";
-    inputElement.style.zIndex = "99999";
+    inputElement.style.color = "transparent";
+    inputElement.style.pointerEvents = "none";
+    inputElement.style.zIndex = "9999";
+    inputElement.setAttribute("aria-hidden", "true");
+    inputElement.setAttribute("tabindex", "-1");
     document.body.appendChild(inputElement);
 
     this.mobileInputElement = inputElement;
 
-    // Focus the input to show keyboard (must be triggered by user gesture on some browsers,
-    // so this initial focus may be ignored on mobile but works as a best-effort)
+    // Auto-focus on scene creation with a delay
     setTimeout(() => {
       this.focusMobileInput();
-    }, 100);
+    }, 300);
 
     // Listen to input changes
     inputElement.addEventListener("input", (e) => {
@@ -597,10 +608,19 @@ export default class WordRushGameScene extends Phaser.Scene {
   private focusMobileInput() {
     if (!this.mobileInputElement) return;
 
-    // Try to focus via a short timeout to align with user gesture
-    setTimeout(() => {
-      this.mobileInputElement?.focus();
-    }, 0);
+    try {
+      // Clear any existing value
+      this.mobileInputElement.value = "";
+      
+      // Focus with click simulation for better mobile compatibility
+      this.mobileInputElement.focus({ preventScroll: true });
+      
+      // Some browsers require a click event to trigger keyboard
+      this.mobileInputElement.click();
+    } catch (e) {
+      // Silently fail if focus is blocked
+      console.warn("Could not focus mobile input:", e);
+    }
   }
 
   private updateInputDisplay() {
