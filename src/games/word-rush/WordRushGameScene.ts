@@ -27,9 +27,7 @@ export default class WordRushGameScene extends Phaser.Scene {
   private inputText!: Phaser.GameObjects.Text;
   private selectedLettersText!: Phaser.GameObjects.Text;
   private giveUpButton!: Phaser.GameObjects.Container;
-  private keyboardButton!: Phaser.GameObjects.Container;
-  private isKeyboardCompactLayout = false;
-  private mobileInputElement: HTMLInputElement | null = null;
+  private onScreenKeyboard!: Phaser.GameObjects.Container;
   private tiles: TileData[] = [];
   private currentInput: string = "";
   private gameActive: boolean = false;
@@ -51,9 +49,9 @@ export default class WordRushGameScene extends Phaser.Scene {
   create() {
     this.createBackground();
     this.createUI();
+    this.createOnScreenKeyboard();
     this.startLevel();
     this.setupKeyboardInput();
-    this.createMobileKeyboardInput();
   }
 
   private createBackground() {
@@ -104,88 +102,55 @@ export default class WordRushGameScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Input display
+    // Input display (moved up to make room for keyboard)
     this.inputText = this.add
-      .text(PLAY_WIDTH / 2 - 30, PLAY_HEIGHT - 180, "", {
+      .text(PLAY_WIDTH / 2, PLAY_HEIGHT - 360, "", {
         fontFamily: "Arial, sans-serif",
-        fontSize: "32px",
+        fontSize: "28px",
         fontStyle: "bold",
         color: "#fbbf24",
         backgroundColor: "#1f2937",
-        padding: { x: 20, y: 10 },
+        padding: { x: 16, y: 8 },
       })
       .setOrigin(0.5);
 
-    // Selected letters display
-    this.add
-      .text(PLAY_WIDTH / 2, PLAY_HEIGHT - 120, "Your Letters:", {
+    // Selected letters display (left side, above keyboard) - with better padding
+    const lettersContainer = this.add.container(135, PLAY_HEIGHT - 285);
+    
+    const lettersLabel = this.add
+      .text(0, -18, "Your Letters:", {
         fontFamily: "Arial, sans-serif",
-        fontSize: "18px",
+        fontSize: "13px",
         fontStyle: "bold",
         color: "#9ca3af",
       })
       .setOrigin(0.5);
 
     this.selectedLettersText = this.add
-      .text(PLAY_WIDTH / 2, PLAY_HEIGHT - 90, "", {
+      .text(0, 8, "", {
         fontFamily: "Arial, sans-serif",
-        fontSize: "28px",
+        fontSize: "22px",
         fontStyle: "bold",
         color: "#60a5fa",
-        letterSpacing: 8,
+        letterSpacing: 5,
+        backgroundColor: "#1f2937",
+        padding: { x: 12, y: 6 },
       })
       .setOrigin(0.5);
+    
+    lettersContainer.add([lettersLabel, this.selectedLettersText]);
 
-    // Give up button
+    // Give up button (right side, above keyboard) - with better padding
     this.createGiveUpButton();
-
-    // Keyboard toggle button (small icon next to input) - mobile only
-    if (this.isMobileDevice()) {
-      this.createKeyboardButton();
-    }
   }
 
-  private createKeyboardButton() {
-    this.keyboardButton = this.add.container(PLAY_WIDTH / 2 + 180, PLAY_HEIGHT - 180);
 
-    const bg = this.add.rectangle(0, 0, 44, 44, 0x111827, 0.9);
-    bg.setStrokeStyle(2, 0x4b5563);
-
-    // Simple keyboard glyph
-    const icon = this.add.text(0, 1, "⌨", {
-      fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-      fontSize: "26px",
-      color: "#e5e7eb",
-    }).setOrigin(0.5);
-
-    this.keyboardButton.add([bg, icon]);
-    this.keyboardButton.setSize(44, 44);
-    this.keyboardButton.setInteractive({ useHandCursor: true });
-
-    this.keyboardButton.on("pointerdown", () => {
-      if (!this.gameActive) return;
-      
-      // Stop event propagation to ensure this is treated as a user gesture
-      if (this.mobileInputElement) {
-        this.mobileInputElement.focus({ preventScroll: true });
-        this.mobileInputElement.click();
-      }
-    });
-
-    this.keyboardButton.on("pointerover", () => {
-      bg.setFillStyle(0x1f2937, 0.95);
-    });
-
-    this.keyboardButton.on("pointerout", () => {
-      bg.setFillStyle(0x111827, 0.9);
-    });
-  }
 
   private createGiveUpButton() {
-    // Leave a little padding at the bottom of the screen
-    this.giveUpButton = this.add.container(PLAY_WIDTH / 2, PLAY_HEIGHT - 40);
+    // Position on the right side, above keyboard with better padding
+    this.giveUpButton = this.add.container(PLAY_WIDTH - 90, PLAY_HEIGHT - 285);
 
-    const bg = this.add.rectangle(0, 0, 200, 50, 0xef4444);
+    const bg = this.add.rectangle(0, 0, 130, 48, 0xef4444);
     bg.setStrokeStyle(3, 0x991b1b);
 
     const text = this.add
@@ -343,9 +308,20 @@ export default class WordRushGameScene extends Phaser.Scene {
   }
 
   private startLevel() {
-    // Select random category and word
+    // Select random category and word, ensuring no word is longer than 9 letters
     this.currentCategory = getRandomCategory();
-    this.currentAnswer = getRandomWord(this.currentCategory);
+    
+    // Keep trying until we find a word where all individual words are 9 letters or less
+    let attempts = 0;
+    do {
+      this.currentAnswer = getRandomWord(this.currentCategory);
+      attempts++;
+      // Fallback to prevent infinite loop (though unlikely)
+      if (attempts > 50) {
+        console.warn("Could not find suitable word, using current one");
+        break;
+      }
+    } while (this.currentAnswer.split(" ").some(word => word.length > 9));
 
     this.categoryText.setText(`Category: ${this.currentCategory.name}`);
     this.levelText.setText(`Level ${this.level}`);
@@ -365,7 +341,7 @@ export default class WordRushGameScene extends Phaser.Scene {
     const answer = this.currentAnswer;
     const words = answer.split(" ");
 
-  let startY = this.isKeyboardCompactLayout ? 140 : 200;
+  let startY = 200;
     const tileSize = 50;
     const tileSpacing = 8;
     const wordSpacing = 30;
@@ -516,112 +492,7 @@ export default class WordRushGameScene extends Phaser.Scene {
     });
   }
 
-  private createMobileKeyboardInput() {
-    // Create an HTML input to trigger mobile keyboard
-    // Make it visually hidden but still focusable by not using display:none or visibility:hidden
-    const inputElement = document.createElement("input");
-    inputElement.type = "text";
-    inputElement.autocomplete = "off";
-    inputElement.autocapitalize = "characters";
-    inputElement.inputMode = "text";
-    inputElement.style.position = "fixed";
-    inputElement.style.bottom = "0px";
-    inputElement.style.left = "0px";
-    inputElement.style.width = "1px";
-    inputElement.style.height = "1px";
-    inputElement.style.opacity = "0.01"; // Barely visible but not completely hidden
-    inputElement.style.fontSize = "16px"; // Prevents iOS zoom on focus
-    inputElement.style.border = "none";
-    inputElement.style.outline = "none";
-    inputElement.style.background = "transparent";
-    inputElement.style.color = "transparent";
-    inputElement.style.pointerEvents = "none";
-    inputElement.style.zIndex = "9999";
-    inputElement.setAttribute("aria-hidden", "true");
-    inputElement.setAttribute("tabindex", "-1");
-    document.body.appendChild(inputElement);
 
-    this.mobileInputElement = inputElement;
-
-    // Auto-focus on scene creation with a delay
-    setTimeout(() => {
-      this.focusMobileInput();
-    }, 300);
-
-    // Listen to input changes
-    inputElement.addEventListener("input", (e) => {
-      if (!this.gameActive) return;
-
-      const target = e.target as HTMLInputElement;
-      const value = target.value.toUpperCase();
-
-      // Handle input
-      if (value.length > this.currentInput.length) {
-        // Character added
-        const newChar = value[value.length - 1];
-        if (/^[A-Z ]$/.test(newChar)) {
-          this.currentInput += newChar;
-          this.updateInputDisplay();
-        }
-      } else if (value.length < this.currentInput.length) {
-        // Character removed (backspace)
-        this.currentInput = this.currentInput.slice(0, -1);
-        this.updateInputDisplay();
-      }
-
-      // Keep input synced
-  target.value = this.currentInput;
-    });
-
-    // Handle enter key on mobile
-    inputElement.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && this.gameActive) {
-        this.checkAnswer();
-      }
-    });
-
-    // Refocus if keyboard closes
-    const refocus = () => {
-      if (this.gameActive) {
-        setTimeout(() => this.focusMobileInput(), 150);
-      }
-    };
-
-    inputElement.addEventListener("blur", refocus);
-
-    // Cleanup on scene shutdown
-    this.events.once("shutdown", () => {
-      inputElement.removeEventListener("blur", refocus);
-      if (this.mobileInputElement) {
-        document.body.removeChild(this.mobileInputElement);
-        this.mobileInputElement = null;
-      }
-    });
-  }
-
-  private isMobileDevice(): boolean {
-    if (typeof navigator === "undefined") return false;
-    const ua = navigator.userAgent || navigator.vendor || "";
-    return /android|iphone|ipad|ipod|iemobile|opera mini/i.test(ua);
-  }
-
-  private focusMobileInput() {
-    if (!this.mobileInputElement) return;
-
-    try {
-      // Clear any existing value
-      this.mobileInputElement.value = "";
-      
-      // Focus with click simulation for better mobile compatibility
-      this.mobileInputElement.focus({ preventScroll: true });
-      
-      // Some browsers require a click event to trigger keyboard
-      this.mobileInputElement.click();
-    } catch (e) {
-      // Silently fail if focus is blocked
-      console.warn("Could not focus mobile input:", e);
-    }
-  }
 
   private updateInputDisplay() {
     this.inputText.setText(this.currentInput || "Type your answer...");
@@ -791,6 +662,92 @@ export default class WordRushGameScene extends Phaser.Scene {
 
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.15);
+  }
+
+  private createOnScreenKeyboard() {
+    // Create Wordle-style on-screen keyboard at the bottom
+    // Position: near bottom with enough space to show all 3 rows (3 rows * 58px + 2 gaps * 6px = 186px)
+    const keyboardY = PLAY_HEIGHT - 200;
+    this.onScreenKeyboard = this.add.container(PLAY_WIDTH / 2, keyboardY);
+
+    const keyWidth = 43;
+    const keyHeight = 58;
+    const keySpacing = 6;
+
+    // QWERTY layout rows
+    const rows = [
+      ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+      ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+      ['BACKSPACE', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'ENTER']
+    ];
+
+    rows.forEach((row, rowIndex) => {
+      const rowWidth = row.reduce((sum, key) => {
+        const width = (key === 'BACKSPACE' || key === 'ENTER') ? keyWidth * 1.5 : keyWidth;
+        return sum + width + keySpacing;
+      }, -keySpacing);
+
+      let startX = -rowWidth / 2;
+      const rowY = rowIndex * (keyHeight + keySpacing);
+
+      row.forEach((key) => {
+        const isSpecial = key === 'BACKSPACE' || key === 'ENTER';
+        const width = isSpecial ? keyWidth * 1.5 : keyWidth;
+
+        // Create key container
+        const keyContainer = this.add.container(startX + width / 2, rowY);
+
+        // Key background
+        const bg = this.add.rectangle(0, 0, width, keyHeight, 0x818384);
+        bg.setStrokeStyle(1, 0x565758);
+
+        // Key label
+        const label = key === 'BACKSPACE' ? '⌫' : key === 'ENTER' ? '↵' : key;
+        const fontSize = isSpecial ? '28px' : '20px';
+        const keyText = this.add.text(0, 0, label, {
+          fontFamily: "Arial, sans-serif",
+          fontSize: fontSize,
+          fontStyle: "bold",
+          color: "#ffffff",
+        }).setOrigin(0.5);
+
+        keyContainer.add([bg, keyText]);
+        keyContainer.setSize(width, keyHeight);
+        keyContainer.setInteractive({ useHandCursor: true });
+
+        // Handle key press
+        keyContainer.on("pointerdown", () => {
+          if (!this.gameActive) return;
+
+          this.playSelectSound();
+
+          if (key === 'BACKSPACE') {
+            if (this.currentInput.length > 0) {
+              this.currentInput = this.currentInput.slice(0, -1);
+              this.updateInputDisplay();
+            }
+          } else if (key === 'ENTER') {
+            this.checkAnswer();
+          } else {
+            // Regular letter
+            this.currentInput += key;
+            this.updateInputDisplay();
+          }
+        });
+
+        // Hover effects
+        keyContainer.on("pointerover", () => {
+          bg.setFillStyle(0x565758);
+        });
+
+        keyContainer.on("pointerout", () => {
+          bg.setFillStyle(0x818384);
+        });
+
+        this.onScreenKeyboard.add(keyContainer);
+        startX += width + keySpacing;
+      });
+    });
   }
 
   private playErrorSound() {
