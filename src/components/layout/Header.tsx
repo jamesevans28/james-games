@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthProvider";
+import { useSession } from "../../hooks/useSession";
 import SideDrawer from "../SideDrawer";
+import { ProfileAvatar } from "../profile";
 
 export default function Header() {
-  const { user } = useAuth();
+  const { user } = useSession();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const isAuthenticated = !!user;
 
   return (
     <header className="w-full border-b border-gray-200">
@@ -26,27 +28,37 @@ export default function Header() {
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="p-2 rounded-md border border-gray-300 hover:bg-gray-100"
-          aria-label="Menu"
+          className="w-10 h-10 rounded-full overflow-hidden focus:outline-none flex items-center justify-center"
+          aria-label="Account"
         >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="1" />
-            <circle cx="19" cy="12" r="1" />
-            <circle cx="5" cy="12" r="1" />
-          </svg>
+          {isAuthenticated ? (
+            <ProfileAvatar
+              user={user}
+              size={40}
+              borderWidth={0}
+              strokeWidth={0}
+              rounded={true}
+            />
+          ) : (
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="1" />
+              <circle cx="19" cy="12" r="1" />
+              <circle cx="5" cy="12" r="1" />
+            </svg>
+          )}
         </button>
       </div>
 
-      <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} isAuthenticated={!!user} />
+      <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} isAuthenticated={isAuthenticated} />
     </header>
   );
 }

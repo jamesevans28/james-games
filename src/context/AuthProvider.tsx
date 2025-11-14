@@ -59,6 +59,71 @@ type AuthContextType = {
   refreshSession: (opts?: { silent?: boolean }) => Promise<void>;
 };
 
+const SESSION_CACHE_KEY = "auth:session";
+const LAST_REFRESH_KEY = "auth:lastRefresh";
+const SESSION_CACHE_MAX_AGE = 180 * 24 * 60 * 60 * 1000; // ~6 months
+const OFFLINE_CACHE_GRACE_MS = 24 * 60 * 60 * 1000; // allow 24h offline before forcing re-login
+const isBrowser = typeof window !== "undefined";
+
+type CachedSession = {
+  user: AuthUser;
+  timestamp: number;
+};
+
+function persistSessionCache(user: AuthUser | null) {
+  if (!isBrowser) return;
+  if (!user) {
+    window.localStorage.removeItem(SESSION_CACHE_KEY);
+    return;
+  }
+  try {
+    const payload: CachedSession = { user, timestamp: Date.now() };
+    window.localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(payload));
+  } catch (err) {
+    console.warn("AuthProvider: unable to persist session cache", err);
+  }
+}
+
+function readSessionCache(maxAge: number = SESSION_CACHE_MAX_AGE): AuthUser | null {
+  if (!isBrowser) return null;
+  try {
+    const raw = window.localStorage.getItem(SESSION_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CachedSession;
+    if (!parsed?.user) return null;
+    if (parsed.timestamp && Date.now() - parsed.timestamp > maxAge) {
+      window.localStorage.removeItem(SESSION_CACHE_KEY);
+      return null;
+    }
+    return parsed.user;
+  } catch (err) {
+    console.error("AuthProvider: unable to read session cache", err);
+    window.localStorage.removeItem(SESSION_CACHE_KEY);
+    return null;
+  }
+}
+
+function clearSessionCache() {
+  if (!isBrowser) return;
+  window.localStorage.removeItem(SESSION_CACHE_KEY);
+}
+
+function setLastRefreshTimestamp(ts: number) {
+  if (!isBrowser) return;
+  window.localStorage.setItem(LAST_REFRESH_KEY, String(ts));
+}
+
+function getLastRefreshTimestamp() {
+  if (!isBrowser) return 0;
+  const raw = window.localStorage.getItem(LAST_REFRESH_KEY);
+  return raw ? Number(raw) || 0 : 0;
+}
+
+function clearLastRefreshTimestamp() {
+  if (!isBrowser) return;
+  window.localStorage.removeItem(LAST_REFRESH_KEY);
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -99,12 +164,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         cache: "no-store", // Bypass all caches for auth endpoints
       });
       if (!res.ok) {
-        setUser(null);
-        // Clear localStorage backup on auth failure
-        if (isMobile || isPWA) {
-          localStorage.removeItem("auth:session");
+        if (res.status === 401) {
+          setUser(null);
+          clearSessionCache();
         }
-        return;
+        return null;
       }
       const body = await res.json();
 
@@ -112,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userData = body?.user || body;
 
       if (userData?.userId) {
-        const userObj = {
+        const userObj: AuthUser = {
           userId: userData.userId,
           screenName: userData.screenName ?? null,
           email: userData.email ?? null,
@@ -122,29 +186,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             typeof userData.avatar === "number" ? userData.avatar : Number(userData.avatar) || null,
         };
         setUser(userObj);
-
-        // Backup session to localStorage for mobile/PWA resilience
-        if (isMobile || isPWA) {
-          localStorage.setItem(
-            "auth:session",
-            JSON.stringify({
-              user: userObj,
-              timestamp: Date.now(),
-            })
-          );
-        }
-
-        return;
+        persistSessionCache(userObj);
+        return userObj;
       }
     } catch (err) {
-      // network or parse error: clear user
-      setUser(null);
-      if (isMobile || isPWA) {
-        localStorage.removeItem("auth:session");
-      }
+      console.error("AuthProvider: /me request failed", err);
     }
-    setUser(null);
-  }, [apiBase, isMobile, isPWA]);
+    return null;
+  }, [apiBase]);
 
   // Attempt to restore an existing session once on mount. This will call the
   // protected `/auth/refresh` endpoint which will refresh tokens if needed and
@@ -156,125 +205,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // - Calling `/auth/refresh` will refresh expired access tokens and return 200
   //   if a valid refresh token exists, or 401 if the session has expired.
   // After successful refresh, we call `/me` to get the user data.
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      // loading is already true from initial state
-
-      // First, clear any stale service worker caches for auth endpoints
-      if ("caches" in window) {
-        try {
-          const cacheKeys = await caches.keys();
-          for (const key of cacheKeys) {
-            if (key.includes("api-cache") || key.includes("api-external-cache")) {
-              const cache = await caches.open(key);
-              const requests = await cache.keys();
-              for (const request of requests) {
-                if (request.url.includes("/auth/") || request.url.includes("/me")) {
-                  await cache.delete(request);
-                  console.log("Cleared stale auth cache:", request.url);
-                }
-              }
-            }
-          }
-        } catch (e) {
-          console.error("Error clearing auth caches:", e);
-        }
-      }
-
-      try {
-        // First try to refresh the session
-        console.log("AuthProvider: Attempting session restoration");
-        const refreshRes = await fetch(`${apiBase}/auth/refresh`, {
-          method: "POST",
-          credentials: "include",
-          cache: "no-store", // Bypass all caches
-          // Add timeout for mobile/PWA contexts
-          signal: AbortSignal.timeout(10000), // 10 second timeout
-        });
-        console.log("AuthProvider: /auth/refresh response:", refreshRes.status);
-        if (refreshRes.ok) {
-          // Session refreshed successfully, update timestamp and get user data
-          localStorage.setItem(STORAGE_KEY, String(Date.now()));
-          console.log("AuthProvider: Refresh successful, fetching user data");
-          await fetchMe();
-        } else {
-          console.log("AuthProvider: Refresh failed with status:", refreshRes.status);
-
-          // For mobile/PWA, try to restore from localStorage backup
-          if ((isMobile || isPWA) && refreshRes.status !== 200) {
-            console.log("AuthProvider: Trying localStorage fallback");
-            try {
-              const backup = localStorage.getItem("auth:session");
-              if (backup) {
-                const { user: backupUser, timestamp } = JSON.parse(backup);
-                // Only use backup if it's less than 24 hours old
-                if (Date.now() - timestamp < 24 * 60 * 60 * 1000 && backupUser?.userId) {
-                  console.log("AuthProvider: Restored from localStorage backup");
-                  setUser(backupUser);
-                  // Try to refresh in background to get fresh tokens
-                  setTimeout(() => {
-                    fetch(`${apiBase}/auth/refresh`, {
-                      method: "POST",
-                      credentials: "include",
-                    }).catch(() => {
-                      // Ignore background refresh failures
-                    });
-                  }, 1000);
-                  return;
-                } else {
-                  // Backup is too old, remove it
-                  localStorage.removeItem("auth:session");
-                }
-              }
-            } catch (e) {
-              console.error("AuthProvider: Error parsing localStorage backup:", e);
-              localStorage.removeItem("auth:session");
-            }
-          }
-
-          // No valid session, clear user
-          setUser(null);
-        }
-      } catch (err) {
-        console.error("AuthProvider: Session restoration error:", err);
-
-        // For mobile/PWA, try localStorage fallback even on network errors
-        if (isMobile || isPWA) {
-          console.log("AuthProvider: Network error, trying localStorage fallback");
-          try {
-            const backup = localStorage.getItem("auth:session");
-            if (backup) {
-              const { user: backupUser, timestamp } = JSON.parse(backup);
-              // Only use backup if it's less than 12 hours old for network errors
-              if (Date.now() - timestamp < 12 * 60 * 60 * 1000 && backupUser?.userId) {
-                console.log("AuthProvider: Restored from localStorage backup (offline mode)");
-                setUser(backupUser);
-                return;
-              } else {
-                localStorage.removeItem("auth:session");
-              }
-            }
-          } catch (e) {
-            console.error("AuthProvider: Error parsing localStorage backup:", e);
-            localStorage.removeItem("auth:session");
-          }
-        }
-
-        // Network error or timeout, clear user
-        setUser(null);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-    // run only once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMobile, isPWA]);
 
   const signUp = useCallback(
     async ({
@@ -343,8 +273,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ignore network errors — we still clear client state
     }
     setUser(null);
-    // Clear localStorage backup on sign out
-    localStorage.removeItem("auth:session");
+    // Clear local storage backups on sign out
+    persistSessionCache(null);
+    clearLastRefreshTimestamp();
   }, [apiBase]);
 
   // Hosted UI is not used in this project. Keep the API surface small and
@@ -382,43 +313,143 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Use 23 hours for desktop, 8 hours for mobile/PWA to ensure sessions persist
   const REFRESH_INTERVAL_MS = isMobile || isPWA ? 8 * 60 * 60 * 1000 : 23 * 60 * 60 * 1000; // 8 hours for mobile/PWA, 23 hours for desktop
   const MIN_SPACING_MS = 5 * 60 * 1000; // 5 minutes debounce between tabs
-  const STORAGE_KEY = "auth:lastRefresh"; // localStorage timestamp key
   const bcRef = React.useRef<BroadcastChannel | null>(null);
   const intervalRef = React.useRef<number | null>(null);
 
+  const runRefresh = useCallback(
+    async ({ reason = "manual", broadcast = true, timeoutMs = 10000 }: { reason?: string; broadcast?: boolean; timeoutMs?: number } = {}) => {
+      const controller = typeof AbortController !== "undefined" ? new AbortController() : undefined;
+      const timeoutId = controller && typeof window !== "undefined"
+        ? window.setTimeout(() => controller.abort(), timeoutMs)
+        : null;
+      try {
+        const res = await fetch(`${apiBase}/auth/refresh`, {
+          method: "POST",
+          credentials: "include",
+          cache: "no-store",
+          signal: controller?.signal,
+        });
+        if (res.ok) {
+          const stamp = Date.now();
+          setLastRefreshTimestamp(stamp);
+          if (broadcast) {
+            bcRef.current?.postMessage({ type: "refreshed", at: stamp, reason });
+          }
+          return true;
+        }
+        if (res.status === 401) {
+          clearSessionCache();
+          setUser(null);
+        }
+        return false;
+      } catch (err) {
+        console.error("AuthProvider: refresh error", err);
+        return false;
+      } finally {
+        if (timeoutId !== null && typeof window !== "undefined") {
+          window.clearTimeout(timeoutId);
+        }
+      }
+    },
+    [apiBase]
+  );
+
   const performScheduledRefresh = useCallback(async () => {
-    // If not signed in skip.
     if (!user) return;
-    const last = Number(localStorage.getItem(STORAGE_KEY) || 0);
+    const last = getLastRefreshTimestamp();
     const now = Date.now();
     if (now - last < MIN_SPACING_MS) return; // another tab refreshed recently
     try {
       console.log("AuthProvider: Performing scheduled refresh");
-      // Call proactive refresh endpoint; if it succeeds update timestamp & broadcast.
-      const res = await fetch(`${apiBase}/auth/refresh`, {
-        method: "POST",
-        credentials: "include",
-        // Add timeout for mobile/PWA contexts
-        signal: AbortSignal.timeout(8000), // 8 second timeout
-      });
-      console.log("AuthProvider: Scheduled refresh response:", res.status);
-      if (res.ok) {
-        localStorage.setItem(STORAGE_KEY, String(Date.now()));
-        bcRef.current?.postMessage({ type: "refreshed", at: Date.now() });
-        // Optionally refresh user profile silently to reflect any changes.
+      const refreshed = await runRefresh({ reason: "interval" });
+      if (refreshed) {
         await refreshSession({ silent: true });
-      } else if (res.status === 401) {
-        console.log("AuthProvider: Scheduled refresh failed with 401, clearing user");
-        // Refresh failed (maybe refresh token expired) — clear user locally.
-        setUser(null);
-      } else {
-        console.log("AuthProvider: Scheduled refresh failed with status:", res.status);
       }
     } catch (err) {
       console.error("AuthProvider: Scheduled refresh error:", err);
-      // Ignore network failures (offline); will retry later.
     }
-  }, [user, apiBase, refreshSession]);
+  }, [user, runRefresh, refreshSession]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const cachedUser = readSessionCache();
+    if (cachedUser) {
+      setUser((prev) => prev ?? cachedUser);
+      setLoading(false);
+    }
+
+    const restoreSession = async () => {
+      if (typeof window !== "undefined" && "caches" in window) {
+        try {
+          const cacheKeys = await caches.keys();
+          for (const key of cacheKeys) {
+            if (key.includes("api-cache") || key.includes("api-external-cache")) {
+              const cache = await caches.open(key);
+              const requests = await cache.keys();
+              for (const request of requests) {
+                if (request.url.includes("/auth/") || request.url.includes("/me")) {
+                  await cache.delete(request);
+                  console.log("Cleared stale auth cache:", request.url);
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Error clearing auth caches:", e);
+        }
+      }
+
+      try {
+        console.log("AuthProvider: Attempting session restoration");
+        const refreshed = await runRefresh({ reason: "startup", timeoutMs: 10000 });
+        if (refreshed) {
+          console.log("AuthProvider: Refresh successful, fetching user data");
+          await fetchMe();
+          return;
+        }
+
+        const fallbackUser = readSessionCache(OFFLINE_CACHE_GRACE_MS);
+        if (fallbackUser) {
+          console.log("AuthProvider: Using cached session while offline");
+          setUser(fallbackUser);
+          return;
+        }
+
+        clearSessionCache();
+        setUser(null);
+      } catch (err) {
+        console.error("AuthProvider: Session restoration error:", err);
+        const fallbackUser = readSessionCache(OFFLINE_CACHE_GRACE_MS);
+        if (fallbackUser) {
+          console.log("AuthProvider: Restored from cache after error");
+          setUser(fallbackUser);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    restoreSession();
+
+    const onlineHandler = () => {
+      void (async () => {
+        const ok = await runRefresh({ reason: "online" });
+        if (ok) {
+          await fetchMe();
+        }
+      })();
+    };
+
+    window.addEventListener("online", onlineHandler);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("online", onlineHandler);
+    };
+  }, [fetchMe, runRefresh]);
 
   // Listen for broadcasts from other tabs so each tab stays in sync.
   useEffect(() => {
@@ -427,7 +458,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     bc.onmessage = (ev) => {
       if (ev?.data?.type === "refreshed") {
         // Update local timestamp; no need to call /me again.
-        localStorage.setItem(STORAGE_KEY, String(ev.data.at || Date.now()));
+  setLastRefreshTimestamp(ev?.data?.at || Date.now());
       }
     };
     return () => {
@@ -476,17 +507,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Only check if we don't have a user
           if (!user) {
             console.log("AuthProvider: No user, trying localStorage restore");
-            try {
-              const backup = localStorage.getItem("auth:session");
-              if (backup) {
-                const { user: backupUser, timestamp } = JSON.parse(backup);
-                if (Date.now() - timestamp < 24 * 60 * 60 * 1000 && backupUser?.userId) {
-                  console.log("AuthProvider: Restoring from localStorage");
-                  setUser(backupUser);
-                }
-              }
-            } catch (e) {
-              console.error("AuthProvider: Error restoring from localStorage:", e);
+            const backupUser = readSessionCache(OFFLINE_CACHE_GRACE_MS);
+            if (backupUser) {
+              console.log("AuthProvider: Restoring from cached session");
+              setUser(backupUser);
             }
           }
 
@@ -495,7 +519,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         // Desktop behavior: only refresh if needed based on time
         if (!user) return;
-        const last = Number(localStorage.getItem(STORAGE_KEY) || 0);
+        const last = getLastRefreshTimestamp();
         const now = Date.now();
         if (now - last > REFRESH_INTERVAL_MS - 10 * 60 * 1000) {
           void performScheduledRefresh();
