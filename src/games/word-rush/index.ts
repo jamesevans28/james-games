@@ -15,6 +15,13 @@ export function mount(container: HTMLElement) {
     height: 960,
     parent: container,
     transparent: true,
+    antialias: true,
+    antialiasGL: true,
+    render: {
+      antialias: true,
+      antialiasGL: true,
+      roundPixels: false,
+    },
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,

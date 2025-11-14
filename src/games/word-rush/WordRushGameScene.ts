@@ -15,6 +15,7 @@ type TileData = {
 
 export default class WordRushGameScene extends Phaser.Scene {
   private selectedLetters: string[] = [];
+  private boughtLetters: string[] = []; // Track letters bought during gameplay
   private currentAnswer: string = "";
   private currentCategory!: Category;
   private level: number = 1;
@@ -25,13 +26,16 @@ export default class WordRushGameScene extends Phaser.Scene {
   private levelText!: Phaser.GameObjects.Text;
   private scoreText!: Phaser.GameObjects.Text;
   private inputText!: Phaser.GameObjects.Text;
-  private selectedLettersText!: Phaser.GameObjects.Text;
   private giveUpButton!: Phaser.GameObjects.Container;
+  private buyLetterButton!: Phaser.GameObjects.Container;
+  private submitButton!: Phaser.GameObjects.Container;
   private onScreenKeyboard!: Phaser.GameObjects.Container;
+  private keyboardKeys: Map<string, Phaser.GameObjects.Container> = new Map();
   private tiles: TileData[] = [];
   private currentInput: string = "";
   private gameActive: boolean = false;
   private timerEvent?: Phaser.Time.TimerEvent;
+
 
   constructor() {
     super("WordRushGame");
@@ -61,20 +65,20 @@ export default class WordRushGameScene extends Phaser.Scene {
   }
 
   private createUI() {
-    // Level display
+    // Level display - smaller font and with padding
     this.levelText = this.add
-      .text(20, 20, `Level ${this.level}`, {
+      .text(15, 15, `Level ${this.level}`, {
         fontFamily: "Arial, sans-serif",
-        fontSize: "24px",
+        fontSize: "20px",
         fontStyle: "bold",
         color: "#fbbf24",
       });
 
-    // Score display
+    // Score display - smaller font and with padding
     this.scoreText = this.add
-      .text(PLAY_WIDTH - 20, 20, `Score: ${this.totalScore}`, {
+      .text(PLAY_WIDTH - 15, 15, `Score: ${this.totalScore}`, {
         fontFamily: "Arial, sans-serif",
-        fontSize: "24px",
+        fontSize: "20px",
         fontStyle: "bold",
         color: "#10b981",
       })
@@ -104,7 +108,7 @@ export default class WordRushGameScene extends Phaser.Scene {
 
     // Input display (moved up to make room for keyboard)
     this.inputText = this.add
-      .text(PLAY_WIDTH / 2, PLAY_HEIGHT - 360, "", {
+      .text(PLAY_WIDTH / 2, PLAY_HEIGHT - 380, "", {
         fontFamily: "Arial, sans-serif",
         fontSize: "28px",
         fontStyle: "bold",
@@ -114,71 +118,118 @@ export default class WordRushGameScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Selected letters display (left side, above keyboard) - with better padding
-    const lettersContainer = this.add.container(135, PLAY_HEIGHT - 285);
-    
-    const lettersLabel = this.add
-      .text(0, -18, "Your Letters:", {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "13px",
-        fontStyle: "bold",
-        color: "#9ca3af",
-      })
-      .setOrigin(0.5);
-
-    this.selectedLettersText = this.add
-      .text(0, 8, "", {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "22px",
-        fontStyle: "bold",
-        color: "#60a5fa",
-        letterSpacing: 5,
-        backgroundColor: "#1f2937",
-        padding: { x: 12, y: 6 },
-      })
-      .setOrigin(0.5);
-    
-    lettersContainer.add([lettersLabel, this.selectedLettersText]);
-
-    // Give up button (right side, above keyboard) - with better padding
-    this.createGiveUpButton();
+    // Create action buttons (Give Up, Buy Letter, Submit)
+    this.createActionButtons();
   }
 
+  private createActionButtons() {
+    const buttonY = PLAY_HEIGHT - 320; // Moved higher to avoid keyboard overlap
+    const buttonWidth = 105; // Slightly narrower
+    const buttonHeight = 46;
+    const sidePadding = 20; // Padding from sides
 
-
-  private createGiveUpButton() {
-    // Position on the right side, above keyboard with better padding
-    this.giveUpButton = this.add.container(PLAY_WIDTH - 90, PLAY_HEIGHT - 285);
-
-    const bg = this.add.rectangle(0, 0, 130, 48, 0xef4444);
-    bg.setStrokeStyle(3, 0x991b1b);
-
-    const text = this.add
+    // Give Up button (left) - with padding from edge
+    this.giveUpButton = this.add.container(sidePadding + buttonWidth / 2, buttonY);
+    const giveUpBg = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0xef4444);
+    giveUpBg.setStrokeStyle(3, 0x991b1b);
+    const giveUpText = this.add
       .text(0, 0, "GIVE UP", {
         fontFamily: "Arial, sans-serif",
-        fontSize: "22px",
+        fontSize: "18px",
         fontStyle: "bold",
         color: "#ffffff",
       })
       .setOrigin(0.5);
-
-    this.giveUpButton.add([bg, text]);
-    this.giveUpButton.setSize(200, 50);
+    this.giveUpButton.add([giveUpBg, giveUpText]);
+    this.giveUpButton.setSize(buttonWidth, buttonHeight);
     this.giveUpButton.setInteractive({ useHandCursor: true });
-
     this.giveUpButton.on("pointerdown", () => {
       if (this.gameActive) {
         this.showGiveUpConfirmation();
       }
     });
-
     this.giveUpButton.on("pointerover", () => {
-      bg.setFillStyle(0xdc2626);
+      giveUpBg.setFillStyle(0xdc2626);
+    });
+    this.giveUpButton.on("pointerout", () => {
+      giveUpBg.setFillStyle(0xef4444);
     });
 
-    this.giveUpButton.on("pointerout", () => {
-      bg.setFillStyle(0xef4444);
+    // Buy Letter button (center)
+    this.buyLetterButton = this.add.container(PLAY_WIDTH / 2, buttonY);
+    const buyLetterBg = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x3b82f6);
+    buyLetterBg.setStrokeStyle(3, 0x1e40af);
+    const buyLetterText = this.add
+      .text(0, 0, "BUY\nLETTER", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "15px",
+        fontStyle: "bold",
+        color: "#ffffff",
+        align: "center",
+        lineSpacing: -5,
+      })
+      .setOrigin(0.5);
+    this.buyLetterButton.add([buyLetterBg, buyLetterText]);
+    this.buyLetterButton.setSize(buttonWidth, buttonHeight);
+    this.buyLetterButton.setInteractive({ useHandCursor: true });
+    this.buyLetterButton.on("pointerdown", () => {
+      if (this.gameActive && this.timeRemaining >= 30) {
+        this.showBuyLetterConfirmation();
+      }
     });
+    this.buyLetterButton.on("pointerover", () => {
+      if (this.timeRemaining >= 30) {
+        buyLetterBg.setFillStyle(0x2563eb);
+      }
+    });
+    this.buyLetterButton.on("pointerout", () => {
+      buyLetterBg.setFillStyle(0x3b82f6);
+    });
+
+    // Submit button (right) - with padding from edge
+    this.submitButton = this.add.container(PLAY_WIDTH - sidePadding - buttonWidth / 2, buttonY);
+    const submitBg = this.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x10b981);
+    submitBg.setStrokeStyle(3, 0x047857);
+    const submitText = this.add
+      .text(0, 0, "SUBMIT", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "18px",
+        fontStyle: "bold",
+        color: "#ffffff",
+      })
+      .setOrigin(0.5);
+    this.submitButton.add([submitBg, submitText]);
+    this.submitButton.setSize(buttonWidth, buttonHeight);
+    this.submitButton.setInteractive({ useHandCursor: true });
+    this.submitButton.on("pointerdown", () => {
+      if (this.gameActive) {
+        this.checkAnswer();
+      }
+    });
+    this.submitButton.on("pointerover", () => {
+      submitBg.setFillStyle(0x059669);
+    });
+    this.submitButton.on("pointerout", () => {
+      submitBg.setFillStyle(0x10b981);
+    });
+  }
+
+  private updateBuyLetterButton() {
+    // Grey out if less than 30 seconds
+    const bg = this.buyLetterButton.getAt(0) as Phaser.GameObjects.Rectangle;
+    const text = this.buyLetterButton.getAt(1) as Phaser.GameObjects.Text;
+    
+    if (this.timeRemaining < 30) {
+      bg.setFillStyle(0x6b7280);
+      bg.setStrokeStyle(3, 0x4b5563);
+      text.setAlpha(0.5);
+      this.buyLetterButton.removeInteractive();
+    } else {
+      bg.setFillStyle(0x3b82f6);
+      bg.setStrokeStyle(3, 0x1e40af);
+      text.setAlpha(1);
+      this.buyLetterButton.setInteractive({ useHandCursor: true });
+    }
   }
 
   private showGiveUpConfirmation() {
@@ -307,7 +358,176 @@ export default class WordRushGameScene extends Phaser.Scene {
     });
   }
 
+  private showBuyLetterConfirmation() {
+    // Pause the game
+    const wasActive = this.gameActive;
+    this.gameActive = false;
+    
+    // Dim background
+    const overlay = this.add.rectangle(
+      PLAY_WIDTH / 2,
+      PLAY_HEIGHT / 2,
+      PLAY_WIDTH,
+      PLAY_HEIGHT,
+      0x000000,
+      0.7
+    );
+
+    // Confirmation box
+    const boxWidth = 400;
+    const boxHeight = 250;
+    const box = this.add.rectangle(
+      PLAY_WIDTH / 2,
+      PLAY_HEIGHT / 2,
+      boxWidth,
+      boxHeight,
+      0x1f2937
+    );
+    box.setStrokeStyle(4, 0x3b82f6);
+
+    // Title
+    const title = this.add
+      .text(PLAY_WIDTH / 2, PLAY_HEIGHT / 2 - 70, "BUY A LETTER?", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "32px",
+        fontStyle: "bold",
+        color: "#3b82f6",
+      })
+      .setOrigin(0.5);
+
+    // Message
+    const message = this.add
+      .text(
+        PLAY_WIDTH / 2,
+        PLAY_HEIGHT / 2 - 20,
+        "This will reveal a random letter\nand all its instances.\n\nCost: 30 seconds",
+        {
+          fontFamily: "Arial, sans-serif",
+          fontSize: "18px",
+          color: "#cbd5e0",
+          align: "center",
+          wordWrap: { width: boxWidth - 40 },
+        }
+      )
+      .setOrigin(0.5);
+
+    // Buy button
+    const buyButton = this.add.container(PLAY_WIDTH / 2 - 80, PLAY_HEIGHT / 2 + 70);
+    const buyBg = this.add.rectangle(0, 0, 140, 60, 0x3b82f6);
+    buyBg.setStrokeStyle(3, 0x1e40af);
+    const buyText = this.add
+      .text(0, 0, "BUY", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "24px",
+        fontStyle: "bold",
+        color: "#ffffff",
+      })
+      .setOrigin(0.5);
+    buyButton.add([buyBg, buyText]);
+    buyButton.setSize(140, 60);
+    buyButton.setInteractive({ useHandCursor: true });
+
+    // Cancel button
+    const cancelButton = this.add.container(PLAY_WIDTH / 2 + 80, PLAY_HEIGHT / 2 + 70);
+    const cancelBg = this.add.rectangle(0, 0, 140, 60, 0x6b7280);
+    cancelBg.setStrokeStyle(3, 0x4b5563);
+    const cancelText = this.add
+      .text(0, 0, "CANCEL", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "24px",
+        fontStyle: "bold",
+        color: "#ffffff",
+      })
+      .setOrigin(0.5);
+    cancelButton.add([cancelBg, cancelText]);
+    cancelButton.setSize(140, 60);
+    cancelButton.setInteractive({ useHandCursor: true });
+
+    // Cleanup function
+    const cleanup = () => {
+      overlay.destroy();
+      box.destroy();
+      title.destroy();
+      message.destroy();
+      buyButton.destroy();
+      cancelButton.destroy();
+    };
+
+    // Buy button handler
+    buyButton.on("pointerdown", () => {
+      this.playSelectSound();
+      cleanup();
+      this.buyRandomLetter();
+      this.gameActive = wasActive;
+    });
+
+    buyButton.on("pointerover", () => {
+      buyBg.setFillStyle(0x2563eb);
+    });
+
+    buyButton.on("pointerout", () => {
+      buyBg.setFillStyle(0x3b82f6);
+    });
+
+    // Cancel button handler
+    cancelButton.on("pointerdown", () => {
+      this.playSelectSound();
+      cleanup();
+      this.gameActive = wasActive; // Resume game
+    });
+
+    cancelButton.on("pointerover", () => {
+      cancelBg.setFillStyle(0x4b5563);
+    });
+
+    cancelButton.on("pointerout", () => {
+      cancelBg.setFillStyle(0x6b7280);
+    });
+  }
+
+  private async buyRandomLetter() {
+    // Deduct 30 seconds
+    this.timeRemaining = Math.max(0, this.timeRemaining - 30);
+    this.timerText.setText(this.formatTime(this.timeRemaining));
+    this.updateBuyLetterButton();
+
+    // Get all unrevealed letters from the answer
+    const unrevealedLetters = new Set<string>();
+    this.tiles.forEach(tile => {
+      if (!tile.revealed && tile.letter !== ' ') {
+        unrevealedLetters.add(tile.letter);
+      }
+    });
+
+    if (unrevealedLetters.size === 0) return;
+
+    // Pick a random letter
+    const lettersArray = Array.from(unrevealedLetters);
+    const randomLetter = lettersArray[Math.floor(Math.random() * lettersArray.length)];
+
+    // Add to bought letters and highlight on keyboard
+    if (!this.boughtLetters.includes(randomLetter)) {
+      this.boughtLetters.push(randomLetter);
+      this.highlightSelectedKeys(); // Re-highlight to show bought letter in green
+    }
+
+    // Find all tiles with this letter
+    const tilesToReveal = this.tiles.filter(
+      tile => tile.letter === randomLetter && !tile.revealed
+    );
+
+    // Reveal them with animation
+    for (const tile of tilesToReveal) {
+      this.revealTile(tile.container, tile.letter);
+      tile.revealed = true;
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+
   private startLevel() {
+    // Clear bought letters for new level
+    this.boughtLetters = [];
+    
     // Select random category and word, ensuring no word is longer than 9 letters
     this.currentCategory = getRandomCategory();
     
@@ -326,8 +546,8 @@ export default class WordRushGameScene extends Phaser.Scene {
     this.categoryText.setText(`Category: ${this.currentCategory.name}`);
     this.levelText.setText(`Level ${this.level}`);
     
-    // Display selected letters
-    this.selectedLettersText.setText(this.selectedLetters.join("  "));
+    // Highlight selected letters on keyboard
+    this.highlightSelectedKeys();
 
     // Create tiles
     this.createTiles();
@@ -341,30 +561,73 @@ export default class WordRushGameScene extends Phaser.Scene {
     const answer = this.currentAnswer;
     const words = answer.split(" ");
 
-  let startY = 200;
-    const tileSize = 50;
-    const tileSpacing = 8;
-    const wordSpacing = 30;
+    let startY = 150; // Raised from 200 to provide more space above buttons
+    const tileSize = 42; // Reduced from 46
+    const tileSpacing = 6; // Reduced from 7
+    const wordSpacing = 16; // Reduced from 18
+    const interWordSpacing = 8; // Reduced from 10
+    const maxLineLength = 9; // Max letters per line (not including spaces between words)
+
+    // Group words into lines
+    const lines: string[][] = [];
+    let currentLine: string[] = [];
+    let currentLineLength = 0;
 
     words.forEach((word) => {
-      const wordWidth = word.length * (tileSize + tileSpacing) - tileSpacing;
-      let startX = (PLAY_WIDTH - wordWidth) / 2 + tileSize / 2; // Add half tile size for center positioning
+      const wordLength = word.length;
+      // Add 1 for space between words if not first word in line
+      const lengthWithSpace = currentLine.length > 0 ? wordLength + 1 : wordLength;
 
-      for (let i = 0; i < word.length; i++) {
-        const letter = word[i];
-        const x = startX + i * (tileSize + tileSpacing);
-        const y = startY + tileSize / 2; // Add half tile size for center positioning
-
-        const container = this.createTile(x, y, letter, tileSize);
-        const revealed = this.selectedLetters.includes(letter);
-
-        this.tiles.push({
-          letter,
-          revealed,
-          container,
-        });
+      if (currentLineLength + lengthWithSpace <= maxLineLength) {
+        // Word fits on current line
+        currentLine.push(word);
+        currentLineLength += lengthWithSpace;
+      } else {
+        // Start new line
+        if (currentLine.length > 0) {
+          lines.push(currentLine);
+        }
+        currentLine = [word];
+        currentLineLength = wordLength;
       }
+    });
+    
+    // Add last line
+    if (currentLine.length > 0) {
+      lines.push(currentLine);
+    }
 
+    // Create tiles for each line
+    lines.forEach((lineWords) => {
+      // Calculate total width needed for this line
+      const totalLetters = lineWords.reduce((sum, w) => sum + w.length, 0);
+      const numSpaces = lineWords.length - 1; // Spaces between words
+      const lineWidth = totalLetters * (tileSize + tileSpacing) - tileSpacing + 
+                        numSpaces * interWordSpacing;
+      
+      let startX = (PLAY_WIDTH - lineWidth) / 2 + tileSize / 2;
+
+      lineWords.forEach((word) => {
+        for (let i = 0; i < word.length; i++) {
+          const letter = word[i];
+          const x = startX + i * (tileSize + tileSpacing);
+          const y = startY + tileSize / 2;
+
+          const container = this.createTile(x, y, letter, tileSize);
+          const revealed = this.selectedLetters.includes(letter);
+
+          this.tiles.push({
+            letter,
+            revealed,
+            container,
+          });
+        }
+
+        // Move X position for next word (add word length + space)
+        startX += word.length * (tileSize + tileSpacing) + interWordSpacing;
+      });
+
+      // Move to next line
       startY += tileSize + wordSpacing;
     });
   }
@@ -452,6 +715,9 @@ export default class WordRushGameScene extends Phaser.Scene {
       callback: () => {
         this.timeRemaining--;
         this.timerText.setText(this.formatTime(this.timeRemaining));
+
+        // Update buy letter button state
+        this.updateBuyLetterButton();
 
         // Update color based on time
         if (this.timeRemaining <= 10) {
@@ -613,13 +879,13 @@ export default class WordRushGameScene extends Phaser.Scene {
       }
     });
 
-    // Show "tap to continue" message
+    // Show "game over" message
     const tapText = this.add
-      .text(PLAY_WIDTH / 2, PLAY_HEIGHT / 2, "TAP TO CONTINUE", {
+      .text(PLAY_WIDTH / 2, PLAY_HEIGHT / 2, "GAME OVER", {
         fontFamily: "Arial, sans-serif",
-        fontSize: "32px",
+        fontSize: "48px",
         fontStyle: "bold",
-        color: "#fbbf24",
+        color: "#ef4444",
         backgroundColor: "#1f2937",
         padding: { x: 30, y: 15 },
       })
@@ -666,27 +932,28 @@ export default class WordRushGameScene extends Phaser.Scene {
 
   private createOnScreenKeyboard() {
     // Create Wordle-style on-screen keyboard at the bottom
-    // Position: near bottom with enough space to show all 3 rows (3 rows * 58px + 2 gaps * 6px = 186px)
-    const keyboardY = PLAY_HEIGHT - 200;
+    // Position: near bottom with padding (4 rows * 56px + 3 gaps * 6px + 20px bottom padding = 262px)
+    const keyboardY = PLAY_HEIGHT - 242;
     this.onScreenKeyboard = this.add.container(PLAY_WIDTH / 2, keyboardY);
+    this.keyboardKeys.clear();
 
     const keyWidth = 40;
     const keyHeight = 56;
     const keySpacing = 6;
 
-    // QWERTY layout rows with space bar
+    // QWERTY layout rows - backspace moved to right of spacebar
     const rows = [
       ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
       ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-      ['BACKSPACE', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'ENTER'],
-      ['SPACE']
+      ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
+      ['SPACE', 'BACKSPACE']
     ];
 
     rows.forEach((row, rowIndex) => {
       const rowWidth = row.reduce((sum, key) => {
         let width = keyWidth;
-        if (key === 'BACKSPACE' || key === 'ENTER') width = keyWidth * 1.4;
-        if (key === 'SPACE') width = keyWidth * 5;
+        if (key === 'BACKSPACE') width = keyWidth * 1.5;
+        if (key === 'SPACE') width = keyWidth * 4.5;
         return sum + width + keySpacing;
       }, -keySpacing);
 
@@ -696,10 +963,10 @@ export default class WordRushGameScene extends Phaser.Scene {
       row.forEach((key) => {
         let width = keyWidth;
         
-        if (key === 'BACKSPACE' || key === 'ENTER') {
-          width = keyWidth * 1.4;
+        if (key === 'BACKSPACE') {
+          width = keyWidth * 1.5;
         } else if (key === 'SPACE') {
-          width = keyWidth * 5;
+          width = keyWidth * 4.5;
         }
 
         // Create key container
@@ -714,9 +981,6 @@ export default class WordRushGameScene extends Phaser.Scene {
         let fontSize = '20px';
         if (key === 'BACKSPACE') {
           label = '⌫';
-          fontSize = '26px';
-        } else if (key === 'ENTER') {
-          label = '↵';
           fontSize = '26px';
         } else if (key === 'SPACE') {
           label = '';
@@ -734,6 +998,11 @@ export default class WordRushGameScene extends Phaser.Scene {
         keyContainer.setSize(width, keyHeight);
         keyContainer.setInteractive({ useHandCursor: true });
 
+        // Store letter keys for highlighting
+        if (key.length === 1) {
+          this.keyboardKeys.set(key, keyContainer);
+        }
+
         // Handle key press
         keyContainer.on("pointerdown", () => {
           if (!this.gameActive) return;
@@ -745,8 +1014,6 @@ export default class WordRushGameScene extends Phaser.Scene {
               this.currentInput = this.currentInput.slice(0, -1);
               this.updateInputDisplay();
             }
-          } else if (key === 'ENTER') {
-            this.checkAnswer();
           } else if (key === 'SPACE') {
             this.currentInput += ' ';
             this.updateInputDisplay();
@@ -763,12 +1030,41 @@ export default class WordRushGameScene extends Phaser.Scene {
         });
 
         keyContainer.on("pointerout", () => {
-          bg.setFillStyle(0x818384);
+          const isSelected = this.selectedLetters.includes(key);
+          const isBought = this.boughtLetters.includes(key);
+          
+          if (isBought) {
+            bg.setFillStyle(0x10b981); // Green for bought letters
+          } else if (isSelected) {
+            bg.setFillStyle(0x3b82f6); // Blue for selected letters
+          } else {
+            bg.setFillStyle(0x818384); // Default gray
+          }
         });
 
         this.onScreenKeyboard.add(keyContainer);
         startX += width + keySpacing;
       });
+    });
+  }
+
+  private highlightSelectedKeys() {
+    // Highlight keys that match selected letters (blue)
+    this.selectedLetters.forEach(letter => {
+      const keyContainer = this.keyboardKeys.get(letter);
+      if (keyContainer) {
+        const bg = keyContainer.getAt(0) as Phaser.GameObjects.Rectangle;
+        bg.setFillStyle(0x3b82f6); // Blue highlight for selected
+      }
+    });
+    
+    // Highlight bought letters (green) - these override selected letters
+    this.boughtLetters.forEach(letter => {
+      const keyContainer = this.keyboardKeys.get(letter);
+      if (keyContainer) {
+        const bg = keyContainer.getAt(0) as Phaser.GameObjects.Rectangle;
+        bg.setFillStyle(0x10b981); // Green highlight for bought
+      }
     });
   }
 

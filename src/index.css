@@ -77,10 +77,11 @@ button {
 .game-stage {
   position: fixed;
   top: var(--header-h);
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   bottom: 0;
   width: 100vw;
+  max-width: 540px; /* Max width to match game design width */
   /* Use the app background image stretched to edges */
   background-image: url("/assets/bg.png");
   background-size: cover;
