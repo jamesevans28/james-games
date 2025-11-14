@@ -316,8 +316,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const bcRef = React.useRef<BroadcastChannel | null>(null);
   const intervalRef = React.useRef<number | null>(null);
 
+  type RefreshOutcome = "success" | "unauthorized" | "failed";
+
   const runRefresh = useCallback(
-    async ({ reason = "manual", broadcast = true, timeoutMs = 10000 }: { reason?: string; broadcast?: boolean; timeoutMs?: number } = {}) => {
+    async ({ reason = "manual", broadcast = true, timeoutMs = 10000 }: { reason?: string; broadcast?: boolean; timeoutMs?: number } = {}): Promise<RefreshOutcome> => {
       const controller = typeof AbortController !== "undefined" ? new AbortController() : undefined;
       const timeoutId = controller && typeof window !== "undefined"
         ? window.setTimeout(() => controller.abort(), timeoutMs)
@@ -335,16 +337,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (broadcast) {
             bcRef.current?.postMessage({ type: "refreshed", at: stamp, reason });
           }
-          return true;
+          return "success";
         }
         if (res.status === 401) {
-          clearSessionCache();
-          setUser(null);
+          return "unauthorized";
         }
-        return false;
+        return "failed";
       } catch (err) {
         console.error("AuthProvider: refresh error", err);
-        return false;
+        return "failed";
       } finally {
         if (timeoutId !== null && typeof window !== "undefined") {
           window.clearTimeout(timeoutId);
@@ -354,6 +355,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [apiBase]
   );
 
+  const handleUnauthorized = useCallback(() => {
+    const cached = readSessionCache(SESSION_CACHE_MAX_AGE);
+    if (cached) {
+      setUser(cached);
+      persistSessionCache(cached);
+    } else {
+      clearSessionCache();
+      setUser(null);
+    }
+  }, []);
+
   const performScheduledRefresh = useCallback(async () => {
     if (!user) return;
     const last = getLastRefreshTimestamp();
@@ -361,14 +373,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (now - last < MIN_SPACING_MS) return; // another tab refreshed recently
     try {
       console.log("AuthProvider: Performing scheduled refresh");
-      const refreshed = await runRefresh({ reason: "interval" });
-      if (refreshed) {
+      const outcome = await runRefresh({ reason: "interval" });
+      if (outcome === "success") {
         await refreshSession({ silent: true });
+      } else if (outcome === "unauthorized") {
+        handleUnauthorized();
       }
     } catch (err) {
       console.error("AuthProvider: Scheduled refresh error:", err);
     }
-  }, [user, runRefresh, refreshSession]);
+  }, [user, runRefresh, refreshSession, handleUnauthorized]);
 
   useEffect(() => {
     let mounted = true;
@@ -402,10 +416,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         console.log("AuthProvider: Attempting session restoration");
-        const refreshed = await runRefresh({ reason: "startup", timeoutMs: 10000 });
-        if (refreshed) {
+        const outcome = await runRefresh({ reason: "startup", timeoutMs: 10000 });
+        if (outcome === "success") {
           console.log("AuthProvider: Refresh successful, fetching user data");
           await fetchMe();
+          return;
+        }
+
+        if (outcome === "unauthorized") {
+          console.log("AuthProvider: Refresh returned 401, using cached session if available");
+          const cached = readSessionCache(SESSION_CACHE_MAX_AGE);
+          if (cached) {
+            setUser(cached);
+            persistSessionCache(cached);
+            return;
+          }
+          clearSessionCache();
+          setUser(null);
           return;
         }
 
@@ -436,9 +463,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const onlineHandler = () => {
       void (async () => {
-        const ok = await runRefresh({ reason: "online" });
-        if (ok) {
+        const outcome = await runRefresh({ reason: "online" });
+        if (outcome === "success") {
           await fetchMe();
+        } else if (outcome === "unauthorized") {
+          handleUnauthorized();
         }
       })();
     };
@@ -449,7 +478,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       window.removeEventListener("online", onlineHandler);
     };
-  }, [fetchMe, runRefresh]);
+  }, [fetchMe, runRefresh, handleUnauthorized]);
 
   // Listen for broadcasts from other tabs so each tab stays in sync.
   useEffect(() => {
