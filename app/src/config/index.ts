@@ -24,5 +24,7 @@ export const config = {
     users: process.env.TABLE_USERS || "games4james-users",
     usernames: process.env.TABLE_USERNAMES || "",
     scoreGsi: process.env.SCORE_GSI_NAME || "GameScoresByScore",
+    ratings: process.env.TABLE_RATINGS || "games4james-gameratings",
+    ratingSummary: process.env.TABLE_RATING_SUMMARY || "games4james-gameratings-summary",
   },
 };

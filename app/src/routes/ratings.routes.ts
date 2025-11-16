@@ -1,9 +1,15 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/authGuards.js";
+import {
+	getRatingSummaryController,
+	listRatingSummaries,
+	submitRating,
+} from "../controllers/ratingsController.js";
 
 const router = Router();
 
-// Placeholder for ratings feature
-router.get("/ping", requireAuth, (_req, res) => res.json({ ok: true }));
+router.get("/", listRatingSummaries);
+router.get("/:gameId", getRatingSummaryController);
+router.post("/:gameId", requireAuth, submitRating);
 
 export default router;

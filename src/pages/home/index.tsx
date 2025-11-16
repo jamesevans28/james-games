@@ -2,29 +2,47 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Seo from "../../components/Seo";
 import { games, GameMeta } from "../../games";
-import { getUserName, setUserName } from "../../utils/user";
+import { fetchRatingSummaries, RatingSummary } from "../../lib/api";
+import { getCachedRatingSummary, primeRatingCache } from "../../utils/ratingCache";
 // import NameDialog from "../../components/NameDialog";
 // useSession removed — currently not needed on the home page
 
 export default function GameHub() {
   const navigate = useNavigate();
-  const [showNameDialog, setShowNameDialog] = useState(false);
-  const [name, setName] = useState<string>(getUserName() || "");
+  const [ratings, setRatings] = useState<Record<string, RatingSummary>>(() => {
+    const initial: Record<string, RatingSummary> = {};
+    games.forEach((game) => {
+      const cached = getCachedRatingSummary(game.id);
+      if (cached) initial[game.id] = cached;
+    });
+    return initial;
+  });
 
   useEffect(() => {
-    // Prompt for name on first visit if not set
-    if (!getUserName()) {
-      setShowNameDialog(true);
-    }
+    let cancelled = false;
+    const loadRatings = async () => {
+      try {
+        const summaries = await fetchRatingSummaries(games.map((g) => g.id));
+        if (cancelled) return;
+        primeRatingCache(summaries);
+        setRatings((prev) => {
+          const next = { ...prev };
+          summaries.forEach((summary) => {
+            next[summary.gameId] = summary;
+          });
+          return next;
+        });
+      } catch (err) {
+        console.warn("Failed to load ratings", err);
+      }
+    };
+    loadRatings();
+    const interval = setInterval(loadRatings, 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, []);
-
-  const handleSaveName = (value: string) => {
-    const v = value.trim();
-    if (v.length === 0) return;
-    setUserName(v);
-    setName(v);
-    setShowNameDialog(false);
-  };
 
   // Filter games into recently added and most popular
   const { recentGames, popularGames } = useMemo(() => {
@@ -54,7 +72,9 @@ export default function GameHub() {
     return { recentGames: recent, popularGames: popular };
   }, []);
 
-  const GameCard = ({ game }: { game: GameMeta }) => (
+  const GameCard = ({ game }: { game: GameMeta }) => {
+    const summary = ratings[game.id];
+    return (
     <div
       className="bg-white rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
       onClick={() => navigate(`/games/${game.id}`)}
@@ -68,10 +88,20 @@ export default function GameHub() {
 
       {/* Game Info */}
       <div className="px-3 py-2">
-        <h3 className="text-sm font-semibold truncate">{game.title}</h3>
+        <h3 className="text-sm font-semibold truncate text-black">{game.title}</h3>
+        <div className="mt-1 flex items-center gap-1 text-xs text-gray-600">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill={summary ? "#F59E0B" : "none"} stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M12 2.5l3.09 6.26 6.91.99-5 4.87 1.18 6.88L12 17.77 5.82 21.5l1.18-6.88-5-4.87 6.91-.99L12 2.5z" />
+          </svg>
+          <span className="font-semibold text-black">
+            {summary ? summary.avgRating.toFixed(1) : "—"}
+          </span>
+          <span className="text-gray-400">({summary?.ratingCount ?? 0})</span>
+        </div>
       </div>
     </div>
   );
+  };
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
       <Seo

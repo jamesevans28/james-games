@@ -1,14 +1,29 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { games } from "../../games";
 import GameHeader from "./GameHeader";
 import { trackGameStart } from "../../utils/analytics";
-import { getUserName, setUserName } from "../../utils/user";
 // import NameDialog from "../../components/NameDialog";
 import Seo from "../../components/Seo";
 import GameLanding from "./GameLanding";
 import ScoreDialog from "../../components/ScoreDialog";
 import { onGameOver } from "../../utils/gameEvents";
+import { useAuth } from "../../context/AuthProvider";
+import RatingPromptModal from "../../components/RatingPromptModal";
+import { fetchRatingSummary, submitRating, RatingSummary } from "../../lib/api";
+import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";
+
+const PLAY_COUNT_PREFIX = "rating:plays:";
+const RATING_PROMPT_INTERVAL = 10;
+
+function incrementPlayCounter(gameId: string) {
+  if (typeof window === "undefined") return 0;
+  const key = `${PLAY_COUNT_PREFIX}${gameId}`;
+  const current = Number(window.localStorage.getItem(key) || 0);
+  const next = current + 1;
+  window.localStorage.setItem(key, String(next));
+  return next;
+}
 
 export default function PlayGame() {
   const { gameId } = useParams();
@@ -18,25 +33,43 @@ export default function PlayGame() {
   const destroyRef = useRef<null | (() => void)>(null);
   const mountingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
-  const [askName, setAskName] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [showScore, setShowScore] = useState(false);
   const [lastScore, setLastScore] = useState<number | null>(null);
+  const { user } = useAuth();
+  const [pendingRatingTrigger, setPendingRatingTrigger] = useState(false);
+  const [ratingPromptOpen, setRatingPromptOpen] = useState(false);
+  const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(() =>
+    meta ? getCachedRatingSummary(meta.id) : null
+  );
+  const [ratingLoading, setRatingLoading] = useState(false);
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
+  const [ratingError, setRatingError] = useState<string | null>(null);
+  const [pendingPromptAction, setPendingPromptAction] = useState<"none" | "playAgain" | "close">(
+    "none"
+  );
+  const [userRating, setUserRating] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!getUserName()) setAskName(true);
-    // Listen for game over and show score dialog over the running game
-    const off = onGameOver((d) => {
-      if (!meta || d.gameId !== meta.id) return;
-      // Keep the game mounted so it's visible in the background
-      setLastScore(d.score);
-      setShowScore(true);
-    });
-    return () => off?.();
+    if (!meta) {
+      setRatingSummary(null);
+      setUserRating(null);
+      return;
+    }
+    const cached = getCachedRatingSummary(meta.id);
+    setRatingSummary(cached);
+    setUserRating(null);
   }, [meta]);
 
+  useEffect(() => {
+    if (!user) {
+      setPendingRatingTrigger(false);
+      setRatingPromptOpen(false);
+    }
+  }, [user]);
+
   // Helper to mount the game immediately
-  const mountGame = async () => {
+  const mountGame = useCallback(async () => {
     if (mountingRef.current) return;
     mountingRef.current = true;
     try {
@@ -62,7 +95,120 @@ export default function PlayGame() {
     } finally {
       mountingRef.current = false;
     }
+  }, [meta]);
+
+  const openRatingPrompt = useCallback(
+    async (nextAction: "none" | "playAgain" | "close") => {
+      if (!meta || !user) return;
+      setPendingRatingTrigger(false);
+      setPendingPromptAction(nextAction);
+      setRatingPromptOpen(true);
+      setRatingError(null);
+      if (!ratingSummary || ratingSummary.gameId !== meta.id || ratingSummary.userRating === undefined) {
+        setRatingLoading(true);
+        try {
+          const summary = await fetchRatingSummary(meta.id);
+          setRatingSummary(summary);
+          setCachedRatingSummary(summary);
+          setUserRating(summary.userRating ?? null);
+        } catch (err) {
+          console.error("Failed to load rating summary", err);
+          setRatingError("Unable to load rating info right now.");
+        } finally {
+          setRatingLoading(false);
+        }
+      } else {
+        setUserRating(ratingSummary.userRating ?? null);
+      }
+    },
+    [meta, ratingSummary, user]
+  );
+
+  const completePromptFlow = useCallback(() => {
+    if (pendingPromptAction === "playAgain") {
+      setPendingPromptAction("none");
+      setPlaying(true);
+      void mountGame();
+    } else {
+      setPendingPromptAction("none");
+    }
+  }, [pendingPromptAction, mountGame]);
+
+  const handleRatingSkip = useCallback(() => {
+    setRatingPromptOpen(false);
+    setRatingError(null);
+    completePromptFlow();
+  }, [completePromptFlow]);
+
+  const handleRatingSubmit = useCallback(
+    async (value: number) => {
+      if (!meta) return;
+      setRatingSubmitting(true);
+      setRatingError(null);
+      try {
+        const summary = await submitRating(meta.id, value);
+        setRatingSummary(summary);
+        setCachedRatingSummary(summary);
+        setUserRating(summary.userRating ?? value);
+        setRatingPromptOpen(false);
+        completePromptFlow();
+      } catch (err: any) {
+        console.error("Failed to submit rating", err);
+        if (err?.message === "signin_required") {
+          setRatingError("Please sign in to rate this game.");
+        } else {
+          setRatingError("Unable to save your rating. Please try again later.");
+        }
+      } finally {
+        setRatingSubmitting(false);
+      }
+    },
+    [meta, completePromptFlow]
+  );
+
+  const handleCloseScore = () => {
+    setShowScore(false);
+    if (destroyRef.current) {
+      try {
+        destroyRef.current();
+      } catch {}
+      destroyRef.current = null;
+    }
+    setPlaying(false);
+    if (pendingRatingTrigger && user) {
+      void openRatingPrompt("close");
+    } else {
+      setPendingRatingTrigger(false);
+    }
   };
+
+  const handlePlayAgain = () => {
+    setShowScore(false);
+    if (pendingRatingTrigger && user) {
+      void openRatingPrompt("playAgain");
+      return;
+    }
+    setPlaying(true);
+    void mountGame();
+  };
+
+  useEffect(() => {
+    if (!meta) return;
+    // Listen for game over and show score dialog over the running game
+    const off = onGameOver((d) => {
+      if (!meta || d.gameId !== meta.id) return;
+      // Keep the game mounted so it's visible in the background
+      setLastScore(d.score);
+      setShowScore(true);
+      if (user) {
+        const count = incrementPlayCounter(meta.id);
+        if (count > 0 && count % RATING_PROMPT_INTERVAL === 0) {
+          setPendingRatingTrigger(true);
+        }
+      }
+    });
+    return () => off?.();
+  }, [meta, user]);
 
   useEffect(() => {
     let canceled = false;
@@ -80,7 +226,7 @@ export default function PlayGame() {
         destroyRef.current = null;
       }
     };
-  }, [playing, meta]);
+  }, [playing, meta, mountGame]);
 
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
@@ -113,38 +259,26 @@ export default function PlayGame() {
         </div>
       )}
 
-      {/* {askName && (
-        <NameDialog
-          initialValue={""}
-          onCancel={() => setAskName(false)}
-          onSave={(v) => {
-            const t = v.trim();
-            if (t) setUserName(t);
-            setAskName(false);
-          }}
-        />
-      )} */}
-
       <ScoreDialog
         open={showScore}
         score={lastScore}
         gameId={meta?.id}
-        onClose={() => {
-          setShowScore(false);
-          if (destroyRef.current) {
-            try {
-              destroyRef.current();
-            } catch {}
-            destroyRef.current = null;
-          }
-          setPlaying(false);
-        }}
-        onPlayAgain={() => {
-          setShowScore(false);
-          setPlaying(true);
-          void mountGame();
-        }}
+        onClose={handleCloseScore}
+        onPlayAgain={handlePlayAgain}
         onViewLeaderboard={meta ? () => navigate(`/leaderboard/${meta.id}`) : undefined}
+      />
+
+      <RatingPromptModal
+        open={ratingPromptOpen}
+        gameTitle={meta?.title ?? "Rate this game"}
+        avgRating={ratingSummary?.avgRating}
+        ratingCount={ratingSummary?.ratingCount}
+        initialRating={userRating}
+        loading={ratingLoading}
+        submitting={ratingSubmitting}
+        error={ratingError}
+        onSubmit={handleRatingSubmit}
+        onSkip={handleRatingSkip}
       />
     </div>
   );

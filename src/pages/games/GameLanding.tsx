@@ -3,10 +3,12 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthProvider";
 import { trackShare } from "../../utils/analytics";
 import { GameMeta } from "../../games";
-import { getTopScores } from "../../lib/api";
+import { getTopScores, fetchRatingSummary, submitRating, RatingSummary } from "../../lib/api";
 import { getUserName } from "../../utils/user";
 import { onGameOver } from "../../utils/gameEvents";
 import { ProfileAvatar } from "../../components/profile";
+import RatingStars from "../../components/RatingStars";
+import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";
 
 type Props = {
   meta: GameMeta;
@@ -23,9 +25,65 @@ export default function GameLanding({ meta, onPlay }: Props) {
   const [top, setTop] = useState<ScoreRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const cachedRating = useMemo(() => getCachedRatingSummary(meta.id), [meta.id]);
+  const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(cachedRating);
+  const [ratingLoading, setRatingLoading] = useState(!cachedRating);
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
+  const [ratingError, setRatingError] = useState<string | null>(null);
+  const [userRating, setUserRating] = useState<number | null>(null);
+  const { user } = useAuth();
 
   const bestKey = useMemo(() => `${meta.id}-best`, [meta.id]);
   const myBest = useMemo(() => Number(localStorage.getItem(bestKey) || 0), [bestKey]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadRating = async () => {
+      setRatingLoading(true);
+      setRatingError(null);
+      try {
+        const summary = await fetchRatingSummary(meta.id);
+        if (cancelled) return;
+        setRatingSummary(summary);
+        setCachedRatingSummary(summary);
+        setUserRating(
+          typeof summary.userRating === "number" && !Number.isNaN(summary.userRating)
+            ? summary.userRating
+            : null
+        );
+      } catch (err) {
+        console.warn("Failed to load rating", err);
+        if (!cancelled) setRatingError("Unable to load rating right now");
+      } finally {
+        if (!cancelled) setRatingLoading(false);
+      }
+    };
+    loadRating();
+    return () => {
+      cancelled = true;
+    };
+  }, [meta.id, user?.userId]);
+
+  const handleSubmitRating = async (value: number) => {
+    if (!user) return;
+    setRatingSubmitting(true);
+    setRatingError(null);
+    try {
+      const summary = await submitRating(meta.id, value);
+      setRatingSummary(summary);
+      setCachedRatingSummary(summary);
+      setUserRating(summary.userRating ?? value);
+    } catch (err: any) {
+      console.error("Failed to submit rating", err);
+      if (err?.message === "signin_required") {
+        setRatingError("Sign in to rate this game.");
+      } else {
+        setRatingError("Unable to save your rating. Please try again.");
+      }
+    } finally {
+      setRatingSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +183,16 @@ export default function GameLanding({ meta, onPlay }: Props) {
           )}
           {/* Leaderboard Top 3 + 4-10 */}
           <LeaderboardSection top={top} loading={loading} error={error} myBest={myBest} />
+
+          <RatingSummaryCard
+            loading={ratingLoading}
+            summary={ratingSummary}
+            user={user}
+            userRating={userRating}
+            error={ratingError}
+            submitting={ratingSubmitting}
+            onRate={handleSubmitRating}
+          />
 
           {/* metadata list */}
           <div className="mt-6">
@@ -315,6 +383,76 @@ function LeaderboardSection({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function RatingSummaryCard({
+  loading,
+  summary,
+  user,
+  userRating,
+  error,
+  submitting,
+  onRate,
+}: {
+  loading: boolean;
+  summary: RatingSummary | null;
+  user: ReturnType<typeof useAuth>["user"];
+  userRating: number | null;
+  error: string | null;
+  submitting: boolean;
+  onRate: (value: number) => void;
+}) {
+  const avg = summary?.avgRating ?? 0;
+  const count = summary?.ratingCount ?? 0;
+  return (
+    <div className="mt-6 border border-gray-200 rounded-lg p-4 bg-white">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-gray-500">Overall rating</p>
+          <div className="text-3xl font-extrabold text-black">
+            {loading ? "—" : avg.toFixed(1)}
+          </div>
+          <p className="text-xs text-gray-500">{count} total ratings</p>
+        </div>
+        <RatingStars value={avg} readOnly size="sm" />
+      </div>
+      <div className="mt-4 border-t border-gray-100 pt-4">
+        {user ? (
+          <div>
+            <p className="text-sm font-semibold text-black flex items-center">
+              Your rating
+              {submitting && (
+                <svg
+                  className="ml-2 w-4 h-4 animate-spin text-gray-500"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" opacity="0.25" />
+                  <path d="M22 12a10 10 0 00-10-10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                </svg>
+              )}
+            </p>
+            <div className="mt-2">
+              <RatingStars
+                value={userRating ?? 0}
+                onSelect={(value) => onRate(value)}
+                readOnly={loading || submitting}
+              />
+            </div>
+            {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-600">
+            <Link to="/login" className="text-blue-600 underline">
+              Sign in
+            </Link>{" "}
+            to rate this game.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
