@@ -319,11 +319,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   type RefreshOutcome = "success" | "unauthorized" | "failed";
 
   const runRefresh = useCallback(
-    async ({ reason = "manual", broadcast = true, timeoutMs = 10000 }: { reason?: string; broadcast?: boolean; timeoutMs?: number } = {}): Promise<RefreshOutcome> => {
+    async ({
+      reason = "manual",
+      broadcast = true,
+      timeoutMs = 10000,
+    }: {
+      reason?: string;
+      broadcast?: boolean;
+      timeoutMs?: number;
+    } = {}): Promise<RefreshOutcome> => {
       const controller = typeof AbortController !== "undefined" ? new AbortController() : undefined;
-      const timeoutId = controller && typeof window !== "undefined"
-        ? window.setTimeout(() => controller.abort(), timeoutMs)
-        : null;
+      const timeoutId =
+        controller && typeof window !== "undefined"
+          ? window.setTimeout(() => controller.abort(), timeoutMs)
+          : null;
       try {
         const res = await fetch(`${apiBase}/auth/refresh`, {
           method: "POST",
@@ -487,7 +496,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     bc.onmessage = (ev) => {
       if (ev?.data?.type === "refreshed") {
         // Update local timestamp; no need to call /me again.
-  setLastRefreshTimestamp(ev?.data?.at || Date.now());
+        setLastRefreshTimestamp(ev?.data?.at || Date.now());
       }
     };
     return () => {

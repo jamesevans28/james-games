@@ -32,13 +32,7 @@ export default function Header() {
           aria-label="Account"
         >
           {isAuthenticated ? (
-            <ProfileAvatar
-              user={user}
-              size={40}
-              borderWidth={0}
-              strokeWidth={0}
-              rounded={true}
-            />
+            <ProfileAvatar user={user} size={40} borderWidth={0} strokeWidth={0} rounded={true} />
           ) : (
             <svg
               width="20"
@@ -58,7 +52,11 @@ export default function Header() {
         </button>
       </div>
 
-      <SideDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} isAuthenticated={isAuthenticated} />
+      <SideDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        isAuthenticated={isAuthenticated}
+      />
     </header>
   );
 }

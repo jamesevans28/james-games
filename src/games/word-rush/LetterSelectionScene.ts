@@ -5,8 +5,27 @@ const PLAY_HEIGHT = 960;
 
 const VOWELS = ["A", "E", "I", "O", "U"];
 const CONSONANTS = [
-  "B", "C", "D", "F", "G", "H", "J", "K", "L", "M",
-  "N", "P", "Q", "R", "S", "T", "V", "W", "X", "Y", "Z",
+  "B",
+  "C",
+  "D",
+  "F",
+  "G",
+  "H",
+  "J",
+  "K",
+  "L",
+  "M",
+  "N",
+  "P",
+  "Q",
+  "R",
+  "S",
+  "T",
+  "V",
+  "W",
+  "X",
+  "Y",
+  "Z",
 ];
 
 export default class LetterSelectionScene extends Phaser.Scene {
@@ -146,12 +165,14 @@ export default class LetterSelectionScene extends Phaser.Scene {
     tile.setStrokeStyle(3, 0x2d3748);
 
     // Letter text
-    const text = this.add.text(0, 0, letter, {
-      fontFamily: "Arial, sans-serif",
-      fontSize: "32px",
-      fontStyle: "bold",
-      color: "#2d3748",
-    }).setOrigin(0.5);
+    const text = this.add
+      .text(0, 0, letter, {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "32px",
+        fontStyle: "bold",
+        color: "#2d3748",
+      })
+      .setOrigin(0.5);
 
     container.add([tile, text]);
     container.setSize(60, 60);
@@ -167,11 +188,7 @@ export default class LetterSelectionScene extends Phaser.Scene {
     return container;
   }
 
-  private onLetterClick(
-    letter: string,
-    isVowel: boolean,
-    container: Phaser.GameObjects.Container
-  ) {
+  private onLetterClick(letter: string, isVowel: boolean, container: Phaser.GameObjects.Container) {
     const isSelected = container.getData("selected");
     const tile = container.getData("tile") as Phaser.GameObjects.Rectangle;
 
@@ -180,9 +197,7 @@ export default class LetterSelectionScene extends Phaser.Scene {
       if (isVowel) {
         this.selectedVowels = this.selectedVowels.filter((l) => l !== letter);
       } else {
-        this.selectedConsonants = this.selectedConsonants.filter(
-          (l) => l !== letter
-        );
+        this.selectedConsonants = this.selectedConsonants.filter((l) => l !== letter);
       }
       container.setData("selected", false);
       tile.setFillStyle(0xf7fafc);
@@ -241,10 +256,7 @@ export default class LetterSelectionScene extends Phaser.Scene {
     }
 
     // Update start button visibility
-    if (
-      this.selectedConsonants.length === 4 &&
-      this.selectedVowels.length === 2
-    ) {
+    if (this.selectedConsonants.length === 4 && this.selectedVowels.length === 2) {
       this.startButton.setVisible(true);
       this.tweens.add({
         targets: this.startButton,
@@ -306,10 +318,7 @@ export default class LetterSelectionScene extends Phaser.Scene {
     oscillator.frequency.value = 600;
     oscillator.type = "sine";
     gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      audioContext.currentTime + 0.1
-    );
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
 
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.1);
@@ -326,10 +335,7 @@ export default class LetterSelectionScene extends Phaser.Scene {
     oscillator.frequency.value = 200;
     oscillator.type = "sawtooth";
     gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      audioContext.currentTime + 0.15
-    );
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
 
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.15);
@@ -346,10 +352,7 @@ export default class LetterSelectionScene extends Phaser.Scene {
     oscillator.frequency.value = 800;
     oscillator.type = "square";
     gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      audioContext.currentTime + 0.2
-    );
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
 
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.2);

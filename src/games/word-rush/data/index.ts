@@ -11,6 +11,13 @@ import { brands } from "./brands";
 import { occupations } from "./occupations";
 import { tvShows } from "./tvshows";
 import { movies } from "./movies";
+import { kidsMovies } from "./kidsMovies";
+import { food } from "./food";
+import { drink } from "./drink";
+import { kitchen } from "./kitchen";
+import { event } from "./event";
+import { counties } from "./counties";
+import { sportsPlayers } from "./sportsPlayers";
 
 export type Category = {
   name: string;
@@ -31,6 +38,13 @@ export const categories: Category[] = [
   { name: "Occupation", words: occupations },
   { name: "TV Show", words: tvShows },
   { name: "Movie", words: movies },
+  { name: "Kids Movie", words: kidsMovies },
+  { name: "Food", words: food },
+  { name: "Drink", words: drink },
+  { name: "In The Kitchen", words: kitchen },
+  { name: "Event", words: event },
+  { name: "Counties", words: counties },
+  { name: "Sports Player", words: sportsPlayers },
 ];
 
 export function getRandomCategory(): Category {

@@ -39,7 +39,6 @@ export default class WordRushGameScene extends Phaser.Scene {
   private lastKeyPressTime: number = 0;
   private readonly KEY_DEBOUNCE_MS = 100;
 
-
   constructor() {
     super("WordRushGame");
   }
@@ -69,13 +68,12 @@ export default class WordRushGameScene extends Phaser.Scene {
 
   private createUI() {
     // Level display - smaller font and with padding
-    this.levelText = this.add
-      .text(15, 15, `Level ${this.level}`, {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "20px",
-        fontStyle: "bold",
-        color: "#fbbf24",
-      });
+    this.levelText = this.add.text(15, 15, `Level ${this.level}`, {
+      fontFamily: "Arial, sans-serif",
+      fontSize: "20px",
+      fontStyle: "bold",
+      color: "#fbbf24",
+    });
 
     // Score display - smaller font and with padding
     this.scoreText = this.add
@@ -221,7 +219,7 @@ export default class WordRushGameScene extends Phaser.Scene {
     // Grey out if less than 30 seconds
     const bg = this.buyLetterButton.getAt(0) as Phaser.GameObjects.Rectangle;
     const text = this.buyLetterButton.getAt(1) as Phaser.GameObjects.Text;
-    
+
     if (this.timeRemaining < 30) {
       bg.setFillStyle(0x6b7280);
       bg.setStrokeStyle(3, 0x4b5563);
@@ -239,7 +237,7 @@ export default class WordRushGameScene extends Phaser.Scene {
     // Pause the game
     const wasActive = this.gameActive;
     this.gameActive = false;
-    
+
     // Dim background
     const overlay = this.add.rectangle(
       PLAY_WIDTH / 2,
@@ -253,13 +251,7 @@ export default class WordRushGameScene extends Phaser.Scene {
     // Confirmation box
     const boxWidth = 400;
     const boxHeight = 250;
-    const box = this.add.rectangle(
-      PLAY_WIDTH / 2,
-      PLAY_HEIGHT / 2,
-      boxWidth,
-      boxHeight,
-      0x1f2937
-    );
+    const box = this.add.rectangle(PLAY_WIDTH / 2, PLAY_HEIGHT / 2, boxWidth, boxHeight, 0x1f2937);
     box.setStrokeStyle(4, 0xef4444);
 
     // Title
@@ -365,7 +357,7 @@ export default class WordRushGameScene extends Phaser.Scene {
     // Pause the game
     const wasActive = this.gameActive;
     this.gameActive = false;
-    
+
     // Dim background
     const overlay = this.add.rectangle(
       PLAY_WIDTH / 2,
@@ -379,13 +371,7 @@ export default class WordRushGameScene extends Phaser.Scene {
     // Confirmation box
     const boxWidth = 400;
     const boxHeight = 250;
-    const box = this.add.rectangle(
-      PLAY_WIDTH / 2,
-      PLAY_HEIGHT / 2,
-      boxWidth,
-      boxHeight,
-      0x1f2937
-    );
+    const box = this.add.rectangle(PLAY_WIDTH / 2, PLAY_HEIGHT / 2, boxWidth, boxHeight, 0x1f2937);
     box.setStrokeStyle(4, 0x3b82f6);
 
     // Title
@@ -496,8 +482,8 @@ export default class WordRushGameScene extends Phaser.Scene {
 
     // Get all unrevealed letters from the answer
     const unrevealedLetters = new Set<string>();
-    this.tiles.forEach(tile => {
-      if (!tile.revealed && tile.letter !== ' ') {
+    this.tiles.forEach((tile) => {
+      if (!tile.revealed && tile.letter !== " ") {
         unrevealedLetters.add(tile.letter);
       }
     });
@@ -516,24 +502,24 @@ export default class WordRushGameScene extends Phaser.Scene {
 
     // Find all tiles with this letter
     const tilesToReveal = this.tiles.filter(
-      tile => tile.letter === randomLetter && !tile.revealed
+      (tile) => tile.letter === randomLetter && !tile.revealed
     );
 
     // Reveal them with animation
     for (const tile of tilesToReveal) {
       this.revealTile(tile.container, tile.letter);
       tile.revealed = true;
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
 
   private startLevel() {
     // Clear bought letters for new level
     this.boughtLetters = [];
-    
+
     // Select random category and word, ensuring no word is longer than 9 letters
     this.currentCategory = getRandomCategory();
-    
+
     // Keep trying until we find a word where all individual words are 9 letters or less
     let attempts = 0;
     do {
@@ -544,11 +530,11 @@ export default class WordRushGameScene extends Phaser.Scene {
         console.warn("Could not find suitable word, using current one");
         break;
       }
-    } while (this.currentAnswer.split(" ").some(word => word.length > 9));
+    } while (this.currentAnswer.split(" ").some((word) => word.length > 9));
 
     this.categoryText.setText(`Category: ${this.currentCategory.name}`);
     this.levelText.setText(`Level ${this.level}`);
-    
+
     // Highlight selected letters on keyboard
     this.highlightSelectedKeys();
 
@@ -594,7 +580,7 @@ export default class WordRushGameScene extends Phaser.Scene {
         currentLineLength = wordLength;
       }
     });
-    
+
     // Add last line
     if (currentLine.length > 0) {
       lines.push(currentLine);
@@ -605,9 +591,9 @@ export default class WordRushGameScene extends Phaser.Scene {
       // Calculate total width needed for this line
       const totalLetters = lineWords.reduce((sum, w) => sum + w.length, 0);
       const numSpaces = lineWords.length - 1; // Spaces between words
-      const lineWidth = totalLetters * (tileSize + tileSpacing) - tileSpacing + 
-                        numSpaces * interWordSpacing;
-      
+      const lineWidth =
+        totalLetters * (tileSize + tileSpacing) - tileSpacing + numSpaces * interWordSpacing;
+
       let startX = (PLAY_WIDTH - lineWidth) / 2 + tileSize / 2;
 
       lineWords.forEach((word) => {
@@ -761,8 +747,6 @@ export default class WordRushGameScene extends Phaser.Scene {
     });
   }
 
-
-
   private updateInputDisplay() {
     this.inputText.setText(this.currentInput || "Type your answer...");
   }
@@ -773,7 +757,7 @@ export default class WordRushGameScene extends Phaser.Scene {
     if (trimmedInput.toUpperCase() === this.currentAnswer) {
       // Reveal the answer on the tiles
       this.revealAnswerOnTiles();
-      
+
       // Wait briefly before showing level complete
       this.time.delayedCall(800, () => {
         this.levelComplete();
@@ -792,7 +776,7 @@ export default class WordRushGameScene extends Phaser.Scene {
   }
 
   private revealAnswerOnTiles() {
-    const words = this.currentAnswer.split(' ');
+    const words = this.currentAnswer.split(" ");
     let tileIndex = 0;
 
     words.forEach((word: string) => {
@@ -801,12 +785,12 @@ export default class WordRushGameScene extends Phaser.Scene {
           const tileData = this.tiles[tileIndex];
           const tile = tileData.container.getData("tile") as Phaser.GameObjects.Rectangle;
           const text = tileData.container.getData("text") as Phaser.GameObjects.Text;
-          
+
           // Reveal the tile
           tile.setFillStyle(0x10b981); // Green for correct answer
           text.setVisible(true);
           tileData.container.setData("revealed", true);
-          
+
           // Fade in animation
           tile.setAlpha(0);
           text.setAlpha(0);
@@ -816,7 +800,7 @@ export default class WordRushGameScene extends Phaser.Scene {
             duration: 200,
             delay: i * 50,
           });
-          
+
           tileIndex++;
         }
       }
@@ -906,7 +890,7 @@ export default class WordRushGameScene extends Phaser.Scene {
   private revealAllTiles() {
     this.gameActive = false;
     this.timerEvent?.remove();
-    
+
     // Hide the give up button
     this.giveUpButton.setVisible(false);
 
@@ -915,7 +899,7 @@ export default class WordRushGameScene extends Phaser.Scene {
       if (!tileData.container.getData("revealed")) {
         const tile = tileData.container.getData("tile") as Phaser.GameObjects.Rectangle;
         const text = tileData.container.getData("text") as Phaser.GameObjects.Text;
-        
+
         tile.setFillStyle(0xf3f4f6);
         text.setVisible(true);
         tileData.container.setData("revealed", true);
@@ -954,7 +938,7 @@ export default class WordRushGameScene extends Phaser.Scene {
   }
 
   private playDingSound() {
-    if (!this.audioContext || this.audioContext.state === 'closed') {
+    if (!this.audioContext || this.audioContext.state === "closed") {
       this.audioContext = new AudioContext();
     }
     const audioContext = this.audioContext;
@@ -967,10 +951,7 @@ export default class WordRushGameScene extends Phaser.Scene {
     oscillator.frequency.value = 800;
     oscillator.type = "sine";
     gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      audioContext.currentTime + 0.15
-    );
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
 
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.15);
@@ -989,19 +970,21 @@ export default class WordRushGameScene extends Phaser.Scene {
 
     // QWERTY layout rows
     const rows = [
-      ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-      ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-      ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
-      ['SPACE', 'BACKSPACE']
+      ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+      ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+      ["Z", "X", "C", "V", "B", "N", "M"],
+      ["SPACE", "BACKSPACE"],
     ];
 
     rows.forEach((row, rowIndex) => {
       // Find the longest row to determine base key width
-      const maxRowKeys = Math.max(...rows.map(r => {
-        // Count regular keys (SPACE and BACKSPACE don't affect the base width calculation)
-        return r.filter(k => k.length === 1).length;
-      }));
-      
+      const maxRowKeys = Math.max(
+        ...rows.map((r) => {
+          // Count regular keys (SPACE and BACKSPACE don't affect the base width calculation)
+          return r.filter((k) => k.length === 1).length;
+        })
+      );
+
       // Calculate key width based on the longest row (10 keys in top row)
       const totalSpacing = (maxRowKeys - 1) * keySpacing;
       const keyWidth = (availableWidth - totalSpacing) / maxRowKeys;
@@ -1009,9 +992,9 @@ export default class WordRushGameScene extends Phaser.Scene {
       // Calculate this row's width
       let rowWidth = 0;
       row.forEach((key) => {
-        if (key === 'BACKSPACE') {
+        if (key === "BACKSPACE") {
           rowWidth += keyWidth * 2 + keySpacing; // 2x width
-        } else if (key === 'SPACE') {
+        } else if (key === "SPACE") {
           rowWidth += keyWidth * 5 + keySpacing; // 5x width
         } else {
           rowWidth += keyWidth + keySpacing;
@@ -1025,9 +1008,9 @@ export default class WordRushGameScene extends Phaser.Scene {
       row.forEach((key) => {
         // Regular keys use base width, special keys are larger
         let width = keyWidth;
-        if (key === 'BACKSPACE') {
+        if (key === "BACKSPACE") {
           width = keyWidth * 2;
-        } else if (key === 'SPACE') {
+        } else if (key === "SPACE") {
           width = keyWidth * 5;
         }
 
@@ -1040,21 +1023,23 @@ export default class WordRushGameScene extends Phaser.Scene {
 
         // Key label
         let label = key;
-        let fontSize = '20px';
-        if (key === 'BACKSPACE') {
-          label = '⌫';
-          fontSize = '26px';
-        } else if (key === 'SPACE') {
-          label = '';
-          fontSize = '16px';
+        let fontSize = "20px";
+        if (key === "BACKSPACE") {
+          label = "⌫";
+          fontSize = "26px";
+        } else if (key === "SPACE") {
+          label = "";
+          fontSize = "16px";
         }
-        
-        const keyText = this.add.text(0, 0, label, {
-          fontFamily: "Arial, sans-serif",
-          fontSize: fontSize,
-          fontStyle: "bold",
-          color: "#ffffff",
-        }).setOrigin(0.5);
+
+        const keyText = this.add
+          .text(0, 0, label, {
+            fontFamily: "Arial, sans-serif",
+            fontSize: fontSize,
+            fontStyle: "bold",
+            color: "#ffffff",
+          })
+          .setOrigin(0.5);
 
         keyContainer.add([bg, keyText]);
         keyContainer.setSize(width, keyHeight);
@@ -1074,15 +1059,18 @@ export default class WordRushGameScene extends Phaser.Scene {
           this.lastKeyPressTime = now;
 
           // Update input immediately (no delay)
-          if (key === 'BACKSPACE') {
+          if (key === "BACKSPACE") {
             if (this.currentInput.length > 0) {
               this.currentInput = this.currentInput.slice(0, -1);
               this.updateInputDisplay();
             }
-          } else if (key === 'SPACE') {
+          } else if (key === "SPACE") {
             // Prevent double spaces
-            if (this.currentInput.length > 0 && this.currentInput[this.currentInput.length - 1] !== ' ') {
-              this.currentInput += ' ';
+            if (
+              this.currentInput.length > 0 &&
+              this.currentInput[this.currentInput.length - 1] !== " "
+            ) {
+              this.currentInput += " ";
               this.updateInputDisplay();
             }
           } else {
@@ -1103,7 +1091,7 @@ export default class WordRushGameScene extends Phaser.Scene {
         keyContainer.on("pointerout", () => {
           const isSelected = this.selectedLetters.includes(key);
           const isBought = this.boughtLetters.includes(key);
-          
+
           if (isBought) {
             bg.setFillStyle(0x10b981); // Green for bought letters
           } else if (isSelected) {
@@ -1121,16 +1109,16 @@ export default class WordRushGameScene extends Phaser.Scene {
 
   private highlightSelectedKeys() {
     // Highlight keys that match selected letters (blue)
-    this.selectedLetters.forEach(letter => {
+    this.selectedLetters.forEach((letter) => {
       const keyContainer = this.keyboardKeys.get(letter);
       if (keyContainer) {
         const bg = keyContainer.getAt(0) as Phaser.GameObjects.Rectangle;
         bg.setFillStyle(0x3b82f6); // Blue highlight for selected
       }
     });
-    
+
     // Highlight bought letters (green) - these override selected letters
-    this.boughtLetters.forEach(letter => {
+    this.boughtLetters.forEach((letter) => {
       const keyContainer = this.keyboardKeys.get(letter);
       if (keyContainer) {
         const bg = keyContainer.getAt(0) as Phaser.GameObjects.Rectangle;
@@ -1140,7 +1128,7 @@ export default class WordRushGameScene extends Phaser.Scene {
   }
 
   private playErrorSound() {
-    if (!this.audioContext || this.audioContext.state === 'closed') {
+    if (!this.audioContext || this.audioContext.state === "closed") {
       this.audioContext = new AudioContext();
     }
     const audioContext = this.audioContext;
@@ -1153,17 +1141,14 @@ export default class WordRushGameScene extends Phaser.Scene {
     oscillator.frequency.value = 150;
     oscillator.type = "sawtooth";
     gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      audioContext.currentTime + 0.2
-    );
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
 
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.2);
   }
 
   private playSelectSound() {
-    if (!this.audioContext || this.audioContext.state === 'closed') {
+    if (!this.audioContext || this.audioContext.state === "closed") {
       this.audioContext = new AudioContext();
     }
     const audioContext = this.audioContext;
@@ -1176,17 +1161,14 @@ export default class WordRushGameScene extends Phaser.Scene {
     oscillator.frequency.value = 600;
     oscillator.type = "sine";
     gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      audioContext.currentTime + 0.1
-    );
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
 
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.1);
   }
 
   private playLevelCompleteSound() {
-    if (!this.audioContext || this.audioContext.state === 'closed') {
+    if (!this.audioContext || this.audioContext.state === "closed") {
       this.audioContext = new AudioContext();
     }
     const audioContext = this.audioContext;

@@ -23,9 +23,7 @@ export const countries = [
   "NORWAY",
   "DENMARK",
   "FINLAND",
-  "NETHERLANDS",
   "BELGIUM",
-  "SWITZERLAND",
   "AUSTRIA",
   "GREECE",
   "PORTUGAL",
@@ -47,6 +45,5 @@ export const countries = [
   "CZECH REPUBLIC",
   "HUNGARY",
   "ROMANIA",
-  "PHILIPPINES",
   "PAKISTAN",
 ];
