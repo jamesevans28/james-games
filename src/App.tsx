@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import GameHub from "./pages/home";
-import PlayGame from "./pages/games/[gameId]";
+import PlayGame from "./pages/games/PlayGame";
 import LeaderboardPage from "./pages/leaderboard/[gameId]";
 import LoginPage from "./pages/login";
 import SignupPage from "./pages/signup";

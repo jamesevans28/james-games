@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/authGuards.js";
 import {
-	getRatingSummaryController,
-	listRatingSummaries,
-	submitRating,
+  getRatingSummaryController,
+  listRatingSummaries,
+  submitRating,
 } from "../controllers/ratingsController.js";
 
 const router = Router();

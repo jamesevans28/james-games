@@ -75,32 +75,42 @@ export default function GameHub() {
   const GameCard = ({ game }: { game: GameMeta }) => {
     const summary = ratings[game.id];
     return (
-    <div
-      className="bg-white rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-      onClick={() => navigate(`/games/${game.id}`)}
-    >
-      {/* Game Thumbnail */}
       <div
-        className="aspect-square bg-cover bg-center"
-        style={{ backgroundImage: `url(${game.thumbnail || "/assets/logo.png"})` }}
-        title={game.title}
-      />
+        className="bg-white rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+        onClick={() => navigate(`/games/${game.id}`)}
+      >
+        {/* Game Thumbnail */}
+        <div
+          className="aspect-square bg-cover bg-center"
+          style={{ backgroundImage: `url(${game.thumbnail || "/assets/logo.png"})` }}
+          title={game.title}
+        />
 
-      {/* Game Info */}
-      <div className="px-3 py-2">
-        <h3 className="text-sm font-semibold truncate text-black">{game.title}</h3>
-        <div className="mt-1 flex items-center gap-1 text-xs text-gray-600">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill={summary ? "#F59E0B" : "none"} stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M12 2.5l3.09 6.26 6.91.99-5 4.87 1.18 6.88L12 17.77 5.82 21.5l1.18-6.88-5-4.87 6.91-.99L12 2.5z" />
-          </svg>
-          <span className="font-semibold text-black">
-            {summary ? summary.avgRating.toFixed(1) : "—"}
-          </span>
-          <span className="text-gray-400">({summary?.ratingCount ?? 0})</span>
+        {/* Game Info */}
+        <div className="px-3 py-2">
+          <h3 className="text-sm font-semibold truncate text-black">{game.title}</h3>
+          <div className="mt-1 flex items-center gap-1 text-xs text-gray-600">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill={summary ? "#F59E0B" : "none"}
+              stroke="#F59E0B"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d="M12 2.5l3.09 6.26 6.91.99-5 4.87 1.18 6.88L12 17.77 5.82 21.5l1.18-6.88-5-4.87 6.91-.99L12 2.5z" />
+            </svg>
+            <span className="font-semibold text-black">
+              {summary ? summary.avgRating.toFixed(1) : "—"}
+            </span>
+            <span className="text-gray-400">({summary?.ratingCount ?? 0})</span>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
   };
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">

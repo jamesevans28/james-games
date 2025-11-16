@@ -34,6 +34,7 @@ export default function PlayGame() {
   const mountingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [mounting, setMounting] = useState(false);
   const [showScore, setShowScore] = useState(false);
   const [lastScore, setLastScore] = useState<number | null>(null);
   const { user } = useAuth();
@@ -58,7 +59,11 @@ export default function PlayGame() {
     }
     const cached = getCachedRatingSummary(meta.id);
     setRatingSummary(cached);
-    setUserRating(null);
+    setUserRating(
+      typeof cached?.userRating === "number" && !Number.isNaN(cached.userRating)
+        ? cached.userRating
+        : null
+    );
   }, [meta]);
 
   useEffect(() => {
@@ -72,6 +77,7 @@ export default function PlayGame() {
   const mountGame = useCallback(async () => {
     if (mountingRef.current) return;
     mountingRef.current = true;
+    setMounting(true);
     try {
       if (!meta) {
         setError("Game not found");
@@ -94,35 +100,9 @@ export default function PlayGame() {
       setError("Failed to load game");
     } finally {
       mountingRef.current = false;
+      setMounting(false);
     }
   }, [meta]);
-
-  const openRatingPrompt = useCallback(
-    async (nextAction: "none" | "playAgain" | "close") => {
-      if (!meta || !user) return;
-      setPendingRatingTrigger(false);
-      setPendingPromptAction(nextAction);
-      setRatingPromptOpen(true);
-      setRatingError(null);
-      if (!ratingSummary || ratingSummary.gameId !== meta.id || ratingSummary.userRating === undefined) {
-        setRatingLoading(true);
-        try {
-          const summary = await fetchRatingSummary(meta.id);
-          setRatingSummary(summary);
-          setCachedRatingSummary(summary);
-          setUserRating(summary.userRating ?? null);
-        } catch (err) {
-          console.error("Failed to load rating summary", err);
-          setRatingError("Unable to load rating info right now.");
-        } finally {
-          setRatingLoading(false);
-        }
-      } else {
-        setUserRating(ratingSummary.userRating ?? null);
-      }
-    },
-    [meta, ratingSummary, user]
-  );
 
   const completePromptFlow = useCallback(() => {
     if (pendingPromptAction === "playAgain") {
@@ -133,6 +113,50 @@ export default function PlayGame() {
       setPendingPromptAction("none");
     }
   }, [pendingPromptAction, mountGame]);
+
+  const openRatingPrompt = useCallback(
+    async (nextAction: "none" | "playAgain" | "close") => {
+      if (!meta || !user) return;
+      setPendingRatingTrigger(false);
+      setPendingPromptAction(nextAction);
+      setRatingError(null);
+
+      // If we already know the user has rated, skip showing the prompt.
+      const knownUserRating = userRating ?? ratingSummary?.userRating ?? null;
+      if (typeof knownUserRating === "number" && !Number.isNaN(knownUserRating)) {
+        completePromptFlow();
+        return;
+      }
+
+      // Otherwise fetch latest summary to confirm whether the prompt is needed
+      setRatingLoading(true);
+      try {
+        const summary = await fetchRatingSummary(meta.id);
+        setRatingSummary(summary);
+        setCachedRatingSummary(summary);
+        const fetchedUserRating =
+          typeof summary.userRating === "number" && !Number.isNaN(summary.userRating)
+            ? summary.userRating
+            : null;
+        setUserRating(fetchedUserRating);
+        if (fetchedUserRating !== null) {
+          // User has already rated — don't open the modal.
+          completePromptFlow();
+          return;
+        }
+        // No rating yet — show the prompt now
+        setRatingPromptOpen(true);
+      } catch (err) {
+        console.error("Failed to load rating summary", err);
+        setRatingError("Unable to load rating info right now.");
+        // If we can't confirm, don't block the user — just continue their flow.
+        completePromptFlow();
+      } finally {
+        setRatingLoading(false);
+      }
+    },
+    [meta, user, userRating, ratingSummary?.userRating, completePromptFlow]
+  );
 
   const handleRatingSkip = useCallback(() => {
     setRatingPromptOpen(false);
@@ -203,12 +227,17 @@ export default function PlayGame() {
       if (user) {
         const count = incrementPlayCounter(meta.id);
         if (count > 0 && count % RATING_PROMPT_INTERVAL === 0) {
-          setPendingRatingTrigger(true);
+          const alreadyRated =
+            typeof (userRating ?? ratingSummary?.userRating) === "number" &&
+            !Number.isNaN(userRating ?? ratingSummary?.userRating);
+          if (!alreadyRated) {
+            setPendingRatingTrigger(true);
+          }
         }
       }
     });
     return () => off?.();
-  }, [meta, user]);
+  }, [meta, user, userRating, ratingSummary?.userRating]);
 
   useEffect(() => {
     let canceled = false;
@@ -256,6 +285,20 @@ export default function PlayGame() {
             id="game-container"
             className="relative w-full h-full overflow-hidden bg-black"
           />
+          {mounting && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-[1000]">
+              <div className="flex flex-col items-center">
+                <img
+                  src="/assets/rocket-spinner.svg"
+                  alt="Loading"
+                  className="w-32 h-32 animate-pulse"
+                />
+                <div className="mt-4 text-white font-semibold tracking-[0.35em] text-sm">
+                  LOADING
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

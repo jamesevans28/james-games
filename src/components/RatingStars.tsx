@@ -25,12 +25,11 @@ export default function RatingStars({
       {[1, 2, 3, 4, 5].map((star) => {
         const filled = displayValue >= star;
         const shared = {
-          key: star,
           className: "transition-transform",
         };
         if (!interactive) {
           return (
-            <span {...shared}>
+            <span key={star} {...shared}>
               <StarIcon filled={filled} size={px} />
             </span>
           );
@@ -38,6 +37,7 @@ export default function RatingStars({
         return (
           <button
             type="button"
+            key={star}
             {...shared}
             onMouseEnter={() => setHover(star)}
             onMouseLeave={() => setHover(null)}

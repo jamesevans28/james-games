@@ -76,7 +76,7 @@ export default function GameLanding({ meta, onPlay }: Props) {
     } catch (err: any) {
       console.error("Failed to submit rating", err);
       if (err?.message === "signin_required") {
-        setRatingError("Sign in to rate this game.");
+        setRatingError("Sign in to rate this game (maybe relog).");
       } else {
         setRatingError("Unable to save your rating. Please try again.");
       }
@@ -411,9 +411,7 @@ function RatingSummaryCard({
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500">Overall rating</p>
-          <div className="text-3xl font-extrabold text-black">
-            {loading ? "—" : avg.toFixed(1)}
-          </div>
+          <div className="text-3xl font-extrabold text-black">{loading ? "—" : avg.toFixed(1)}</div>
           <p className="text-xs text-gray-500">{count} total ratings</p>
         </div>
         <RatingStars value={avg} readOnly size="sm" />
@@ -430,8 +428,20 @@ function RatingSummaryCard({
                   fill="none"
                   aria-hidden
                 >
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" opacity="0.25" />
-                  <path d="M22 12a10 10 0 00-10-10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    opacity="0.25"
+                  />
+                  <path
+                    d="M22 12a10 10 0 00-10-10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
                 </svg>
               )}
             </p>
