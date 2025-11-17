@@ -1,13 +1,45 @@
+// (Removed duplicate power-up system methods and properties)
 import Phaser from "phaser";
 import { trackGameStart } from "../../utils/analytics";
 import { dispatchGameOver } from "../../utils/gameEvents";
 
-// Angle spacing constraints for new target placement (degrees)
-// Tweak these to tune how far the next highlight can appear from the last angle.
-// Note: due to circular geometry, the effective maximum separation using shortest arc is 180°.
-// If you set a value > 180, it will be clamped to 180 internally.
 const MIN_TARGET_SEPARATION_DEG = 40;
 const MAX_TARGET_SEPARATION_DEG = 250;
+const PERFECT_WINDOW_RATIO = 0.2;
+
+const POWERUP_TYPES = ["slow-time", "wide-wedge", "perfect-touch", "auto-hit"] as const;
+type PowerupType = (typeof POWERUP_TYPES)[number];
+
+const POWERUP_CONFIG: Record<PowerupType, { short: string; banner: string; circleColor: number; textColor: string; duration: number }> = {
+  "slow-time": {
+    short: "SLOW",
+    banner: "Slow Time",
+    circleColor: 0x1d4ed8,
+    textColor: "#BFDBFE",
+    duration: 6500,
+  },
+  "wide-wedge": {
+    short: "WIDE",
+    banner: "Wide Target",
+    circleColor: 0x9333ea,
+    textColor: "#F3E8FF",
+    duration: 6000,
+  },
+  "perfect-touch": {
+    short: "PERF",
+    banner: "Perfect Streak",
+    circleColor: 0x047857,
+    textColor: "#D1FAE5",
+    duration: 6000,
+  },
+  "auto-hit": {
+    short: "AUTO",
+    banner: "Auto Tap",
+    circleColor: 0xf59e0b,
+    textColor: "#FEF3C7",
+    duration: 6000,
+  },
+};
 
 export default class ReflexRingGame extends Phaser.Scene {
   private centerX!: number;
@@ -15,46 +47,64 @@ export default class ReflexRingGame extends Phaser.Scene {
   private radius!: number;
 
   private arrowContainer!: Phaser.GameObjects.Container;
-  private currentAngle = 0; // radians
-  private angularVelocity = 1.5; // rad/s
+  private arrowSprite!: Phaser.GameObjects.Sprite;
+  private arrowShadow!: Phaser.GameObjects.Sprite;
+  private hitPulseTween?: Phaser.Tweens.Tween;
+
+  private currentAngle = 0;
+  private angularVelocity = 1.5;
+  private readonly baseAngularVelocity = 1.5;
+  private savedAngularVelocity: number | null = null;
+
   private maxSpeed = 5;
+  private readonly baseMaxSpeed = 5;
+  private savedMaxSpeed: number | null = null;
 
-  private targetAngle = 0; // radians
-  private segmentWidth = Phaser.Math.DegToRad(28);
+  private targetAngle = 0;
+  private readonly baseSegmentWidth = Phaser.Math.DegToRad(28);
+  private segmentWidth = this.baseSegmentWidth;
 
+  private bgSprites: Phaser.GameObjects.Sprite[] = [];
+  private ringSprite!: Phaser.GameObjects.Sprite;
   private wedgeGraphics!: Phaser.GameObjects.Graphics;
-  private ringGraphics!: Phaser.GameObjects.Graphics;
-  private wedgeColor: number = 0xff3d81;
-  private readonly wedgePalette: number[] = [
-    0x22e3ff, // cyan
-    0xffd166, // warm yellow
-    0xff6b6b, // coral
-    0x7cfc00, // lime
-    0x9d4edd, // purple
-    0x00f5d4, // aqua mint
-  ];
+  private wedgeColor = 0xff3d81;
+  private readonly wedgePalette = [0x22e3ff, 0xffd166, 0xff6b6b, 0x7cfc00, 0x9d4edd, 0x00f5d4];
 
   private score = 0;
   private best = 0;
   private scoreText!: Phaser.GameObjects.Text;
 
-  // Track pass-through logic for target wedge
   private inWedgePrev = false;
   private tappedThisWedge = false;
   private gameOver = false;
 
-  // DOM tap forwarding (to capture taps outside the canvas inside the game container)
   private parentEl: HTMLElement | null = null;
   private domPointerHandler?: (ev: PointerEvent) => void;
+
+  private powerupToken?: Phaser.GameObjects.Container;
+  private pendingPowerupType: PowerupType | null = null;
+  private activePowerupType: PowerupType | null = null;
+  private powerupTimer: Phaser.Time.TimerEvent | null = null;
+  private powerupActive = false;
+  private powerupStatusText?: Phaser.GameObjects.Text;
+  private currentPowerupLabel = "";
+  private powerupTokenRadius = 0;
+  private forcePerfectHits = false;
+  private autoHitActive = false;
+
+  private powerupSpawnTimer?: Phaser.Time.TimerEvent;
+  private backgroundDriftTimer?: Phaser.Time.TimerEvent;
 
   constructor() {
     super("ReflexRingGame");
   }
 
   preload(): void {
-    // Load images via asset pack for consistency
-    // Use an absolute path so routes like /games/:id don't resolve this relatively
-    this.load.pack("preload", "/assets/preload-asset-pack.json", "preload");
+    this.load.svg("arrow", "/assets/reflex-ring/arrow.svg");
+    this.load.svg("ring", "/assets/reflex-ring/ring.svg");
+    this.load.svg("bg-block", "/assets/reflex-ring/bg-block.svg");
+    this.load.svg("bg-rune", "/assets/reflex-ring/bg-rune.svg");
+    this.load.svg("bg-sparkle", "/assets/reflex-ring/bg-sparkle.svg");
   }
 
   create(): void {
@@ -63,106 +113,46 @@ export default class ReflexRingGame extends Phaser.Scene {
     this.centerY = Math.floor(height / 2);
     this.radius = Math.floor(Math.min(width, height) * 0.35);
 
-    // Background now handled by DOM/CSS to fully cover viewport; Phaser canvas is transparent
+    this.gameOver = false;
+    this.currentAngle = 0;
+    this.angularVelocity = this.baseAngularVelocity;
+    this.maxSpeed = this.baseMaxSpeed;
+  this.segmentWidth = this.baseSegmentWidth;
+  this.forcePerfectHits = false;
+  this.autoHitActive = false;
+  this.currentPowerupLabel = "";
+  this.activePowerupType = null;
+  this.pendingPowerupType = null;
+  this.powerupToken?.destroy(true);
+  this.powerupToken = undefined;
+  this.powerupStatusText?.destroy();
+  this.powerupStatusText = undefined;
 
-    // Ring with cartoon ticks (bold outline + inner stroke)
-    this.ringGraphics = this.add.graphics();
-    this.ringGraphics.lineStyle(12, 0x0b0b0b, 1);
-    this.ringGraphics.strokeCircle(this.centerX, this.centerY, this.radius + 3);
-    this.ringGraphics.lineStyle(12, 0xffffff, 1);
-    this.ringGraphics.strokeCircle(this.centerX, this.centerY, this.radius);
-    // Tick marks every 30 degrees (cartoon black)
-    this.ringGraphics.lineStyle(6, 0x0b0b0b, 0.9);
-    for (let a = 0; a < Math.PI * 2; a += Math.PI / 6) {
-      const r1 = this.radius - 12;
-      const r2 = this.radius + 6;
-      const x1 = this.centerX + Math.cos(a) * r1;
-      const y1 = this.centerY + Math.sin(a) * r1;
-      const x2 = this.centerX + Math.cos(a) * r2;
-      const y2 = this.centerY + Math.sin(a) * r2;
-      this.ringGraphics.lineBetween(x1, y1, x2, y2);
-    }
+    this.createBackground(width, height);
+    this.createRing();
+    this.createArrow();
+    this.createUi(height);
 
-    // Arrow (cartoon) in a container so we can rotate from center
-    this.arrowContainer = this.add.container(this.centerX, this.centerY);
-    const margin = 12;
-    const shaftHeight = Math.max(10, Math.floor(this.radius * 0.08));
-    const headLength = Math.max(18, Math.floor(this.radius * 0.2));
-    const shaftLength = this.radius - margin;
-    const shaftWidth = Math.max(12, shaftLength - headLength);
-    const headHalfWidth = Math.floor(shaftHeight * 0.7);
-
-    // Shadow (offset)
-    const shadowShaft = this.add
-      .rectangle(3, 3, shaftWidth, shaftHeight, 0x000000, 0.35)
-      .setOrigin(0, 0.5);
-    const shadowHead = this.add
-      .triangle(
-        shaftWidth + 3,
-        3,
-        0,
-        -headHalfWidth,
-        0,
-        headHalfWidth,
-        headLength,
-        0,
-        0x000000,
-        0.35
-      )
-      .setOrigin(0, 0.5);
-
-    // Main arrow
-    const shaft = this.add.rectangle(0, 0, shaftWidth, shaftHeight, 0xffd400).setOrigin(0, 0.5);
-    shaft.setStrokeStyle(4, 0x0b0b0b, 1);
-    const head = this.add
-      .triangle(shaftWidth, 0, 0, -headHalfWidth, 0, headHalfWidth, headLength, 0, 0xfff275)
-      .setOrigin(0, 0);
-    head.setStrokeStyle(4, 0x0b0b0b, 1);
-    this.arrowContainer.add([shadowShaft, shadowHead, shaft, head]);
-
-    // Wedge graphics layer
-    this.wedgeGraphics = this.add.graphics();
-    this.best = Number(localStorage.getItem("reflex-ring-best") || 0);
-    this.scoreText = this.add
-      .text(this.centerX, 24, this.makeScoreText(), {
-        fontFamily: "Fredoka, Arial Black, Arial, sans-serif",
-        fontSize: "28px",
-        color: "#ffffff",
-        stroke: "#000",
-        strokeThickness: 6,
-        align: "center",
-      })
-      .setOrigin(0.5, 0);
-
-    this.add
-      .text(this.centerX, height - 40, "Tap when the arrow hits the highlight", {
-        fontFamily: "Arial",
-        fontSize: "18px",
-        color: "#3f3f3f",
-      })
-      .setOrigin(0.5, 1);
-
-    // Initial target
     this.pickNewTargetAngle(this.currentAngle);
 
-    // Input: in-canvas tap
+    this.powerupSpawnTimer = this.time.addEvent({
+      delay: Phaser.Math.Between(4000, 7000),
+      loop: true,
+      callback: () => {
+        if (!this.gameOver && !this.powerupActive && !this.powerupToken) {
+          this.spawnPowerup();
+        }
+      },
+    });
+
     this.input.on("pointerdown", this.handleTap, this);
+    this.attachDomPointerHandler();
+    trackGameStart("reflex-ring", "Reflex Ring");
 
-    // Input: capture taps on the full game container (outside canvas letterbox)
-    this.parentEl = this.game.canvas.parentElement as HTMLElement | null;
-    this.domPointerHandler = (ev: PointerEvent) => {
-      // Avoid double trigger when the tap is directly on the canvas
-      if (ev.target instanceof HTMLCanvasElement) return;
-      // Ignore if the scene is in game over state; restart is handled via scene input
-      if (this.gameOver) return;
-      this.handleTap();
-    };
-    if (this.parentEl && this.domPointerHandler) {
-      this.parentEl.addEventListener("pointerdown", this.domPointerHandler, { passive: true });
-    }
-
-    // Clean up DOM listener on shutdown
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.backgroundDriftTimer?.remove();
+      this.powerupSpawnTimer?.remove();
+      this.powerupTimer?.remove();
       if (this.parentEl && this.domPointerHandler) {
         this.parentEl.removeEventListener("pointerdown", this.domPointerHandler);
       }
@@ -172,23 +162,310 @@ export default class ReflexRingGame extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
+    if (this.gameOver) {
+      this.arrowContainer.rotation = this.currentAngle;
+      return;
+    }
+
     const dt = delta / 1000;
     this.currentAngle = Phaser.Math.Angle.Wrap(this.currentAngle + this.angularVelocity * dt);
     this.arrowContainer.rotation = this.currentAngle;
 
-    // Detect entering/exiting the target wedge to fail the run if player doesn't tap in time
+    const wasInWedge = this.inWedgePrev;
     const inWedgeNow = this.isWithinWedge(this.currentAngle, this.targetAngle, this.segmentWidth);
-    if (!this.inWedgePrev && inWedgeNow) {
-      // Just entered the wedge for this pass
+    if (!wasInWedge && inWedgeNow) {
       this.tappedThisWedge = false;
     }
-    if (this.inWedgePrev && !inWedgeNow) {
-      // Exited the wedge; if not tapped during this pass -> game over
-      if (!this.tappedThisWedge && !this.gameOver) {
+    if (wasInWedge && !inWedgeNow && !this.tappedThisWedge) {
+      if (this.autoHitActive) {
+        const perfect = this.forcePerfectHits || this.isPerfectHit(this.currentAngle, this.targetAngle);
+        this.registerHit(perfect, perfect);
+      } else {
         this.onGameOver();
       }
     }
     this.inWedgePrev = inWedgeNow;
+
+    if (!this.powerupActive && this.powerupToken && this.pendingPowerupType) {
+      const tip = this.getArrowTipPosition();
+      const dx = tip.x - this.powerupToken.x;
+      const dy = tip.y - this.powerupToken.y;
+      const distanceSq = dx * dx + dy * dy;
+      const threshold = (this.powerupTokenRadius + 24) ** 2;
+      if (distanceSq <= threshold) {
+        this.activatePowerup(this.pendingPowerupType);
+      }
+    }
+
+    if (this.powerupActive && this.powerupTimer && this.powerupStatusText && this.activePowerupType) {
+      const remaining = Math.max(0, this.powerupTimer.getRemainingSeconds());
+      this.powerupStatusText.setText(`${this.currentPowerupLabel} ${remaining.toFixed(1)}s`);
+    }
+  }
+
+  private createBackground(width: number, height: number): void {
+    this.bgSprites.forEach((sprite) => sprite.destroy());
+    this.bgSprites = [];
+
+    const pushSprite = (key: string, count: number, alpha: number, depth: number, scaleRange: [number, number]) => {
+      for (let i = 0; i < count; i++) {
+        const sprite = this.add.sprite(Phaser.Math.Between(0, width), Phaser.Math.Between(0, height), key);
+        sprite.setAlpha(alpha);
+        sprite.setScale(Phaser.Math.FloatBetween(scaleRange[0], scaleRange[1]));
+        sprite.setDepth(depth);
+        this.bgSprites.push(sprite);
+      }
+    };
+
+    pushSprite("bg-block", 8, 0.18, -10, [0.7, 1.2]);
+    pushSprite("bg-rune", 6, 0.13, -9, [0.8, 1.3]);
+    pushSprite("bg-sparkle", 10, 0.09, -8, [0.5, 1.1]);
+
+    this.backgroundDriftTimer?.remove();
+    this.backgroundDriftTimer = this.time.addEvent({
+      delay: 16,
+      loop: true,
+      callback: () => {
+        const now = this.time.now;
+        this.bgSprites.forEach((sprite, idx) => {
+          sprite.x += Math.sin(now / 800 + idx) * 0.2;
+          sprite.y += Math.cos(now / 1000 + idx) * 0.2;
+          if (sprite.x < -20) sprite.x = width + 20;
+          if (sprite.x > width + 20) sprite.x = -20;
+          if (sprite.y < -20) sprite.y = height + 20;
+          if (sprite.y > height + 20) sprite.y = -20;
+        });
+      },
+    });
+  }
+
+  private createRing(): void {
+    if (this.ringSprite) this.ringSprite.destroy();
+    this.ringSprite = this.add.sprite(this.centerX, this.centerY, "ring");
+    this.scaleSpriteByHeight(this.ringSprite, this.radius * 2.15);
+    this.ringSprite.setDepth(1);
+  }
+
+  private createArrow(): void {
+    if (this.arrowContainer) this.arrowContainer.destroy();
+    this.arrowContainer = this.add.container(this.centerX, this.centerY).setDepth(3);
+
+  const targetHeight = this.radius * 1.28;
+  const widthScale = 0.74;
+    const tailOriginX = 12 / 64;
+    this.arrowShadow = this.add.sprite(0, 0, "arrow").setOrigin(tailOriginX, 0.5).setAlpha(0.32).setTint(0x000000);
+    this.scaleSpriteByHeight(this.arrowShadow, targetHeight);
+  this.arrowShadow.setScale(this.arrowShadow.scaleX * widthScale, this.arrowShadow.scaleY);
+  this.arrowShadow.setPosition(5, 3);
+
+    this.arrowSprite = this.add.sprite(0, 0, "arrow").setOrigin(tailOriginX, 0.5);
+    this.scaleSpriteByHeight(this.arrowSprite, targetHeight);
+  this.arrowSprite.setScale(this.arrowSprite.scaleX * widthScale, this.arrowSprite.scaleY);
+
+    this.arrowContainer.add([this.arrowShadow, this.arrowSprite]);
+    this.arrowContainer.setScale(1);
+  }
+
+  private createUi(canvasHeight: number): void {
+    this.wedgeGraphics?.destroy();
+    this.wedgeGraphics = this.add.graphics().setDepth(2);
+
+    this.best = Number(localStorage.getItem("reflex-ring-best") || 0);
+    this.scoreText?.destroy();
+    this.scoreText = this.add
+      .text(this.centerX, 24, this.makeScoreText(), {
+        fontFamily: "Fredoka, Arial Black, Arial, sans-serif",
+        fontSize: "28px",
+        color: "#ffffff",
+        stroke: "#000000",
+        strokeThickness: 6,
+        align: "center",
+      })
+      .setOrigin(0.5, 0)
+      .setDepth(5);
+
+    this.add
+      .text(this.centerX, canvasHeight - 50, "Tap anywhere when the arrow hits the highlight", {
+        fontFamily: "Arial",
+        fontSize: "18px",
+        color: "#3f3f3f",
+        align: "center",
+      })
+      .setOrigin(0.5, 1)
+      .setDepth(4);
+  }
+
+  private attachDomPointerHandler(): void {
+    this.parentEl = this.game.canvas.parentElement as HTMLElement | null;
+    this.domPointerHandler = (ev: PointerEvent) => {
+      if (ev.target instanceof HTMLCanvasElement) return;
+      if (this.gameOver) return;
+      this.handleTap();
+    };
+    if (this.parentEl && this.domPointerHandler) {
+      this.parentEl.addEventListener("pointerdown", this.domPointerHandler, { passive: true });
+    }
+  }
+
+  private spawnPowerup(): void {
+    const type = POWERUP_TYPES[Phaser.Math.Between(0, POWERUP_TYPES.length - 1)];
+    const config = POWERUP_CONFIG[type];
+    const angle = Phaser.Math.FloatBetween(0, Phaser.Math.PI2);
+    const r = this.radius * 0.85;
+    const x = this.centerX + Math.cos(angle) * r;
+    const y = this.centerY + Math.sin(angle) * r;
+
+    const container = this.add.container(x, y).setDepth(10).setAlpha(0);
+    const radius = this.radius * 0.18;
+    const circle = this.add.circle(0, 0, radius, config.circleColor, 0.92);
+    circle.setStrokeStyle(6, 0xffffff, 0.95);
+    const label = this.add
+      .text(0, 2, config.short, {
+        fontFamily: "Fredoka, Arial Black, Arial, sans-serif",
+        fontSize: `${Math.round(radius * 0.8)}px`,
+        color: config.textColor,
+        fontStyle: "bold",
+        align: "center",
+      })
+      .setOrigin(0.5);
+    container.add([circle, label]);
+
+    this.tweens.add({ targets: container, alpha: 1, duration: 220, ease: "Cubic.Out" });
+
+    this.pendingPowerupType = type;
+    this.powerupToken = container;
+    this.powerupTokenRadius = radius;
+
+    this.time.delayedCall(config.duration + 2000, () => {
+      if (this.powerupToken && !this.powerupActive && this.pendingPowerupType === type) {
+        this.tweens.add({
+          targets: this.powerupToken,
+          alpha: 0,
+          duration: 180,
+          onComplete: () => {
+            this.powerupToken?.destroy(true);
+            this.powerupToken = undefined;
+            this.pendingPowerupType = null;
+          },
+        });
+      }
+    });
+  }
+
+  private activatePowerup(type: PowerupType): void {
+    if (this.powerupActive) return;
+    this.powerupActive = true;
+    this.activePowerupType = type;
+    this.pendingPowerupType = null;
+
+    this.powerupToken?.destroy(true);
+    this.powerupToken = undefined;
+    this.powerupTokenRadius = 0;
+
+    switch (type) {
+      case "slow-time":
+        this.savedAngularVelocity = this.angularVelocity;
+        this.savedMaxSpeed = this.maxSpeed;
+        this.angularVelocity *= 0.75;
+        this.maxSpeed *= 0.75;
+        break;
+      case "wide-wedge":
+        this.segmentWidth = this.baseSegmentWidth * 2;
+        this.drawWedge(this.targetAngle);
+        break;
+      case "perfect-touch":
+        this.forcePerfectHits = true;
+        break;
+      case "auto-hit":
+        this.autoHitActive = true;
+        break;
+    }
+
+    const { banner, textColor, duration } = POWERUP_CONFIG[type];
+    this.showPowerupStatus(banner, textColor);
+
+    this.powerupTimer?.remove();
+    this.powerupTimer = this.time.delayedCall(duration, () => this.expirePowerup());
+  }
+
+  private expirePowerup(): void {
+    if (!this.powerupActive) {
+      this.fadeOutPowerupStatus();
+      return;
+    }
+
+    if (this.activePowerupType) {
+      this.revertPowerupEffects(this.activePowerupType);
+    }
+
+    this.powerupActive = false;
+    this.activePowerupType = null;
+
+    this.powerupTimer?.remove();
+    this.powerupTimer = null;
+
+    this.fadeOutPowerupStatus();
+  }
+
+  private revertPowerupEffects(type: PowerupType): void {
+    switch (type) {
+      case "slow-time":
+        if (this.savedAngularVelocity !== null) {
+          this.angularVelocity = this.savedAngularVelocity;
+        } else {
+          this.angularVelocity = Math.sign(this.angularVelocity || 1) * this.baseAngularVelocity;
+        }
+        if (this.savedMaxSpeed !== null) {
+          this.maxSpeed = this.savedMaxSpeed;
+        } else {
+          this.maxSpeed = this.baseMaxSpeed;
+        }
+        break;
+      case "wide-wedge":
+        this.segmentWidth = this.baseSegmentWidth;
+        this.drawWedge(this.targetAngle);
+        break;
+      case "perfect-touch":
+        this.forcePerfectHits = false;
+        break;
+      case "auto-hit":
+        this.autoHitActive = false;
+        break;
+    }
+
+    this.savedAngularVelocity = null;
+    this.savedMaxSpeed = null;
+  }
+
+  private showPowerupStatus(message: string, color: string): void {
+    this.powerupStatusText?.destroy();
+    this.currentPowerupLabel = message;
+    this.powerupStatusText = this.add
+      .text(this.centerX, this.centerY - this.radius - 34, `${message}`, {
+        fontFamily: "Fredoka, Arial Black, Arial, sans-serif",
+        fontSize: "24px",
+        color,
+        stroke: "#0f172a",
+        strokeThickness: 5,
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setDepth(15);
+  }
+
+  private fadeOutPowerupStatus(delay = 0): void {
+    if (!this.powerupStatusText) return;
+    this.tweens.add({
+      targets: this.powerupStatusText,
+      alpha: 0,
+      delay,
+      duration: 220,
+      onComplete: () => {
+        this.powerupStatusText?.destroy();
+        this.powerupStatusText = undefined;
+        this.currentPowerupLabel = "";
+      },
+    });
   }
 
   private drawWedge(angle: number): void {
@@ -198,8 +475,6 @@ export default class ReflexRingGame extends Phaser.Scene {
     const end = angle + this.segmentWidth / 2;
     this.wedgeGraphics.slice(this.centerX, this.centerY, this.radius, start, end, true);
     this.wedgeGraphics.fillPath();
-
-    // Thick cartoon outline
     this.wedgeGraphics.lineStyle(4, 0x0b0b0b, 1);
     this.wedgeGraphics.beginPath();
     this.wedgeGraphics.arc(this.centerX, this.centerY, this.radius, start, end, false);
@@ -218,77 +493,77 @@ export default class ReflexRingGame extends Phaser.Scene {
     this.wedgeGraphics.strokePath();
   }
 
-  private handleTap(): void {
+  private handleTap = (): void => {
+    if (this.gameOver) return;
+
     const within = this.isWithinWedge(this.currentAngle, this.targetAngle, this.segmentWidth);
     if (within) {
-      // check for perfect hit
-      const isPerfect = this.isPerfectHit(this.currentAngle, this.targetAngle);
-
-      //update score
-      this.score += isPerfect ? 2 : 1;
-      this.scoreText.setText(this.makeScoreText());
-
-      //update speed
-      const speed = Math.abs(this.angularVelocity);
-      const next = Math.min(speed * 1.03, this.maxSpeed);
-      this.angularVelocity = -Math.sign(this.angularVelocity || 1) * next;
-
-      // Flash the wedge for feedback
-      this.tweens.add({
-        targets: this.wedgeGraphics,
-        alpha: { from: 0.6, to: 1 },
-        duration: 80,
-        yoyo: true,
-      });
-
-      // Show perfect popup if centered enough
-      if (isPerfect) {
-        const tip = this.getArrowTipPosition();
-        this.showPerfectPopup(tip.x, tip.y);
-      }
-
-      // Mark that we tapped during this wedge pass
-      this.tappedThisWedge = true;
-
-      this.pickNewTargetAngle(this.targetAngle);
+      const isPerfect = this.forcePerfectHits || this.isPerfectHit(this.currentAngle, this.targetAngle);
+      this.registerHit(isPerfect, isPerfect);
     } else {
       this.onGameOver();
     }
+  };
+
+  private registerHit(isPerfect: boolean, showPerfectPopup: boolean): void {
+    this.score += isPerfect ? 2 : 1;
+    this.scoreText.setText(this.makeScoreText());
+
+    const speed = Math.abs(this.angularVelocity);
+    const next = Math.min(speed * 1.03, this.maxSpeed);
+    this.angularVelocity = -Math.sign(this.angularVelocity || 1) * next;
+
+    this.tweens.add({ targets: this.wedgeGraphics, alpha: { from: 0.6, to: 1 }, duration: 90, yoyo: true });
+
+    this.hitPulseTween?.stop();
+    this.arrowContainer.setScale(1);
+    this.hitPulseTween = this.tweens.add({
+      targets: this.arrowContainer,
+      scaleX: 1.08,
+      scaleY: 1.08,
+      duration: 80,
+      yoyo: true,
+      ease: "Sine.Out",
+      onComplete: () => {
+        this.arrowContainer.setScale(1);
+        this.hitPulseTween = undefined;
+      },
+    });
+
+    if (showPerfectPopup && isPerfect) {
+      const tip = this.getArrowTipPosition();
+      this.showPerfectPopup(tip.x, tip.y);
+    }
+
+    this.tappedThisWedge = true;
+    this.pickNewTargetAngle(this.targetAngle);
   }
 
   private onGameOver(): void {
     if (this.gameOver) return;
     this.gameOver = true;
     this.input.off("pointerdown", this.handleTap, this);
-    // Stop arrow rotation while in game-over state
-    this.angularVelocity = 0;
+    if (this.powerupActive) {
+      this.expirePowerup();
+    } else {
+      this.fadeOutPowerupStatus();
+    }
 
-    // Camera effects
-    this.cameras.main.shake(250, 0.01);
+    this.cameras.main.shake(250, 0.012);
     this.cameras.main.flash(120, 255, 50, 50);
 
-    // Update best (local)
     if (this.score > this.best) {
       this.best = this.score;
       localStorage.setItem("reflex-ring-best", String(this.best));
     }
 
-    // Score submission is handled by the React ScoreDialog via dispatchGameOver event
-
-    const overlay = this.add.rectangle(
-      this.centerX,
-      this.centerY,
-      this.scale.width,
-      this.scale.height,
-      0x000000,
-      0.55
-    );
+    const overlay = this.add.rectangle(this.centerX, this.centerY, this.scale.width, this.scale.height, 0x000000, 0.55);
     const t1 = this.add
       .text(this.centerX, this.centerY - 20, "Game Over", {
         fontFamily: "Arial Black",
         fontSize: "42px",
         color: "#ffffff",
-        stroke: "#000",
+        stroke: "#000000",
         strokeThickness: 6,
       })
       .setOrigin(0.5);
@@ -304,30 +579,52 @@ export default class ReflexRingGame extends Phaser.Scene {
       overlay.destroy();
       t1.destroy();
       t2.destroy();
-      this.score = 0;
-      this.scoreText.setText(this.makeScoreText());
-      this.currentAngle = 0;
-      // Resume arrow rotation for a fresh run
-      this.angularVelocity = 1.5;
-      this.gameOver = false;
-      this.inWedgePrev = false;
-      this.tappedThisWedge = false;
-      this.pickNewTargetAngle(this.currentAngle);
+      this.resetGameState();
       this.input.on("pointerdown", this.handleTap, this);
       this.input.off("pointerdown", restart);
-      // Track new game start on restart attempts
       trackGameStart("reflex-ring", "Reflex Ring");
     };
 
-    // Notify shell to return to landing
     try {
       dispatchGameOver({ gameId: "reflex-ring", score: this.score, ts: Date.now() });
-    } catch {}
+    } catch {
+      // ignore dispatch errors to keep the game responsive
+    }
 
-    // Add a short delay before allowing restart to avoid accidental taps (kept for in-canvas flow)
-    this.time.delayedCall(1000, () => {
+    this.time.delayedCall(900, () => {
       this.input.once("pointerdown", restart);
     });
+  }
+
+  private resetGameState(): void {
+    this.score = 0;
+    this.scoreText.setText(this.makeScoreText());
+    this.currentAngle = 0;
+    this.angularVelocity = this.baseAngularVelocity;
+    this.maxSpeed = this.baseMaxSpeed;
+    this.savedAngularVelocity = null;
+    this.savedMaxSpeed = null;
+    this.segmentWidth = this.baseSegmentWidth;
+    this.forcePerfectHits = false;
+    this.autoHitActive = false;
+    this.activePowerupType = null;
+    this.pendingPowerupType = null;
+    this.powerupActive = false;
+    this.powerupTimer?.remove();
+    this.powerupTimer = null;
+    this.powerupToken?.destroy(true);
+    this.powerupToken = undefined;
+    this.powerupTokenRadius = 0;
+    this.powerupStatusText?.destroy();
+    this.powerupStatusText = undefined;
+    this.currentPowerupLabel = "";
+    this.hitPulseTween?.stop();
+    this.hitPulseTween = undefined;
+    this.arrowContainer.setScale(1);
+    this.tappedThisWedge = false;
+    this.inWedgePrev = false;
+    this.gameOver = false;
+    this.pickNewTargetAngle(this.currentAngle);
   }
 
   private isWithinWedge(angle: number, wedgeCenter: number, wedgeWidth: number): boolean {
@@ -335,16 +632,14 @@ export default class ReflexRingGame extends Phaser.Scene {
     return Math.abs(diff) <= (wedgeWidth * 1.2) / 2;
   }
 
-  // Perfect hit is a tighter window around the wedge center
   private isPerfectHit(angle: number, wedgeCenter: number): boolean {
     const diff = Math.abs(Phaser.Math.Angle.Wrap(angle - wedgeCenter));
-    const perfectWindow = this.segmentWidth * 0.2; // ~15% of segment width
+    const perfectWindow = this.segmentWidth * PERFECT_WINDOW_RATIO;
     return diff <= perfectWindow / 2;
   }
 
-  // Compute the world position of the arrow tip (slightly inside the ring)
   private getArrowTipPosition(): { x: number; y: number } {
-    const tipRadius = this.radius - 8;
+    const tipRadius = this.radius - 12;
     return {
       x: this.centerX + Math.cos(this.currentAngle) * tipRadius,
       y: this.centerY + Math.sin(this.currentAngle) * tipRadius,
@@ -361,46 +656,49 @@ export default class ReflexRingGame extends Phaser.Scene {
         strokeThickness: 6,
       })
       .setOrigin(0.5)
-      .setDepth(1000)
+      .setDepth(20)
       .setAlpha(0.95);
 
     this.tweens.add({
       targets: txt,
-      y: y - 24,
+      y: y - 26,
       alpha: 0,
-      duration: 500,
-      ease: "Cubic.EaseIn",
+      duration: 520,
+      ease: "Cubic.In",
       onComplete: () => txt.destroy(),
     });
   }
 
   private pickNewTargetAngle(avoidNear: number): void {
     const minSep = Phaser.Math.DegToRad(MIN_TARGET_SEPARATION_DEG);
-    // Clamp to 180° max effectively, since shortest angular distance is in [0, PI]
     const maxSep = Phaser.Math.DegToRad(Math.min(MAX_TARGET_SEPARATION_DEG, 180));
 
-    let tries = 0;
     let candidate = Phaser.Math.FloatBetween(0, Phaser.Math.PI2);
-
-    const isValid = (ang: number) => {
-      const delta = Math.abs(Phaser.Math.Angle.Wrap(ang - avoidNear)); // [0, PI]
-      return delta >= minSep && delta <= maxSep;
-    };
-
-    while (tries++ < 50 && !isValid(candidate)) {
+    let tries = 0;
+    while (tries++ < 60) {
+      const delta = Math.abs(Phaser.Math.Angle.Wrap(candidate - avoidNear));
+      if (delta >= minSep && delta <= maxSep) break;
       candidate = Phaser.Math.FloatBetween(0, Phaser.Math.PI2);
     }
 
     this.targetAngle = candidate;
-    // Pick a vibrant color for the next wedge
     this.wedgeColor = this.wedgePalette[Phaser.Math.Between(0, this.wedgePalette.length - 1)];
     this.drawWedge(this.targetAngle);
-    // Reset per-pass state so the player gets a fresh chance on the new segment
     this.inWedgePrev = false;
     this.tappedThisWedge = false;
   }
 
   private makeScoreText(): string {
     return `Score: ${this.score}   Best: ${this.best}`;
+  }
+
+  private scaleSpriteByHeight(sprite: Phaser.GameObjects.Sprite, targetHeight: number): void {
+    const source = sprite.texture.getSourceImage() as HTMLImageElement | HTMLCanvasElement | undefined;
+    if (source && source.height) {
+      const scale = targetHeight / source.height;
+      sprite.setScale(scale);
+    } else {
+      sprite.setDisplaySize(targetHeight, targetHeight);
+    }
   }
 }
