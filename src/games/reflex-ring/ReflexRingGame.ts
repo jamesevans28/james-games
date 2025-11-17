@@ -729,15 +729,29 @@ export default class ReflexRingGame extends Phaser.Scene {
   }
 
   private scaleSpriteByHeight(sprite: Phaser.GameObjects.Sprite, targetHeight: number): void {
+    // Prefer the texture/frame intrinsic size (works consistently for SVGs and atlases).
+    const frame = sprite.frame as Phaser.Textures.Frame | undefined;
     const source = sprite.texture.getSourceImage() as
       | HTMLImageElement
       | HTMLCanvasElement
       | undefined;
-    if (source && source.height) {
-      const scale = targetHeight / source.height;
+
+    const intrinsicHeight = frame?.height || source?.height || 0;
+    const intrinsicWidth = frame?.width || source?.width || 0;
+
+    // If we have a sensible intrinsic height, scale relative to it. Some SVGs
+    // (depending on how they're served) report a height of 0 or 1 — treat
+    // those as invalid and fall back to setDisplaySize which uses logical pixels.
+    if (intrinsicHeight && intrinsicHeight > 8) {
+      const scale = targetHeight / intrinsicHeight;
       sprite.setScale(scale);
+    } else if (intrinsicWidth && intrinsicHeight) {
+      // defensive fallback: preserve aspect ratio
+      const aspect = intrinsicWidth / Math.max(1, intrinsicHeight);
+      sprite.setDisplaySize(Math.round(targetHeight * aspect), Math.round(targetHeight));
     } else {
-      sprite.setDisplaySize(targetHeight, targetHeight);
+      // Last resort: square display size
+      sprite.setDisplaySize(Math.round(targetHeight), Math.round(targetHeight));
     }
   }
 }
