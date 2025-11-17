@@ -75,3 +75,5 @@ Mobile-first web game hub built with React + Vite and Phaser 3. Each game is sel
 8. **Patterns to follow**: Touch-optimized, 60 FPS, portrait mode, modular scenes, commented logic. Test on mobile, ensure no global state.
 
 Prioritize mobile performance, simplicity, and Phaser best practices. Reference existing games for new ones.
+
+When making changes to game logic, update the updatedAt field in the corresponding game entry in `src/games/index.ts`.
