@@ -261,7 +261,9 @@ export default class ReflexRingGame extends Phaser.Scene {
   private createRing(): void {
     if (this.ringSprite) this.ringSprite.destroy();
     this.ringSprite = this.add.sprite(this.centerX, this.centerY, "ring");
-    this.scaleSpriteByHeight(this.ringSprite, this.radius * 2.15);
+    // Use setDisplaySize for consistent sizing across environments
+    const ringSize = this.radius * 2.15;
+    this.ringSprite.setDisplaySize(ringSize, ringSize);
     this.ringSprite.setDepth(1);
   }
 
@@ -272,18 +274,18 @@ export default class ReflexRingGame extends Phaser.Scene {
     const targetHeight = this.radius * 1.28;
     const widthScale = 0.74;
     const tailOriginX = 12 / 64;
+    
+    // Use setDisplaySize instead of scaling by intrinsic size to avoid SVG dimension issues
     this.arrowShadow = this.add
       .sprite(0, 0, "arrow")
       .setOrigin(tailOriginX, 0.5)
       .setAlpha(0.32)
       .setTint(0x000000);
-    this.scaleSpriteByHeight(this.arrowShadow, targetHeight);
-    this.arrowShadow.setScale(this.arrowShadow.scaleX * widthScale, this.arrowShadow.scaleY);
+    this.arrowShadow.setDisplaySize(targetHeight * widthScale, targetHeight);
     this.arrowShadow.setPosition(5, 3);
 
     this.arrowSprite = this.add.sprite(0, 0, "arrow").setOrigin(tailOriginX, 0.5);
-    this.scaleSpriteByHeight(this.arrowSprite, targetHeight);
-    this.arrowSprite.setScale(this.arrowSprite.scaleX * widthScale, this.arrowSprite.scaleY);
+    this.arrowSprite.setDisplaySize(targetHeight * widthScale, targetHeight);
 
     this.arrowContainer.add([this.arrowShadow, this.arrowSprite]);
     this.arrowContainer.setScale(1);
@@ -726,32 +728,5 @@ export default class ReflexRingGame extends Phaser.Scene {
 
   private makeScoreText(): string {
     return `Score: ${this.score}   Best: ${this.best}`;
-  }
-
-  private scaleSpriteByHeight(sprite: Phaser.GameObjects.Sprite, targetHeight: number): void {
-    // Prefer the texture/frame intrinsic size (works consistently for SVGs and atlases).
-    const frame = sprite.frame as Phaser.Textures.Frame | undefined;
-    const source = sprite.texture.getSourceImage() as
-      | HTMLImageElement
-      | HTMLCanvasElement
-      | undefined;
-
-    const intrinsicHeight = frame?.height || source?.height || 0;
-    const intrinsicWidth = frame?.width || source?.width || 0;
-
-    // If we have a sensible intrinsic height, scale relative to it. Some SVGs
-    // (depending on how they're served) report a height of 0 or 1 — treat
-    // those as invalid and fall back to setDisplaySize which uses logical pixels.
-    if (intrinsicHeight && intrinsicHeight > 8) {
-      const scale = targetHeight / intrinsicHeight;
-      sprite.setScale(scale);
-    } else if (intrinsicWidth && intrinsicHeight) {
-      // defensive fallback: preserve aspect ratio
-      const aspect = intrinsicWidth / Math.max(1, intrinsicHeight);
-      sprite.setDisplaySize(Math.round(targetHeight * aspect), Math.round(targetHeight));
-    } else {
-      // Last resort: square display size
-      sprite.setDisplaySize(Math.round(targetHeight), Math.round(targetHeight));
-    }
   }
 }
