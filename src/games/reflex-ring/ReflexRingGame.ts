@@ -10,7 +10,10 @@ const PERFECT_WINDOW_RATIO = 0.2;
 const POWERUP_TYPES = ["slow-time", "wide-wedge", "perfect-touch", "auto-hit"] as const;
 type PowerupType = (typeof POWERUP_TYPES)[number];
 
-const POWERUP_CONFIG: Record<PowerupType, { short: string; banner: string; circleColor: number; textColor: string; duration: number }> = {
+const POWERUP_CONFIG: Record<
+  PowerupType,
+  { short: string; banner: string; circleColor: number; textColor: string; duration: number }
+> = {
   "slow-time": {
     short: "SLOW",
     banner: "Slow Time",
@@ -117,16 +120,16 @@ export default class ReflexRingGame extends Phaser.Scene {
     this.currentAngle = 0;
     this.angularVelocity = this.baseAngularVelocity;
     this.maxSpeed = this.baseMaxSpeed;
-  this.segmentWidth = this.baseSegmentWidth;
-  this.forcePerfectHits = false;
-  this.autoHitActive = false;
-  this.currentPowerupLabel = "";
-  this.activePowerupType = null;
-  this.pendingPowerupType = null;
-  this.powerupToken?.destroy(true);
-  this.powerupToken = undefined;
-  this.powerupStatusText?.destroy();
-  this.powerupStatusText = undefined;
+    this.segmentWidth = this.baseSegmentWidth;
+    this.forcePerfectHits = false;
+    this.autoHitActive = false;
+    this.currentPowerupLabel = "";
+    this.activePowerupType = null;
+    this.pendingPowerupType = null;
+    this.powerupToken?.destroy(true);
+    this.powerupToken = undefined;
+    this.powerupStatusText?.destroy();
+    this.powerupStatusText = undefined;
 
     this.createBackground(width, height);
     this.createRing();
@@ -178,7 +181,8 @@ export default class ReflexRingGame extends Phaser.Scene {
     }
     if (wasInWedge && !inWedgeNow && !this.tappedThisWedge) {
       if (this.autoHitActive) {
-        const perfect = this.forcePerfectHits || this.isPerfectHit(this.currentAngle, this.targetAngle);
+        const perfect =
+          this.forcePerfectHits || this.isPerfectHit(this.currentAngle, this.targetAngle);
         this.registerHit(perfect, perfect);
       } else {
         this.onGameOver();
@@ -197,7 +201,12 @@ export default class ReflexRingGame extends Phaser.Scene {
       }
     }
 
-    if (this.powerupActive && this.powerupTimer && this.powerupStatusText && this.activePowerupType) {
+    if (
+      this.powerupActive &&
+      this.powerupTimer &&
+      this.powerupStatusText &&
+      this.activePowerupType
+    ) {
       const remaining = Math.max(0, this.powerupTimer.getRemainingSeconds());
       this.powerupStatusText.setText(`${this.currentPowerupLabel} ${remaining.toFixed(1)}s`);
     }
@@ -207,9 +216,19 @@ export default class ReflexRingGame extends Phaser.Scene {
     this.bgSprites.forEach((sprite) => sprite.destroy());
     this.bgSprites = [];
 
-    const pushSprite = (key: string, count: number, alpha: number, depth: number, scaleRange: [number, number]) => {
+    const pushSprite = (
+      key: string,
+      count: number,
+      alpha: number,
+      depth: number,
+      scaleRange: [number, number]
+    ) => {
       for (let i = 0; i < count; i++) {
-        const sprite = this.add.sprite(Phaser.Math.Between(0, width), Phaser.Math.Between(0, height), key);
+        const sprite = this.add.sprite(
+          Phaser.Math.Between(0, width),
+          Phaser.Math.Between(0, height),
+          key
+        );
         sprite.setAlpha(alpha);
         sprite.setScale(Phaser.Math.FloatBetween(scaleRange[0], scaleRange[1]));
         sprite.setDepth(depth);
@@ -250,17 +269,21 @@ export default class ReflexRingGame extends Phaser.Scene {
     if (this.arrowContainer) this.arrowContainer.destroy();
     this.arrowContainer = this.add.container(this.centerX, this.centerY).setDepth(3);
 
-  const targetHeight = this.radius * 1.28;
-  const widthScale = 0.74;
+    const targetHeight = this.radius * 1.28;
+    const widthScale = 0.74;
     const tailOriginX = 12 / 64;
-    this.arrowShadow = this.add.sprite(0, 0, "arrow").setOrigin(tailOriginX, 0.5).setAlpha(0.32).setTint(0x000000);
+    this.arrowShadow = this.add
+      .sprite(0, 0, "arrow")
+      .setOrigin(tailOriginX, 0.5)
+      .setAlpha(0.32)
+      .setTint(0x000000);
     this.scaleSpriteByHeight(this.arrowShadow, targetHeight);
-  this.arrowShadow.setScale(this.arrowShadow.scaleX * widthScale, this.arrowShadow.scaleY);
-  this.arrowShadow.setPosition(5, 3);
+    this.arrowShadow.setScale(this.arrowShadow.scaleX * widthScale, this.arrowShadow.scaleY);
+    this.arrowShadow.setPosition(5, 3);
 
     this.arrowSprite = this.add.sprite(0, 0, "arrow").setOrigin(tailOriginX, 0.5);
     this.scaleSpriteByHeight(this.arrowSprite, targetHeight);
-  this.arrowSprite.setScale(this.arrowSprite.scaleX * widthScale, this.arrowSprite.scaleY);
+    this.arrowSprite.setScale(this.arrowSprite.scaleX * widthScale, this.arrowSprite.scaleY);
 
     this.arrowContainer.add([this.arrowShadow, this.arrowSprite]);
     this.arrowContainer.setScale(1);
@@ -498,7 +521,8 @@ export default class ReflexRingGame extends Phaser.Scene {
 
     const within = this.isWithinWedge(this.currentAngle, this.targetAngle, this.segmentWidth);
     if (within) {
-      const isPerfect = this.forcePerfectHits || this.isPerfectHit(this.currentAngle, this.targetAngle);
+      const isPerfect =
+        this.forcePerfectHits || this.isPerfectHit(this.currentAngle, this.targetAngle);
       this.registerHit(isPerfect, isPerfect);
     } else {
       this.onGameOver();
@@ -513,7 +537,12 @@ export default class ReflexRingGame extends Phaser.Scene {
     const next = Math.min(speed * 1.03, this.maxSpeed);
     this.angularVelocity = -Math.sign(this.angularVelocity || 1) * next;
 
-    this.tweens.add({ targets: this.wedgeGraphics, alpha: { from: 0.6, to: 1 }, duration: 90, yoyo: true });
+    this.tweens.add({
+      targets: this.wedgeGraphics,
+      alpha: { from: 0.6, to: 1 },
+      duration: 90,
+      yoyo: true,
+    });
 
     this.hitPulseTween?.stop();
     this.arrowContainer.setScale(1);
@@ -557,7 +586,14 @@ export default class ReflexRingGame extends Phaser.Scene {
       localStorage.setItem("reflex-ring-best", String(this.best));
     }
 
-    const overlay = this.add.rectangle(this.centerX, this.centerY, this.scale.width, this.scale.height, 0x000000, 0.55);
+    const overlay = this.add.rectangle(
+      this.centerX,
+      this.centerY,
+      this.scale.width,
+      this.scale.height,
+      0x000000,
+      0.55
+    );
     const t1 = this.add
       .text(this.centerX, this.centerY - 20, "Game Over", {
         fontFamily: "Arial Black",
@@ -693,7 +729,10 @@ export default class ReflexRingGame extends Phaser.Scene {
   }
 
   private scaleSpriteByHeight(sprite: Phaser.GameObjects.Sprite, targetHeight: number): void {
-    const source = sprite.texture.getSourceImage() as HTMLImageElement | HTMLCanvasElement | undefined;
+    const source = sprite.texture.getSourceImage() as
+      | HTMLImageElement
+      | HTMLCanvasElement
+      | undefined;
     if (source && source.height) {
       const scale = targetHeight / source.height;
       sprite.setScale(scale);

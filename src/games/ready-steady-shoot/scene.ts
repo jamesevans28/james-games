@@ -38,11 +38,19 @@ export default class ReadySteadyShootGame extends Phaser.Scene {
   private angleSelecting: boolean = false; // true when user is holding to select angle
   private powerSelecting: boolean = false; // true when user is holding to select power
 
+  // Shot speed limits (tuned to prevent limp or wildly overpowered shots)
+  // Units match Phaser Arcade velocity (px/sec). Adjust if tuning needed.
+  private MIN_SHOT_SPEED: number = 1100;
+  private MAX_SHOT_SPEED: number = 1500;
+
   private score: number = 0;
   private best: number = 0;
   private lives: number = 3;
 
   private swishCandidate: boolean = true; // becomes false when rim/backboard touched during flight
+  // Track whether the ball rose above the hoop during this flight; used to ensure
+  // we only score when the ball actually passes through the hoop from above.
+  private ballWasAboveHoop: boolean = false;
 
   constructor() {
     super("ReadySteadyShoot");
@@ -200,10 +208,17 @@ export default class ReadySteadyShootGame extends Phaser.Scene {
 
     // Overlap through hoop sensor (ball center passes through net area while falling)
     this.physics.add.overlap(this.ball, this.hoopSensor as any, () => {
-      if (this.state === "flying" && this.ball.body?.velocity.y! > 0) {
+      // Only award score when the ball was previously above the hoop and is now
+      // falling through the hoop (prevents scoring from rim/backboard collisions).
+      const body = this.ball.body as Phaser.Physics.Arcade.Body;
+      if (
+        this.state === "flying" &&
+        body.velocity.y! > 0 &&
+        this.ballWasAboveHoop &&
+        this.ball.y > this.hoopY
+      ) {
         // When the ball passes through the rim center, remove horizontal momentum
         // and slow its fall so it drops straight down behind the net.
-        const body = this.ball.body as Phaser.Physics.Arcade.Body;
         // zero horizontal velocity
         body.velocity.x = 0;
         // slow vertical fall (but keep a minimum downward speed)
@@ -212,6 +227,9 @@ export default class ReadySteadyShootGame extends Phaser.Scene {
         this.ball.setBounce(0.2, 0.2);
         // add horizontal drag to ensure no leftover sideways motion
         this.ball.setDrag(200, 0);
+
+        // clear the flag so we don't double-score
+        this.ballWasAboveHoop = false;
 
         this.onScore(this.swishCandidate ? 2 : 1);
       }
@@ -479,15 +497,34 @@ export default class ReadySteadyShootGame extends Phaser.Scene {
       },
       onComplete: () => {
         // Now fire from EXACT lifted position
-        const speed = 3600 * this.power;
-        const vx = Math.cos(this.angleRad) * speed;
-        const vy = Math.sin(this.angleRad) * speed;
+        // Compute base velocity from angle + power, then add a small sideways randomness.
+        const baseSpeed = 3600 * this.power;
+        let vx = Math.cos(this.angleRad) * baseSpeed;
+        let vy = Math.sin(this.angleRad) * baseSpeed;
         const sidewaysBoost = 50 + Math.random() * 100;
         const sidewaysDir = Math.random() > 0.5 ? 1 : -1;
-        const finalVx = vx + sidewaysBoost * sidewaysDir;
+        vx = vx + sidewaysBoost * sidewaysDir;
+
+        // Clamp shot magnitude to configured min/max to avoid limp or wildly powerful shots.
+        const mag = Math.hypot(vx, vy);
+        if (mag > 0) {
+          if (mag < this.MIN_SHOT_SPEED) {
+            const scale = this.MIN_SHOT_SPEED / mag;
+            vx *= scale;
+            vy *= scale;
+          } else if (mag > this.MAX_SHOT_SPEED) {
+            const scale = this.MAX_SHOT_SPEED / mag;
+            vx *= scale;
+            vy *= scale;
+          }
+        }
+
         this.ball.body!.enable = true;
-        this.ball.setVelocity(finalVx, vy);
+        this.ball.setVelocity(vx, vy);
         this.swishCandidate = true;
+        // Reset the above-hoop flag for this new flight; it will be set to true
+        // if/when the ball rises above the hoop during its trajectory.
+        this.ballWasAboveHoop = false;
         this.state = "flying";
         // Remove hand-drawn ball (stick figure will no longer render ball in flying state)
         this.drawStickFigure();
@@ -498,6 +535,8 @@ export default class ReadySteadyShootGame extends Phaser.Scene {
   private onScore(points: number) {
     // Prevent double-scoring for same shot
     if (this.state !== "flying") return;
+    // Ensure flag is cleared (defensive) so further overlaps don't re-score
+    this.ballWasAboveHoop = false;
     this.score += points;
     this.scoreText.setText(`Score: ${this.score}`);
     if (this.score > this.best) {
@@ -568,6 +607,22 @@ export default class ReadySteadyShootGame extends Phaser.Scene {
     // Check if ball has stopped moving - end game if stationary
     if (this.state === "flying" && this.ball.body?.enable) {
       const body = this.ball.body as Phaser.Physics.Arcade.Body;
+      // Enforce maximum speed so collisions or sideways randomness can't create extreme velocities.
+      const mag = Math.hypot(body.velocity.x, body.velocity.y);
+      if (mag > this.MAX_SHOT_SPEED) {
+        const scale = this.MAX_SHOT_SPEED / mag;
+        body.velocity.x *= scale;
+        body.velocity.y *= scale;
+      }
+
+      // Track whether the ball has gone above the hoop during this flight. We only
+      // want to count a score if the ball actually passed above the rim first and
+      // then fell back down through it.
+      if (this.ball.y < this.hoopY - 4) {
+        this.ballWasAboveHoop = true;
+      }
+
+      // If ball has practically stopped, treat as miss
       if (Math.abs(body.velocity.x) < 5 && Math.abs(body.velocity.y) < 5) {
         this.onMiss();
       }

@@ -15,8 +15,8 @@ export const games: GameMeta[] = [
     title: "Reflex Ring",
     description: "Tap precisely as the arrow hits the highlighted segment. Speeds up over time.",
     thumbnail: "/assets/reflex-ring/thumbnail.svg",
-    createdAt: "2024-09-15T00:00:00.000Z",
-    updatedAt: "2024-09-15T00:00:00.000Z",
+    createdAt: "2025-09-15T00:00:00.000Z",
+    updatedAt: "2025-11-17T00:00:00.000Z",
     load: async () => {
       const mod = await import("./reflex-ring/index");
       return { mount: mod.mount };
@@ -27,8 +27,8 @@ export const games: GameMeta[] = [
     title: "Snapadile",
     description: "Tap the crocs before they reach your raft. More and faster crocs over time.",
     thumbnail: "/assets/snapadile/thumbnail.svg",
-    createdAt: "2024-09-16T00:00:00.000Z",
-    updatedAt: "2024-09-16T00:00:00.000Z",
+    createdAt: "2025-09-16T00:00:00.000Z",
+    updatedAt: "2025-09-16T00:00:00.000Z",
     load: async () => {
       const mod = await import("./snapadile/index");
       return { mount: mod.mount };
@@ -40,8 +40,8 @@ export const games: GameMeta[] = [
     description:
       "Switch lanes to dodge incoming cars. Step-based movement with growing difficulty.",
     thumbnail: "/assets/car-crash/thumbnail.svg",
-    createdAt: "2024-09-17T00:00:00.000Z",
-    updatedAt: "2024-09-17T00:00:00.000Z",
+    createdAt: "2025-09-17T00:00:00.000Z",
+    updatedAt: "2025-09-17T00:00:00.000Z",
     load: async () => {
       const mod = await import("./car-crash/index");
       return { mount: mod.mount };
@@ -92,8 +92,8 @@ export const games: GameMeta[] = [
     description:
       "Hold to pick angle, hold to pick power, then release to shoot. Swish for 2 points! 3 lives.",
     thumbnail: "/assets/ready-steady-shoot/thumbnail.svg",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: "2025-11-05T00:00:00.000Z",
+    updatedAt: "2025-11-17T00:00:00.000Z",
     load: async () => {
       const mod = await import("./ready-steady-shoot/index");
       return { mount: mod.mount };
@@ -104,8 +104,8 @@ export const games: GameMeta[] = [
     title: "Paddle Pop",
     description: "Deflect the marble, collect power-ups, hit bonus discs, avoid falling obstacles.",
     thumbnail: "/assets/paddle-pop/thumbnail.svg",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: "2025-11-05T00:00:00.000Z",
+    updatedAt: "2025-11-05T00:00:00.000Z",
     load: async () => {
       const mod = await import("./paddle-pop/index");
       return { mount: mod.mount };
@@ -116,8 +116,8 @@ export const games: GameMeta[] = [
     title: "Word Rush with Tom",
     description: "Guess words and phrases with your selected letters. 2-minute timer per level!",
     thumbnail: "/assets/word-rush/thumbnail.svg",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: "2025-11-05T00:00:00.000Z",
+    updatedAt: "2025-11-05T00:00:00.000Z",
     load: async () => {
       const mod = await import("./word-rush/index");
       return { mount: mod.mount };

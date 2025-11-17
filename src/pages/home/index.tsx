@@ -45,7 +45,7 @@ export default function GameHub() {
   }, []);
 
   // Filter games into recently added and most popular
-  const { recentGames, popularGames } = useMemo(() => {
+  const { recentGames, popularGames, recentUpdated, favouriteGames } = useMemo(() => {
     const fourDaysAgo = new Date();
     fourDaysAgo.setDate(fourDaysAgo.getDate() - 4);
 
@@ -69,8 +69,23 @@ export default function GameHub() {
     // Sort recent games by createdAt descending (most recent first)
     recent.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
 
-    return { recentGames: recent, popularGames: popular };
-  }, []);
+    // Recently updated within the last 4 days
+    const recentUpdated: GameMeta[] = [];
+    games.forEach((game) => {
+      if (game.updatedAt) {
+        const updatedDate = new Date(game.updatedAt);
+        if (updatedDate >= fourDaysAgo) recentUpdated.push(game);
+      }
+    });
+
+    // Favourites: top-rated games (by average rating). Show top 2.
+    const favs = [...games]
+      .filter((g) => ratings[g.id] && typeof ratings[g.id].avgRating === "number")
+      .sort((a, b) => (ratings[b.id].avgRating || 0) - (ratings[a.id].avgRating || 0))
+      .slice(0, 2);
+
+    return { recentGames: recent, popularGames: popular, recentUpdated, favouriteGames: favs };
+  }, [ratings]);
 
   const GameCard = ({ game }: { game: GameMeta }) => {
     const summary = ratings[game.id];
@@ -122,6 +137,18 @@ export default function GameHub() {
         image="https://games4james.com/assets/logo.png"
       />
 
+      {/* Recently Updated Section */}
+      {recentUpdated && recentUpdated.length > 0 && (
+        <div className="w-full max-w-6xl mx-auto px-4 py-6">
+          <h2 className="text-xl font-bold mb-4 text-black">Recently Updated</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+            {recentUpdated.map((game) => (
+              <GameCard key={game.id} game={game} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Recently Added Section */}
       {recentGames.length > 0 && (
         <div className="w-full max-w-6xl mx-auto px-4 py-6">
@@ -134,9 +161,21 @@ export default function GameHub() {
         </div>
       )}
 
-      {/* Most Popular Section */}
+      {/* Favourites (top rated) */}
+      {favouriteGames && favouriteGames.length > 0 && (
+        <div className="w-full max-w-6xl mx-auto px-4 py-6">
+          <h2 className="text-xl font-bold mb-4 text-black">Favourites</h2>
+          <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-2 gap-4">
+            {favouriteGames.map((game) => (
+              <GameCard key={game.id} game={game} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recommended Section */}
       <div className="w-full max-w-6xl mx-auto px-4 py-6">
-        <h2 className="text-xl font-bold mb-4 text-black">Most Popular</h2>
+        <h2 className="text-xl font-bold mb-4 text-black">Recommended</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
           {popularGames.map((game) => (
             <GameCard key={game.id} game={game} />
