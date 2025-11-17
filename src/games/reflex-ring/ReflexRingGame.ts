@@ -230,15 +230,16 @@ export default class ReflexRingGame extends Phaser.Scene {
           key
         );
         sprite.setAlpha(alpha);
+        // Keep minimal scaling for variety - these are small 32x32 SVGs
         sprite.setScale(Phaser.Math.FloatBetween(scaleRange[0], scaleRange[1]));
         sprite.setDepth(depth);
         this.bgSprites.push(sprite);
       }
     };
 
-    pushSprite("bg-block", 8, 0.18, -10, [0.7, 1.2]);
-    pushSprite("bg-rune", 6, 0.13, -9, [0.8, 1.3]);
-    pushSprite("bg-sparkle", 10, 0.09, -8, [0.5, 1.1]);
+    pushSprite("bg-block", 8, 0.18, -10, [1.0, 1.5]);
+    pushSprite("bg-rune", 6, 0.13, -9, [1.0, 1.5]);
+    pushSprite("bg-sparkle", 10, 0.09, -8, [1.0, 1.5]);
 
     this.backgroundDriftTimer?.remove();
     this.backgroundDriftTimer = this.time.addEvent({
@@ -261,9 +262,7 @@ export default class ReflexRingGame extends Phaser.Scene {
   private createRing(): void {
     if (this.ringSprite) this.ringSprite.destroy();
     this.ringSprite = this.add.sprite(this.centerX, this.centerY, "ring");
-    // Use setDisplaySize for consistent sizing across environments
-    const ringSize = this.radius * 2.15;
-    this.ringSprite.setDisplaySize(ringSize, ringSize);
+    // No scaling needed - SVG is pre-sized
     this.ringSprite.setDepth(1);
   }
 
@@ -271,21 +270,17 @@ export default class ReflexRingGame extends Phaser.Scene {
     if (this.arrowContainer) this.arrowContainer.destroy();
     this.arrowContainer = this.add.container(this.centerX, this.centerY).setDepth(3);
 
-    const targetHeight = this.radius * 1.28;
-    const widthScale = 0.74;
-    const tailOriginX = 12 / 64;
+    const tailOriginX = 20 / 159; // tail position in the new SVG dimensions
     
-    // Use setDisplaySize instead of scaling by intrinsic size to avoid SVG dimension issues
+    // No scaling needed - SVG is pre-sized
     this.arrowShadow = this.add
       .sprite(0, 0, "arrow")
       .setOrigin(tailOriginX, 0.5)
       .setAlpha(0.32)
       .setTint(0x000000);
-    this.arrowShadow.setDisplaySize(targetHeight * widthScale, targetHeight);
     this.arrowShadow.setPosition(5, 3);
 
     this.arrowSprite = this.add.sprite(0, 0, "arrow").setOrigin(tailOriginX, 0.5);
-    this.arrowSprite.setDisplaySize(targetHeight * widthScale, targetHeight);
 
     this.arrowContainer.add([this.arrowShadow, this.arrowSprite]);
     this.arrowContainer.setScale(1);
@@ -347,7 +342,7 @@ export default class ReflexRingGame extends Phaser.Scene {
     const label = this.add
       .text(0, 2, config.short, {
         fontFamily: "Fredoka, Arial Black, Arial, sans-serif",
-        fontSize: `${Math.round(radius * 0.8)}px`,
+        fontSize: `${Math.round(radius * 0.5)}px`, // Reduced from 0.8 to 0.5
         color: config.textColor,
         fontStyle: "bold",
         align: "center",
@@ -623,10 +618,20 @@ export default class ReflexRingGame extends Phaser.Scene {
       trackGameStart("reflex-ring", "Reflex Ring");
     };
 
+    // Delay dispatching the game-over event slightly so the in-game "Game Over"
+    // animations (shake/flash) complete and any overlays in the React UI don't
+    // immediately navigate away from the running scene.
+    const GAME_OVER_DISPATCH_DELAY = 900; // ms
     try {
-      dispatchGameOver({ gameId: "reflex-ring", score: this.score, ts: Date.now() });
+      this.time.delayedCall(GAME_OVER_DISPATCH_DELAY, () => {
+        try {
+          dispatchGameOver({ gameId: "reflex-ring", score: this.score, ts: Date.now() });
+        } catch {
+          // ignore dispatch errors to keep the game responsive
+        }
+      });
     } catch {
-      // ignore dispatch errors to keep the game responsive
+      // ignore scheduling errors
     }
 
     this.time.delayedCall(900, () => {
