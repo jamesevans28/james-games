@@ -271,7 +271,7 @@ export default class ReflexRingGame extends Phaser.Scene {
     this.arrowContainer = this.add.container(this.centerX, this.centerY).setDepth(3);
 
     const tailOriginX = 20 / 159; // tail position in the new SVG dimensions
-    
+
     // No scaling needed - SVG is pre-sized
     this.arrowShadow = this.add
       .sprite(0, 0, "arrow")

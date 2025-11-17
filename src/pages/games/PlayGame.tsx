@@ -12,6 +12,7 @@ import { useAuth } from "../../context/AuthProvider";
 import RatingPromptModal from "../../components/RatingPromptModal";
 import { fetchRatingSummary, submitRating, RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";
+import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 
 const PLAY_COUNT_PREFIX = "rating:plays:";
 const RATING_PROMPT_INTERVAL = 10;
@@ -29,6 +30,7 @@ export default function PlayGame() {
   const { gameId } = useParams();
   const navigate = useNavigate();
   const meta = useMemo(() => games.find((g) => g.id === gameId), [gameId]);
+  const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const destroyRef = useRef<null | (() => void)>(null);
   const mountingRef = useRef(false);
@@ -37,7 +39,6 @@ export default function PlayGame() {
   const [mounting, setMounting] = useState(false);
   const [showScore, setShowScore] = useState(false);
   const [lastScore, setLastScore] = useState<number | null>(null);
-  const { user } = useAuth();
   const [pendingRatingTrigger, setPendingRatingTrigger] = useState(false);
   const [ratingPromptOpen, setRatingPromptOpen] = useState(false);
   const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(() =>
@@ -50,6 +51,19 @@ export default function PlayGame() {
     "none"
   );
   const [userRating, setUserRating] = useState<number | null>(null);
+  const presenceStatus = showScore
+    ? "in_score_dialog"
+    : playing
+    ? "playing"
+    : meta
+    ? "game_lobby"
+    : "looking_for_game";
+  usePresenceReporter({
+    status: presenceStatus,
+    gameId: meta?.id,
+    gameTitle: meta?.title,
+    enabled: !!meta,
+  });
 
   useEffect(() => {
     if (!meta) {

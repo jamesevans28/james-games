@@ -8,10 +8,19 @@ type Props = {
   open: boolean;
   onClose: () => void;
   isAuthenticated?: boolean;
+  hasUnreadNotifications?: boolean;
+  onNotificationsOpen?: () => void;
 };
 
-export default function SideDrawer({ open, onClose, isAuthenticated }: Props) {
+export default function SideDrawer({
+  open,
+  onClose,
+  isAuthenticated,
+  hasUnreadNotifications,
+  onNotificationsOpen,
+}: Props) {
   const { user } = useSession();
+  const profilePath = user?.userId ? `/profile/${user.userId}` : "/profile";
   const linkClass =
     "w-full text-left inline-flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-gray-800 bg-white border border-gray-200 hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors";
   return (
@@ -58,6 +67,33 @@ export default function SideDrawer({ open, onClose, isAuthenticated }: Props) {
               </svg>
               <span>Games</span>
             </Link>
+            {isAuthenticated && user?.userId && (
+              <Link
+                to={profilePath}
+                className={linkClass}
+                onClick={onClose}
+                role="button"
+                aria-pressed="false"
+              >
+                <svg className="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M12 12a4 4 0 100-8 4 4 0 000 8z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4 21v-1c0-2.761 3.134-5 7-5s7 2.239 7 5v1"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>My profile</span>
+              </Link>
+            )}
             <Link
               to="/settings"
               className={linkClass}
@@ -121,22 +157,96 @@ export default function SideDrawer({ open, onClose, isAuthenticated }: Props) {
               </svg>
               <span>Choose avatar</span>
             </Link>
+            <Link
+              to="/followers"
+              className={linkClass}
+              onClick={onClose}
+              role="button"
+              aria-pressed="false"
+            >
+              <svg className="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path
+                  d="M12 11a4 4 0 100-8 4 4 0 000 8z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M4 21v-1c0-2.761 3.134-5 7-5s7 2.239 7 5v1"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span>Followers</span>
+            </Link>
+            {isAuthenticated && (
+              <Link
+                to="/notifications"
+                className={`${linkClass} relative`}
+                onClick={() => {
+                  if (onNotificationsOpen) {
+                    onNotificationsOpen();
+                  } else {
+                    onClose();
+                  }
+                }}
+                role="button"
+                aria-pressed="false"
+              >
+                <svg className="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M18 15V11a6 6 0 10-12 0v4l-1.5 3h15L18 15z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M13.73 21a2 2 0 01-3.46 0"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="flex items-center gap-1">
+                  Notifications
+                  {hasUnreadNotifications && (
+                    <span className="inline-flex w-2 h-2 rounded-full bg-red-500" aria-hidden />
+                  )}
+                </span>
+              </Link>
+            )}
           </nav>
         </div>
 
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-          <div className="flex items-center gap-3 mb-3">
-            <ProfileAvatar user={isAuthenticated ? user : { avatar: 1 }} size={48} />
-            <div className="min-w-0">
-              <div className="text-xs text-gray-500 leading-tight">
-                {isAuthenticated ? "Signed in as" : ""}
+          {isAuthenticated ? (
+            <Link
+              to={profilePath}
+              onClick={onClose}
+              className="flex items-center gap-3 mb-3 hover:bg-gray-50 rounded-lg px-2 py-1"
+            >
+              <ProfileAvatar user={user} size={48} />
+              <div className="min-w-0">
+                <div className="text-xs text-gray-500 leading-tight">Signed in as</div>
+                <div className="text-sm font-semibold text-gray-900 truncate max-w-[12rem]">
+                  {(user as any)?.screenName || "Player"}
+                </div>
               </div>
-              <div className="text-sm font-semibold text-gray-900 truncate max-w-[12rem]">
-                {isAuthenticated ? (user as any)?.screenName || "Player" : "Not logged in"}
+            </Link>
+          ) : (
+            <div className="flex items-center gap-3 mb-3">
+              <ProfileAvatar user={{ avatar: 1 }} size={48} />
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-gray-900">Not logged in</div>
               </div>
             </div>
-          </div>
+          )}
           {isAuthenticated ? (
             <LogoutButton onClose={onClose} />
           ) : (

@@ -4,6 +4,7 @@ import {
   getTopScoresHydrated,
   validateScoreInput,
 } from "../services/scoresService.js";
+import { getFollowingIds } from "../services/followersService.js";
 
 export async function createScore(req: Request, res: Response) {
   try {
@@ -32,7 +33,18 @@ export async function listScores(req: Request, res: Response) {
     const gameId = String((req.params as any).gameId);
     const limitRaw = Number((req.query as any).limit) || 10;
     const limit = Math.min(50, Math.max(1, limitRaw));
-    const rows = await getTopScoresHydrated(gameId, limit);
+    const scope = String((req.query as any)?.scope || "");
+    let includeUserIds: string[] | undefined;
+    if (scope === "following") {
+      // @ts-ignore
+      const userId = req.user?.userId as string | undefined;
+      if (!userId) return res.status(401).json({ error: "unauthorized" });
+      const followingIds = await getFollowingIds(userId);
+      const allow = new Set<string>(followingIds);
+      allow.add(userId);
+      includeUserIds = Array.from(allow);
+    }
+    const rows = await getTopScoresHydrated(gameId, limit, { includeUserIds });
     res.json(rows);
   } catch (e: any) {
     res.status(500).json({ error: e?.message || "Server error" });

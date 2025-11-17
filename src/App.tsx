@@ -7,6 +7,9 @@ import SignupPage from "./pages/signup";
 import RootLayout from "./components/layout/RootLayout";
 import SettingsScreen from "./pages/settings";
 import AvatarSelect from "./pages/settings/AvatarSelect";
+import FollowersPage from "./pages/followers";
+import ProfilePage from "./pages/profile/[userId]";
+import NotificationsPage from "./pages/notifications";
 import { RequireAuth } from "./components/RouteGuards";
 import SWUpdatePrompt from "./components/SWUpdatePrompt";
 import InstallPWA from "./components/InstallPWA";
@@ -43,6 +46,23 @@ export default function App() {
                 </RequireAuth>
               }
             />
+            <Route
+              path="/followers"
+              element={
+                <RequireAuth>
+                  <FollowersPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <RequireAuth>
+                  <NotificationsPage />
+                </RequireAuth>
+              }
+            />
+            <Route path="/profile/:userId" element={<ProfilePage />} />
             <Route path="/games/:gameId" element={<PlayGame />} />
             <Route path="/leaderboard/:gameId" element={<LeaderboardPage />} />
           </Route>

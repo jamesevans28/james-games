@@ -1,9 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthProvider";
 import { trackShare } from "../../utils/analytics";
 import { GameMeta } from "../../games";
-import { getTopScores, fetchRatingSummary, submitRating, RatingSummary } from "../../lib/api";
+import {
+  getTopScores,
+  fetchRatingSummary,
+  submitRating,
+  RatingSummary,
+  fetchFollowingActivity,
+  FollowingActivityEntry,
+  ScoreEntry,
+} from "../../lib/api";
 import { getUserName } from "../../utils/user";
 import { onGameOver } from "../../utils/gameEvents";
 import { ProfileAvatar } from "../../components/profile";
@@ -15,16 +23,16 @@ type Props = {
   onPlay: () => void;
 };
 
-type ScoreRow = { screenName: string; avatar: number; score: number; createdAt?: string };
-
 // Global cache for leaderboards to avoid refetching on every load
-const leaderboardCache = new Map<string, { data: ScoreRow[]; timestamp: number }>();
+const leaderboardCache = new Map<string, { data: ScoreEntry[]; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export default function GameLanding({ meta, onPlay }: Props) {
-  const [top, setTop] = useState<ScoreRow[]>([]);
+  const [top, setTop] = useState<ScoreEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activity, setActivity] = useState<FollowingActivityEntry[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
   const cachedRating = useMemo(() => getCachedRatingSummary(meta.id), [meta.id]);
   const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(cachedRating);
   const [ratingLoading, setRatingLoading] = useState(!cachedRating);
@@ -84,6 +92,39 @@ export default function GameLanding({ meta, onPlay }: Props) {
       setRatingSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    if (!user || !meta?.id) {
+      setActivity([]);
+      return;
+    }
+    let cancelled = false;
+    let timeoutId: number | null = null;
+    const load = async () => {
+      try {
+        if (!cancelled) setActivityLoading(true);
+        const res = await fetchFollowingActivity({
+          gameId: meta.id,
+          statuses: ["playing", "game_lobby", "in_score_dialog", "browsing_high_scores"],
+        });
+        if (!cancelled) setActivity(res.activity || []);
+      } catch (err) {
+        if (import.meta.env.DEV) {
+          console.debug("activity fetch failed", err);
+        }
+      } finally {
+        if (!cancelled) setActivityLoading(false);
+      }
+      if (!cancelled && typeof window !== "undefined") {
+        timeoutId = window.setTimeout(load, 20000);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+      if (timeoutId && typeof window !== "undefined") window.clearTimeout(timeoutId);
+    };
+  }, [meta.id, user?.userId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -176,6 +217,8 @@ export default function GameLanding({ meta, onPlay }: Props) {
           title={meta.title}
         />
 
+        {user && <FollowingNowStrip loading={activityLoading} activity={activity} />}
+
         <div className="mt-4">
           <h1 className="text-2xl font-extrabold mb-1 text-black">{meta.title}</h1>
           {meta.description && (
@@ -263,13 +306,17 @@ function LeaderboardSection({
   error,
   myBest,
 }: {
-  top: ScoreRow[];
+  top: ScoreEntry[];
   loading: boolean;
   error: string | null;
   myBest: number;
 }) {
   const userName = useMemo(() => (getUserName ? getUserName() : ""), []);
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const goToProfile = (userId?: string) => {
+    if (userId) navigate(`/profile/${userId}`);
+  };
 
   // Debugging: log leaderboard inputs so we can trace why nothing renders
   // (some runtime environments may return unexpected shapes)
@@ -303,6 +350,7 @@ function LeaderboardSection({
             second?.score === userTopRow.score &&
             (second?.screenName || "").toLowerCase() === userMatchName
           }
+          onSelect={second?.userId ? () => goToProfile(second.userId) : undefined}
         />
         <TopBox
           pos={1}
@@ -314,6 +362,7 @@ function LeaderboardSection({
             first?.score === userTopRow.score &&
             (first?.screenName || "").toLowerCase() === userMatchName
           }
+          onSelect={first?.userId ? () => goToProfile(first.userId) : undefined}
         />
         <TopBox
           pos={3}
@@ -325,6 +374,7 @@ function LeaderboardSection({
             third?.score === userTopRow.score &&
             (third?.screenName || "").toLowerCase() === userMatchName
           }
+          onSelect={third?.userId ? () => goToProfile(third.userId) : undefined}
         />
       </div>
 
@@ -351,10 +401,29 @@ function LeaderboardSection({
               !!userTopRow &&
               r?.score === userTopRow.score &&
               (r?.screenName || "").toLowerCase() === userMatchName;
+            const hasProfile = Boolean(r?.userId);
+            const handleClick = () => {
+              if (r?.userId) goToProfile(r.userId);
+            };
             return (
               <li
                 key={`${r?.screenName ?? "anon"}-${rank}`}
-                className="flex items-center justify-between px-3 py-2 text-sm"
+                className={`flex items-center justify-between px-3 py-2 text-sm ${
+                  hasProfile ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-black" : ""
+                }`}
+                role={hasProfile ? "button" : undefined}
+                tabIndex={hasProfile ? 0 : undefined}
+                onClick={hasProfile ? handleClick : undefined}
+                onKeyDown={
+                  hasProfile
+                    ? (evt) => {
+                        if (evt.key === "Enter" || evt.key === " ") {
+                          evt.preventDefault();
+                          handleClick();
+                        }
+                      }
+                    : undefined
+                }
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="text-gray-500 font-mono w-6">#{rank}</span>
@@ -467,18 +536,71 @@ function RatingSummaryCard({
   );
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  playing: "Playing now",
+  game_lobby: "In lobby",
+  browsing_high_scores: "High scores",
+  in_score_dialog: "Sharing score",
+};
+
+function FollowingNowStrip({
+  loading,
+  activity,
+}: {
+  loading: boolean;
+  activity: FollowingActivityEntry[];
+}) {
+  if (loading && !activity.length) {
+    return <div className="mt-4 text-sm text-gray-500">Checking who&apos;s playing…</div>;
+  }
+  if (!activity.length)
+    return <div className="mt-4 text-sm text-gray-500">No players you follow are here right now.</div>;
+  return (
+    <div className="mt-4">
+      <h3 className="text-sm font-semibold text-gray-600 mb-2">Players you follow</h3>
+      <div className="flex gap-4 overflow-x-auto pb-2">
+        {activity.map((entry) => (
+          <Link
+            key={`${entry.targetUserId}-${entry.presence?.updatedAt || "now"}`}
+            to={`/profile/${entry.targetUserId}`}
+            className="flex flex-col items-center min-w-[72px]"
+          >
+            <ProfileAvatar
+              user={{ avatar: entry.targetAvatar ?? 1 }}
+              size={56}
+              borderWidth={2}
+              strokeWidth={2}
+              title={entry.targetScreenName ?? "Player"}
+            />
+            <span className="mt-2 text-xs font-semibold text-black text-center truncate max-w-[80px]">
+              {entry.targetScreenName ?? "Player"}
+            </span>
+            {entry.presence?.status && (
+              <span className="mt-1 text-[11px] text-gray-500 text-center">
+                {STATUS_LABELS[entry.presence.status] || "Online"}
+              </span>
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function TopBox({
   pos,
   row,
   tall,
   medal,
   isUserBest,
+  onSelect,
 }: {
   pos: 1 | 2 | 3;
-  row?: ScoreRow;
+  row?: ScoreEntry;
   tall: boolean;
   medal: "gold" | "silver" | "bronze";
   isUserBest?: boolean;
+  onSelect?: () => void;
 }) {
   const medalBg =
     medal === "gold"
@@ -488,14 +610,28 @@ function TopBox({
       : "rgba(205,127,50,0.18)";
   const tagBg = medal === "gold" ? "#FFD700" : medal === "silver" ? "#C0C0C0" : "#CD7F32";
   const tagText = medal === "bronze" ? "text-white" : "text-gray-900";
+  const interactive = typeof onSelect === "function";
 
   return (
     <div className="flex-1 min-w-0">
       <div
         className={`rounded-lg border border-gray-200 p-3 flex flex-col items-center justify-between ${
           tall ? "min-h-48" : "min-h-40"
-        }`}
+        } ${interactive ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-black" : ""}`}
         style={{ background: `linear-gradient(to top, ${medalBg} 0%, transparent 60%)` }}
+        role={interactive ? "button" : undefined}
+        tabIndex={interactive ? 0 : undefined}
+        onClick={interactive ? onSelect : undefined}
+        onKeyDown={
+          interactive
+            ? (evt) => {
+                if (evt.key === "Enter" || evt.key === " ") {
+                  evt.preventDefault();
+                  onSelect?.();
+                }
+              }
+            : undefined
+        }
       >
         <div className="w-full flex flex-col items-center min-w-0">
           <div className="text-xs text-gray-500 font-semibold">#{pos}</div>

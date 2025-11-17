@@ -1,0 +1,373 @@
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import {
+  fetchFollowersSummary,
+  followUserApi,
+  unfollowUserApi,
+  FollowersSummary,
+  PresenceStatus,
+} from "../../lib/api";
+import { ProfileAvatar } from "../../components/profile";
+import { usePresenceReporter } from "../../hooks/usePresenceReporter";
+import { useAuth } from "../../context/AuthProvider";
+import { buildProfileLink, shareProfileLink } from "../../utils/shareProfileLink";
+
+const STATUS_LABELS: Record<PresenceStatus, string> = {
+  looking_for_game: "Online",
+  home: "Online",
+  browsing_high_scores: "High scores",
+  browsing_leaderboard: "Leaderboards",
+  game_lobby: "In lobby",
+  playing: "Playing",
+  in_score_dialog: "Sharing score",
+};
+
+export default function FollowersPage() {
+  const [data, setData] = useState<FollowersSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionUser, setActionUser] = useState<string | null>(null);
+  const [codeInput, setCodeInput] = useState("");
+  const [manualMessage, setManualMessage] = useState<string | null>(null);
+  const [manualStatus, setManualStatus] = useState<"success" | "error" | null>(null);
+  const [manualBusy, setManualBusy] = useState(false);
+  const [shareHint, setShareHint] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const anchor = searchParams.get("view");
+
+  usePresenceReporter({ status: "home", enabled: true });
+
+  const refresh = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const summary = await fetchFollowersSummary();
+      setData(summary);
+    } catch (err: any) {
+      setError(err?.message || "Failed to load followers");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!anchor || !data || loading) return;
+    if (typeof document === "undefined") return;
+    const id = `${anchor}-section`;
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [anchor, data, loading]);
+
+  useEffect(() => {
+    if (!shareHint && !manualMessage) return;
+    if (typeof window === "undefined") return;
+    const timer = window.setTimeout(() => {
+      setShareHint(null);
+      setManualMessage(null);
+      setManualStatus(null);
+    }, 2500);
+    return () => window.clearTimeout(timer);
+  }, [shareHint, manualMessage]);
+
+  const handleUnfollow = async (userId: string) => {
+    setActionUser(userId);
+    try {
+      await unfollowUserApi(userId);
+      await refresh();
+    } catch (err: any) {
+      setError(err?.message || "Unable to unfollow right now");
+    } finally {
+      setActionUser(null);
+    }
+  };
+
+  const handleFollowBack = async (userId: string) => {
+    setActionUser(userId);
+    try {
+      await followUserApi(userId);
+      await refresh();
+    } catch (err: any) {
+      setError(err?.message || "Unable to follow right now");
+    } finally {
+      setActionUser(null);
+    }
+  };
+
+  const followCode = user?.userId ?? "";
+  const followLink = followCode ? buildProfileLink(followCode) : "";
+
+  const handleShareFollowCode = async () => {
+    if (!followCode) return;
+    const result = await shareProfileLink({ userId: followCode, screenName: user?.screenName, isSelf: true });
+    if (result.status === "shared") setShareHint("Sent via share sheet");
+    else if (result.status === "copied") setShareHint("Profile link copied to clipboard");
+    else setShareHint(`Share this link: ${result.url}`);
+  };
+
+  const handleCopyMyCode = async () => {
+    if (!followCode) return;
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(followCode);
+        setShareHint("Follow code copied");
+        return;
+      }
+    } catch (err) {
+      console.warn("copy failed", err);
+    }
+    setShareHint(`Code: ${followCode}`);
+  };
+
+  const handleCopyMyLink = async () => {
+    if (!followLink) return;
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(followLink);
+        setShareHint("Profile link copied");
+        return;
+      }
+    } catch (err) {
+      console.warn("copy failed", err);
+    }
+    setShareHint(`Link: ${followLink}`);
+  };
+
+  const handleFollowByCode = async () => {
+    const target = codeInput.trim();
+    if (!target) {
+      setManualStatus("error");
+      setManualMessage("Enter a follow code first");
+      return;
+    }
+    setManualBusy(true);
+    setManualMessage(null);
+    setManualStatus(null);
+    try {
+      await followUserApi(target);
+      setManualMessage("Followed! They'll appear once they follow you back.");
+      setManualStatus("success");
+      setCodeInput("");
+      await refresh();
+    } catch (err: any) {
+      setManualMessage(err?.message || "Unable to follow that code");
+      setManualStatus("error");
+    } finally {
+      setManualBusy(false);
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-extrabold text-black">Followers</h1>
+        <Link
+          to="/"
+          className="text-sm text-blue-600 underline"
+        >
+          Back to games
+        </Link>
+      </div>
+      {loading && <div className="mt-4 text-gray-600">Loading...</div>}
+      {error && !loading && <div className="mt-4 text-sm text-red-600">{error}</div>}
+      {user && (
+        <section className="mt-6 border border-gray-200 rounded-2xl p-4 bg-white shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-black">Share your follow code</h2>
+              <p className="text-sm text-gray-600">
+                Send your code or personal link so people can follow you without searching. The same code
+                is always visible on your Profile page.
+              </p>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold border border-blue-600 text-blue-600 hover:bg-blue-50"
+                onClick={handleShareFollowCode}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M16 6l-4-4-4 4"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M12 2v13"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Share link
+              </button>
+              <button
+                type="button"
+                className="px-3 py-2 text-sm font-semibold border border-gray-300 rounded-full"
+                onClick={handleCopyMyLink}
+              >
+                Copy link
+              </button>
+              <button
+                type="button"
+                className="px-3 py-2 text-sm font-semibold border border-gray-300 rounded-full"
+                onClick={handleCopyMyCode}
+              >
+                Copy code
+              </button>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <code className="px-4 py-2 rounded-lg bg-gray-900 text-white font-mono text-lg">
+              {followCode}
+            </code>
+            {followLink && (
+              <span className="text-xs text-gray-500 break-all">{followLink}</span>
+            )}
+          </div>
+          <div className="mt-4">
+            <label className="text-sm font-semibold text-gray-700" htmlFor="follow-code-input">
+              Follow someone by code
+            </label>
+            <p className="text-xs text-gray-500 mb-2">
+              Paste the code they shared with you and we&apos;ll follow them instantly.
+            </p>
+            <div className="flex flex-col gap-3 md:flex-row">
+              <input
+                id="follow-code-input"
+                type="text"
+                className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm"
+                placeholder="e.g. user_123abc"
+                value={codeInput}
+                onChange={(e) => setCodeInput(e.target.value)}
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                className="px-4 py-2 rounded-full text-sm font-semibold border border-green-600 text-white bg-green-600 disabled:opacity-60"
+                onClick={handleFollowByCode}
+                disabled={manualBusy}
+              >
+                {manualBusy ? "Following…" : "Follow"}
+              </button>
+            </div>
+            {manualMessage && (
+              <p
+                className={`mt-2 text-xs ${
+                  manualStatus === "error" ? "text-red-600" : "text-green-700"
+                }`}
+              >
+                {manualMessage}
+              </p>
+            )}
+            {shareHint && !manualMessage && <p className="mt-2 text-xs text-green-700">{shareHint}</p>}
+          </div>
+        </section>
+      )}
+      {!loading && data && (
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <section id="following-section">
+            <header className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-lg font-semibold text-black">Following</h2>
+                <p className="text-xs text-gray-500">{data.followingCount} total</p>
+              </div>
+            </header>
+            {data.following.length === 0 ? (
+              <p className="text-sm text-gray-600">You&apos;re not following anyone yet.</p>
+            ) : (
+              <ul className="space-y-3">
+                {data.following.map((edge) => (
+                  <li
+                    key={`${edge.targetUserId}-${edge.createdAt}`}
+                    className="flex items-center justify-between border border-gray-200 rounded-lg p-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <ProfileAvatar user={{ avatar: edge.targetAvatar ?? 1 }} size={48} />
+                      <div className="min-w-0">
+                        <Link
+                          to={`/profile/${edge.targetUserId}`}
+                          className="text-sm font-semibold text-black truncate block"
+                        >
+                          {edge.targetScreenName ?? "Player"}
+                        </Link>
+                        {edge.presence?.status && (
+                          <div className="text-xs text-gray-500">
+                            {STATUS_LABELS[edge.presence.status] || "Online"}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      className="text-xs font-semibold text-red-600 border border-red-200 rounded-full px-3 py-1"
+                      onClick={() => handleUnfollow(edge.targetUserId)}
+                      disabled={actionUser === edge.targetUserId}
+                    >
+                      {actionUser === edge.targetUserId ? "Removing" : "Unfollow"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+          <section id="followers-section">
+            <header className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-lg font-semibold text-black">Followers</h2>
+                <p className="text-xs text-gray-500">{data.followersCount} total</p>
+              </div>
+            </header>
+            {data.followers.length === 0 ? (
+              <p className="text-sm text-gray-600">No one is following you yet.</p>
+            ) : (
+              <ul className="space-y-3">
+                {data.followers.map((edge) => (
+                  <li
+                    key={`${edge.userId}-${edge.createdAt}`}
+                    className="flex items-center justify-between border border-gray-200 rounded-lg p-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <ProfileAvatar user={{ avatar: edge.avatar ?? 1 }} size={48} />
+                      <div className="min-w-0">
+                        <Link
+                          to={`/profile/${edge.userId}`}
+                          className="text-sm font-semibold text-black truncate block"
+                        >
+                          {edge.screenName ?? "Player"}
+                        </Link>
+                      </div>
+                    </div>
+                    <button
+                      className="text-xs font-semibold text-blue-600 border border-blue-200 rounded-full px-3 py-1"
+                      onClick={() => handleFollowBack(edge.userId)}
+                      disabled={actionUser === edge.userId}
+                    >
+                      {actionUser === edge.userId ? "Following" : "Follow back"}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+      )}
+    </div>
+  );
+}

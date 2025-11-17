@@ -8,6 +8,14 @@ import {
 import { config } from "../config/index.js";
 import userService from "../services/userService.js";
 import { cognitoClient } from "../config/aws.js";
+import {
+  countFollowers,
+  countFollowing,
+  listFollowers,
+  listFollowing,
+  isFollowing,
+} from "../services/followersService.js";
+import { getRecentGamesForUser } from "../services/userGameStatsService.js";
 
 export async function me(req: Request, res: Response) {
   // @ts-ignore
@@ -103,5 +111,52 @@ export async function updateSettings(req: Request, res: Response) {
     res.json({ ok: true, screenName: assigned });
   } catch (e: any) {
     res.status(400).json({ error: e?.message || "update failed" });
+  }
+}
+
+export async function getPublicProfile(req: Request, res: Response) {
+  const targetUserId = String((req.params as any)?.userId || "").trim();
+  if (!targetUserId) return res.status(400).json({ error: "userId_required" });
+  try {
+    const profile = await userService.getProfile(targetUserId);
+    if (!profile || !profile.screenName) {
+      return res.status(404).json({ error: "user_not_found" });
+    }
+    const [followingCount, followersCount, followingEdges, followerEdges, recentGames] =
+      await Promise.all([
+        countFollowing(targetUserId),
+        countFollowers(targetUserId),
+        listFollowing(targetUserId),
+        listFollowers(targetUserId),
+        getRecentGamesForUser(targetUserId, 10),
+      ]);
+    // @ts-ignore
+    const viewerId = req.user?.userId as string | undefined;
+    let viewerFollows = false;
+    if (viewerId && viewerId !== targetUserId) {
+      viewerFollows = await isFollowing(viewerId, targetUserId);
+    }
+    res.json({
+      profile,
+      followingCount,
+      followersCount,
+      following: followingEdges.slice(0, 25).map((edge) => ({
+        userId: edge.targetUserId,
+        screenName: edge.targetScreenName,
+        avatar: edge.targetAvatar,
+        createdAt: edge.createdAt,
+      })),
+      followers: followerEdges.slice(0, 25).map((edge) => ({
+        userId: edge.userId,
+        screenName: edge.followerScreenName,
+        avatar: edge.followerAvatar,
+        createdAt: edge.createdAt,
+      })),
+      recentGames,
+      isSelf: viewerId === targetUserId,
+      isFollowing: viewerFollows,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err?.message || "failed" });
   }
 }

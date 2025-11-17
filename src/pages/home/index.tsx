@@ -4,6 +4,7 @@ import Seo from "../../components/Seo";
 import { games, GameMeta } from "../../games";
 import { fetchRatingSummaries, RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, primeRatingCache } from "../../utils/ratingCache";
+import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 // import NameDialog from "../../components/NameDialog";
 // useSession removed — currently not needed on the home page
 
@@ -43,6 +44,8 @@ export default function GameHub() {
       clearInterval(interval);
     };
   }, []);
+
+  usePresenceReporter({ status: "looking_for_game", enabled: true });
 
   // Filter games into recently added and most popular
   const { recentGames, popularGames, recentUpdated, favouriteGames } = useMemo(() => {

@@ -2,6 +2,7 @@ import { DynamoDBDocumentClient, PutCommand, QueryCommand } from "@aws-sdk/lib-d
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
 import { getUser } from "./dynamoService.js";
+import { recordUserGameSession } from "./userGameStatsService.js";
 import { randomUUID } from "crypto";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
@@ -30,6 +31,7 @@ export interface RawScoreItem {
 }
 
 export interface PublicScoreRow {
+  userId?: string;
   screenName: string;
   avatar: number;
   score: number;
@@ -66,6 +68,11 @@ export async function putScoreWithUser(args: {
       Item: item,
     })
   );
+  if (args.userId) {
+    recordUserGameSession(args.userId, args.gameId, args.score).catch((err) => {
+      console.warn("recordUserGameSession failed", err);
+    });
+  }
   return item;
 }
 
@@ -73,7 +80,11 @@ export async function putScoreWithUser(args: {
  * Fetch top scores and hydrate with CURRENT user profile (screenName/avatar).
  * Fallback: snapshot values or legacyName when user no longer exists.
  */
-export async function getTopScoresHydrated(gameId: string, limit = 10): Promise<PublicScoreRow[]> {
+export async function getTopScoresHydrated(
+  gameId: string,
+  limit = 10,
+  opts?: { includeUserIds?: string[] }
+): Promise<PublicScoreRow[]> {
   const fetchLimit = Math.max(limit * 5, 100);
   const result = await ddb.send(
     new QueryCommand({
@@ -91,7 +102,12 @@ export async function getTopScoresHydrated(gameId: string, limit = 10): Promise<
     if (b.score !== a.score) return b.score - a.score;
     return a.createdAt.localeCompare(b.createdAt);
   });
-  const sliced = items.slice(0, limit);
+  let filtered = items;
+  if (opts?.includeUserIds && opts.includeUserIds.length > 0) {
+    const allowed = new Set(opts.includeUserIds);
+    filtered = items.filter((row) => row.userId && allowed.has(row.userId));
+  }
+  const sliced = filtered.slice(0, limit);
   // Collect distinct userIds for profile hydration
   const userIds = Array.from(new Set(sliced.map((r) => r.userId).filter(Boolean))) as string[];
   const userProfiles: Record<string, any> = {};
@@ -115,6 +131,7 @@ export async function getTopScoresHydrated(gameId: string, limit = 10): Promise<
         ? row.avatarSnapshot
         : 1;
     return {
+      userId: row.userId,
       screenName,
       avatar,
       score: row.score,

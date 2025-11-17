@@ -26,5 +26,11 @@ export const config = {
     scoreGsi: process.env.SCORE_GSI_NAME || "GameScoresByScore",
     ratings: process.env.TABLE_RATINGS || "games4james-gameratings",
     ratingSummary: process.env.TABLE_RATING_SUMMARY || "games4james-gameratings-summary",
+    follows: process.env.TABLE_FOLLOWS || "games4james-follows",
+    presence: process.env.TABLE_PRESENCE || "games4james-presence",
+    userGameStats: process.env.TABLE_USER_GAME_STATS || "games4james-userGameStats",
+    userRecentGamesIndex: process.env.TABLE_USER_RECENT_GSI || "UserRecentGames",
+    gameStatsByGameIndex: process.env.TABLE_GAME_STATS_GSI || "GameStatsByGame",
+    followsByTargetIndex: process.env.TABLE_FOLLOWS_BY_TARGET_GSI || "FollowedBy",
   },
 };

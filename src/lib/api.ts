@@ -8,6 +8,56 @@ export type RatingSummary = {
   updatedAt?: string;
 };
 
+export type PresenceStatus =
+  | "looking_for_game"
+  | "home"
+  | "browsing_high_scores"
+  | "browsing_leaderboard"
+  | "game_lobby"
+  | "playing"
+  | "in_score_dialog";
+
+export type FollowingActivityEntry = {
+  userId: string;
+  targetUserId: string;
+  targetScreenName?: string | null;
+  targetAvatar?: number | null;
+  createdAt?: string;
+  presence?: {
+    status: PresenceStatus;
+    gameId?: string;
+    gameTitle?: string;
+    updatedAt: string;
+  };
+};
+
+export type FollowersSummary = {
+  following: FollowingActivityEntry[];
+  followers: Array<{
+    userId: string;
+    screenName?: string | null;
+    avatar?: number | null;
+    createdAt: string;
+  }>;
+  followingCount: number;
+  followersCount: number;
+};
+
+export type ScoreEntry = {
+  userId?: string;
+  screenName: string;
+  avatar: number;
+  score: number;
+  createdAt?: string;
+};
+
+export type FollowNotification = {
+  userId: string;
+  screenName?: string | null;
+  avatar?: number | null;
+  createdAt: string;
+};
+
 function emptySummary(gameId: string): RatingSummary {
   return { gameId, avgRating: 0, ratingCount: 0 };
 }
@@ -28,21 +78,27 @@ export async function postHighScore(args: { gameId: string; score: number }) {
   return res.json();
 }
 
-export async function getTopScores(gameId: string, limit = 10) {
-  if (!API_BASE)
-    return [] as { screenName: string; avatar: number; score: number; createdAt?: string }[];
+export async function getTopScores(
+  gameId: string,
+  limit = 10,
+  opts?: { scope?: "overall" | "following" }
+): Promise<ScoreEntry[]> {
+  if (!API_BASE) return [];
   const url = new URL(`${API_BASE}/scores/${encodeURIComponent(gameId)}`);
   url.searchParams.set("limit", String(limit));
-  const res = await fetch(url.toString());
+  if (opts?.scope === "following") {
+    url.searchParams.set("scope", "following");
+  }
+  const res = await fetch(url.toString(), {
+    credentials: opts?.scope === "following" ? "include" : undefined,
+  });
+  if (res.status === 401) {
+    throw new Error("signin_required");
+  }
   if (!res.ok) {
     throw new Error(`Failed to load leaderboard: ${res.status}`);
   }
-  return (await res.json()) as {
-    screenName: string;
-    avatar: number;
-    score: number;
-    createdAt?: string;
-  }[];
+  return (await res.json()) as ScoreEntry[];
 }
 
 // Update user settings (currently only screenName). Returns { ok, screenName }.
@@ -138,4 +194,85 @@ export async function submitRating(gameId: string, rating: number): Promise<Rati
   if (res.status === 401) throw new Error("signin_required");
   if (!res.ok) throw new Error(`Failed to submit rating: ${res.status}`);
   return (await res.json()) as RatingSummary;
+}
+
+export async function fetchFollowersSummary(): Promise<FollowersSummary> {
+  if (!API_BASE) return { following: [], followers: [], followingCount: 0, followersCount: 0 };
+  const res = await fetch(`${API_BASE}/followers/summary`, { credentials: "include" });
+  if (res.status === 401) return { following: [], followers: [], followingCount: 0, followersCount: 0 };
+  if (!res.ok) throw new Error(`Failed to load followers: ${res.status}`);
+  return (await res.json()) as FollowersSummary;
+}
+
+export async function followUserApi(targetUserId: string) {
+  if (!API_BASE) return { ok: false } as any;
+  const res = await fetch(`${API_BASE}/followers/${encodeURIComponent(targetUserId)}`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (res.status === 401) throw new Error("signin_required");
+  if (!res.ok) throw new Error(`Failed to follow: ${res.status}`);
+  return res.json();
+}
+
+export async function unfollowUserApi(targetUserId: string) {
+  if (!API_BASE) return { ok: false } as any;
+  const res = await fetch(`${API_BASE}/followers/${encodeURIComponent(targetUserId)}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (res.status === 401) throw new Error("signin_required");
+  if (!res.ok) throw new Error(`Failed to unfollow: ${res.status}`);
+  return res.json();
+}
+
+export async function updatePresenceStatus(payload: {
+  status: PresenceStatus;
+  gameId?: string;
+  gameTitle?: string;
+}) {
+  if (!API_BASE) return { ok: false } as any;
+  const res = await fetch(`${API_BASE}/followers/status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+  if (res.status === 401) throw new Error("signin_required");
+  if (!res.ok) throw new Error(`Failed to update presence: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchFollowingActivity(args: {
+  gameId?: string;
+  statuses?: PresenceStatus[];
+}): Promise<{ activity: FollowingActivityEntry[] }> {
+  if (!API_BASE) return { activity: [] };
+  const url = new URL(`${API_BASE}/followers/activity`);
+  if (args.gameId) url.searchParams.set("gameId", args.gameId);
+  if (args.statuses && args.statuses.length) {
+    url.searchParams.set("status", args.statuses.join(","));
+  }
+  const res = await fetch(url.toString(), { credentials: "include" });
+  if (res.status === 401) return { activity: [] };
+  if (!res.ok) throw new Error(`Failed to load activity: ${res.status}`);
+  return (await res.json()) as { activity: FollowingActivityEntry[] };
+}
+
+export async function fetchUserProfile(userId: string) {
+  if (!API_BASE) return null;
+  const res = await fetch(`${API_BASE}/users/${encodeURIComponent(userId)}`, {
+    credentials: "include",
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Failed to load profile: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchFollowNotifications(): Promise<{ notifications: FollowNotification[] }> {
+  if (!API_BASE) return { notifications: [] };
+  const res = await fetch(`${API_BASE}/followers/notifications`, { credentials: "include" });
+  if (res.status === 401) return { notifications: [] };
+  if (!res.ok) throw new Error(`Failed to load notifications: ${res.status}`);
+  return (await res.json()) as { notifications: FollowNotification[] };
 }

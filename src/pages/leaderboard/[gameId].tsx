@@ -1,37 +1,81 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { games } from "../../games";
-import { getTopScores } from "../../lib/api";
+import { getTopScores, ScoreEntry } from "../../lib/api";
 import { getUserName } from "../../utils/user";
 import Seo from "../../components/Seo";
 import { ProfileAvatar } from "../../components/profile";
-
-type ScoreRow = { screenName: string; avatar: number; score: number; createdAt?: string };
+import { useAuth } from "../../context/AuthProvider";
+import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 
 export default function LeaderboardPage() {
   const { gameId } = useParams();
   const navigate = useNavigate();
   const meta = useMemo(() => games.find((g) => g.id === gameId), [gameId]);
-  const [rows, setRows] = useState<ScoreRow[]>([]);
+  const [rows, setRows] = useState<ScoreEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tabError, setTabError] = useState<string | null>(null);
   const myName = useMemo(() => getUserName() || "", []);
+  const { user } = useAuth();
+  usePresenceReporter({
+    status: "browsing_leaderboard",
+    gameId: meta?.id,
+    gameTitle: meta?.title,
+    enabled: !!meta,
+  });
+
+  const getStoredTab = () => {
+    if (typeof window === "undefined") return "overall" as const;
+    const stored = window.localStorage.getItem("leaderboard:lastTab");
+    return stored === "following" ? "following" : "overall";
+  };
+
+  const [activeTab, setActiveTab] = useState<"overall" | "following">(() => getStoredTab());
 
   useEffect(() => {
+    let cancelled = false;
     const load = async () => {
       if (!gameId) return;
-      try {
-        const res = await getTopScores(gameId, 25);
-        setRows(res);
-      } catch (e) {
-        console.error(e);
-        setError("Failed to load leaderboard");
-      } finally {
+      setLoading(true);
+      setError(null);
+      setTabError(null);
+      const scope = activeTab === "following" ? "following" : undefined;
+      if (scope === "following" && !user) {
+        setRows([]);
         setLoading(false);
+        setTabError("Sign in to see scores from people you follow.");
+        return;
+      }
+      try {
+        const res = await getTopScores(gameId, 25, { scope });
+        if (!cancelled) setRows(res);
+      } catch (e: any) {
+        console.error(e);
+        if (scope === "following" && e?.message === "signin_required") {
+          if (!cancelled) {
+            setRows([]);
+            setTabError("Sign in to see scores from people you follow.");
+          }
+        } else {
+          if (!cancelled) setError("Failed to load leaderboard");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
     load();
-  }, [gameId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [gameId, activeTab, user?.userId]);
+
+  function handleTabChange(next: "overall" | "following") {
+    setActiveTab(next);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("leaderboard:lastTab", next);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
@@ -65,8 +109,32 @@ export default function LeaderboardPage() {
         </div>
       </header>
       <div className="pt-16 pb-6 px-4 max-w-xl w-full mx-auto">
+        <div className="flex gap-2 mb-4" role="tablist" aria-label="Leaderboard scope">
+          {(
+            [
+              { id: "overall", label: "Overall" },
+              { id: "following", label: "Following" },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              className={`flex-1 rounded-full border px-3 py-2 text-sm font-semibold transition-colors ${
+                activeTab === tab.id
+                  ? "bg-black text-white border-black"
+                  : "bg-white text-black border-gray-300"
+              }`}
+              onClick={() => handleTabChange(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
         {loading && <div className="text-gray-700">Loading…</div>}
         {error && <div className="text-red-600">{error}</div>}
+        {tabError && <div className="text-sm text-orange-600 mb-3">{tabError}</div>}
         {!loading && !error && (
           <ol className="rounded-lg overflow-hidden bg-white border border-gray-200">
             {rows.map((r, i) => {
@@ -78,9 +146,39 @@ export default function LeaderboardPage() {
                 bronze: { ring: "#d97706", badge: "#92400e", text: "#78350f" },
               };
               const avatarSize = medal ? 44 : 28;
+              const hasProfile = Boolean(r.userId);
+              const handleRowClick = () => {
+                if (r.userId) navigate(`/profile/${r.userId}`);
+              };
+              const baseRowClass =
+                "flex items-center justify-between px-4 py-3 border-b border-gray-200 last:border-b-0 " +
+                (isMe
+                  ? "bg-amber-50"
+                  : medal === "gold"
+                  ? "bg-yellow-50"
+                  : medal === "silver"
+                  ? "bg-gray-50"
+                  : medal === "bronze"
+                  ? "bg-orange-50"
+                  : "");
               return (
                 <li
                   key={`${r.screenName}-${i}`}
+                  className={baseRowClass + (hasProfile ? " cursor-pointer focus:outline-none focus:ring-2 focus:ring-black" : "")}
+                  role={hasProfile ? "button" : undefined}
+                  tabIndex={hasProfile ? 0 : undefined}
+                  onClick={hasProfile ? handleRowClick : undefined}
+                  onKeyDown={
+                    hasProfile
+                      ? (evt) => {
+                          if (evt.key === "Enter" || evt.key === " ") {
+                            evt.preventDefault();
+                            handleRowClick();
+                          }
+                        }
+                      : undefined
+                  }
+                  aria-label={hasProfile ? `View ${r.screenName}'s profile` : undefined}
                   className={
                     "flex items-center justify-between px-4 py-3 border-b border-gray-200 last:border-b-0 " +
                     (isMe
@@ -91,7 +189,8 @@ export default function LeaderboardPage() {
                       ? "bg-gray-50"
                       : medal === "bronze"
                       ? "bg-orange-50"
-                      : "")
+                      : "") +
+                    (hasProfile ? " cursor-pointer focus:outline-none focus:ring-2 focus:ring-black" : "")
                   }
                 >
                   <div className="flex items-center gap-3">
