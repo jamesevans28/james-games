@@ -179,19 +179,6 @@ export default function LeaderboardPage() {
                       : undefined
                   }
                   aria-label={hasProfile ? `View ${r.screenName}'s profile` : undefined}
-                  className={
-                    "flex items-center justify-between px-4 py-3 border-b border-gray-200 last:border-b-0 " +
-                    (isMe
-                      ? "bg-amber-50"
-                      : medal === "gold"
-                      ? "bg-yellow-50"
-                      : medal === "silver"
-                      ? "bg-gray-50"
-                      : medal === "bronze"
-                      ? "bg-orange-50"
-                      : "") +
-                    (hasProfile ? " cursor-pointer focus:outline-none focus:ring-2 focus:ring-black" : "")
-                  }
                 >
                   <div className="flex items-center gap-3">
                     <span className="w-7 text-gray-500 font-mono">{i + 1}.</span>

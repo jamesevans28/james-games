@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   fetchFollowersSummary,
@@ -33,8 +33,8 @@ export default function FollowersPage() {
   const [manualBusy, setManualBusy] = useState(false);
   const [shareHint, setShareHint] = useState<string | null>(null);
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
-  const anchor = searchParams.get("view");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const anchor = searchParams.get("view") === "followers" ? "followers" : "following";
 
   usePresenceReporter({ status: "home", enabled: true });
 
@@ -55,16 +55,6 @@ export default function FollowersPage() {
     void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (!anchor || !data || loading) return;
-    if (typeof document === "undefined") return;
-    const id = `${anchor}-section`;
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [anchor, data, loading]);
 
   useEffect(() => {
     if (!shareHint && !manualMessage) return;
@@ -162,6 +152,102 @@ export default function FollowersPage() {
     } finally {
       setManualBusy(false);
     }
+  };
+
+  const followingIds = useMemo(() => {
+    return new Set(data?.following.map((edge) => edge.targetUserId) ?? []);
+  }, [data?.following]);
+
+  const handleTabChange = (tab: "following" | "followers") => {
+    if (tab === "followers") {
+      setSearchParams({ view: "followers" });
+    } else {
+      setSearchParams({});
+    }
+  };
+
+  const renderFollowing = () => {
+    if (!data) return null;
+    if (data.following.length === 0) {
+      return <p className="text-sm text-gray-600">You&apos;re not following anyone yet.</p>;
+    }
+    return (
+      <ul className="space-y-3">
+        {data.following.map((edge) => (
+          <li
+            key={`${edge.targetUserId}-${edge.createdAt}`}
+            className="flex items-center justify-between border border-gray-200 rounded-lg p-3"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <ProfileAvatar user={{ avatar: edge.targetAvatar ?? 1 }} size={48} />
+              <div className="min-w-0">
+                <Link
+                  to={`/profile/${edge.targetUserId}`}
+                  className="text-sm font-semibold text-black truncate block"
+                >
+                  {edge.targetScreenName ?? "Player"}
+                </Link>
+                {edge.presence?.status && (
+                  <div className="text-xs text-gray-500">
+                    {STATUS_LABELS[edge.presence.status] || "Online"}
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              className="text-xs font-semibold text-red-600 border border-red-200 rounded-full px-3 py-1"
+              onClick={() => handleUnfollow(edge.targetUserId)}
+              disabled={actionUser === edge.targetUserId}
+            >
+              {actionUser === edge.targetUserId ? "Removing" : "Unfollow"}
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  const renderFollowers = () => {
+    if (!data) return null;
+    if (data.followers.length === 0) {
+      return <p className="text-sm text-gray-600">No one is following you yet.</p>;
+    }
+    return (
+      <ul className="space-y-3">
+        {data.followers.map((edge) => {
+          const isFollowing = followingIds.has(edge.userId);
+          return (
+            <li
+              key={`${edge.userId}-${edge.createdAt}`}
+              className="flex items-center justify-between border border-gray-200 rounded-lg p-3"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <ProfileAvatar user={{ avatar: edge.avatar ?? 1 }} size={48} />
+                <div className="min-w-0">
+                  <Link
+                    to={`/profile/${edge.userId}`}
+                    className="text-sm font-semibold text-black truncate block"
+                  >
+                    {edge.screenName ?? "Player"}
+                  </Link>
+                </div>
+              </div>
+              {isFollowing ? (
+                <span className="text-xs text-gray-500">Following</span>
+              ) : (
+                <button
+                  className="text-xs font-semibold text-blue-600 border border-blue-200 rounded-full px-3 py-1"
+                  onClick={() => handleFollowBack(edge.userId)}
+                  disabled={actionUser === edge.userId}
+                >
+                  {actionUser === edge.userId ? "Following" : "Follow back"}
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    );
   };
 
   return (
@@ -282,91 +368,30 @@ export default function FollowersPage() {
         </section>
       )}
       {!loading && data && (
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
-          <section id="following-section">
-            <header className="flex items-center justify-between mb-3">
-              <div>
-                <h2 className="text-lg font-semibold text-black">Following</h2>
-                <p className="text-xs text-gray-500">{data.followingCount} total</p>
-              </div>
-            </header>
-            {data.following.length === 0 ? (
-              <p className="text-sm text-gray-600">You&apos;re not following anyone yet.</p>
-            ) : (
-              <ul className="space-y-3">
-                {data.following.map((edge) => (
-                  <li
-                    key={`${edge.targetUserId}-${edge.createdAt}`}
-                    className="flex items-center justify-between border border-gray-200 rounded-lg p-3"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <ProfileAvatar user={{ avatar: edge.targetAvatar ?? 1 }} size={48} />
-                      <div className="min-w-0">
-                        <Link
-                          to={`/profile/${edge.targetUserId}`}
-                          className="text-sm font-semibold text-black truncate block"
-                        >
-                          {edge.targetScreenName ?? "Player"}
-                        </Link>
-                        {edge.presence?.status && (
-                          <div className="text-xs text-gray-500">
-                            {STATUS_LABELS[edge.presence.status] || "Online"}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      className="text-xs font-semibold text-red-600 border border-red-200 rounded-full px-3 py-1"
-                      onClick={() => handleUnfollow(edge.targetUserId)}
-                      disabled={actionUser === edge.targetUserId}
-                    >
-                      {actionUser === edge.targetUserId ? "Removing" : "Unfollow"}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-          <section id="followers-section">
-            <header className="flex items-center justify-between mb-3">
-              <div>
-                <h2 className="text-lg font-semibold text-black">Followers</h2>
-                <p className="text-xs text-gray-500">{data.followersCount} total</p>
-              </div>
-            </header>
-            {data.followers.length === 0 ? (
-              <p className="text-sm text-gray-600">No one is following you yet.</p>
-            ) : (
-              <ul className="space-y-3">
-                {data.followers.map((edge) => (
-                  <li
-                    key={`${edge.userId}-${edge.createdAt}`}
-                    className="flex items-center justify-between border border-gray-200 rounded-lg p-3"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <ProfileAvatar user={{ avatar: edge.avatar ?? 1 }} size={48} />
-                      <div className="min-w-0">
-                        <Link
-                          to={`/profile/${edge.userId}`}
-                          className="text-sm font-semibold text-black truncate block"
-                        >
-                          {edge.screenName ?? "Player"}
-                        </Link>
-                      </div>
-                    </div>
-                    <button
-                      className="text-xs font-semibold text-blue-600 border border-blue-200 rounded-full px-3 py-1"
-                      onClick={() => handleFollowBack(edge.userId)}
-                      disabled={actionUser === edge.userId}
-                    >
-                      {actionUser === edge.userId ? "Following" : "Follow back"}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
+        <section className="mt-6 border border-gray-200 rounded-2xl bg-white p-4 shadow-sm">
+          <div className="flex gap-2 bg-gray-100 rounded-full p-1">
+            {(
+              [
+                { id: "following" as const, label: `Following (${data.followingCount})` },
+                { id: "followers" as const, label: `Followers (${data.followersCount})` },
+              ]
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                className={`flex-1 px-4 py-2 text-sm font-semibold rounded-full transition ${
+                  anchor === tab.id ? "bg-white text-black shadow" : "text-gray-500"
+                }`}
+                onClick={() => handleTabChange(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className="mt-4" aria-live="polite">
+            {anchor === "followers" ? renderFollowers() : renderFollowing()}
+          </div>
+        </section>
       )}
     </div>
   );
