@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import Seo from "../../components/Seo";
 import { games, GameMeta } from "../../games";
@@ -47,66 +48,168 @@ export default function GameHub() {
 
   usePresenceReporter({ status: "looking_for_game", enabled: true });
 
-  // Filter games into recently added and most popular
-  const { recentGames, popularGames, recentUpdated, favouriteGames } = useMemo(() => {
-    const fourDaysAgo = new Date();
-    fourDaysAgo.setDate(fourDaysAgo.getDate() - 4);
+  const randomGame = useMemo(() => {
+    if (!games.length) return null;
+    const index = Math.floor(Math.random() * games.length);
+    return games[index] ?? null;
+  }, []);
 
-    const recent: GameMeta[] = [];
-    const popular: GameMeta[] = [];
+  // Filter games into curated buckets for the home experience
+  const { recentDrops, recentlyUpdated, favouriteGames, evergreenGames, heroGame } = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 4);
+
+    const fresh: GameMeta[] = [];
+    const updated: GameMeta[] = [];
 
     games.forEach((game) => {
       if (game.createdAt) {
         const createdDate = new Date(game.createdAt);
-        if (createdDate >= fourDaysAgo) {
-          recent.push(game);
-        } else {
-          popular.push(game);
+        if (!Number.isNaN(createdDate.getTime()) && createdDate >= cutoff) {
+          fresh.push(game);
         }
-      } else {
-        // Games without createdAt go to popular
-        popular.push(game);
       }
-    });
-
-    // Sort recent games by createdAt descending (most recent first)
-    recent.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
-
-    // Recently updated within the last 4 days
-    const recentUpdated: GameMeta[] = [];
-    games.forEach((game) => {
       if (game.updatedAt) {
         const updatedDate = new Date(game.updatedAt);
-        if (updatedDate >= fourDaysAgo) recentUpdated.push(game);
+        if (!Number.isNaN(updatedDate.getTime()) && updatedDate >= cutoff) {
+          updated.push(game);
+        }
       }
     });
 
-    // Favourites: top-rated games (by average rating). Show top 2.
+    fresh.sort(
+      (a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+    );
+    updated.sort(
+      (a, b) => new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
+    );
+
+    const freshIds = new Set(fresh.map((g) => g.id));
+    const uniqueUpdated = updated.filter((game) => !freshIds.has(game.id));
+
     const favs = [...games]
       .filter((g) => ratings[g.id] && typeof ratings[g.id].avgRating === "number")
       .sort((a, b) => (ratings[b.id].avgRating || 0) - (ratings[a.id].avgRating || 0))
       .slice(0, 2);
 
-    return { recentGames: recent, popularGames: popular, recentUpdated, favouriteGames: favs };
+    const usedIds = new Set<string>([...freshIds, ...uniqueUpdated.map((g) => g.id)]);
+    const evergreen = games
+      .filter((game) => !usedIds.has(game.id))
+      .sort((a, b) => {
+        const scoreA = ratings[a.id]?.avgRating ?? 0;
+        const scoreB = ratings[b.id]?.avgRating ?? 0;
+        if (scoreA === scoreB) return a.title.localeCompare(b.title);
+        return scoreB - scoreA;
+      });
+
+    const hero = fresh[0] ?? uniqueUpdated[0] ?? favs[0] ?? games[0] ?? null;
+
+    return {
+      recentDrops: fresh,
+      recentlyUpdated: uniqueUpdated,
+      favouriteGames: favs,
+      evergreenGames: evergreen,
+      heroGame: hero,
+    };
   }, [ratings]);
 
-  const GameCard = ({ game }: { game: GameMeta }) => {
+  const formatRelativeLabel = (iso?: string | null, prefix = "Updated") => {
+    if (!iso) return null;
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return null;
+    const diffDays = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays <= 0) return `${prefix} today`;
+    if (diffDays === 1) return `${prefix} yesterday`;
+    if (diffDays < 7) return `${prefix} ${diffDays}d ago`;
+    return `${prefix} ${date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+  };
+
+  const ratingSummaryLine = (gameId: string) => {
+    const summary = ratings[gameId];
+    if (!summary) return null;
+    if (!summary.ratingCount) return "Be the first to rate";
+    return `${summary.avgRating?.toFixed(1) ?? "-"} avg · ${summary.ratingCount} ratings`;
+  };
+
+  const heroRatingLine = heroGame ? ratingSummaryLine(heroGame.id) : null;
+  const heroTimestamp = heroGame
+    ? formatRelativeLabel(
+        heroGame.updatedAt ?? heroGame.createdAt,
+        heroGame.updatedAt ? "Updated" : "Added"
+      )
+    : null;
+
+  const fallbackGameId = heroGame?.id ?? randomGame?.id ?? games[0]?.id;
+  const leaderboardGameId =
+    heroGame?.id ||
+    recentlyUpdated[0]?.id ||
+    recentDrops[0]?.id ||
+    favouriteGames[0]?.id ||
+    evergreenGames[0]?.id ||
+    fallbackGameId;
+  const quickActions = [
+    {
+      title: "Invite friends",
+      body: "Share your follow code or follow someone by theirs.",
+      cta: "Open followers",
+      action: () => navigate("/followers"),
+    },
+    {
+      title: "Leaderboards",
+      body: "See the top scores for every game in one place.",
+      cta: "View leaderboard",
+      action: () => {
+        if (leaderboardGameId) {
+          navigate(`/leaderboard/${leaderboardGameId}`);
+        }
+      },
+    },
+    {
+      title: "Surprise me",
+      body: randomGame
+        ? `${randomGame.title} is calling your name.`
+        : "Pick any game to get started.",
+      cta: randomGame ? `Play ${randomGame.title}` : "Play a game",
+      action: () => {
+        if (randomGame?.id) {
+          navigate(`/games/${randomGame.id}`);
+        } else if (fallbackGameId) {
+          navigate(`/games/${fallbackGameId}`);
+        }
+      },
+    },
+  ];
+
+  const GameCard = ({
+    game,
+    badge,
+    metaLine,
+  }: {
+    game: GameMeta;
+    badge?: string;
+    metaLine?: string | null;
+  }) => {
     const summary = ratings[game.id];
     return (
       <div
-        className="bg-white rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+        className="relative bg-white rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
         onClick={() => navigate(`/games/${game.id}`)}
       >
-        {/* Game Thumbnail */}
+        {badge && (
+          <span className="absolute top-2 left-2 z-10 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide rounded-full bg-black/80 text-white">
+            {badge}
+          </span>
+        )}
         <div
           className="aspect-square bg-cover bg-center"
           style={{ backgroundImage: `url(${game.thumbnail || "/assets/logo.png"})` }}
           title={game.title}
         />
-
-        {/* Game Info */}
         <div className="px-3 py-2">
           <h3 className="text-sm font-semibold truncate text-black">{game.title}</h3>
+          {metaLine && (
+            <p className="text-[11px] text-gray-500 uppercase tracking-wide mt-0.5">{metaLine}</p>
+          )}
           <div className="mt-1 flex items-center gap-1 text-xs text-gray-600">
             <svg
               width="12"
@@ -130,6 +233,7 @@ export default function GameHub() {
       </div>
     );
   };
+
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
       <Seo
@@ -140,59 +244,158 @@ export default function GameHub() {
         image="https://games4james.com/assets/logo.png"
       />
 
-      {/* Recently Updated Section */}
-      {recentUpdated && recentUpdated.length > 0 && (
-        <div className="w-full max-w-6xl mx-auto px-4 py-6">
-          <h2 className="text-xl font-bold mb-4 text-black">Recently Updated</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
-            {recentUpdated.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
+      {heroGame && (
+        <section className="w-full bg-gradient-to-br from-emerald-50 via-white to-blue-50 border-b border-gray-100">
+          <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col gap-6 md:flex-row md:items-center">
+            <div className="flex-1 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
+                Featured game
+              </p>
+              <h1 className="text-3xl font-extrabold text-black">{heroGame.title}</h1>
+              {heroGame.description && (
+                <p className="text-gray-600 text-sm leading-relaxed">{heroGame.description}</p>
+              )}
+              {heroRatingLine && <p className="text-xs text-gray-500">{heroRatingLine}</p>}
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-full bg-black text-white text-sm font-semibold"
+                  onClick={() => navigate(`/games/${heroGame.id}`)}
+                >
+                  Play now
+                </button>
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-full border border-black/20 text-sm font-semibold"
+                  onClick={() => navigate(`/leaderboard/${heroGame.id}`)}
+                >
+                  View leaderboard
+                </button>
+              </div>
+            </div>
+            <div
+              className="flex-1 min-h-[220px] rounded-2xl border border-white/60 shadow-inner overflow-hidden relative"
+              style={{
+                backgroundImage: `url(${heroGame.thumbnail || "/assets/logo.png"})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/50 to-transparent" />
+              <div className="relative z-10 h-full flex items-end p-4">
+                <div className="text-white text-sm font-semibold">
+                  {heroTimestamp ?? "Now playing"}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Recently Added Section */}
-      {recentGames.length > 0 && (
-        <div className="w-full max-w-6xl mx-auto px-4 py-6">
-          <h2 className="text-xl font-bold mb-4 text-black">Recently Added</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
-            {recentGames.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Favourites (top rated) */}
-      {favouriteGames && favouriteGames.length > 0 && (
-        <div className="w-full max-w-6xl mx-auto px-4 py-6">
-          <h2 className="text-xl font-bold mb-4 text-black">Favourites</h2>
-          <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-2 gap-4">
-            {favouriteGames.map((game) => (
-              <GameCard key={game.id} game={game} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Recommended Section */}
-      <div className="w-full max-w-6xl mx-auto px-4 py-6">
-        <h2 className="text-xl font-bold mb-4 text-black">Recommended</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
-          {popularGames.map((game) => (
-            <GameCard key={game.id} game={game} />
+      <section className="w-full max-w-6xl mx-auto px-4 py-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          {quickActions.map((action) => (
+            <button
+              key={action.title}
+              type="button"
+              onClick={action.action}
+              className="text-left rounded-2xl border border-gray-200 bg-white/80 shadow-sm p-4 hover:border-black/20 hover:-translate-y-0.5 transition-all"
+            >
+              <p className="text-sm font-semibold text-black">{action.title}</p>
+              <p className="text-xs text-gray-500 mt-1">{action.body}</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-600">
+                {action.cta}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M5 12h14M13 5l7 7-7 7"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+            </button>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* {showNameDialog && (
-        <NameDialog
-          initialValue={name}
-          onCancel={() => setShowNameDialog(false)}
-          onSave={handleSaveName}
-        />
-      )} */}
+      {recentlyUpdated.length > 0 && (
+        <HomeSection
+          title="Freshly updated"
+          subtitle="Balance tweaks, new levels, and polish drops from this week."
+        >
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+            {recentlyUpdated.map((game) => (
+              <GameCard
+                key={game.id}
+                game={game}
+                badge="Updated"
+                metaLine={formatRelativeLabel(game.updatedAt, "Updated")}
+              />
+            ))}
+          </div>
+        </HomeSection>
+      )}
+
+      {recentDrops.length > 0 && (
+        <HomeSection title="New this week" subtitle="Brand-new releases that just landed.">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+            {recentDrops.map((game) => (
+              <GameCard
+                key={game.id}
+                game={game}
+                badge="New"
+                metaLine={formatRelativeLabel(game.createdAt, "Added")}
+              />
+            ))}
+          </div>
+        </HomeSection>
+      )}
+
+      {favouriteGames.length > 0 && (
+        <HomeSection title="Fan favourites" subtitle="Highest-rated challenges from the community.">
+          <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {favouriteGames.map((game) => (
+              <GameCard
+                key={game.id}
+                game={game}
+                badge="Top rated"
+                metaLine={ratingSummaryLine(game.id)}
+              />
+            ))}
+          </div>
+        </HomeSection>
+      )}
+
+      {evergreenGames.length > 0 && (
+        <HomeSection title="Play anything" subtitle="Classic skill games you can always count on.">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+            {evergreenGames.map((game) => (
+              <GameCard key={game.id} game={game} metaLine={ratingSummaryLine(game.id)} />
+            ))}
+          </div>
+        </HomeSection>
+      )}
     </div>
+  );
+}
+
+function HomeSection({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="w-full max-w-6xl mx-auto px-4 py-6">
+      <div className="mb-4">
+        <h2 className="text-xl font-bold text-black">{title}</h2>
+        {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+      </div>
+      {children}
+    </section>
   );
 }

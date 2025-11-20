@@ -271,6 +271,8 @@ export default function PlayGame() {
     };
   }, [playing, meta, mountGame]);
 
+  const landingState = playing ? "hidden" : "visible";
+
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
       <Seo
@@ -290,31 +292,35 @@ export default function PlayGame() {
       />
 
       {error && <div className="p-4 text-red-400">{error}</div>}
-      {!playing && meta && !error && <GameLanding meta={meta} onPlay={() => setPlaying(true)} />}
-
-      {playing && (
-        <div className="game-stage">
-          <div
-            ref={containerRef}
-            id="game-container"
-            className="relative w-full h-full overflow-hidden bg-black"
-          />
-          {mounting && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-[1000]">
-              <div className="flex flex-col items-center">
-                <img
-                  src="/assets/rocket-spinner.svg"
-                  alt="Loading"
-                  className="w-32 h-32 animate-pulse"
-                />
-                <div className="mt-4 text-white font-semibold tracking-[0.35em] text-sm">
-                  LOADING
-                </div>
-              </div>
-            </div>
-          )}
+      {meta && !error && (
+        <div className="landing-panel" data-state={landingState} aria-hidden={playing}>
+          <GameLanding meta={meta} onPlay={() => setPlaying(true)} />
         </div>
       )}
+
+      <div
+        className="game-stage"
+        data-state={playing ? "visible" : "hidden"}
+        aria-hidden={!playing}
+      >
+        <div
+          ref={containerRef}
+          id="game-container"
+          className="relative w-full h-full overflow-hidden bg-black"
+        />
+        {mounting && playing && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-[1000]">
+            <div className="flex flex-col items-center">
+              <img
+                src="/assets/rocket-spinner.svg"
+                alt="Loading"
+                className="w-32 h-32 animate-pulse"
+              />
+              <div className="mt-4 text-white font-semibold tracking-[0.35em] text-sm">LOADING</div>
+            </div>
+          </div>
+        )}
+      </div>
 
       <ScoreDialog
         open={showScore}

@@ -164,7 +164,12 @@ export default function LeaderboardPage() {
               return (
                 <li
                   key={`${r.screenName}-${i}`}
-                  className={baseRowClass + (hasProfile ? " cursor-pointer focus:outline-none focus:ring-2 focus:ring-black" : "")}
+                  className={
+                    baseRowClass +
+                    (hasProfile
+                      ? " cursor-pointer focus:outline-none focus:ring-2 focus:ring-black"
+                      : "")
+                  }
                   role={hasProfile ? "button" : undefined}
                   tabIndex={hasProfile ? 0 : undefined}
                   onClick={hasProfile ? handleRowClick : undefined}

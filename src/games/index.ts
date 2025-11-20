@@ -126,10 +126,11 @@ export const games: GameMeta[] = [
   {
     id: "serpento",
     title: "Serpento",
-    description: "Classic snake game. Turn left/right to collect food, avoid walls and yourself. Gets faster as you grow!",
+    description:
+      "Classic snake game. Turn left/right to collect food, avoid walls and yourself. Gets faster as you grow!",
     thumbnail: "/assets/serpento/thumbnail.svg",
     createdAt: "2025-11-17T00:00:00.000Z",
-    updatedAt: "2025-11-17T00:00:00.000Z",
+    updatedAt: "2025-11-20T00:00:00.000Z",
     load: async () => {
       const mod = await import("./serpento/index");
       return { mount: mod.mount };

@@ -13,7 +13,7 @@ export default function Header() {
   const { hasUnread, markRead } = useNotificationsIndicator();
 
   return (
-    <header className="w-full border-b border-gray-200">
+    <header className="w-full border-b border-gray-200 bg-white/95 sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:backdrop-blur">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
@@ -56,7 +56,10 @@ export default function Header() {
                 />
               </svg>
               {hasUnread && (
-                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full" aria-hidden />
+                <span
+                  className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full"
+                  aria-hidden
+                />
               )}
             </button>
           )}

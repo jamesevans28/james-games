@@ -78,13 +78,38 @@ button {
   position: fixed;
   top: var(--header-h);
   left: 50%;
-  transform: translateX(-50%);
   bottom: 0;
   width: 100vw;
   max-width: 540px; /* Max width to match game design width */
-  /* Use the app background image stretched to edges */
+  transform: translate(-50%, 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1), opacity 450ms ease;
   background-image: url("/assets/bg.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+.game-stage[data-state="visible"] {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.game-stage[data-state="hidden"] {
+  transform: translate(-50%, 100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.landing-panel {
+  transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 360ms ease;
+}
+
+.landing-panel[data-state="hidden"] {
+  transform: translateY(-18px);
+  opacity: 0;
+  pointer-events: none;
+  filter: blur(1px);
 }

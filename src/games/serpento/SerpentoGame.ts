@@ -35,6 +35,8 @@ export default class SerpentoGame extends Phaser.Scene {
 
   private leftButton!: Phaser.GameObjects.Container;
   private rightButton!: Phaser.GameObjects.Container;
+  private leftButtonBg?: Phaser.GameObjects.Arc;
+  private rightButtonBg?: Phaser.GameObjects.Arc;
 
   constructor() {
     super("SerpentoGame");
@@ -89,6 +91,7 @@ export default class SerpentoGame extends Phaser.Scene {
 
     // Controls
     this.createControls(width, height);
+    this.registerGlobalControls();
 
     // Start movement timer
     this.startMoveTimer();
@@ -97,6 +100,7 @@ export default class SerpentoGame extends Phaser.Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.moveTimer?.remove();
+      this.input.off("pointerdown", this.handleScreenTap, this);
     });
   }
 
@@ -191,19 +195,13 @@ export default class SerpentoGame extends Phaser.Scene {
     leftArrow.fillTriangle(-15, 0, 15, -12, 15, 12);
 
     this.leftButton.add([leftBg, leftArrow]);
+    this.leftButtonBg = leftBg;
     this.leftButton.setSize(buttonSize, buttonSize);
     this.leftButton.setInteractive({ useHandCursor: true });
 
-    this.leftButton.on("pointerdown", () => {
-      if (this.gameOver) return;
-      this.turnLeft();
-      this.tweens.add({
-        targets: leftBg,
-        scaleX: 0.9,
-        scaleY: 0.9,
-        duration: 80,
-        yoyo: true,
-      });
+    this.leftButton.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation?.();
+      this.handleDirectionInput("left");
     });
 
     // Right button
@@ -218,33 +216,55 @@ export default class SerpentoGame extends Phaser.Scene {
     rightArrow.fillTriangle(15, 0, -15, -12, -15, 12);
 
     this.rightButton.add([rightBg, rightArrow]);
+    this.rightButtonBg = rightBg;
     this.rightButton.setSize(buttonSize, buttonSize);
     this.rightButton.setInteractive({ useHandCursor: true });
 
-    this.rightButton.on("pointerdown", () => {
-      if (this.gameOver) return;
-      this.turnRight();
-      this.tweens.add({
-        targets: rightBg,
-        scaleX: 0.9,
-        scaleY: 0.9,
-        duration: 80,
-        yoyo: true,
-      });
+    this.rightButton.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      pointer.event?.stopPropagation?.();
+      this.handleDirectionInput("right");
     });
 
     // Keyboard controls
-    this.input.keyboard?.on("keydown-LEFT", () => {
-      if (!this.gameOver) this.turnLeft();
-    });
-    this.input.keyboard?.on("keydown-RIGHT", () => {
-      if (!this.gameOver) this.turnRight();
-    });
-    this.input.keyboard?.on("keydown-A", () => {
-      if (!this.gameOver) this.turnLeft();
-    });
-    this.input.keyboard?.on("keydown-D", () => {
-      if (!this.gameOver) this.turnRight();
+    this.input.keyboard?.on("keydown-LEFT", () => this.handleDirectionInput("left"));
+    this.input.keyboard?.on("keydown-RIGHT", () => this.handleDirectionInput("right"));
+    this.input.keyboard?.on("keydown-A", () => this.handleDirectionInput("left"));
+    this.input.keyboard?.on("keydown-D", () => this.handleDirectionInput("right"));
+  }
+
+  private registerGlobalControls(): void {
+    this.input.on("pointerdown", this.handleScreenTap, this);
+  }
+
+  private handleScreenTap(pointer: Phaser.Input.Pointer): void {
+    if (this.gameOver) return;
+    const midpoint = this.scale.width / 2;
+    if (pointer.x <= midpoint) {
+      this.handleDirectionInput("left");
+    } else {
+      this.handleDirectionInput("right");
+    }
+  }
+
+  private handleDirectionInput(direction: "left" | "right"): void {
+    if (this.gameOver) return;
+    if (direction === "left") {
+      this.turnLeft();
+      this.pulseButton(this.leftButtonBg);
+    } else {
+      this.turnRight();
+      this.pulseButton(this.rightButtonBg);
+    }
+  }
+
+  private pulseButton(target?: Phaser.GameObjects.Arc): void {
+    if (!target) return;
+    this.tweens.add({
+      targets: target,
+      scaleX: 0.9,
+      scaleY: 0.9,
+      duration: 80,
+      yoyo: true,
     });
   }
 

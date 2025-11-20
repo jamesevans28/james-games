@@ -147,6 +147,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
+  const hydrateUserFromCache = useCallback(
+    (maxAge: number = SESSION_CACHE_MAX_AGE) => {
+      const cached = readSessionCache(maxAge);
+      if (cached) {
+        setUser((prev) => prev ?? cached);
+        persistSessionCache(cached);
+        return cached;
+      }
+      return null;
+    },
+    [setUser]
+  );
+
   // NOTE: We intentionally do NOT call `/me` on mount. The app should only
   // call protected backend endpoints when it knows a session exists. This
   // avoids unnecessary protected calls that would return 401 when the user
@@ -232,12 +245,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Server signs the user in and sets HttpOnly cookies. Refresh local user state.
       setLoading(true);
       try {
-        await fetchMe();
+        const fetched = await fetchMe();
+        if (!fetched) hydrateUserFromCache();
       } finally {
         setLoading(false);
       }
     },
-    [apiBase, fetchMe]
+    [apiBase, fetchMe, hydrateUserFromCache]
   );
 
   const signIn = useCallback(
@@ -254,12 +268,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setLoading(true);
       try {
-        await fetchMe();
+        const fetched = await fetchMe();
+        if (!fetched) hydrateUserFromCache();
       } finally {
         setLoading(false);
       }
     },
-    [apiBase, fetchMe]
+    [apiBase, fetchMe, hydrateUserFromCache]
   );
 
   /**
@@ -291,12 +306,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const silent = !!opts?.silent;
       if (!silent) setLoading(true);
       try {
-        await fetchMe();
+        const fetched = await fetchMe();
+        if (!fetched) hydrateUserFromCache(OFFLINE_CACHE_GRACE_MS);
       } finally {
         if (!silent) setLoading(false);
       }
     },
-    [fetchMe]
+    [fetchMe, hydrateUserFromCache]
   );
 
   // --- Automatic periodic refresh -------------------------------------------------
@@ -369,10 +385,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (cached) {
       setUser(cached);
       persistSessionCache(cached);
-    } else {
-      clearSessionCache();
-      setUser(null);
+      return;
     }
+    clearSessionCache();
+    setUser(null);
   }, []);
 
   const performScheduledRefresh = useCallback(async () => {
@@ -428,20 +444,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const outcome = await runRefresh({ reason: "startup", timeoutMs: 10000 });
         if (outcome === "success") {
           console.log("AuthProvider: Refresh successful, fetching user data");
-          await fetchMe();
+          const fetched = await fetchMe();
+          if (!fetched) {
+            hydrateUserFromCache(OFFLINE_CACHE_GRACE_MS);
+          }
           return;
         }
 
         if (outcome === "unauthorized") {
-          console.log("AuthProvider: Refresh returned 401, using cached session if available");
-          const cached = readSessionCache(SESSION_CACHE_MAX_AGE);
-          if (cached) {
-            setUser(cached);
-            persistSessionCache(cached);
-            return;
-          }
-          clearSessionCache();
-          setUser(null);
+          console.log("AuthProvider: Refresh returned 401, user must reauthenticate");
+          handleUnauthorized();
           return;
         }
 
@@ -474,7 +486,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       void (async () => {
         const outcome = await runRefresh({ reason: "online" });
         if (outcome === "success") {
-          await fetchMe();
+          const fetched = await fetchMe();
+          if (!fetched) hydrateUserFromCache(OFFLINE_CACHE_GRACE_MS);
         } else if (outcome === "unauthorized") {
           handleUnauthorized();
         }
@@ -487,7 +500,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       window.removeEventListener("online", onlineHandler);
     };
-  }, [fetchMe, runRefresh, handleUnauthorized]);
+  }, [fetchMe, runRefresh, handleUnauthorized, hydrateUserFromCache]);
 
   // Listen for broadcasts from other tabs so each tab stays in sync.
   useEffect(() => {
