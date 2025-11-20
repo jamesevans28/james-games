@@ -1,0 +1,27 @@
+<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+  <!-- Alien enemy -->
+  <defs>
+    <linearGradient id="alienGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#66BB6A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Body -->
+  <ellipse cx="30" cy="35" rx="22" ry="18" fill="url(#alienGradient)" stroke="#1B5E20" stroke-width="2"/>
+  
+  <!-- Head -->
+  <ellipse cx="30" cy="18" rx="16" ry="14" fill="url(#alienGradient)" stroke="#1B5E20" stroke-width="2"/>
+  
+  <!-- Eyes -->
+  <ellipse cx="22" cy="18" rx="5" ry="7" fill="#000" opacity="0.8"/>
+  <ellipse cx="38" cy="18" rx="5" ry="7" fill="#000" opacity="0.8"/>
+  
+  <!-- Eye highlights -->
+  <circle cx="24" cy="16" r="2" fill="#FFF" opacity="0.8"/>
+  <circle cx="40" cy="16" r="2" fill="#FFF" opacity="0.8"/>
+  
+  <!-- Tentacles/Arms -->
+  <path d="M 12 40 Q 5 45 8 52" stroke="#2E7D32" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 48 40 Q 55 45 52 52" stroke="#2E7D32" stroke-width="3" fill="none" stroke-linecap="round"/>
+</svg>

@@ -136,4 +136,17 @@ export const games: GameMeta[] = [
       return { mount: mod.mount };
     },
   },
+  {
+    id: "cosmic-clash",
+    title: "Cosmic Clash",
+    description:
+      "Space Invaders-style shooter. Auto-fire at descending aliens, collect power-ups, survive waves!",
+    thumbnail: "/assets/cosmic-clash/thumbnail.svg",
+    createdAt: "2025-11-21T00:00:00.000Z",
+    updatedAt: "2025-11-21T00:00:00.000Z",
+    load: async () => {
+      const mod = await import("./cosmic-clash/index");
+      return { mount: mod.mount };
+    },
+  },
 ];

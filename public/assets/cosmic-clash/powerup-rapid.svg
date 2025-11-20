@@ -1,0 +1,20 @@
+<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rapid Fire Power-up -->
+  <defs>
+    <radialGradient id="rapidGradient">
+      <stop offset="0%" style="stop-color:#FF6B6B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C92A2A;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Outer circle -->
+  <circle cx="25" cy="25" r="23" fill="url(#rapidGradient)" stroke="#7F1D1D" stroke-width="2"/>
+  
+  <!-- Inner glow -->
+  <circle cx="25" cy="25" r="18" fill="#FF8787" opacity="0.5"/>
+  
+  <!-- Lightning bolts symbol -->
+  <path d="M 25 10 L 22 25 L 28 25 L 25 40" stroke="#FFF" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 18 18 L 15 28 L 20 28" stroke="#FFD93D" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M 32 18 L 35 28 L 30 28" stroke="#FFD93D" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>

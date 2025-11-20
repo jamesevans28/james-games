@@ -1,0 +1,16 @@
+<svg width="20" height="40" viewBox="0 0 20 40" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bullet projectile -->
+  <defs>
+    <linearGradient id="bulletGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFF;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FFD54F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA726;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Bullet shape -->
+  <ellipse cx="10" cy="20" rx="4" ry="15" fill="url(#bulletGradient)"/>
+  
+  <!-- Glow effect -->
+  <ellipse cx="10" cy="20" rx="6" ry="18" fill="#FFD54F" opacity="0.3"/>
+</svg>

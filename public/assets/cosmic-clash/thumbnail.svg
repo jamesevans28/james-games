@@ -1,0 +1,62 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cosmic Clash Thumbnail -->
+  
+  <!-- Black space background -->
+  <rect width="400" height="300" fill="#000000"/>
+  
+  <!-- Stars -->
+  <circle cx="50" cy="40" r="2" fill="#FFF" opacity="0.8"/>
+  <circle cx="120" cy="25" r="1.5" fill="#FFF" opacity="0.6"/>
+  <circle cx="200" cy="50" r="2" fill="#FFF" opacity="0.9"/>
+  <circle cx="280" cy="35" r="1.8" fill="#FFF" opacity="0.7"/>
+  <circle cx="350" cy="60" r="2" fill="#FFF" opacity="0.8"/>
+  <circle cx="80" cy="100" r="1.5" fill="#FFF" opacity="0.6"/>
+  <circle cx="330" cy="120" r="2" fill="#FFF" opacity="0.8"/>
+  <circle cx="150" cy="80" r="1.2" fill="#FFF" opacity="0.7"/>
+  
+  <!-- Aliens (smaller) -->
+  <g transform="translate(80, 80)">
+    <ellipse cx="0" cy="10" rx="15" ry="12" fill="#66BB6A" stroke="#1B5E20" stroke-width="1.5"/>
+    <ellipse cx="0" cy="0" rx="11" ry="9" fill="#66BB6A" stroke="#1B5E20" stroke-width="1.5"/>
+    <ellipse cx="-4" cy="0" rx="3" ry="4" fill="#000" opacity="0.8"/>
+    <ellipse cx="4" cy="0" rx="3" ry="4" fill="#000" opacity="0.8"/>
+  </g>
+  
+  <g transform="translate(180, 90)">
+    <ellipse cx="0" cy="10" rx="15" ry="12" fill="#66BB6A" stroke="#1B5E20" stroke-width="1.5"/>
+    <ellipse cx="0" cy="0" rx="11" ry="9" fill="#66BB6A" stroke="#1B5E20" stroke-width="1.5"/>
+    <ellipse cx="-4" cy="0" rx="3" ry="4" fill="#000" opacity="0.8"/>
+    <ellipse cx="4" cy="0" rx="3" ry="4" fill="#000" opacity="0.8"/>
+  </g>
+  
+  <g transform="translate(280, 95)">
+    <ellipse cx="0" cy="10" rx="15" ry="12" fill="#66BB6A" stroke="#1B5E20" stroke-width="1.5"/>
+    <ellipse cx="0" cy="0" rx="11" ry="9" fill="#66BB6A" stroke="#1B5E20" stroke-width="1.5"/>
+    <ellipse cx="-4" cy="0" rx="3" ry="4" fill="#000" opacity="0.8"/>
+    <ellipse cx="4" cy="0" rx="3" ry="4" fill="#000" opacity="0.8"/>
+  </g>
+  
+  <!-- Player ship (centered, larger) -->
+  <g transform="translate(200, 220)">
+    <defs>
+      <linearGradient id="thumbShipGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" style="stop-color:#4FC3F7;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#0288D1;stop-opacity:1" />
+      </linearGradient>
+    </defs>
+    <polygon points="0,-30 20,20 0,15 -20,20" fill="url(#thumbShipGradient)" stroke="#01579B" stroke-width="2"/>
+    <circle cx="0" cy="0" r="8" fill="#FFD54F" opacity="0.8"/>
+    <polygon points="-20,20 -30,30 -25,20" fill="#0288D1" stroke="#01579B" stroke-width="1"/>
+    <polygon points="20,20 30,30 25,20" fill="#0288D1" stroke="#01579B" stroke-width="1"/>
+    <ellipse cx="0" cy="23" rx="8" ry="4" fill="#FF6B6B" opacity="0.7"/>
+  </g>
+  
+  <!-- Bullets shooting up -->
+  <ellipse cx="200" cy="170" rx="3" ry="12" fill="#FFD54F"/>
+  <ellipse cx="200" cy="140" rx="3" ry="12" fill="#FFD54F" opacity="0.7"/>
+  
+  <!-- Title -->
+  <text x="200" y="270" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#4FC3F7" text-anchor="middle" stroke="#01579B" stroke-width="1">
+    COSMIC CLASH
+  </text>
+</svg>
