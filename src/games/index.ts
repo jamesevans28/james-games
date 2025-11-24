@@ -137,6 +137,19 @@ export const games: GameMeta[] = [
     },
   },
   {
+    id: "blocker",
+    title: "Blocker",
+    description:
+      "Drag puzzle pieces into a 10x10 board, clear full lines, trigger power blocks, and chase combos before you run out of moves.",
+    thumbnail: "/assets/blocker/thumbnail.svg",
+    createdAt: "2025-11-24T00:00:00.000Z",
+    updatedAt: "2025-11-24T00:00:00.000Z",
+    load: async () => {
+      const mod = await import("./blocker/index");
+      return { mount: mod.mount };
+    },
+  },
+  {
     id: "cosmic-clash",
     title: "Cosmic Clash",
     description:

@@ -1,0 +1,15 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="rotButton" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1b2a44" />
+      <stop offset="100%" stop-color="#0c141f" />
+    </linearGradient>
+    <linearGradient id="rotStroke" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8be9ff" />
+      <stop offset="100%" stop-color="#4dd0e1" />
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="56" fill="url(#rotButton)" stroke="#1f3b5c" stroke-width="4" />
+  <path d="M34 68c3.5 17 18.9 29 35.9 27 12.7-1.6 22.8-10.8 26.1-22.8" fill="none" stroke="#f1f8ff" stroke-width="8" stroke-linecap="round" />
+  <path d="M72 28l23 16-28 9z" fill="#ffe082" stroke="#fdd835" stroke-width="4" stroke-linejoin="round" />
+</svg>
