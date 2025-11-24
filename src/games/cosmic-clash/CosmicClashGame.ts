@@ -25,7 +25,7 @@ export default class CosmicClashGame extends Phaser.Scene {
   private aliens!: Phaser.GameObjects.Group;
   private powerUps!: PowerUp[];
   private stars!: Phaser.GameObjects.TileSprite;
-  
+
   private score = 0;
   private level = 1;
   private alienSpeed = 0;
@@ -43,7 +43,7 @@ export default class CosmicClashGame extends Phaser.Scene {
   private pointerHoldDirection: -1 | 0 | 1 = 0;
   private pointerHoldStart = 0;
   private planetGraphic?: Phaser.GameObjects.Graphics;
-  
+
   private scoreText!: Phaser.GameObjects.Text;
   private levelText!: Phaser.GameObjects.Text;
   private gameOverText: Phaser.GameObjects.Text | null = null;
@@ -71,7 +71,7 @@ export default class CosmicClashGame extends Phaser.Scene {
   create() {
     // Black background
     this.cameras.main.setBackgroundColor("#000000");
-    
+
     // Scrolling stars background
     this.stars = this.add.tileSprite(
       GAME_WIDTH / 2,
@@ -81,43 +81,43 @@ export default class CosmicClashGame extends Phaser.Scene {
       "star"
     );
     this.stars.setTileScale(0.5, 0.5);
-    
+
     // Player ship
     this.player = this.add.sprite(GAME_WIDTH / 2, GAME_HEIGHT - 80, "player");
     this.player.setScale(0.8);
-  this.drawPlanetSurface();
+    this.drawPlanetSurface();
 
     this.alienSpeed = this.getAlienSpeedForLevel();
-    
+
     // Groups
     this.bullets = this.add.group({
       maxSize: 50,
       runChildUpdate: false,
     });
-    
+
     this.alienBullets = this.add.group({
       maxSize: 20,
       runChildUpdate: false,
     });
-    
+
     this.aliens = this.add.group();
     this.powerUps = [];
-    
+
     // Input
     this.cursors = this.input.keyboard!.createCursorKeys();
-    
-  // Touch/pointer input for mobile
-  this.input.on("pointerdown", this.handlePointerDownControl, this);
-  this.input.on("pointerup", this.handlePointerUpControl, this);
-  this.input.on("pointerupoutside", this.handlePointerUpControl, this);
-    
+
+    // Touch/pointer input for mobile
+    this.input.on("pointerdown", this.handlePointerDownControl, this);
+    this.input.on("pointerup", this.handlePointerUpControl, this);
+    this.input.on("pointerupoutside", this.handlePointerUpControl, this);
+
     // UI
     this.scoreText = this.add.text(16, 16, "Score: 0", {
       fontSize: "20px",
       color: "#ffffff",
       fontFamily: "Arial",
     });
-    
+
     this.levelText = this.add.text(GAME_WIDTH - 16, 16, "Level: 1", {
       fontSize: "20px",
       color: "#ffffff",
@@ -125,10 +125,10 @@ export default class CosmicClashGame extends Phaser.Scene {
       align: "right",
     });
     this.levelText.setOrigin(1, 0);
-    
+
     // Create initial alien formation
     this.createAlienFormation();
-    
+
     // Start auto-firing
     this.time.addEvent({
       delay: 100,
@@ -143,7 +143,7 @@ export default class CosmicClashGame extends Phaser.Scene {
   private handlePointerDownControl(pointer: Phaser.Input.Pointer) {
     if (this.isGameOver) return;
     const direction = pointer.x < GAME_WIDTH / 2 ? -1 : 1;
-  this.pointerHoldDirection = direction;
+    this.pointerHoldDirection = direction;
     this.pointerHoldStart = this.time.now;
   }
 
@@ -168,10 +168,10 @@ export default class CosmicClashGame extends Phaser.Scene {
 
   private autoFire() {
     if (this.isGameOver) return;
-    
+
     const currentTime = this.time.now;
     const currentFireRate = this.rapidFireActive ? this.fireRate / 2 : this.fireRate;
-    
+
     if (currentTime > this.lastFired + currentFireRate) {
       this.fireBullet();
       this.lastFired = currentTime;
@@ -183,22 +183,22 @@ export default class CosmicClashGame extends Phaser.Scene {
       // Fire two bullets
       const bullet1 = this.add.sprite(this.player.x - 15, this.player.y - 20, "bullet");
       const bullet2 = this.add.sprite(this.player.x + 15, this.player.y - 20, "bullet");
-      
+
       bullet1.setScale(0.6);
       bullet2.setScale(0.6);
-  bullet1.setData("velocity", PLAYER_BULLET_SPEED);
-  bullet2.setData("velocity", PLAYER_BULLET_SPEED);
-      
+      bullet1.setData("velocity", PLAYER_BULLET_SPEED);
+      bullet2.setData("velocity", PLAYER_BULLET_SPEED);
+
       this.bullets.add(bullet1);
       this.bullets.add(bullet2);
     } else {
       // Fire single bullet
       const bullet = this.add.sprite(this.player.x, this.player.y - 20, "bullet");
       bullet.setScale(0.6);
-  bullet.setData("velocity", PLAYER_BULLET_SPEED);
+      bullet.setData("velocity", PLAYER_BULLET_SPEED);
       this.bullets.add(bullet);
     }
-    
+
     // Removed shoot sound
   }
 
@@ -241,18 +241,18 @@ export default class CosmicClashGame extends Phaser.Scene {
 
   private alienFire() {
     if (this.isGameOver || this.aliens.countActive() === 0) return;
-    
+
     // Pick a random alien to fire
-    const activeAliens = this.aliens.children.entries.filter(a => a.active);
+    const activeAliens = this.aliens.children.entries.filter((a) => a.active);
     if (activeAliens.length === 0) return;
-    
+
     const randomAlien = Phaser.Utils.Array.GetRandom(activeAliens) as Phaser.GameObjects.Sprite;
-    
+
     // Create alien bullet
     const bullet = this.add.sprite(randomAlien.x, randomAlien.y + 20, "bullet");
     bullet.setScale(0.6);
     bullet.setTint(0xff0000); // Red tint for enemy bullets
-  bullet.setData("velocity", ALIEN_BULLET_SPEED);
+    bullet.setData("velocity", ALIEN_BULLET_SPEED);
     this.alienBullets.add(bullet);
   }
 
@@ -279,7 +279,7 @@ export default class CosmicClashGame extends Phaser.Scene {
     const spacing = 60;
     const startX = (GAME_WIDTH - (cols - 1) * spacing) / 2;
     const startY = 100;
-    
+
     const strongRowCount = this.level >= 4 ? 2 : this.level === 3 ? 1 : 0;
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
@@ -287,12 +287,8 @@ export default class CosmicClashGame extends Phaser.Scene {
         const isStrong = row < strongRowCount;
         const texture = isStrong ? "alien-strong" : "alien";
         const health = isStrong ? (this.level >= 6 ? 3 : 2) : 1;
-        
-        const alien = this.aliens.create(
-          startX + col * spacing,
-          startY + row * spacing,
-          texture
-        );
+
+        const alien = this.aliens.create(startX + col * spacing, startY + row * spacing, texture);
         alien.setScale(0.7);
         alien.setData("row", row);
         alien.setData("col", col);
@@ -347,18 +343,18 @@ export default class CosmicClashGame extends Phaser.Scene {
     this.bullets.children.entries.forEach((bullet) => {
       const bulletSprite = bullet as Phaser.GameObjects.Sprite;
       if (!bulletSprite.active) return;
-      
+
       this.aliens.children.entries.forEach((alien) => {
         const alienSprite = alien as Phaser.GameObjects.Sprite;
         if (!alienSprite.active) return;
-        
+
         const distance = Phaser.Math.Distance.Between(
           bulletSprite.x,
           bulletSprite.y,
           alienSprite.x,
           alienSprite.y
         );
-        
+
         if (distance < 30) {
           this.bullets.remove(bulletSprite, true, true);
           this.spawnExplosion(alienSprite.x, alienSprite.y, {
@@ -366,14 +362,14 @@ export default class CosmicClashGame extends Phaser.Scene {
             color: 0xfff59d,
             duration: 160,
           });
-          
+
           // Reduce alien health
           let health = alienSprite.getData("health") || 1;
           health--;
           alienSprite.setData("health", health);
-          
+
           this.playHitSound();
-          
+
           // Visual feedback - flash white
           alienSprite.setTint(0xffffff);
           this.time.delayedCall(100, () => {
@@ -381,7 +377,7 @@ export default class CosmicClashGame extends Phaser.Scene {
               alienSprite.clearTint();
             }
           });
-          
+
           // Destroy if health reaches 0
           if (health <= 0) {
             alienSprite.destroy();
@@ -392,7 +388,7 @@ export default class CosmicClashGame extends Phaser.Scene {
         }
       });
     });
-    
+
     // Check power-up collection
     this.powerUps = this.powerUps.filter((powerUp) => {
       const distance = Phaser.Math.Distance.Between(
@@ -401,7 +397,7 @@ export default class CosmicClashGame extends Phaser.Scene {
         powerUp.sprite.x,
         powerUp.sprite.y
       );
-      
+
       if (distance < 40) {
         this.activatePowerUp(powerUp.type);
         powerUp.sprite.destroy();
@@ -409,19 +405,19 @@ export default class CosmicClashGame extends Phaser.Scene {
       }
       return true;
     });
-    
+
     // Check alien bullets hitting player
     this.alienBullets.children.entries.forEach((bullet) => {
       const bulletSprite = bullet as Phaser.GameObjects.Sprite;
       if (!bulletSprite.active) return;
-      
+
       const distance = Phaser.Math.Distance.Between(
         this.player.x,
         this.player.y,
         bulletSprite.x,
         bulletSprite.y
       );
-      
+
       if (distance < 35) {
         this.alienBullets.remove(bulletSprite, true, true);
         if (this.shieldActive) {
@@ -431,7 +427,7 @@ export default class CosmicClashGame extends Phaser.Scene {
         }
       }
     });
-    
+
     // Check if all aliens destroyed
     if (this.aliens.countActive() === 0 && !this.levelTransitionPending) {
       this.nextLevel();
@@ -555,28 +551,28 @@ export default class CosmicClashGame extends Phaser.Scene {
     this.level++;
     this.alienSpeed = this.getAlienSpeedForLevel();
     this.levelText.setText(`Level: ${this.level}`);
-    
+
     // Stop alien firing during transition
     if (this.alienFireEvent) {
       this.alienFireEvent.remove(false);
       this.alienFireEvent = undefined;
     }
-    
+
     this.disableShield();
-    
+
     // Clear bullets, alien bullets and power-ups
     this.bullets.clear(true, true);
     this.alienBullets.clear(true, true);
     this.powerUps.forEach((p) => p.sprite.destroy());
     this.powerUps = [];
     this.lastPowerUpSpawn = this.time.now;
-    
+
     // Clear existing aliens
     this.aliens.clear(true, true);
-    
+
     // Reset alien direction
     this.alienDirection = 1;
-    
+
     // Create new formation
     this.time.delayedCall(1000, () => {
       this.createAlienFormation();
@@ -591,14 +587,18 @@ export default class CosmicClashGame extends Phaser.Scene {
     if (explosionX !== undefined && explosionY !== undefined) {
       this.spawnExplosion(explosionX, explosionY, { radius: 50, color: 0xff7043, duration: 320 });
     } else {
-      this.spawnExplosion(this.player.x, this.player.y, { radius: 50, color: 0xff7043, duration: 320 });
+      this.spawnExplosion(this.player.x, this.player.y, {
+        radius: 50,
+        color: 0xff7043,
+        duration: 320,
+      });
     }
     this.disableShield();
     if (this.alienFireEvent) {
       this.alienFireEvent.remove(false);
       this.alienFireEvent = undefined;
     }
-    
+
     this.gameOverText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "GAME OVER", {
       fontSize: "48px",
       color: "#ff0000",
@@ -606,7 +606,7 @@ export default class CosmicClashGame extends Phaser.Scene {
       fontStyle: "bold",
     });
     this.gameOverText.setOrigin(0.5);
-    
+
     this.time.delayedCall(1000, () => {
       dispatchGameOver({ gameId: "cosmic-clash", score: this.score, ts: Date.now() });
     });
@@ -668,17 +668,17 @@ export default class CosmicClashGame extends Phaser.Scene {
   update(_time: number, delta: number) {
     if (this.isGameOver) return;
     const deltaSeconds = delta / 1000;
-    
+
     // Scroll stars
     this.stars.tilePositionY -= 1;
-    
+
     // Keyboard controls
     if (this.cursors.left.isDown) {
       this.player.x = Math.max(40, this.player.x - HOLD_MOVE_SPEED * deltaSeconds);
     } else if (this.cursors.right.isDown) {
       this.player.x = Math.min(GAME_WIDTH - 40, this.player.x + HOLD_MOVE_SPEED * deltaSeconds);
     }
-    
+
     if (this.pointerHoldDirection !== 0) {
       this.player.x = Phaser.Math.Clamp(
         this.player.x + this.pointerHoldDirection * HOLD_MOVE_SPEED * deltaSeconds,
@@ -686,45 +686,45 @@ export default class CosmicClashGame extends Phaser.Scene {
         GAME_WIDTH - 40
       );
     }
-    
-  // Move aliens
+
+    // Move aliens
     this.moveAliens(delta);
-    
+
     // Move power-ups down
     this.powerUps.forEach((powerUp) => {
       powerUp.sprite.y += 1.5;
-      
+
       // Remove if off screen
       if (powerUp.sprite.y > GAME_HEIGHT) {
         powerUp.sprite.destroy();
       }
     });
     this.powerUps = this.powerUps.filter((p) => p.sprite.y <= GAME_HEIGHT);
-    
+
     // Move and cleanup bullets
     this.bullets.children.entries.forEach((bullet) => {
       const sprite = bullet as Phaser.GameObjects.Sprite;
       const velocity = sprite.getData("velocity") || 0;
       sprite.y += velocity * (delta / 1000);
-      
+
       // Remove if off screen
       if (sprite.y < -10) {
         this.bullets.remove(sprite, true, true);
       }
     });
-    
+
     // Move and cleanup alien bullets
     this.alienBullets.children.entries.forEach((bullet) => {
       const sprite = bullet as Phaser.GameObjects.Sprite;
       const velocity = sprite.getData("velocity") || 0;
       sprite.y += velocity * (delta / 1000);
-      
+
       // Remove if off screen
       if (sprite.y > GAME_HEIGHT + 10) {
         this.alienBullets.remove(sprite, true, true);
       }
     });
-    
+
     // Update power-up timers
     if (this.rapidFireActive) {
       this.rapidFireTimer -= delta;
@@ -732,16 +732,16 @@ export default class CosmicClashGame extends Phaser.Scene {
         this.rapidFireActive = false;
       }
     }
-    
+
     if (this.doubleBulletActive) {
       this.doubleBulletTimer -= delta;
       if (this.doubleBulletTimer <= 0) {
         this.doubleBulletActive = false;
       }
     }
-    
+
     this.updateShield(delta);
-    
+
     // Check collisions
     this.checkCollisions();
   }

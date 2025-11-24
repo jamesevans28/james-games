@@ -77,3 +77,20 @@ Mobile-first web game hub built with React + Vite and Phaser 3. Each game is sel
 Prioritize mobile performance, simplicity, and Phaser best practices. Reference existing games for new ones.
 
 When making changes to game logic, update the updatedAt field in the corresponding game entry in `src/games/index.ts`.
+
+Code Organization and Structure
+Modularity: Separate your code into distinct modules or classes (e.g., for different game objects, UI elements, or logic systems). Use ES6 modules for better dependency management and a clean project structure.
+Scene Management: Extend Phaser.Scene for each distinct game state (e.g., BootScene, PreloadScene, GameScene, MainMenuScene).
+One File Per Scene: Keep each scene in its own dedicated file.
+Keep update() Clean: Minimize the logic within the scene's update() method. Delegate update logic to individual objects or systems (like an Entity Component System) that listen for update events.
+Constants File: Use a dedicated file for string keys, asset paths, and configuration variables to prevent typos and centralize references.
+Input as Scene State: Handle all user input at the scene level (or via a scene plugin) rather than embedding input logic within individual game objects. This makes input accessible to different systems (e.g., player movement, UI navigation, conversation systems).
+Custom Plugins: Utilize custom global or scene plugins for functionality that is used across multiple parts of your game, such as data persistence, sound management, or specific UI systems.
+Performance Optimization
+Asset Compression: Compress all images (using tools like Squoosh) and audio files to reduce initial load times.
+Texture Packers: Use a texture packer to combine multiple smaller images into single sprite sheets, reducing the number of draw calls the GPU has to make.
+Object Pooling: Implement object pooling for frequently created and destroyed objects (e.g., bullets, enemies) to avoid continuous memory allocation and garbage collection, which can cause lag.
+Cache References: Store references to frequently accessed objects or data to speed up access times rather than repeatedly searching for them.
+Optimize Loops: Only loop through and process the objects that require an update in any given frame.
+Lazy Loading: For large games, lazy load assets only when they are needed, perhaps as the player enters a new game area.
+Scaling: Use Phaser.Scale.FIT mode in your game configuration to automatically scale the game to fit the available space while maintaining the aspect ratio, ensuring compatibility across various devices.
