@@ -138,7 +138,9 @@ export default function ProfilePage() {
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
       <Seo
         title={`${data.profile.screenName ?? "Player"} — Games4James Profile`}
-        description={`Check out ${data.profile.screenName ?? "Player"}'s stats and high scores on Games4James.`}
+        description={`Check out ${
+          data.profile.screenName ?? "Player"
+        }'s stats and high scores on Games4James.`}
         url={`https://games4james.com/profile/${userId}`}
         canonical={`https://games4james.com/profile/${userId}`}
       />

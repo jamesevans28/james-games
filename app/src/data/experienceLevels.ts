@@ -6,11 +6,11 @@ export type ExperienceLevelRow = {
 };
 
 const MAX_LEVEL = 100;
-const XP_PER_MINUTE_TARGET = 48; // roughly 20 XP per 25 seconds of play time
+const XP_PER_MINUTE_TARGET = 480; // roughly 40 XP per 5 seconds of play time
 
 function requirementFor(level: number) {
   // Smooth curve that keeps early levels quick while stretching long term goals
-  return Math.round(110 + Math.pow(level, 1.35) * 14);
+  return Math.round(1100 + Math.pow(level, 1.35) * 140);
 }
 
 const rows: ExperienceLevelRow[] = [];
