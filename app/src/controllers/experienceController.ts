@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import {
   applyExperienceToUser,
-  calculateExperienceForDuration,
+  calculateExperienceForScore,
   getExperienceSummary,
 } from "../services/experienceService.js";
 
@@ -9,14 +9,15 @@ export async function recordGameExperience(req: Request, res: Response) {
   // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
-  const { gameId, durationMs } = (req.body || {}) as { gameId?: string; durationMs?: number };
+  const { gameId, score, xpMultiplier } = (req.body || {}) as { gameId?: string; score?: number; xpMultiplier?: number };
   if (!gameId) return res.status(400).json({ error: "gameId_required" });
-  const duration = Number(durationMs);
-  if (!Number.isFinite(duration) || duration <= 0) {
-    return res.status(400).json({ error: "duration_invalid" });
+  const scoreNum = Number(score);
+  if (!Number.isFinite(scoreNum) || scoreNum <= 0) {
+    return res.status(400).json({ error: "score_invalid" });
   }
+  const multiplier = Number(xpMultiplier) || 1.0;
   try {
-    const xp = calculateExperienceForDuration(duration);
+    const xp = calculateExperienceForScore(scoreNum, multiplier);
     const result = await applyExperienceToUser(userId, xp);
     res.json({ ok: true, awardedXp: result.awarded, summary: result.summary });
   } catch (err: any) {

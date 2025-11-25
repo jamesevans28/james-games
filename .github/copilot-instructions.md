@@ -85,12 +85,13 @@ To create a new game within the James Games framework, follow these steps:
 5. **Register game**: Add entry to `src/games/index.ts` with lazy import (e.g., `load: async () => import("./[newId]/index")`).
 6. **Utilize shared systems**:
    - **Score tracking**: Use localStorage for high scores (`localStorage.getItem/setItem` with `${GAME_ID}-best`).
-   - **Game over**: Call `dispatchGameOver({ gameId: GAME_ID, score })` to trigger ScoreDialog.
+   - **Game over**: Call `dispatchGameOver({ gameId: GAME_ID, score })` to trigger GameOver dialog.
    - **Analytics**: Call `trackGameStart(gameId, title)` on mount.
    - **Backend**: Use `postHighScore` from `src/lib/api.ts` for score submission.
+   - **Experience**: XP is calculated based on score × game-specific multiplier (stored in game metadata).
    - **Sounds**: Synthesize via Web Audio API (oscillators/gains) for effects like pop/ding.
    - **Particles**: Use Phaser particles for backgrounds/effects.
-7. **Incorporate shared components**: Games integrate with React via events; ScoreDialog handles post-game UI automatically.
+7. **Incorporate shared components**: Games integrate with React via events; GameOver dialog handles post-game UI automatically.
 8. **Patterns to follow**: Touch-optimized, 60 FPS, portrait mode, modular scenes, commented logic. Test on mobile, ensure no global state.
 
 Prioritize mobile performance, simplicity, and Phaser best practices. Reference existing games for new ones.

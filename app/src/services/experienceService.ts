@@ -71,11 +71,11 @@ function ensureRequirement(levels: ExperienceLevelRow[], level: number): Experie
   return levels[levels.length - 1];
 }
 
-export function calculateExperienceForDuration(durationMs: number): number {
-  if (!Number.isFinite(durationMs) || durationMs <= 0) return 0;
-  const durationSeconds = durationMs / 1000;
-  const base = Math.floor(durationSeconds * 0.8); // roughly 48 XP per minute of play
-  return Math.min(2500, Math.max(5, base));
+export function calculateExperienceForScore(score: number, multiplier: number = 1.0): number {
+  if (!Number.isFinite(score) || score <= 0) return 0;
+  if (!Number.isFinite(multiplier) || multiplier <= 0) multiplier = 1.0;
+  const base = Math.floor(score * multiplier);
+  return Math.min(5000, Math.max(1, base));
 }
 
 export async function getExperienceSummary(userId: string): Promise<ExperienceSummary | null> {

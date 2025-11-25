@@ -46,6 +46,7 @@ export default function FollowersPage() {
   const [manualMessage, setManualMessage] = useState<string | null>(null);
   const [manualStatus, setManualStatus] = useState<"success" | "error" | null>(null);
   const [manualBusy, setManualBusy] = useState(false);
+  const [confirmUnfollow, setConfirmUnfollow] = useState<{ userId: string; name: string } | null>(null);
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const anchor = searchParams.get("view") === "followers" ? "followers" : "following";
@@ -110,6 +111,7 @@ export default function FollowersPage() {
     setActionUser(userId);
     try {
       await unfollowUserApi(userId);
+      setConfirmUnfollow(null);
       await refresh();
     } catch (err: any) {
       setError(err?.message || "Unable to unfollow right now");
@@ -204,11 +206,15 @@ export default function FollowersPage() {
                 </div>
               </div>
               <button
-                className="text-xs font-semibold text-red-600 border border-red-200 rounded-full px-3 py-1"
-                onClick={() => handleUnfollow(profileId)}
+                className="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                onClick={() => setConfirmUnfollow({ userId: profileId, name: displayName })}
                 disabled={actionUser === profileId}
+                aria-label={`Unfollow ${displayName}`}
+                title="Unfollow"
               >
-                {actionUser === profileId ? "Removing" : "Unfollow"}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
               </button>
             </li>
           );
@@ -339,6 +345,34 @@ export default function FollowersPage() {
             {anchor === "followers" ? renderFollowers() : renderFollowing()}
           </div>
         </section>
+      )}
+      {confirmUnfollow && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setConfirmUnfollow(null)} />
+          <div className="relative bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
+            <h3 className="text-lg font-bold text-black mb-2">Unfollow {confirmUnfollow.name}?</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to unfollow this player? You can follow them again anytime.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                className="flex-1 btn btn-outline"
+                onClick={() => setConfirmUnfollow(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="flex-1 px-4 py-2 rounded-full text-sm font-semibold bg-red-600 text-white"
+                onClick={() => handleUnfollow(confirmUnfollow.userId)}
+                disabled={actionUser === confirmUnfollow.userId}
+              >
+                {actionUser === confirmUnfollow.userId ? "Unfollowing..." : "Unfollow"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -3,6 +3,7 @@ export type GameMeta = {
   title: string;
   description?: string;
   thumbnail?: string; // path under public or src that Vite can serve
+  xpMultiplier?: number; // Multiplier for score-based XP calculation
   // optional metadata
   createdAt?: string; // ISO date
   updatedAt?: string; // ISO date
@@ -15,8 +16,9 @@ export const games: GameMeta[] = [
     title: "Reflex Ring",
     description: "Tap precisely as the arrow hits the highlighted segment. Speeds up over time.",
     thumbnail: "/assets/reflex-ring/thumbnail.svg",
+    xpMultiplier: 1.92,
     createdAt: "2025-09-15T00:00:00.000Z",
-    updatedAt: "2025-11-17T00:00:00.000Z",
+    updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
       const mod = await import("./reflex-ring/index");
       return { mount: mod.mount };
@@ -27,8 +29,9 @@ export const games: GameMeta[] = [
     title: "Snapadile",
     description: "Tap the crocs before they reach your raft. More and faster crocs over time.",
     thumbnail: "/assets/snapadile/thumbnail.svg",
+    xpMultiplier: 0.93,
     createdAt: "2025-09-16T00:00:00.000Z",
-    updatedAt: "2025-09-16T00:00:00.000Z",
+    updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
       const mod = await import("./snapadile/index");
       return { mount: mod.mount };
@@ -40,8 +43,9 @@ export const games: GameMeta[] = [
     description:
       "Switch lanes to dodge incoming cars. Step-based movement with growing difficulty.",
     thumbnail: "/assets/car-crash/thumbnail.svg",
+    xpMultiplier: 1.47,
     createdAt: "2025-09-17T00:00:00.000Z",
-    updatedAt: "2025-09-17T00:00:00.000Z",
+    updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
       const mod = await import("./car-crash/index");
       return { mount: mod.mount };
@@ -53,8 +57,9 @@ export const games: GameMeta[] = [
     description:
       "Hold to pour water and fill each glass to the highlighted band. Smaller targets over time.",
     thumbnail: "/assets/fill-the-cup/thumbnail.svg",
+    xpMultiplier: 2.0,
     createdAt: "2025-11-01T00:00:00.000Z",
-    updatedAt: "2025-11-01T00:00:00.000Z",
+    updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
       const mod = await import("./fill-the-cup/index");
       return { mount: mod.mount };
@@ -66,8 +71,9 @@ export const games: GameMeta[] = [
     description:
       "Watch the sequence of colored shapes, then mimic them before time runs out. Sequences get longer!",
     thumbnail: "/assets/flash-bash/thumbnail.svg",
+    xpMultiplier: 3.13,
     createdAt: "2025-11-04T00:00:00.000Z",
-    updatedAt: "2025-11-04T00:00:00.000Z",
+    updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
       const mod = await import("./flash-bash/index.ts");
       return { mount: mod.mount };
@@ -79,8 +85,9 @@ export const games: GameMeta[] = [
     description:
       "Drop presents into chimneys from Santa's sleigh. Nail the landing, avoid misses. 3 lives!",
     thumbnail: "/assets/ho-ho-home-delivery/thumbnail.svg",
+    xpMultiplier: 2.78,
     createdAt: "2025-11-05T00:00:00.000Z",
-    updatedAt: "2025-11-05T00:00:00.000Z",
+    updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
       const mod = await import("./ho-ho-home-delivery/index");
       return { mount: mod.mount };
@@ -92,8 +99,9 @@ export const games: GameMeta[] = [
     description:
       "Hold to pick angle, hold to pick power, then release to shoot. Swish for 2 points! 3 lives.",
     thumbnail: "/assets/ready-steady-shoot/thumbnail.svg",
+    xpMultiplier: 25.0,
     createdAt: "2025-11-05T00:00:00.000Z",
-    updatedAt: "2025-11-17T00:00:00.000Z",
+    updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
       const mod = await import("./ready-steady-shoot/index");
       return { mount: mod.mount };
@@ -104,8 +112,9 @@ export const games: GameMeta[] = [
     title: "Paddle Pop",
     description: "Deflect the marble, collect power-ups, hit bonus discs, avoid falling obstacles.",
     thumbnail: "/assets/paddle-pop/thumbnail.svg",
+    xpMultiplier: 3.13,
     createdAt: "2025-11-05T00:00:00.000Z",
-    updatedAt: "2025-11-05T00:00:00.000Z",
+    updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
       const mod = await import("./paddle-pop/index");
       return { mount: mod.mount };
@@ -116,8 +125,9 @@ export const games: GameMeta[] = [
     title: "Word Rush with Tom",
     description: "Guess words and phrases with your selected letters. 2-minute timer per level!",
     thumbnail: "/assets/word-rush/thumbnail.svg",
+    xpMultiplier: 0.42,
     createdAt: "2025-11-05T00:00:00.000Z",
-    updatedAt: "2025-11-05T00:00:00.000Z",
+    updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
       const mod = await import("./word-rush/index");
       return { mount: mod.mount };
@@ -129,8 +139,9 @@ export const games: GameMeta[] = [
     description:
       "Classic snake game. Turn left/right to collect food, avoid walls and yourself. Gets faster as you grow!",
     thumbnail: "/assets/serpento/thumbnail.svg",
+    xpMultiplier: 12.5,
     createdAt: "2025-11-17T00:00:00.000Z",
-    updatedAt: "2025-11-20T00:00:00.000Z",
+    updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
       const mod = await import("./serpento/index");
       return { mount: mod.mount };
@@ -140,10 +151,11 @@ export const games: GameMeta[] = [
     id: "blocker",
     title: "Blocker",
     description:
-      "Drag puzzle pieces into a 10x10 board, clear full lines, trigger power blocks, and chase combos before you run out of moves.",
+      "Drag puzzle pieces into a 8x8 board, clear full lines, trigger power blocks, and chase combos before you run out of moves.",
     thumbnail: "/assets/blocker/thumbnail.svg",
+    xpMultiplier: 0.063,
     createdAt: "2025-11-24T00:00:00.000Z",
-    updatedAt: "2025-11-24T00:00:00.000Z",
+    updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
       const mod = await import("./blocker/index");
       return { mount: mod.mount };
@@ -155,8 +167,9 @@ export const games: GameMeta[] = [
     description:
       "Space Invaders-style shooter. Auto-fire at descending aliens, collect power-ups, survive waves!",
     thumbnail: "/assets/cosmic-clash/thumbnail.svg",
+    xpMultiplier: 0.04,
     createdAt: "2025-11-21T00:00:00.000Z",
-    updatedAt: "2025-11-21T00:00:00.000Z",
+    updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
       const mod = await import("./cosmic-clash/index");
       return { mount: mod.mount };

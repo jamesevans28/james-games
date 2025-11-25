@@ -103,7 +103,7 @@ export async function postHighScore(args: { gameId: string; score: number }) {
   return res.json();
 }
 
-export async function postExperienceRun(args: { gameId: string; durationMs: number }) {
+export async function postExperienceRun(args: { gameId: string; score: number; xpMultiplier?: number }) {
   if (!API_BASE) return { awardedXp: 0, summary: null } as any;
   const res = await fetch(`${API_BASE}/experience/runs`, {
     method: "POST",
