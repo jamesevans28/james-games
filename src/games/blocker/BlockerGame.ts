@@ -3,19 +3,20 @@ import { dispatchGameOver } from "../../utils/gameEvents";
 
 const GAME_WIDTH = 540;
 const GAME_HEIGHT = 960;
-const GRID_SIZE = 9;
-const CELL_SIZE = 46;
+const GRID_SIZE = 8;
+const CELL_SIZE = 50;
 const GRID_PIXEL = GRID_SIZE * CELL_SIZE;
 const GRID_START_X = (GAME_WIDTH - GRID_PIXEL) / 2;
 const GRID_START_Y = 150;
 const SLOT_Y = GAME_HEIGHT - 220;
 const ROTATE_BUTTON_Y = SLOT_Y + 150;
 const BEST_KEY = "blocker-best";
-const GRAB_PADDING = 12;
 
 const RAW_SHAPES = [
   { id: "domino", color: 0xff6f61, coords: [[0, 0], [1, 0]] },
+  { id: "line-three", color: 0x8e24aa, coords: [[0, 0], [1, 0], [2, 0]] },
   { id: "corner-three", color: 0xffa726, coords: [[0, 0], [0, 1], [1, 1]] },
+  { id: "t-three", color: 0x42a5f5, coords: [[0, 0], [1, 0], [2, 0], [1, 1]] },
   { id: "line-four", color: 0x29b6f6, coords: [[0, 0], [0, 1], [0, 2], [0, 3]] },
   { id: "square-four", color: 0xab47bc, coords: [[0, 0], [1, 0], [0, 1], [1, 1]] },
   { id: "zig-five", color: 0x66bb6a, coords: [[0, 0], [1, 0], [1, 1], [2, 1], [2, 2]] },
@@ -50,6 +51,7 @@ interface GridCell {
   color: number;
   powerType?: PowerType;
   overlay?: Phaser.GameObjects.Graphics;
+  powerPulseTween?: Phaser.Tweens.Tween;
 }
 
 interface ShapeSlot {
@@ -203,8 +205,11 @@ export default class BlockerGame extends Phaser.Scene {
     const container = this.add.container(0, 0);
     const pixelWidth = shape.width * CELL_SIZE;
     const pixelHeight = shape.height * CELL_SIZE;
-    const hitWidth = pixelWidth + GRAB_PADDING * 2;
-    const hitHeight = pixelHeight + GRAB_PADDING * 2;
+    
+    // Fixed uniform hit box that extends downward and doesn't exceed screen center
+    const hitWidth = 150;
+    const hitHeight = 180;
+    const hitOffsetY = 40;
 
     shape.blocks.forEach((block: ShapeCoord) => {
       const sprite = this.add.image(
@@ -220,7 +225,7 @@ export default class BlockerGame extends Phaser.Scene {
     container.setSize(hitWidth, hitHeight);
     container.setDepth(30);
     container.setInteractive(
-      new Phaser.Geom.Rectangle(-hitWidth / 2, -hitHeight / 2, hitWidth, hitHeight),
+      new Phaser.Geom.Rectangle(-hitWidth / 2, -hitHeight / 2 + hitOffsetY, hitWidth, hitHeight),
       Phaser.Geom.Rectangle.Contains
     );
     if (container.input) {
@@ -540,6 +545,7 @@ export default class BlockerGame extends Phaser.Scene {
     });
 
     powersTriggered.forEach((power) => {
+      this.playPowerActivationEffect(power);
       const extra = this.getCellsFromPower(power);
       extra.forEach((key) => cellsToClear.add(key));
     });
@@ -653,6 +659,10 @@ export default class BlockerGame extends Phaser.Scene {
   }
 
   private animateCellRemoval(cell: GridCell) {
+    if (cell.powerPulseTween) {
+      cell.powerPulseTween.stop();
+      cell.powerPulseTween = undefined;
+    }
     const targets: Phaser.GameObjects.GameObject[] = [cell.sprite];
     if (cell.overlay) {
       targets.push(cell.overlay);
@@ -671,35 +681,128 @@ export default class BlockerGame extends Phaser.Scene {
     });
   }
 
+  private playPowerActivationEffect(power: { row: number; col: number; type: PowerType }) {
+    const x = GRID_START_X + power.col * CELL_SIZE + CELL_SIZE / 2;
+    const y = GRID_START_Y + power.row * CELL_SIZE + CELL_SIZE / 2;
+    
+    if (power.type === "cross") {
+      this.playCrossEffect(x, y);
+    } else {
+      this.playBlastEffect(x, y);
+    }
+  }
+
+  private playCrossEffect(x: number, y: number) {
+    const lineColor = 0xffea00;
+    const lineWidth = 8;
+    const duration = 350;
+    const maxDistance = GRID_PIXEL;
+    
+    const directions = [
+      { dx: -1, dy: 0 },
+      { dx: 1, dy: 0 },
+      { dx: 0, dy: -1 },
+      { dx: 0, dy: 1 },
+    ];
+    
+    directions.forEach((dir) => {
+      const line = this.add.graphics();
+      line.setDepth(850);
+      line.setBlendMode(Phaser.BlendModes.ADD);
+      
+      this.tweens.add({
+        targets: line,
+        duration,
+        ease: "Cubic.Out",
+        onUpdate: (tween) => {
+          const progress = tween.progress;
+          const distance = maxDistance * progress;
+          const endX = x + dir.dx * distance;
+          const endY = y + dir.dy * distance;
+          const alpha = 0.95 * (1 - progress * 0.5);
+          line.clear();
+          line.lineStyle(lineWidth, lineColor, alpha);
+          line.lineBetween(x, y, endX, endY);
+        },
+        onComplete: () => line.destroy(),
+      });
+    });
+  }
+
+  private playBlastEffect(x: number, y: number) {
+    const burstCount = 12;
+    const radius = CELL_SIZE * 2.5;
+    
+    for (let i = 0; i < burstCount; i++) {
+      const angle = (Math.PI * 2 * i) / burstCount;
+      const circle = this.add.circle(x, y, 10, 0xd500f9, 0.9);
+      circle.setDepth(850);
+      circle.setBlendMode(Phaser.BlendModes.ADD);
+      
+      const targetX = x + Math.cos(angle) * radius;
+      const targetY = y + Math.sin(angle) * radius;
+      
+      this.tweens.add({
+        targets: circle,
+        x: targetX,
+        y: targetY,
+        scale: 0.3,
+        alpha: 0,
+        duration: 400,
+        ease: "Quad.Out",
+        onComplete: () => circle.destroy(),
+      });
+    }
+    
+    const coreFlash = this.add.circle(x, y, CELL_SIZE * 0.4, 0xffffff, 0.95);
+    coreFlash.setDepth(850);
+    coreFlash.setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({
+      targets: coreFlash,
+      scale: 5,
+      alpha: 0,
+      duration: 450,
+      ease: "Expo.Out",
+      onComplete: () => coreFlash.destroy(),
+    });
+  }
+
   private decoratePowerCell(cell: GridCell, type: PowerType) {
     if (cell.overlay) {
       cell.overlay.destroy();
       cell.overlay = undefined;
     }
-    const spriteColor = type === "blast" ? 0xb388ff : 0xfff59d;
-    cell.sprite.setTint(spriteColor);
+    if (cell.powerPulseTween) {
+      cell.powerPulseTween.stop();
+      cell.powerPulseTween = undefined;
+    }
+    const baseColor = type === "blast" ? 0xd500f9 : 0xffd600;
+    cell.sprite.setTint(baseColor);
     const overlay = this.add.graphics({ x: cell.sprite.x, y: cell.sprite.y });
     overlay.setDepth(cell.sprite.depth + 1);
-    const innerSize = CELL_SIZE - 18;
+    const innerSize = CELL_SIZE - 20;
     if (type === "cross") {
-      overlay.fillStyle(0xfff59d, 0.22);
-      overlay.fillRoundedRect(-innerSize / 2, -innerSize / 2, innerSize, innerSize, 6);
-      overlay.lineStyle(4, 0xffeb3b, 0.9);
-      overlay.lineBetween(-innerSize / 2 + 4, 0, innerSize / 2 - 4, 0);
-      overlay.lineBetween(0, -innerSize / 2 + 4, 0, innerSize / 2 - 4);
-    } else {
-      overlay.fillStyle(0xb388ff, 0.2);
+      overlay.fillStyle(0xffd600, 0.4);
       overlay.fillRoundedRect(-innerSize / 2, -innerSize / 2, innerSize, innerSize, 8);
-      overlay.lineStyle(1.5, 0xe1baff, 0.85);
-      const miniSize = innerSize / 5;
-      const start = -innerSize / 2 + miniSize / 2;
-      for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 5; col++) {
-          const cx = start + col * miniSize;
-          const cy = start + row * miniSize;
-          overlay.strokeRect(cx - miniSize / 2 + 0.5, cy - miniSize / 2 + 0.5, miniSize - 1, miniSize - 1);
-        }
+      overlay.lineStyle(5, 0xffea00, 1);
+      overlay.lineBetween(-innerSize / 2 + 6, 0, innerSize / 2 - 6, 0);
+      overlay.lineBetween(0, -innerSize / 2 + 6, 0, innerSize / 2 - 6);
+      overlay.lineStyle(3, 0xffffff, 0.8);
+      overlay.lineBetween(-innerSize / 2 + 6, 0, innerSize / 2 - 6, 0);
+      overlay.lineBetween(0, -innerSize / 2 + 6, 0, innerSize / 2 - 6);
+    } else {
+      overlay.fillStyle(0xd500f9, 0.45);
+      overlay.fillRoundedRect(-innerSize / 2, -innerSize / 2, innerSize, innerSize, 10);
+      overlay.fillStyle(0xffffff, 0.9);
+      const burstRadius = innerSize * 0.35;
+      const points = 8;
+      for (let i = 0; i < points; i++) {
+        const angle = (Math.PI * 2 * i) / points;
+        const x = Math.cos(angle) * burstRadius;
+        const y = Math.sin(angle) * burstRadius;
+        overlay.fillCircle(x, y, 3);
       }
+      overlay.fillCircle(0, 0, 6);
     }
     cell.overlay = overlay;
   }
@@ -721,11 +824,14 @@ export default class BlockerGame extends Phaser.Scene {
     cell.powerType = type;
     this.decoratePowerCell(cell, type);
     if (cell.overlay) {
-      this.tweens.add({
-        targets: cell.overlay,
-        alpha: 0.6,
-        duration: 140,
+      cell.powerPulseTween = this.tweens.add({
+        targets: [cell.sprite, cell.overlay],
+        scale: { from: 1, to: 1.08 },
+        alpha: { from: 1, to: 0.75 },
+        duration: 500,
         yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
       });
     }
   }
@@ -734,10 +840,14 @@ export default class BlockerGame extends Phaser.Scene {
     if (this.isGameOver) return;
     const hasMoves = this.shapeSlots.some((slot) => {
       if (!slot.shape) return false;
-      for (let row = 0; row < GRID_SIZE; row++) {
-        for (let col = 0; col < GRID_SIZE; col++) {
-          if (this.canPlaceShapeAt(slot.shape, row, col)) {
-            return true;
+      // Check all 4 rotations of the shape
+      for (let rotation = 0; rotation < 4; rotation++) {
+        const rotatedShape = this.createShapeInstance(slot.shape.base, rotation);
+        for (let row = 0; row < GRID_SIZE; row++) {
+          for (let col = 0; col < GRID_SIZE; col++) {
+            if (this.canPlaceShapeAt(rotatedShape, row, col)) {
+              return true;
+            }
           }
         }
       }
