@@ -351,6 +351,31 @@ export default function PlayGame() {
         )}
       </div>
 
+      {meta && (
+        <article className="prose prose-sm max-w-2xl mx-auto p-6 mt-8 bg-gray-50 rounded-xl border border-gray-200">
+          <h1 className="text-2xl font-bold text-black mb-4">{meta.title}</h1>
+
+          <section className="mb-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">About this Game</h2>
+            <p className="text-gray-600">{meta.description}</p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">How to Play</h2>
+            <ul className="list-disc pl-5 text-gray-600 space-y-2">
+              <li>
+                <span className="font-medium">Objective:</span>{" "}
+                {meta.objective || "Score as high as possible."}
+              </li>
+              <li>
+                <span className="font-medium">Controls:</span>{" "}
+                {meta.controls || "Tap or click to interact."}
+              </li>
+            </ul>
+          </section>
+        </article>
+      )}
+
       <GameOver
         open={showScore}
         score={lastScore}

@@ -2,6 +2,8 @@ export type GameMeta = {
   id: string;
   title: string;
   description?: string;
+  objective?: string;
+  controls?: string;
   thumbnail?: string; // path under public or src that Vite can serve
   xpMultiplier?: number; // Multiplier for score-based XP calculation
   // optional metadata
@@ -15,6 +17,8 @@ export const games: GameMeta[] = [
     id: "reflex-ring",
     title: "Reflex Ring",
     description: "Tap precisely as the arrow hits the highlighted segment. Speeds up over time.",
+    objective: "Tap the screen exactly when the rotating arrow overlaps with the colored segment.",
+    controls: "Tap anywhere on the screen.",
     thumbnail: "/assets/reflex-ring/thumbnail.svg",
     xpMultiplier: 1.92,
     createdAt: "2025-09-15T00:00:00.000Z",
@@ -28,6 +32,8 @@ export const games: GameMeta[] = [
     id: "snapadile",
     title: "Snapadile",
     description: "Tap the crocs before they reach your raft. More and faster crocs over time.",
+    objective: "Prevent crocodiles from reaching your raft by tapping them.",
+    controls: "Tap on the crocodiles to scare them away.",
     thumbnail: "/assets/snapadile/thumbnail.svg",
     xpMultiplier: 0.93,
     createdAt: "2025-09-16T00:00:00.000Z",
@@ -42,6 +48,8 @@ export const games: GameMeta[] = [
     title: "Car Crash",
     description:
       "Switch lanes to dodge incoming cars. Step-based movement with growing difficulty.",
+    objective: "Dodge incoming traffic by switching lanes.",
+    controls: "Tap left or right to switch lanes.",
     thumbnail: "/assets/car-crash/thumbnail.svg",
     xpMultiplier: 1.47,
     createdAt: "2025-09-17T00:00:00.000Z",
@@ -56,6 +64,8 @@ export const games: GameMeta[] = [
     title: "Fill the Cup",
     description:
       "Hold to pour water and fill each glass to the highlighted band. Smaller targets over time.",
+    objective: "Fill the glass to the target line without overflowing or underfilling.",
+    controls: "Hold screen to pour, release to stop.",
     thumbnail: "/assets/fill-the-cup/thumbnail.svg",
     xpMultiplier: 2.0,
     createdAt: "2025-11-01T00:00:00.000Z",
@@ -70,6 +80,8 @@ export const games: GameMeta[] = [
     title: "Flash Bash",
     description:
       "Watch the sequence of colored shapes, then mimic them before time runs out. Sequences get longer!",
+    objective: "Memorize and repeat the sequence of flashing colors.",
+    controls: "Tap the colored buttons in the correct order.",
     thumbnail: "/assets/flash-bash/thumbnail.svg",
     xpMultiplier: 3.13,
     createdAt: "2025-11-04T00:00:00.000Z",
@@ -84,6 +96,8 @@ export const games: GameMeta[] = [
     title: "Ho Ho Home Delivery",
     description:
       "Drop presents into chimneys from Santa's sleigh. Nail the landing, avoid misses. 3 lives!",
+    objective: "Deliver presents into the chimneys as you fly over houses.",
+    controls: "Tap to drop a present.",
     thumbnail: "/assets/ho-ho-home-delivery/thumbnail.svg",
     xpMultiplier: 2.78,
     createdAt: "2025-11-05T00:00:00.000Z",
@@ -98,6 +112,8 @@ export const games: GameMeta[] = [
     title: "Ready Steady Shoot",
     description:
       "Hold to pick angle, hold to pick power, then release to shoot. Swish for 2 points! 3 lives.",
+    objective: "Shoot the basketball into the hoop by adjusting angle and power.",
+    controls: "Hold to aim, release to set power and shoot.",
     thumbnail: "/assets/ready-steady-shoot/thumbnail.svg",
     xpMultiplier: 25.0,
     createdAt: "2025-11-05T00:00:00.000Z",
@@ -111,6 +127,8 @@ export const games: GameMeta[] = [
     id: "paddle-pop",
     title: "Paddle Pop",
     description: "Deflect the marble, collect power-ups, hit bonus discs, avoid falling obstacles.",
+    objective: "Keep the ball in the air and hit targets.",
+    controls: "Drag the paddle left and right.",
     thumbnail: "/assets/paddle-pop/thumbnail.svg",
     xpMultiplier: 3.13,
     createdAt: "2025-11-05T00:00:00.000Z",
@@ -124,6 +142,8 @@ export const games: GameMeta[] = [
     id: "word-rush",
     title: "Word Rush with Tom",
     description: "Guess words and phrases with your selected letters. 2-minute timer per level!",
+    objective: "Solve the word puzzle before time runs out.",
+    controls: "Tap letters to guess the word.",
     thumbnail: "/assets/word-rush/thumbnail.svg",
     xpMultiplier: 0.42,
     createdAt: "2025-11-05T00:00:00.000Z",
@@ -138,6 +158,8 @@ export const games: GameMeta[] = [
     title: "Serpento",
     description:
       "Classic snake game. Turn left/right to collect food, avoid walls and yourself. Gets faster as you grow!",
+    objective: "Eat food to grow longer, avoid hitting walls or yourself.",
+    controls: "Tap left or right side of screen to turn.",
     thumbnail: "/assets/serpento/thumbnail.svg",
     xpMultiplier: 12.5,
     createdAt: "2025-11-17T00:00:00.000Z",
@@ -152,6 +174,8 @@ export const games: GameMeta[] = [
     title: "Blocker",
     description:
       "Drag puzzle pieces into a 8x8 board, clear full lines, trigger power blocks, and chase combos before you run out of moves.",
+    objective: "Place blocks to form full rows or columns to clear them.",
+    controls: "Drag and drop blocks onto the grid.",
     thumbnail: "/assets/blocker/thumbnail.svg",
     xpMultiplier: 0.063,
     createdAt: "2025-11-24T00:00:00.000Z",
@@ -166,6 +190,8 @@ export const games: GameMeta[] = [
     title: "Cosmic Clash",
     description:
       "Space Invaders-style shooter. Auto-fire at descending aliens, collect power-ups, survive waves!",
+    objective: "Destroy waves of alien invaders.",
+    controls: "Drag to move ship, it shoots automatically.",
     thumbnail: "/assets/cosmic-clash/thumbnail.svg",
     xpMultiplier: 0.04,
     createdAt: "2025-11-21T00:00:00.000Z",
