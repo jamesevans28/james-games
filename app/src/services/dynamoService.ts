@@ -75,6 +75,10 @@ export async function putUser(args: {
     screenName: args.screenName,
     emailProvided: args.emailProvided,
     validated: false,
+    xpLevel: 1,
+    xpProgress: 0,
+    xpTotal: 0,
+    xpUpdatedAt: now,
     createdAt: now,
     updatedAt: now,
   };

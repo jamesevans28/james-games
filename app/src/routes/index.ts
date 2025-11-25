@@ -6,6 +6,7 @@ import followersRoutes from "./followers.routes.js";
 import rewardsRoutes from "./rewards.routes.js";
 import shopRoutes from "./shop.routes.js";
 import ratingsRoutes from "./ratings.routes.js";
+import experienceRoutes from "./experience.routes.js";
 import { requireAuth } from "../middleware/authGuards.js";
 import { me } from "../controllers/usersController.js";
 
@@ -22,5 +23,6 @@ router.use("/followers", followersRoutes);
 router.use("/rewards", rewardsRoutes);
 router.use("/shop", shopRoutes);
 router.use("/ratings", ratingsRoutes);
+router.use("/experience", experienceRoutes);
 
 export default router;

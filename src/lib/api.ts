@@ -8,6 +8,16 @@ export type RatingSummary = {
   updatedAt?: string;
 };
 
+export type ExperienceSummary = {
+  level: number;
+  progress: number;
+  required: number;
+  percent: number;
+  remaining: number;
+  total: number;
+  lastUpdated?: string;
+};
+
 export type PresenceStatus =
   | "looking_for_game"
   | "home"
@@ -31,13 +41,27 @@ export type FollowingActivityEntry = {
   };
 };
 
+export type FollowingSummaryEntry = {
+  userId: string;
+  screenName?: string | null;
+  avatar?: number | null;
+  targetUserId?: string;
+  targetScreenName?: string | null;
+  targetAvatar?: number | null;
+  createdAt?: string;
+  level?: number | null;
+  presence?: FollowingActivityEntry["presence"];
+  lastOnline?: string | null;
+};
+
 export type FollowersSummary = {
-  following: FollowingActivityEntry[];
+  following: FollowingSummaryEntry[];
   followers: Array<{
     userId: string;
     screenName?: string | null;
     avatar?: number | null;
     createdAt: string;
+    level?: number | null;
   }>;
   followingCount: number;
   followersCount: number;
@@ -49,6 +73,7 @@ export type ScoreEntry = {
   avatar: number;
   score: number;
   createdAt?: string;
+  level?: number | null;
 };
 
 export type FollowNotification = {
@@ -76,6 +101,30 @@ export async function postHighScore(args: { gameId: string; score: number }) {
     throw new Error(`Failed to submit score: ${res.status}`);
   }
   return res.json();
+}
+
+export async function postExperienceRun(args: { gameId: string; durationMs: number }) {
+  if (!API_BASE) return { awardedXp: 0, summary: null } as any;
+  const res = await fetch(`${API_BASE}/experience/runs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(args),
+  });
+  if (res.status === 401) throw new Error("signin_required");
+  if (!res.ok) throw new Error(`Failed to award experience: ${res.status}`);
+  return (await res.json()) as { awardedXp: number; summary: ExperienceSummary };
+}
+
+export async function fetchExperienceSummary(): Promise<ExperienceSummary | null> {
+  if (!API_BASE) return null;
+  const res = await fetch(`${API_BASE}/experience/summary`, {
+    credentials: "include",
+  });
+  if (res.status === 401) return null;
+  if (!res.ok) throw new Error(`Failed to load experience summary: ${res.status}`);
+  const body = (await res.json()) as { summary?: ExperienceSummary | null };
+  return body.summary ?? null;
 }
 
 export async function getTopScores(

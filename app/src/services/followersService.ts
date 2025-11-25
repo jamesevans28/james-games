@@ -12,6 +12,7 @@ import {
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
 import { getUser } from "./dynamoService.js";
+import { buildSummary, ExperienceSummary } from "./experienceService.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 const FOLLOWED_BY_INDEX = config.tables.followsByTargetIndex || "FollowedBy";
@@ -217,19 +218,52 @@ export async function getPresenceForUsers(userIds: string[]): Promise<Record<str
   return out;
 }
 
+export type FollowingEdgeWithExtras = FollowEdge & {
+  presence?: PresenceRecord | null;
+  targetExperience?: ExperienceSummary | null;
+};
+
+export type FollowerEdgeWithExtras = FollowEdge & {
+  presence?: PresenceRecord | null;
+  followerExperience?: ExperienceSummary | null;
+};
+
+async function buildProfileMap(userIds: string[]) {
+  const unique = Array.from(new Set(userIds.filter(Boolean)));
+  const pairs = await Promise.all(
+    unique.map(async (id) => {
+      try {
+        const profile = await getUser(id);
+        return profile ? ([id, profile] as const) : null;
+      } catch (err) {
+        console.warn("followersService: failed to fetch profile", id, err);
+        return null;
+      }
+    })
+  );
+  return pairs.reduce<Record<string, any>>((acc, pair) => {
+    if (!pair) return acc;
+    acc[pair[0]] = pair[1];
+    return acc;
+  }, {});
+}
+
 export async function listFollowingWithPresence(
   userId: string,
   opts: { gameId?: string } = {}
-) {
+): Promise<FollowingEdgeWithExtras[]> {
   const edges = await listFollowing(userId);
   if (!edges.length) return [];
   const presenceMap = await getPresenceForUsers(edges.map((edge) => edge.targetUserId));
+  const profileMap = await buildProfileMap(edges.map((edge) => edge.targetUserId));
   return edges
     .map((edge) => {
       const presence = presenceMap[edge.targetUserId];
+      const profile = profileMap[edge.targetUserId];
       return {
         ...edge,
         presence,
+        targetExperience: profile ? buildSummary(profile) : null,
       };
     })
     .filter((edge) => {
@@ -238,13 +272,19 @@ export async function listFollowingWithPresence(
     });
 }
 
-export async function listFollowersWithPresence(targetUserId: string) {
+export async function listFollowersWithPresence(
+  targetUserId: string
+): Promise<FollowerEdgeWithExtras[]> {
   const edges = await listFollowers(targetUserId);
   if (!edges.length) return [];
   const presenceMap = await getPresenceForUsers(edges.map((edge) => edge.userId));
+  const profileMap = await buildProfileMap(edges.map((edge) => edge.userId));
   return edges.map((edge) => ({
     ...edge,
     presence: presenceMap[edge.userId],
+    followerExperience: profileMap[edge.userId]
+      ? buildSummary(profileMap[edge.userId])
+      : null,
   }));
 }
 

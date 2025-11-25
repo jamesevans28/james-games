@@ -47,6 +47,15 @@ To deploy your game, upload _all_ of the contents of the `dist` folder to a publ
 
 **Note:** In some templates, the `dist` folder has been renamed to `build` to remain within that framework's conventions.
 
+## Experience & Leveling
+
+- Level requirements (1–100) are generated from a mobile-friendly playtime curve in `app/src/data/experienceLevels.ts`. Provide a DynamoDB table name via `TABLE_EXPERIENCE_LEVELS` to override the defaults.
+- New backend endpoints:
+  - `POST /experience/runs` — records a single game session by game id + duration and awards XP server-side.
+  - `GET /experience/summary` — returns the caller’s latest level/progress snapshot, used by the client to render the progress bar.
+- User rows now persist `xpLevel`, `xpProgress`, `xpTotal`, and `xpUpdatedAt`. Existing users are lazily upgraded the first time they earn XP.
+- Frontend surfaces level progress on the in-game score dialog, profile page, followers list, and leaderboards. Ensure the API base URL exposes the new routes before deploying.
+
 ## CI/CD: GitHub Actions → AWS S3
 
 This repo includes a workflow at `.github/workflows/deploy.yml` that builds and deploys to an S3 bucket using GitHub OIDC (no long‑lived AWS keys).

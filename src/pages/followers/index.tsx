@@ -23,6 +23,20 @@ const STATUS_LABELS: Record<PresenceStatus, string> = {
   in_score_dialog: "Sharing score",
 };
 
+function formatLastOnline(timestamp?: string | null) {
+  if (!timestamp) return null;
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return null;
+  const diffMs = Date.now() - date.getTime();
+  if (diffMs < 60 * 1000) return "Last online moments ago";
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 60) return `Last online ${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Last online ${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `Last online ${days}d ago`;
+}
+
 export default function FollowersPage() {
   const [data, setData] = useState<FollowersSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -161,29 +175,40 @@ export default function FollowersPage() {
       <ul className="space-y-3">
         {data.following.map((edge) => {
           const presenceText = describePresence(edge.presence);
+          const levelText = edge.level ? `Level ${edge.level}` : null;
+          const lastOnline = formatLastOnline(edge.lastOnline ?? edge.presence?.updatedAt);
+          const displayName = edge.targetScreenName ?? (edge as any).screenName ?? "Player";
+          const avatar = edge.targetAvatar ?? (edge as any).avatar ?? 1;
+          const profileId = edge.targetUserId ?? edge.userId;
           return (
             <li
-              key={`${edge.targetUserId}-${edge.createdAt}`}
+              key={`${profileId}-${edge.createdAt}`}
               className="flex items-center justify-between border border-gray-200 rounded-lg p-3"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <ProfileAvatar user={{ avatar: edge.targetAvatar ?? 1 }} size={48} />
+                <ProfileAvatar user={{ avatar }} size={48} />
                 <div className="min-w-0">
                   <Link
-                    to={`/profile/${edge.targetUserId}`}
+                    to={`/profile/${profileId}`}
                     className="text-sm font-semibold text-black truncate block"
                   >
-                    {edge.targetScreenName ?? "Player"}
+                    {displayName}
                   </Link>
                   {presenceText && <div className="text-xs text-gray-500">{presenceText}</div>}
+                  {(levelText || lastOnline) && (
+                    <div className="text-xs text-gray-400 flex flex-wrap gap-2 mt-0.5">
+                      {levelText && <span>{levelText}</span>}
+                      {lastOnline && <span>{lastOnline}</span>}
+                    </div>
+                  )}
                 </div>
               </div>
               <button
                 className="text-xs font-semibold text-red-600 border border-red-200 rounded-full px-3 py-1"
-                onClick={() => handleUnfollow(edge.targetUserId)}
-                disabled={actionUser === edge.targetUserId}
+                onClick={() => handleUnfollow(profileId)}
+                disabled={actionUser === profileId}
               >
-                {actionUser === edge.targetUserId ? "Removing" : "Unfollow"}
+                {actionUser === profileId ? "Removing" : "Unfollow"}
               </button>
             </li>
           );

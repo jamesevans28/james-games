@@ -32,5 +32,6 @@ export const config = {
     userRecentGamesIndex: process.env.TABLE_USER_RECENT_GSI || "UserRecentGames",
     gameStatsByGameIndex: process.env.TABLE_GAME_STATS_GSI || "GameStatsByGame",
     followsByTargetIndex: process.env.TABLE_FOLLOWS_BY_TARGET_GSI || "FollowedBy",
+    experienceLevels: process.env.TABLE_EXPERIENCE_LEVELS || "games4james-experience-levels",
   },
 };

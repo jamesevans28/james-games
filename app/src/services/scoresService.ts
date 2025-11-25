@@ -36,6 +36,7 @@ export interface PublicScoreRow {
   avatar: number;
   score: number;
   createdAt: string;
+  level?: number | null;
 }
 
 /**
@@ -136,6 +137,7 @@ export async function getTopScoresHydrated(
       avatar,
       score: row.score,
       createdAt: row.createdAt,
+      level: typeof profile?.xpLevel === "number" ? profile.xpLevel : undefined,
     };
   });
 }

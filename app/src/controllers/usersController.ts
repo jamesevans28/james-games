@@ -36,6 +36,7 @@ export async function me(req: Request, res: Response) {
         validated: profile.validated,
         createdAt: profile.createdAt,
         updatedAt: profile.updatedAt,
+        experience: profile.experience,
       },
     });
   } catch (e: any) {

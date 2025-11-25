@@ -1,11 +1,13 @@
-import { useEffect, useRef } from "react";
-import { postHighScore } from "../lib/api";
+import { useEffect, useRef, useState } from "react";
+import { postHighScore, postExperienceRun, type ExperienceSummary } from "../lib/api";
 import { useAuth } from "../context/AuthProvider";
+import { ExperienceBar } from "./ExperienceBar";
 
 type Props = {
   open: boolean;
   score: number | null;
   gameId?: string | null; // gameId provided so dialog can post score
+  runDurationMs?: number | null;
   onClose: () => void;
   onPlayAgain?: () => void;
   onViewLeaderboard?: () => void;
@@ -15,6 +17,7 @@ export default function ScoreDialog({
   open,
   score,
   gameId,
+  runDurationMs,
   onClose,
   onPlayAgain,
   onViewLeaderboard,
@@ -23,7 +26,12 @@ export default function ScoreDialog({
   // signature is `${gameId}:${score}`. This allows the dialog component to be
   // reused between games while still posting each new score once.
   const postedRef = useRef<string | null>(null);
-  const { user } = useAuth?.() ?? ({ user: null } as any);
+  const xpPostedRef = useRef<string | null>(null);
+  const { user, refreshSession } = useAuth();
+  const [experience, setExperience] = useState<ExperienceSummary | null>(user?.experience ?? null);
+  const [xpAwarded, setXpAwarded] = useState<number | null>(null);
+  const [xpPending, setXpPending] = useState(false);
+  const [xpError, setXpError] = useState<string | null>(null);
   useEffect(() => {
     if (!open) {
       console.log("ScoreDialog: not posting score because dialog is not open");
@@ -62,6 +70,52 @@ export default function ScoreDialog({
         console.warn("Failed to post high score", e);
       });
   }, [open, score, gameId, user]);
+
+  useEffect(() => {
+    if (!open) {
+      xpPostedRef.current = null;
+      setXpAwarded(null);
+      setXpPending(false);
+      setXpError(null);
+      setExperience(user?.experience ?? null);
+      return;
+    }
+    if (experience === null && user?.experience) {
+      setExperience(user.experience);
+    }
+  }, [open, user?.experience, experience]);
+
+  useEffect(() => {
+    if (!open || !user || !gameId || !runDurationMs || runDurationMs <= 0) return;
+    const sig = `${gameId}:${runDurationMs}:${score ?? 0}`;
+    if (xpPostedRef.current === sig) return;
+    xpPostedRef.current = sig;
+    setXpPending(true);
+    setXpError(null);
+    setXpAwarded(null);
+    let canceled = false;
+    postExperienceRun({ gameId, durationMs: runDurationMs })
+      .then(({ summary, awardedXp }) => {
+        if (canceled) return;
+        setExperience(summary);
+        setXpAwarded(awardedXp);
+        setXpPending(false);
+        void refreshSession({ silent: true });
+      })
+      .catch((err: any) => {
+        if (canceled) return;
+        if (err?.message === "signin_required") {
+          setXpError("Sign in to earn experience.");
+        } else {
+          setXpError(err?.message || "Could not add experience right now.");
+        }
+        setXpPending(false);
+        xpPostedRef.current = null;
+      });
+    return () => {
+      canceled = true;
+    };
+  }, [open, user?.userId, gameId, runDurationMs, score, refreshSession]);
   if (!open) return null;
   const phrases = [
     "Great job!",
@@ -97,6 +151,36 @@ export default function ScoreDialog({
         <div className="px-5 py-6">
           <div className="text-5xl font-extrabold text-center text-black">{score ?? 0}</div>
         </div>
+        {user ? (
+          <div className="px-5 pb-5 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-semibold text-black flex items-center gap-1">
+                <span role="img" aria-hidden>
+                  ✨
+                </span>
+                Level progress
+              </div>
+              <div className="text-xs text-gray-500">
+                {xpPending ? "Adding XP…" : xpAwarded ? `+${xpAwarded} XP` : ""}
+              </div>
+            </div>
+            {experience ? (
+              <ExperienceBar
+                level={experience.level}
+                progress={experience.progress}
+                required={experience.required}
+                incomingXp={xpAwarded ?? undefined}
+              />
+            ) : (
+              <p className="text-xs text-gray-500">Play more runs to unlock experience tracking.</p>
+            )}
+            {xpError && <p className="text-xs text-red-500 mt-2">{xpError}</p>}
+          </div>
+        ) : (
+          <div className="px-5 pb-4 border-t border-gray-100 text-xs text-gray-500">
+            Sign in to earn experience, level up, and unlock a shiny progress bar!
+          </div>
+        )}
         <div className="px-5 pt-3 pb-5 flex flex-col sm:flex-row gap-3">
           {onPlayAgain && (
             <button type="button" className="btn btn-primary sm:flex-1" onClick={onPlayAgain}>

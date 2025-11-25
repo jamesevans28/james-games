@@ -34,11 +34,13 @@ export default function PlayGame() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const destroyRef = useRef<null | (() => void)>(null);
   const mountingRef = useRef(false);
+  const sessionStartRef = useRef<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [mounting, setMounting] = useState(false);
   const [showScore, setShowScore] = useState(false);
   const [lastScore, setLastScore] = useState<number | null>(null);
+  const [lastRunDuration, setLastRunDuration] = useState<number | null>(null);
   const [pendingRatingTrigger, setPendingRatingTrigger] = useState(false);
   const [ratingPromptOpen, setRatingPromptOpen] = useState(false);
   const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(() =>
@@ -109,6 +111,7 @@ export default function PlayGame() {
       const { destroy } = mod.mount(containerRef.current);
       destroyRef.current = destroy;
       trackGameStart(meta.id, meta.title);
+      sessionStartRef.current = Date.now();
     } catch (e) {
       console.error(e);
       setError("Failed to load game");
@@ -206,6 +209,7 @@ export default function PlayGame() {
 
   const handleCloseScore = () => {
     setShowScore(false);
+    setLastRunDuration(null);
     if (destroyRef.current) {
       try {
         destroyRef.current();
@@ -213,6 +217,7 @@ export default function PlayGame() {
       destroyRef.current = null;
     }
     setPlaying(false);
+    sessionStartRef.current = null;
     if (pendingRatingTrigger && user) {
       void openRatingPrompt("close");
     } else {
@@ -222,6 +227,7 @@ export default function PlayGame() {
 
   const handlePlayAgain = () => {
     setShowScore(false);
+    setLastRunDuration(null);
     if (pendingRatingTrigger && user) {
       void openRatingPrompt("playAgain");
       return;
@@ -237,6 +243,11 @@ export default function PlayGame() {
       if (!meta || d.gameId !== meta.id) return;
       // Keep the game mounted so it's visible in the background
       setLastScore(d.score);
+      if (sessionStartRef.current) {
+        setLastRunDuration(Math.max(0, Date.now() - sessionStartRef.current));
+      } else {
+        setLastRunDuration(null);
+      }
       setShowScore(true);
       if (user) {
         const count = incrementPlayCounter(meta.id);
@@ -268,6 +279,7 @@ export default function PlayGame() {
         } catch {}
         destroyRef.current = null;
       }
+      sessionStartRef.current = null;
     };
   }, [playing, meta, mountGame]);
 
@@ -326,6 +338,7 @@ export default function PlayGame() {
         open={showScore}
         score={lastScore}
         gameId={meta?.id}
+        runDurationMs={lastRunDuration}
         onClose={handleCloseScore}
         onPlayAgain={handlePlayAgain}
         onViewLeaderboard={meta ? () => navigate(`/leaderboard/${meta.id}`) : undefined}

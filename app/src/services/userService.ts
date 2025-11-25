@@ -16,6 +16,7 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { dynamoClient } from "../config/aws.js";
 import crypto from "crypto";
+import { buildSummary } from "./experienceService.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
@@ -32,6 +33,7 @@ export async function getProfile(userId: string) {
     validated: profile?.validated ?? false,
     createdAt: profile?.createdAt ?? null,
     updatedAt: profile?.updatedAt ?? null,
+    experience: profile ? buildSummary(profile) : null,
   };
 }
 

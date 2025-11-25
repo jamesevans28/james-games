@@ -16,17 +16,30 @@ export async function getFollowersSummary(req: Request, res: Response) {
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   try {
-    const [following, followersRaw, followingCount, followersCount] = await Promise.all([
+    const [followingRaw, followersRaw, followingCount, followersCount] = await Promise.all([
       listFollowingWithPresence(userId),
       listFollowersWithPresence(userId),
       countFollowing(userId),
       countFollowers(userId),
     ]);
+    const following = followingRaw.map((edge) => ({
+      userId: edge.targetUserId,
+      targetUserId: edge.targetUserId,
+      screenName: edge.targetScreenName,
+      targetScreenName: edge.targetScreenName,
+      avatar: edge.targetAvatar,
+      targetAvatar: edge.targetAvatar,
+      createdAt: edge.createdAt,
+      level: edge.targetExperience?.level ?? null,
+      presence: edge.presence,
+      lastOnline: edge.presence?.updatedAt ?? null,
+    }));
     const followers = followersRaw.map((edge) => ({
       userId: edge.userId,
       screenName: edge.followerScreenName,
       avatar: edge.followerAvatar,
       createdAt: edge.createdAt,
+      level: edge.followerExperience?.level ?? null,
     }));
     res.json({ following, followers, followingCount, followersCount });
   } catch (err: any) {

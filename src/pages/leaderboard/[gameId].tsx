@@ -212,15 +212,20 @@ export default function LeaderboardPage() {
                         </span>
                       )}
                     </div>
-                    <span
-                      className={
-                        "font-semibold truncate max-w-[140px] " +
-                        (isMe ? "text-amber-700" : medal ? `text-[${medalColors[medal].text}]` : "")
-                      }
-                      title={r.screenName}
-                    >
-                      {r.screenName}
-                    </span>
+                    <div className="min-w-0">
+                      <span
+                        className={
+                          "font-semibold truncate max-w-[210px] md:max-w-[260px] " +
+                          (isMe ? "text-amber-700" : medal ? `text-[${medalColors[medal].text}]` : "")
+                        }
+                        title={r.screenName}
+                      >
+                        {r.screenName}
+                      </span>
+                      {typeof r.level === "number" && (
+                        <div className="text-[11px] text-gray-500">Level {r.level}</div>
+                      )}
+                    </div>
                   </div>
                   <div className={"text-right font-mono " + (isMe ? "text-amber-700" : "")}>
                     {r.score}

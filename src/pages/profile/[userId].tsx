@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { games } from "../../games";
-import { fetchUserProfile, followUserApi, unfollowUserApi } from "../../lib/api";
+import { fetchUserProfile, followUserApi, unfollowUserApi, type ExperienceSummary } from "../../lib/api";
 import { ProfileAvatar } from "../../components/profile";
 import ShareFollowCodeCard from "../../components/ShareFollowCodeCard";
 import { useAuth } from "../../context/AuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
+import { ExperienceBar } from "../../components/ExperienceBar";
 
 interface ProfileResponse {
   profile: {
     userId: string;
     screenName?: string | null;
     avatar?: number | null;
+    experience?: ExperienceSummary | null;
   };
   followingCount: number;
   followersCount: number;
@@ -164,6 +166,25 @@ export default function ProfilePage() {
                 </Link>
               )}
             </div>
+            {data.profile.experience && (
+              data.isSelf ? (
+                <div className="mt-3">
+                  <ExperienceBar
+                    level={data.profile.experience.level}
+                    progress={data.profile.experience.progress}
+                    required={data.profile.experience.required}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {Math.max(0, Math.round(data.profile.experience.remaining))} XP to level{" "}
+                    {Math.min(100, data.profile.experience.level + 1)}
+                  </p>
+                </div>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-1 rounded-full mt-2">
+                  Level {data.profile.experience.level}
+                </span>
+              )
+            )}
           </div>
         </div>
         {canFollow && (

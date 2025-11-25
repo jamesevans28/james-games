@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import type { ExperienceSummary } from "../lib/api";
 // Auth is handled by the backend local endpoints for username/password.
 // Frontend will call POST /auth/local-signin and POST /auth/local-signup and
 // rely on cookie-based sessions returned by the server (/me endpoint).
@@ -14,6 +15,7 @@ type AuthUser = {
   emailProvided?: boolean;
   validated?: boolean; // email verified flag from profile
   avatar?: number | null; // numeric avatar index (1..25)
+  experience?: ExperienceSummary | null;
 };
 
 type AuthContextType = {
@@ -197,6 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           validated: userData.validated ?? false,
           avatar:
             typeof userData.avatar === "number" ? userData.avatar : Number(userData.avatar) || null,
+          experience: userData.experience ?? null,
         };
         setUser(userObj);
         persistSessionCache(userObj);
