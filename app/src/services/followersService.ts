@@ -193,7 +193,9 @@ export async function getPresence(userId: string): Promise<PresenceRecord | null
   return (res.Item as PresenceRecord) || null;
 }
 
-export async function getPresenceForUsers(userIds: string[]): Promise<Record<string, PresenceRecord>> {
+export async function getPresenceForUsers(
+  userIds: string[]
+): Promise<Record<string, PresenceRecord>> {
   if (!config.tables.presence || userIds.length === 0) return {};
   const unique = Array.from(new Set(userIds));
   const batches: string[][] = [];
@@ -282,9 +284,7 @@ export async function listFollowersWithPresence(
   return edges.map((edge) => ({
     ...edge,
     presence: presenceMap[edge.userId],
-    followerExperience: profileMap[edge.userId]
-      ? buildSummary(profileMap[edge.userId])
-      : null,
+    followerExperience: profileMap[edge.userId] ? buildSummary(profileMap[edge.userId]) : null,
   }));
 }
 

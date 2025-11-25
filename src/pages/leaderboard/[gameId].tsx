@@ -216,7 +216,11 @@ export default function LeaderboardPage() {
                       <span
                         className={
                           "font-semibold truncate max-w-[210px] md:max-w-[260px] " +
-                          (isMe ? "text-amber-700" : medal ? `text-[${medalColors[medal].text}]` : "")
+                          (isMe
+                            ? "text-amber-700"
+                            : medal
+                            ? `text-[${medalColors[medal].text}]`
+                            : "")
                         }
                         title={r.screenName}
                       >

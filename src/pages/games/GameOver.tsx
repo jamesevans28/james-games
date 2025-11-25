@@ -50,7 +50,9 @@ function LevelUpModal({ level, onClose }: { level: number; onClose: () => void }
             opacity: 1;
           }
           100% {
-            transform: translate(${Math.random() * 200 - 100}px, ${Math.random() * 200 - 100}px) scale(0);
+            transform: translate(${Math.random() * 200 - 100}px, ${
+        Math.random() * 200 - 100
+      }px) scale(0);
             opacity: 0;
           }
         }
@@ -73,24 +75,22 @@ function LevelUpModal({ level, onClose }: { level: number; onClose: () => void }
       `}</style>
       <div className="fixed inset-0 z-[10001] flex items-center justify-center">
         <div className="absolute inset-0 bg-black/80" onClick={onClose} />
-        <div className="relative bg-gradient-to-b from-yellow-50 to-orange-50 rounded-2xl p-8 max-w-sm mx-4 shadow-2xl border-4 border-yellow-400 text-center" style={{ animation: "glow-pulse 2s ease-in-out infinite" }}>
-          <div className="text-8xl mb-4" style={{ animation: "trophy-bounce 1s ease-in-out infinite" }}>
+        <div
+          className="relative bg-gradient-to-b from-yellow-50 to-orange-50 rounded-2xl p-8 max-w-sm mx-4 shadow-2xl border-4 border-yellow-400 text-center"
+          style={{ animation: "glow-pulse 2s ease-in-out infinite" }}
+        >
+          <div
+            className="text-8xl mb-4"
+            style={{ animation: "trophy-bounce 1s ease-in-out infinite" }}
+          >
             🏆
           </div>
           <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-orange-600 mb-2">
             LEVEL UP!
           </h2>
-          <p className="text-5xl font-extrabold text-orange-600 mb-4">
-            Level {level}
-          </p>
-          <p className="text-gray-700 mb-6">
-            Congratulations! You've reached a new level!
-          </p>
-          <button
-            type="button"
-            className="btn btn-primary px-8 py-3 text-lg"
-            onClick={onClose}
-          >
+          <p className="text-5xl font-extrabold text-orange-600 mb-4">Level {level}</p>
+          <p className="text-gray-700 mb-6">Congratulations! You've reached a new level!</p>
+          <button type="button" className="btn btn-primary px-8 py-3 text-lg" onClick={onClose}>
             Continue
           </button>
         </div>
@@ -188,7 +188,9 @@ function AnimatedExperienceBar({
             backgroundImage:
               "repeating-linear-gradient(45deg, rgba(255,255,255,0.35) 0, rgba(255,255,255,0.35) 8px, transparent 8px, transparent 16px)",
             backgroundColor: "#ffd54f",
-            boxShadow: isAnimating ? "0 0 18px rgba(255, 214, 79, 0.7)" : "0 0 12px rgba(0,0,0,0.15)",
+            boxShadow: isAnimating
+              ? "0 0 18px rgba(255, 214, 79, 0.7)"
+              : "0 0 12px rgba(0,0,0,0.15)",
             transition: "none",
           }}
         />
@@ -281,7 +283,7 @@ export default function GameOver({
     setXpPending(true);
     setXpError(null);
     setXpAwarded(null);
-    
+
     const currentExperience = user.experience;
     if (currentExperience) {
       setStartExperience(currentExperience);
@@ -294,14 +296,14 @@ export default function GameOver({
         setEndExperience(summary);
         setXpAwarded(awardedXp);
         setXpPending(false);
-        
+
         // Check for level up
         if (currentExperience && summary.level > currentExperience.level) {
           setTimeout(() => {
             setShowLevelUp(true);
           }, 1500); // Show after XP animation completes
         }
-        
+
         void refreshSession({ silent: true });
       })
       .catch((err: any) => {
@@ -366,9 +368,7 @@ export default function GameOver({
                   </span>
                   Level progress
                 </div>
-                <div className="text-xs text-gray-500">
-                  {xpPending ? "Adding XP…" : ""}
-                </div>
+                <div className="text-xs text-gray-500">{xpPending ? "Adding XP…" : ""}</div>
               </div>
               {startExperience && endExperience ? (
                 <AnimatedExperienceBar
@@ -380,7 +380,9 @@ export default function GameOver({
                   awardedXp={xpAwarded ?? 0}
                 />
               ) : (
-                <p className="text-xs text-gray-500">Play more runs to unlock experience tracking.</p>
+                <p className="text-xs text-gray-500">
+                  Play more runs to unlock experience tracking.
+                </p>
               )}
               {xpError && <p className="text-xs text-red-500 mt-2">{xpError}</p>}
             </div>
@@ -396,7 +398,11 @@ export default function GameOver({
               </button>
             )}
             {onViewLeaderboard && (
-              <button type="button" className="btn btn-outline sm:flex-1" onClick={onViewLeaderboard}>
+              <button
+                type="button"
+                className="btn btn-outline sm:flex-1"
+                onClick={onViewLeaderboard}
+              >
                 View Leaderboard
               </button>
             )}
@@ -407,10 +413,7 @@ export default function GameOver({
         </div>
       </div>
       {showLevelUp && endExperience && (
-        <LevelUpModal
-          level={endExperience.level}
-          onClose={() => setShowLevelUp(false)}
-        />
+        <LevelUpModal level={endExperience.level} onClose={() => setShowLevelUp(false)} />
       )}
     </>
   );

@@ -8,6 +8,7 @@ export type SeoProps = {
   siteName?: string;
   noindex?: boolean;
   canonical?: string;
+  jsonLd?: Record<string, any>;
 };
 
 function upsertMeta(selector: string, attrs: Record<string, string>) {
@@ -31,6 +32,25 @@ function upsertLinkRel(rel: string, href: string) {
   el.setAttribute("href", href);
 }
 
+function upsertJsonLd(data?: Record<string, any>) {
+  const head = document.head;
+  const selector = "script[data-seo-schema='true']";
+  let el = head.querySelector<HTMLScriptElement>(selector);
+
+  if (!data) {
+    if (el) el.parentElement?.removeChild(el);
+    return;
+  }
+
+  if (!el) {
+    el = document.createElement("script");
+    el.setAttribute("type", "application/ld+json");
+    el.setAttribute("data-seo-schema", "true");
+    head.appendChild(el);
+  }
+  el.textContent = JSON.stringify(data);
+}
+
 export default function Seo({
   title,
   description,
@@ -39,6 +59,7 @@ export default function Seo({
   siteName = "Games4James",
   noindex,
   canonical,
+  jsonLd,
 }: SeoProps) {
   useEffect(() => {
     if (title) document.title = title;
@@ -81,7 +102,10 @@ export default function Seo({
       name: "twitter:card",
       content: "summary_large_image",
     });
-  }, [title, description, url, image, siteName, noindex, canonical]);
+
+    // JSON-LD
+    upsertJsonLd(jsonLd);
+  }, [title, description, url, image, siteName, noindex, canonical, jsonLd]);
 
   return null;
 }

@@ -273,6 +273,34 @@ export default function PlayGame() {
 
   const landingState = playing ? "hidden" : "visible";
 
+  const jsonLd = useMemo(() => {
+    if (!meta) return undefined;
+    return {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      name: meta.title,
+      description: meta.description,
+      image: meta.thumbnail ? `https://games4james.com${meta.thumbnail}` : undefined,
+      url: `https://games4james.com/games/${meta.id}`,
+      genre: "Arcade",
+      author: {
+        "@type": "Person",
+        name: "James",
+      },
+      applicationCategory: "Game",
+      operatingSystem: "Any",
+      aggregateRating: ratingSummary?.avgRating
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: ratingSummary.avgRating,
+            ratingCount: ratingSummary.ratingCount,
+            bestRating: 5,
+            worstRating: 1,
+          }
+        : undefined,
+    };
+  }, [meta, ratingSummary]);
+
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
       <Seo
@@ -284,6 +312,7 @@ export default function PlayGame() {
         url={`https://games4james.com/games/${meta?.id ?? ""}`}
         canonical={`https://games4james.com/games/${meta?.id ?? ""}`}
         image={meta?.thumbnail ? `https://games4james.com${meta.thumbnail}` : "/assets/logo.png"}
+        jsonLd={jsonLd}
       />
 
       <GameHeader

@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { games } from "../../games";
-import { fetchUserProfile, followUserApi, unfollowUserApi, type ExperienceSummary } from "../../lib/api";
+import {
+  fetchUserProfile,
+  followUserApi,
+  unfollowUserApi,
+  type ExperienceSummary,
+} from "../../lib/api";
 import { ProfileAvatar } from "../../components/profile";
 import ShareFollowCodeCard from "../../components/ShareFollowCodeCard";
 import { useAuth } from "../../context/AuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { ExperienceBar } from "../../components/ExperienceBar";
+import Seo from "../../components/Seo";
 
 interface ProfileResponse {
   profile: {
@@ -130,6 +136,12 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <Seo
+        title={`${data.profile.screenName ?? "Player"} — Games4James Profile`}
+        description={`Check out ${data.profile.screenName ?? "Player"}'s stats and high scores on Games4James.`}
+        url={`https://games4james.com/profile/${userId}`}
+        canonical={`https://games4james.com/profile/${userId}`}
+      />
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">
           {data.isSelf ? (
@@ -166,8 +178,8 @@ export default function ProfilePage() {
                 </Link>
               )}
             </div>
-            {data.profile.experience && (
-              data.isSelf ? (
+            {data.profile.experience &&
+              (data.isSelf ? (
                 <div className="mt-3">
                   <ExperienceBar
                     level={data.profile.experience.level}
@@ -183,8 +195,7 @@ export default function ProfilePage() {
                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-1 rounded-full mt-2">
                   Level {data.profile.experience.level}
                 </span>
-              )
-            )}
+              ))}
           </div>
         </div>
         {canFollow && (

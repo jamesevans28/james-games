@@ -9,7 +9,11 @@ export async function recordGameExperience(req: Request, res: Response) {
   // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
-  const { gameId, score, xpMultiplier } = (req.body || {}) as { gameId?: string; score?: number; xpMultiplier?: number };
+  const { gameId, score, xpMultiplier } = (req.body || {}) as {
+    gameId?: string;
+    score?: number;
+    xpMultiplier?: number;
+  };
   if (!gameId) return res.status(400).json({ error: "gameId_required" });
   const scoreNum = Number(score);
   if (!Number.isFinite(scoreNum) || scoreNum <= 0) {

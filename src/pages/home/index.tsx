@@ -242,6 +242,18 @@ export default function GameHub() {
         url="https://games4james.com/"
         canonical="https://games4james.com/"
         image="https://games4james.com/assets/logo.png"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Games4James",
+          url: "https://games4james.com/",
+          description:
+            "Play free online games made by James! Fun, fast, skill-based games you can play instantly on your phone or browser.",
+          publisher: {
+            "@type": "Person",
+            name: "James",
+          },
+        }}
       />
 
       {heroGame && (

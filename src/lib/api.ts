@@ -103,7 +103,11 @@ export async function postHighScore(args: { gameId: string; score: number }) {
   return res.json();
 }
 
-export async function postExperienceRun(args: { gameId: string; score: number; xpMultiplier?: number }) {
+export async function postExperienceRun(args: {
+  gameId: string;
+  score: number;
+  xpMultiplier?: number;
+}) {
   if (!API_BASE) return { awardedXp: 0, summary: null } as any;
   const res = await fetch(`${API_BASE}/experience/runs`, {
     method: "POST",
@@ -248,7 +252,8 @@ export async function submitRating(gameId: string, rating: number): Promise<Rati
 export async function fetchFollowersSummary(): Promise<FollowersSummary> {
   if (!API_BASE) return { following: [], followers: [], followingCount: 0, followersCount: 0 };
   const res = await fetch(`${API_BASE}/followers/summary`, { credentials: "include" });
-  if (res.status === 401) return { following: [], followers: [], followingCount: 0, followersCount: 0 };
+  if (res.status === 401)
+    return { following: [], followers: [], followingCount: 0, followersCount: 0 };
   if (!res.ok) throw new Error(`Failed to load followers: ${res.status}`);
   return (await res.json()) as FollowersSummary;
 }

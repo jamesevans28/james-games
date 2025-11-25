@@ -46,7 +46,9 @@ export default function FollowersPage() {
   const [manualMessage, setManualMessage] = useState<string | null>(null);
   const [manualStatus, setManualStatus] = useState<"success" | "error" | null>(null);
   const [manualBusy, setManualBusy] = useState(false);
-  const [confirmUnfollow, setConfirmUnfollow] = useState<{ userId: string; name: string } | null>(null);
+  const [confirmUnfollow, setConfirmUnfollow] = useState<{ userId: string; name: string } | null>(
+    null
+  );
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const anchor = searchParams.get("view") === "followers" ? "followers" : "following";
@@ -212,7 +214,14 @@ export default function FollowersPage() {
                 aria-label={`Unfollow ${displayName}`}
                 title="Unfollow"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>

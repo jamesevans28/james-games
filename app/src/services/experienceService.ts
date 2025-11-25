@@ -1,7 +1,11 @@
 import { DynamoDBDocumentClient, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
-import { DEFAULT_EXPERIENCE_LEVELS, EXPERIENCE_MAX_LEVEL, ExperienceLevelRow } from "../data/experienceLevels.js";
+import {
+  DEFAULT_EXPERIENCE_LEVELS,
+  EXPERIENCE_MAX_LEVEL,
+  ExperienceLevelRow,
+} from "../data/experienceLevels.js";
 import { getUser } from "./dynamoService.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
@@ -36,15 +40,16 @@ async function loadExperienceLevels(): Promise<ExperienceLevelRow[]> {
         TableName: config.tables.experienceLevels,
       })
     );
-    const rows = ((res.Items || []) as Array<{ level: number; requiredXp: number; targetMinutes?: number }>).filter(
-      (row) => typeof row.level === "number" && typeof row.requiredXp === "number"
-    );
+    const rows = (
+      (res.Items || []) as Array<{ level: number; requiredXp: number; targetMinutes?: number }>
+    ).filter((row) => typeof row.level === "number" && typeof row.requiredXp === "number");
     if (rows.length) {
       rows.sort((a, b) => a.level - b.level);
       const normalized: ExperienceLevelRow[] = [];
       rows.forEach((row, index) => {
         const prev = normalized[index - 1];
-        const fallback = DEFAULT_EXPERIENCE_LEVELS[Math.min(index, DEFAULT_EXPERIENCE_LEVELS.length - 1)];
+        const fallback =
+          DEFAULT_EXPERIENCE_LEVELS[Math.min(index, DEFAULT_EXPERIENCE_LEVELS.length - 1)];
         normalized.push({
           level: row.level,
           requiredXp: row.requiredXp,
@@ -65,7 +70,10 @@ async function loadExperienceLevels(): Promise<ExperienceLevelRow[]> {
 }
 
 function ensureRequirement(levels: ExperienceLevelRow[], level: number): ExperienceLevelRow {
-  const clamped = Math.min(Math.max(level, 1), levels[levels.length - 1]?.level ?? EXPERIENCE_MAX_LEVEL);
+  const clamped = Math.min(
+    Math.max(level, 1),
+    levels[levels.length - 1]?.level ?? EXPERIENCE_MAX_LEVEL
+  );
   const found = levels.find((row) => row.level === clamped);
   if (found) return found;
   return levels[levels.length - 1];
@@ -163,7 +171,12 @@ export async function applyExperienceToUser(userId: string, xpEarned: number) {
   }
 
   cachedLevels ||= levels; // ensure cached after first load
-  const summary = buildSummary({ xpLevel: level, xpProgress: progress, xpTotal: total, xpUpdatedAt: stamp });
+  const summary = buildSummary({
+    xpLevel: level,
+    xpProgress: progress,
+    xpTotal: total,
+    xpUpdatedAt: stamp,
+  });
   return { summary, awarded: xpEarned };
 }
 
