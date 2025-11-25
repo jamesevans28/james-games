@@ -13,16 +13,109 @@ const ROTATE_BUTTON_Y = SLOT_Y + 150;
 const BEST_KEY = "blocker-best";
 
 const RAW_SHAPES = [
-  { id: "domino", color: 0xff6f61, coords: [[0, 0], [1, 0]] },
-  { id: "line-three", color: 0x8e24aa, coords: [[0, 0], [1, 0], [2, 0]] },
-  { id: "corner-three", color: 0xffa726, coords: [[0, 0], [0, 1], [1, 1]] },
-  { id: "t-three", color: 0x42a5f5, coords: [[0, 0], [1, 0], [2, 0], [1, 1]] },
-  { id: "line-four", color: 0x29b6f6, coords: [[0, 0], [0, 1], [0, 2], [0, 3]] },
-  { id: "square-four", color: 0xab47bc, coords: [[0, 0], [1, 0], [0, 1], [1, 1]] },
-  { id: "zig-five", color: 0x66bb6a, coords: [[0, 0], [1, 0], [1, 1], [2, 1], [2, 2]] },
-  { id: "tee-five", color: 0xff7043, coords: [[0, 0], [1, 0], [2, 0], [1, 1], [1, 2]] },
-  { id: "bar-six", color: 0x26c6da, coords: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0]] },
-  { id: "bolt-seven", color: 0xffd54f, coords: [[0, 0], [1, 0], [1, 1], [2, 1], [2, 2], [3, 2], [3, 3]] },
+  {
+    id: "domino",
+    color: 0xff6f61,
+    coords: [
+      [0, 0],
+      [1, 0],
+    ],
+  },
+  {
+    id: "line-three",
+    color: 0x8e24aa,
+    coords: [
+      [0, 0],
+      [1, 0],
+      [2, 0],
+    ],
+  },
+  {
+    id: "corner-three",
+    color: 0xffa726,
+    coords: [
+      [0, 0],
+      [0, 1],
+      [1, 1],
+    ],
+  },
+  {
+    id: "t-three",
+    color: 0x42a5f5,
+    coords: [
+      [0, 0],
+      [1, 0],
+      [2, 0],
+      [1, 1],
+    ],
+  },
+  {
+    id: "line-four",
+    color: 0x29b6f6,
+    coords: [
+      [0, 0],
+      [0, 1],
+      [0, 2],
+      [0, 3],
+    ],
+  },
+  {
+    id: "square-four",
+    color: 0xab47bc,
+    coords: [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [1, 1],
+    ],
+  },
+  {
+    id: "zig-five",
+    color: 0x66bb6a,
+    coords: [
+      [0, 0],
+      [1, 0],
+      [1, 1],
+      [2, 1],
+      [2, 2],
+    ],
+  },
+  {
+    id: "tee-five",
+    color: 0xff7043,
+    coords: [
+      [0, 0],
+      [1, 0],
+      [2, 0],
+      [1, 1],
+      [1, 2],
+    ],
+  },
+  {
+    id: "bar-six",
+    color: 0x26c6da,
+    coords: [
+      [0, 0],
+      [1, 0],
+      [2, 0],
+      [3, 0],
+      [4, 0],
+      [5, 0],
+    ],
+  },
+  {
+    id: "bolt-seven",
+    color: 0xffd54f,
+    coords: [
+      [0, 0],
+      [1, 0],
+      [1, 1],
+      [2, 1],
+      [2, 2],
+      [3, 2],
+      [3, 3],
+    ],
+  },
 ] as const;
 
 type PowerType = "cross" | "blast";
@@ -125,20 +218,24 @@ export default class BlockerGame extends Phaser.Scene {
 
     this.grid = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null));
 
-    this.scoreText = this.add.text(GAME_WIDTH / 2, 48, "Score: 0", {
-      fontSize: "34px",
-      color: "#fffde7",
-      fontFamily: "Poppins, Arial, sans-serif",
-    }).setOrigin(0.5, 0.5);
+    this.scoreText = this.add
+      .text(GAME_WIDTH / 2, 48, "Score: 0", {
+        fontSize: "34px",
+        color: "#fffde7",
+        fontFamily: "Poppins, Arial, sans-serif",
+      })
+      .setOrigin(0.5, 0.5);
     this.scoreText.setStroke("#ffd180", 2);
     this.scoreText.setShadow(0, 0, "#ffe082", 6, true, true);
 
     this.bestScore = this.loadBestScore();
-    this.bestText = this.add.text(GAME_WIDTH / 2, 96, `Best: ${this.bestScore}`, {
-      fontSize: "24px",
-      color: "#cfd8dc",
-      fontFamily: "Poppins, Arial, sans-serif",
-    }).setOrigin(0.5, 0.5);
+    this.bestText = this.add
+      .text(GAME_WIDTH / 2, 96, `Best: ${this.bestScore}`, {
+        fontSize: "24px",
+        color: "#cfd8dc",
+        fontFamily: "Poppins, Arial, sans-serif",
+      })
+      .setOrigin(0.5, 0.5);
 
     this.shapeSlots = [
       { shape: null, container: null, position: new Phaser.Math.Vector2(GAME_WIDTH * 0.3, SLOT_Y) },
@@ -178,7 +275,12 @@ export default class BlockerGame extends Phaser.Scene {
   private drawGrid() {
     this.gridGraphics.clear();
     this.gridGraphics.fillStyle(0x111a2b, 1);
-    this.gridGraphics.fillRect(GRID_START_X - 8, GRID_START_Y - 8, GRID_PIXEL + 16, GRID_PIXEL + 16);
+    this.gridGraphics.fillRect(
+      GRID_START_X - 8,
+      GRID_START_Y - 8,
+      GRID_PIXEL + 16,
+      GRID_PIXEL + 16
+    );
     this.gridGraphics.lineStyle(2, 0x1f2d46, 1);
 
     for (let row = 0; row <= GRID_SIZE; row++) {
@@ -205,7 +307,7 @@ export default class BlockerGame extends Phaser.Scene {
     const container = this.add.container(0, 0);
     const pixelWidth = shape.width * CELL_SIZE;
     const pixelHeight = shape.height * CELL_SIZE;
-    
+
     // Fixed uniform hit box that extends downward and doesn't exceed screen center
     const hitWidth = 150;
     const hitHeight = 180;
@@ -600,7 +702,8 @@ export default class BlockerGame extends Phaser.Scene {
 
   private calculateScore(blocksCleared: number, linesCleared: number) {
     const base = blocksCleared * 10;
-    const multiplier = linesCleared >= 3 ? 2.5 : linesCleared === 2 ? 1.8 : linesCleared === 1 ? 1.3 : 1;
+    const multiplier =
+      linesCleared >= 3 ? 2.5 : linesCleared === 2 ? 1.8 : linesCleared === 1 ? 1.3 : 1;
     return Math.round(base * multiplier);
   }
 
@@ -617,7 +720,7 @@ export default class BlockerGame extends Phaser.Scene {
       duration: 450,
       onUpdate: (tween) => {
         const tweenValue = tween.getValue();
-        const value = Math.round((tweenValue ?? newScore));
+        const value = Math.round(tweenValue ?? newScore);
         this.scoreText.setText(`Score: ${value}`);
       },
       onComplete: () => {
@@ -638,15 +741,18 @@ export default class BlockerGame extends Phaser.Scene {
 
   private showScorePopup(amount: number) {
     if (amount <= 0) return;
-    const point = this.lastDropPoint ?? new Phaser.Math.Vector2(GAME_WIDTH / 2, GRID_START_Y + GRID_PIXEL / 2);
-    const popup = this.add.text(point.x, point.y, `+${amount}`, {
-      fontSize: "28px",
-      fontFamily: "'Press Start 2P', 'Courier New', monospace",
-      color: "#fff59d",
-      stroke: "#5d4037",
-      strokeThickness: 6,
-      align: "center",
-    }).setOrigin(0.5);
+    const point =
+      this.lastDropPoint ?? new Phaser.Math.Vector2(GAME_WIDTH / 2, GRID_START_Y + GRID_PIXEL / 2);
+    const popup = this.add
+      .text(point.x, point.y, `+${amount}`, {
+        fontSize: "28px",
+        fontFamily: "'Press Start 2P', 'Courier New', monospace",
+        color: "#fff59d",
+        stroke: "#5d4037",
+        strokeThickness: 6,
+        align: "center",
+      })
+      .setOrigin(0.5);
     popup.setShadow(0, 0, "#fff9c4", 12, true, true);
     this.tweens.add({
       targets: popup,
@@ -684,7 +790,7 @@ export default class BlockerGame extends Phaser.Scene {
   private playPowerActivationEffect(power: { row: number; col: number; type: PowerType }) {
     const x = GRID_START_X + power.col * CELL_SIZE + CELL_SIZE / 2;
     const y = GRID_START_Y + power.row * CELL_SIZE + CELL_SIZE / 2;
-    
+
     if (power.type === "cross") {
       this.playCrossEffect(x, y);
     } else {
@@ -697,19 +803,19 @@ export default class BlockerGame extends Phaser.Scene {
     const lineWidth = 8;
     const duration = 350;
     const maxDistance = GRID_PIXEL;
-    
+
     const directions = [
       { dx: -1, dy: 0 },
       { dx: 1, dy: 0 },
       { dx: 0, dy: -1 },
       { dx: 0, dy: 1 },
     ];
-    
+
     directions.forEach((dir) => {
       const line = this.add.graphics();
       line.setDepth(850);
       line.setBlendMode(Phaser.BlendModes.ADD);
-      
+
       this.tweens.add({
         targets: line,
         duration,
@@ -732,16 +838,16 @@ export default class BlockerGame extends Phaser.Scene {
   private playBlastEffect(x: number, y: number) {
     const burstCount = 12;
     const radius = CELL_SIZE * 2.5;
-    
+
     for (let i = 0; i < burstCount; i++) {
       const angle = (Math.PI * 2 * i) / burstCount;
       const circle = this.add.circle(x, y, 10, 0xd500f9, 0.9);
       circle.setDepth(850);
       circle.setBlendMode(Phaser.BlendModes.ADD);
-      
+
       const targetX = x + Math.cos(angle) * radius;
       const targetY = y + Math.sin(angle) * radius;
-      
+
       this.tweens.add({
         targets: circle,
         x: targetX,
@@ -753,7 +859,7 @@ export default class BlockerGame extends Phaser.Scene {
         onComplete: () => circle.destroy(),
       });
     }
-    
+
     const coreFlash = this.add.circle(x, y, CELL_SIZE * 0.4, 0xffffff, 0.95);
     coreFlash.setDepth(850);
     coreFlash.setBlendMode(Phaser.BlendModes.ADD);
@@ -888,15 +994,17 @@ export default class BlockerGame extends Phaser.Scene {
     overlay.setInteractive();
     this.gameOverOverlay = overlay;
 
-    const message = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "NO MORE MOVES", {
-      fontSize: "58px",
-      color: "#fff8e1",
-      fontFamily: "Poppins, Arial, sans-serif",
-      fontStyle: "bold",
-      stroke: "#ff7043",
-      strokeThickness: 6,
-      align: "center",
-    }).setOrigin(0.5);
+    const message = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "NO MORE MOVES", {
+        fontSize: "58px",
+        color: "#fff8e1",
+        fontFamily: "Poppins, Arial, sans-serif",
+        fontStyle: "bold",
+        stroke: "#ff7043",
+        strokeThickness: 6,
+        align: "center",
+      })
+      .setOrigin(0.5);
     message.setDepth(901);
     message.setShadow(0, 0, "#ffcdd2", 16, true, true);
     this.gameOverMessage = message;
