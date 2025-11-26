@@ -22,7 +22,7 @@ export const games: GameMeta[] = [
     thumbnail: "/assets/reflex-ring/thumbnail.svg",
     xpMultiplier: 1.92,
     createdAt: "2025-09-15T00:00:00.000Z",
-    updatedAt: "2025-11-25T00:00:00.000Z",
+    updatedAt: "2025-11-26T00:00:00.000Z",
     load: async () => {
       const mod = await import("./reflex-ring/index");
       return { mount: mod.mount };

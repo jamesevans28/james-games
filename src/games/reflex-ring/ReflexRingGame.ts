@@ -262,7 +262,9 @@ export default class ReflexRingGame extends Phaser.Scene {
   private createRing(): void {
     if (this.ringSprite) this.ringSprite.destroy();
     this.ringSprite = this.add.sprite(this.centerX, this.centerY, "ring");
-    // No scaling needed - SVG is pre-sized
+    // Scale ring to match calculated radius (SVG is 360x360 with r=158)
+    const ringScale = (this.radius * 2) / 316; // 316 = diameter of SVG ring (158 * 2)
+    this.ringSprite.setScale(ringScale);
     this.ringSprite.setDepth(1);
   }
 
@@ -272,15 +274,19 @@ export default class ReflexRingGame extends Phaser.Scene {
 
     const tailOriginX = 20 / 159; // tail position in the new SVG dimensions
 
-    // No scaling needed - SVG is pre-sized
+    // Scale arrow to match calculated radius (SVG arrow is 159x215)
+    // Arrow should span most of radius; 139px is the arrow tip-to-tail distance
+    const arrowScale = (this.radius * 0.9) / 139;
+    
     this.arrowShadow = this.add
       .sprite(0, 0, "arrow")
       .setOrigin(tailOriginX, 0.5)
+      .setScale(arrowScale)
       .setAlpha(0.32)
       .setTint(0x000000);
     this.arrowShadow.setPosition(5, 3);
 
-    this.arrowSprite = this.add.sprite(0, 0, "arrow").setOrigin(tailOriginX, 0.5);
+    this.arrowSprite = this.add.sprite(0, 0, "arrow").setOrigin(tailOriginX, 0.5).setScale(arrowScale);
 
     this.arrowContainer.add([this.arrowShadow, this.arrowSprite]);
     this.arrowContainer.setScale(1);
