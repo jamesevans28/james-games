@@ -277,7 +277,7 @@ export default class ReflexRingGame extends Phaser.Scene {
     // Scale arrow to match calculated radius (SVG arrow is 159x215)
     // Arrow should span most of radius; 139px is the arrow tip-to-tail distance
     const arrowScale = (this.radius * 0.9) / 139;
-    
+
     this.arrowShadow = this.add
       .sprite(0, 0, "arrow")
       .setOrigin(tailOriginX, 0.5)
@@ -286,7 +286,10 @@ export default class ReflexRingGame extends Phaser.Scene {
       .setTint(0x000000);
     this.arrowShadow.setPosition(5, 3);
 
-    this.arrowSprite = this.add.sprite(0, 0, "arrow").setOrigin(tailOriginX, 0.5).setScale(arrowScale);
+    this.arrowSprite = this.add
+      .sprite(0, 0, "arrow")
+      .setOrigin(tailOriginX, 0.5)
+      .setScale(arrowScale);
 
     this.arrowContainer.add([this.arrowShadow, this.arrowSprite]);
     this.arrowContainer.setScale(1);
