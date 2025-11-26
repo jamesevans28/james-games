@@ -14,6 +14,13 @@ const BEST_KEY = "blocker-best";
 
 const RAW_SHAPES = [
   {
+    id: "single",
+    color: 0xef5350,
+    coords: [
+      [0, 0],
+    ],
+  },
+  {
     id: "domino",
     color: 0xff6f61,
     coords: [
@@ -28,6 +35,16 @@ const RAW_SHAPES = [
       [0, 0],
       [1, 0],
       [2, 0],
+    ],
+  },
+  {
+    id: "l-shape",
+    color: 0x5c6bc0,
+    coords: [
+      [0, 0],
+      [1, 0],
+      [2, 0],
+      [2, 1],
     ],
   },
   {
@@ -47,16 +64,6 @@ const RAW_SHAPES = [
       [1, 0],
       [2, 0],
       [1, 1],
-    ],
-  },
-  {
-    id: "line-four",
-    color: 0x29b6f6,
-    coords: [
-      [0, 0],
-      [0, 1],
-      [0, 2],
-      [0, 3],
     ],
   },
   {
@@ -89,31 +96,6 @@ const RAW_SHAPES = [
       [2, 0],
       [1, 1],
       [1, 2],
-    ],
-  },
-  {
-    id: "bar-six",
-    color: 0x26c6da,
-    coords: [
-      [0, 0],
-      [1, 0],
-      [2, 0],
-      [3, 0],
-      [4, 0],
-      [5, 0],
-    ],
-  },
-  {
-    id: "bolt-seven",
-    color: 0xffd54f,
-    coords: [
-      [0, 0],
-      [1, 0],
-      [1, 1],
-      [2, 1],
-      [2, 2],
-      [3, 2],
-      [3, 3],
     ],
   },
 ] as const;
@@ -414,7 +396,10 @@ export default class BlockerGame extends Phaser.Scene {
     if (!this.activeDrag) return;
     const { container, offsetX, offsetY, shape } = this.activeDrag;
     container.x = pointer.x - offsetX;
-    container.y = pointer.y - offsetY;
+    // Apply 1.8x speed to vertical movement
+    const slotY = this.shapeSlots[this.activeDrag.slotIndex].position.y;
+    const dragDeltaY = (pointer.y - offsetY) - slotY;
+    container.y = slotY + (dragDeltaY * 1.8);
     const target = this.getPlacementForShape(shape, container.x, container.y);
     this.renderPreview(shape, target);
   }
