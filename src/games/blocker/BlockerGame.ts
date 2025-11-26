@@ -245,6 +245,7 @@ export default class BlockerGame extends Phaser.Scene {
     this.shapeSlots.forEach((_, index) => this.spawnShapeInSlot(index));
     this.buildRotateButton();
 
+    this.input.on("pointerdown", this.handlePointerDown, this);
     this.input.on("pointermove", this.handlePointerMove, this);
     this.input.on("pointerup", this.handlePointerUp, this);
     this.input.on("pointerupoutside", this.handlePointerUp, this);
@@ -349,13 +350,20 @@ export default class BlockerGame extends Phaser.Scene {
     container.y = slot.position.y;
     slot.shape = shape;
     slot.container = container;
+  }
 
-    container.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      if (this.isGameOver || this.activeDrag) return;
-      const currentShape = slot.shape;
-      if (!currentShape) return;
-      this.startDrag(slotIndex, container, currentShape, pointer);
-    });
+  private handlePointerDown(pointer: Phaser.Input.Pointer) {
+    if (this.isGameOver || this.activeDrag) return;
+
+    const isBottomHalf = pointer.y >= GAME_HEIGHT / 2;
+    if (!isBottomHalf) return;
+
+    const isLeftHalf = pointer.x < GAME_WIDTH / 2;
+    const slotIndex = isLeftHalf ? 0 : 1;
+    const slot = this.shapeSlots[slotIndex];
+    if (!slot || !slot.shape || !slot.container) return;
+
+    this.startDrag(slotIndex, slot.container, slot.shape, pointer);
   }
 
   private buildRotateButton() {
@@ -886,21 +894,32 @@ export default class BlockerGame extends Phaser.Scene {
     cell.sprite.setTint(baseColor);
     const overlay = this.add.graphics({ x: cell.sprite.x, y: cell.sprite.y });
     overlay.setDepth(cell.sprite.depth + 1);
-    const innerSize = CELL_SIZE - 20;
+
+    // Inner icon: original size/geometry (based on CELL_SIZE - 20)
+    const iconSize = CELL_SIZE - 20;
+    // Outer glow box: slightly smaller so the pulsing box doesn’t feel huge
+    const glowSize = CELL_SIZE - 50;
+
     if (type === "cross") {
-      overlay.fillStyle(0xffd600, 0.4);
-      overlay.fillRoundedRect(-innerSize / 2, -innerSize / 2, innerSize, innerSize, 8);
+      // Outer glow
+      overlay.fillStyle(0xffd600, 0.35);
+      overlay.fillRoundedRect(-glowSize / 2, -glowSize / 2, glowSize, glowSize, 6);
+
+      // Inner cross icon (restored to original)
       overlay.lineStyle(5, 0xffea00, 1);
-      overlay.lineBetween(-innerSize / 2 + 6, 0, innerSize / 2 - 6, 0);
-      overlay.lineBetween(0, -innerSize / 2 + 6, 0, innerSize / 2 - 6);
+      overlay.lineBetween(-iconSize / 2 + 6, 0, iconSize / 2 - 6, 0);
+      overlay.lineBetween(0, -iconSize / 2 + 6, 0, iconSize / 2 - 6);
       overlay.lineStyle(3, 0xffffff, 0.8);
-      overlay.lineBetween(-innerSize / 2 + 6, 0, innerSize / 2 - 6, 0);
-      overlay.lineBetween(0, -innerSize / 2 + 6, 0, innerSize / 2 - 6);
+      overlay.lineBetween(-iconSize / 2 + 6, 0, iconSize / 2 - 6, 0);
+      overlay.lineBetween(0, -iconSize / 2 + 6, 0, iconSize / 2 - 6);
     } else {
-      overlay.fillStyle(0xd500f9, 0.45);
-      overlay.fillRoundedRect(-innerSize / 2, -innerSize / 2, innerSize, innerSize, 10);
+      // Outer glow
+      overlay.fillStyle(0xd500f9, 0.4);
+      overlay.fillRoundedRect(-glowSize / 2, -glowSize / 2, glowSize, glowSize, 8);
+
+      // Inner burst icon (restored to original)
       overlay.fillStyle(0xffffff, 0.9);
-      const burstRadius = innerSize * 0.35;
+      const burstRadius = iconSize * 0.35;
       const points = 8;
       for (let i = 0; i < points; i++) {
         const angle = (Math.PI * 2 * i) / points;
