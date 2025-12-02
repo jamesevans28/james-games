@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 100" width="240" height="100">
+  <defs>
+    <!-- Shadow gradient -->
+    <radialGradient id="shadowGrad" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="#0a0d16" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#0a0d16" stop-opacity="0"/>
+    </radialGradient>
+    
+    <!-- Back tube outer surface gradient (darker, in shadow) -->
+    <linearGradient id="tubeBackOuterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8a5a0a"/>
+      <stop offset="30%" stop-color="#a66a08"/>
+      <stop offset="70%" stop-color="#c97f0e"/>
+      <stop offset="100%" stop-color="#8a5a0a"/>
+    </linearGradient>
+    
+    <!-- Back tube inner surface gradient (slightly lighter) -->
+    <linearGradient id="tubeBackInnerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6b4606"/>
+      <stop offset="50%" stop-color="#8a5a0a"/>
+      <stop offset="100%" stop-color="#5d3a04"/>
+    </linearGradient>
+    
+    <!-- Mask for back half only -->
+    <mask id="backRingMask">
+      <rect x="0" y="0" width="240" height="100" fill="black"/>
+      <!-- Show top half of ring (back arc) -->
+      <ellipse cx="120" cy="50" rx="105" ry="45" fill="white"/>
+      <ellipse cx="120" cy="50" rx="85" ry="33" fill="black"/>
+      <!-- Hide bottom half -->
+      <rect x="0" y="50" width="240" height="50" fill="black"/>
+    </mask>
+    
+    <mask id="backInnerMask">
+      <rect x="0" y="0" width="240" height="100" fill="black"/>
+      <ellipse cx="120" cy="50" rx="85" ry="33" fill="white"/>
+      <ellipse cx="120" cy="50" rx="65" ry="25" fill="black"/>
+      <rect x="0" y="50" width="240" height="50" fill="black"/>
+    </mask>
+  </defs>
+  
+  <!-- Shadow below ring -->
+  <ellipse cx="120" cy="68" rx="95" ry="32" fill="url(#shadowGrad)"/>
+  
+  <!-- Back outer tube surface -->
+  <ellipse cx="120" cy="50" rx="105" ry="45" fill="url(#tubeBackOuterGrad)" mask="url(#backRingMask)"/>
+  
+  <!-- Back inner tube surface (darker inside) -->
+  <ellipse cx="120" cy="50" rx="85" ry="33" fill="url(#tubeBackInnerGrad)" mask="url(#backInnerMask)"/>
+  
+  <!-- Inner rim definition line -->
+  <path d="M 35,50 A 85,33 0 0,1 205,50" fill="none" stroke="#4a3005" stroke-width="2" opacity="0.9"/>
+  
+  <!-- Outer rim highlight -->
+  <path d="M 15,50 A 105,45 0 0,1 225,50" fill="none" stroke="#d9a035" stroke-width="1.5" opacity="0.4"/>
+</svg>

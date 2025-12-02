@@ -1,27 +1,28 @@
 export type ExperienceLevelRow = {
   level: number;
   requiredXp: number;
-  targetMinutes: number;
   cumulativeXp: number;
 };
 
 const MAX_LEVEL = 100;
-const XP_PER_MINUTE_TARGET = 480; // roughly 40 XP per 5 seconds of play time
+const BASE_REQUIREMENT = 1100; // Level 1 starts close to a single good run
+const GROWTH_FACTOR = 140; // Each level grows by this scaled power value
+const CURVE = 1.35; // Non-linear growth that stays gentle early on
 
 function requirementFor(level: number) {
-  // Smooth curve that keeps early levels quick while stretching long term goals
-  return Math.round(1100 + Math.pow(level, 1.35) * 140);
+  // XP follows a softened power curve so later levels feel meaningful without being unreachable
+  const scaledGrowth = Math.pow(level, CURVE) * GROWTH_FACTOR;
+  return Math.round(BASE_REQUIREMENT + scaledGrowth);
 }
 
 const rows: ExperienceLevelRow[] = [];
 for (let level = 1; level <= MAX_LEVEL; level++) {
   const requiredXp = requirementFor(level);
-  const targetMinutes = Math.max(1, Math.round(requiredXp / XP_PER_MINUTE_TARGET));
   const previous = rows[rows.length - 1];
   rows.push({
     level,
     requiredXp,
-    targetMinutes,
+    // Store the running total so UI/API calls can answer "total XP to reach level N" instantly.
     cumulativeXp: previous ? previous.cumulativeXp + requiredXp : requiredXp,
   });
 }
@@ -32,8 +33,5 @@ export const EXPERIENCE_MAX_LEVEL = MAX_LEVEL;
 export function describeLevel(level: number) {
   const row = DEFAULT_EXPERIENCE_LEVELS.find((entry) => entry.level === level);
   if (!row) return null;
-  return {
-    ...row,
-    approxHours: Number((row.cumulativeXp / (XP_PER_MINUTE_TARGET * 60)).toFixed(2)),
-  };
+  return { ...row };
 }

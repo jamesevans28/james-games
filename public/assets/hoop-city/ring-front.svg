@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 100" width="240" height="100">
+  <defs>
+    <!-- Front tube outer surface gradient (brighter, catching light) -->
+    <linearGradient id="tubeFrontOuterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffd866"/>
+      <stop offset="30%" stop-color="#ffb833"/>
+      <stop offset="70%" stop-color="#ff9e0f"/>
+      <stop offset="100%" stop-color="#e89512"/>
+    </linearGradient>
+    
+    <!-- Front tube inner surface gradient -->
+    <linearGradient id="tubeFrontInnerGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#8a5a0a"/>
+      <stop offset="50%" stop-color="#a66a08"/>
+      <stop offset="100%" stop-color="#6b4606"/>
+    </linearGradient>
+    
+    <!-- Highlight gradient for shiny tube -->
+    <radialGradient id="highlightGrad" cx="35%" cy="35%">
+      <stop offset="0%" stop-color="#fffef5" stop-opacity="0.95"/>
+      <stop offset="40%" stop-color="#ffe99e" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ffa826" stop-opacity="0"/>
+    </radialGradient>
+    
+    <!-- Mask for front half only -->
+    <mask id="frontRingMask">
+      <rect x="0" y="0" width="240" height="100" fill="black"/>
+      <!-- Show bottom half of ring (front arc) -->
+      <ellipse cx="120" cy="50" rx="105" ry="45" fill="white"/>
+      <ellipse cx="120" cy="50" rx="85" ry="33" fill="black"/>
+      <!-- Hide top half -->
+      <rect x="0" y="0" width="240" height="50" fill="black"/>
+    </mask>
+    
+    <mask id="frontInnerMask">
+      <rect x="0" y="0" width="240" height="100" fill="black"/>
+      <ellipse cx="120" cy="50" rx="85" ry="33" fill="white"/>
+      <ellipse cx="120" cy="50" rx="65" ry="25" fill="black"/>
+      <rect x="0" y="0" width="240" height="50" fill="black"/>
+    </mask>
+    
+    <mask id="highlightMask">
+      <rect x="0" y="0" width="240" height="100" fill="black"/>
+      <ellipse cx="120" cy="50" rx="105" ry="45" fill="white"/>
+      <ellipse cx="120" cy="50" rx="85" ry="33" fill="black"/>
+      <rect x="0" y="0" width="240" height="50" fill="black"/>
+    </mask>
+  </defs>
+  
+  <!-- Front outer tube surface -->
+  <ellipse cx="120" cy="50" rx="105" ry="45" fill="url(#tubeFrontOuterGrad)" mask="url(#frontRingMask)"/>
+  
+  <!-- Highlight on outer tube -->
+  <ellipse cx="95" cy="38" rx="55" ry="22" fill="url(#highlightGrad)" mask="url(#highlightMask)"/>
+  
+  <!-- Front inner tube surface -->
+  <ellipse cx="120" cy="50" rx="85" ry="33" fill="url(#tubeFrontInnerGrad)" mask="url(#frontInnerMask)"/>
+  
+  <!-- Inner rim definition -->
+  <path d="M 35,50 A 85,33 0 0,0 205,50" fill="none" stroke="#5d3a04" stroke-width="2" opacity="0.8"/>
+  
+  <!-- Outer rim bright edge -->
+  <path d="M 15,50 A 105,45 0 0,0 225,50" fill="none" stroke="#fff9e6" stroke-width="2" opacity="0.7"/>
+  
+  <!-- Extra shine on outer edge -->
+  <path d="M 30,48 A 105,45 0 0,0 210,48" fill="none" stroke="#fffef5" stroke-width="1" opacity="0.5"/>
+</svg>

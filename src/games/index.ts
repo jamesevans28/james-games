@@ -186,6 +186,22 @@ export const games: GameMeta[] = [
     },
   },
   {
+    id: "hoop-city",
+    title: "Hoop City",
+    description:
+      "Tap to keep the ball afloat while threading every vertical hoop as the city scrolls by.",
+    objective: "Float the ball through each hoop without touching the skyline or missing a ring.",
+    controls: "Tap anywhere or press space to bounce upward.",
+    thumbnail: "/assets/hoop-city/thumbnail.svg",
+    xpMultiplier: 1.15,
+    createdAt: "2025-11-28T00:00:00.000Z",
+    updatedAt: "2025-11-28T00:00:00.000Z",
+    load: async () => {
+      const mod = await import("./hoop-city/index");
+      return { mount: mod.mount };
+    },
+  },
+  {
     id: "cosmic-clash",
     title: "Cosmic Clash",
     description:
@@ -198,6 +214,21 @@ export const games: GameMeta[] = [
     updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
       const mod = await import("./cosmic-clash/index");
+      return { mount: mod.mount };
+    },
+  },
+  {
+    id: "block-breaker",
+    title: "Block Breaker",
+    description: "A classic brick-breaking game. Clear all the bricks to win.",
+    objective: "Break all the bricks with the ball.",
+    controls: "Move the paddle with the mouse.",
+    thumbnail: "/assets/block-breaker/thumbnail.svg",
+    xpMultiplier: 1.5,
+    createdAt: "2025-12-01T00:00:00.000Z",
+    updatedAt: "2025-12-01T00:00:00.000Z",
+    load: async () => {
+      const mod = await import("./block-breaker/index");
       return { mount: mod.mount };
     },
   },

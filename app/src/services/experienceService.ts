@@ -40,9 +40,9 @@ async function loadExperienceLevels(): Promise<ExperienceLevelRow[]> {
         TableName: config.tables.experienceLevels,
       })
     );
-    const rows = (
-      (res.Items || []) as Array<{ level: number; requiredXp: number; targetMinutes?: number }>
-    ).filter((row) => typeof row.level === "number" && typeof row.requiredXp === "number");
+    const rows = ((res.Items || []) as Array<{ level: number; requiredXp: number }>).filter(
+      (row) => typeof row.level === "number" && typeof row.requiredXp === "number"
+    );
     if (rows.length) {
       rows.sort((a, b) => a.level - b.level);
       const normalized: ExperienceLevelRow[] = [];
@@ -53,7 +53,6 @@ async function loadExperienceLevels(): Promise<ExperienceLevelRow[]> {
         normalized.push({
           level: row.level,
           requiredXp: row.requiredXp,
-          targetMinutes: row.targetMinutes ?? fallback.targetMinutes,
           cumulativeXp: prev ? prev.cumulativeXp + row.requiredXp : row.requiredXp,
         });
       });
@@ -80,6 +79,11 @@ function ensureRequirement(levels: ExperienceLevelRow[], level: number): Experie
 }
 
 export function calculateExperienceForScore(score: number, multiplier: number = 1.0): number {
+  /*
+    XP is awarded purely from in-game score. Each game declares a multiplier that reflects
+    how generous that title should be. We clamp to [1, 5000] so streaks cannot explode totals
+    or underflow when designers experiment with tiny multipliers.
+  */
   if (!Number.isFinite(score) || score <= 0) return 0;
   if (!Number.isFinite(multiplier) || multiplier <= 0) multiplier = 1.0;
   const base = Math.floor(score * multiplier);
@@ -98,6 +102,7 @@ export function buildSummary(user: any): ExperienceSummary {
   const total = Math.max(0, Number(user?.xpTotal ?? 0));
   const levels = cachedLevels || DEFAULT_EXPERIENCE_LEVELS;
   const requirementRow = ensureRequirement(levels, level);
+  // `requiredXp` represents how much XP must be banked at the current level before leveling up.
   const required = Math.max(1, Number(requirementRow?.requiredXp || 500));
   const clampedProgress = Math.min(progress, required);
   const percent = Math.min(1, clampedProgress / required);
