@@ -217,19 +217,19 @@ export const games: GameMeta[] = [
       return { mount: mod.mount };
     },
   },
-  {
-    id: "block-breaker",
-    title: "Block Breaker",
-    description: "A classic brick-breaking game. Clear all the bricks to win.",
-    objective: "Break all the bricks with the ball.",
-    controls: "Move the paddle with the mouse.",
-    thumbnail: "/assets/block-breaker/thumbnail.svg",
-    xpMultiplier: 1.5,
-    createdAt: "2025-12-01T00:00:00.000Z",
-    updatedAt: "2025-12-01T00:00:00.000Z",
-    load: async () => {
-      const mod = await import("./block-breaker/index");
-      return { mount: mod.mount };
-    },
-  },
+  // {
+  //   id: "block-breaker",
+  //   title: "Block Breaker",
+  //   description: "A classic brick-breaking game. Clear all the bricks to win.",
+  //   objective: "Break all the bricks with the ball.",
+  //   controls: "Move the paddle with the mouse.",
+  //   thumbnail: "/assets/block-breaker/thumbnail.svg",
+  //   xpMultiplier: 1.5,
+  //   createdAt: "2025-12-01T00:00:00.000Z",
+  //   updatedAt: "2025-12-01T00:00:00.000Z",
+  //   load: async () => {
+  //     const mod = await import("./block-breaker/index");
+  //     return { mount: mod.mount };
+  //   },
+  // },
 ];
