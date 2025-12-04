@@ -16,6 +16,7 @@ type AuthUser = {
   validated?: boolean; // email verified flag from profile
   avatar?: number | null; // numeric avatar index (1..25)
   experience?: ExperienceSummary | null;
+  betaTester?: boolean;
 };
 
 type AuthContextType = {
@@ -200,6 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           avatar:
             typeof userData.avatar === "number" ? userData.avatar : Number(userData.avatar) || null,
           experience: userData.experience ?? null,
+          betaTester: Boolean(userData.betaTester),
         };
         setUser(userObj);
         persistSessionCache(userObj);
@@ -590,6 +592,80 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("focus", onVisibilityOrFocus);
     };
   }, [user, performScheduledRefresh, isMobile, isPWA]);
+
+  // Global fetch interceptor: automatically refresh when a protected call returns 401.
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.fetch !== "function" || !apiBase) {
+      return;
+    }
+
+    const originalFetch = window.fetch.bind(window);
+    let refreshPromise: Promise<RefreshOutcome> | null = null;
+    const normalizedApi = apiBase.replace(/\/$/, "");
+
+    const shouldBypass = (url: string) => {
+      return (
+        url.includes("/auth/refresh") ||
+        url.includes("/auth/local-signin") ||
+        url.includes("/auth/local-signup") ||
+        url.includes("/auth/logout")
+      );
+    };
+
+    const shouldMonitor = (url: string) => {
+      return normalizedApi && url.startsWith(normalizedApi);
+    };
+
+    const ensureRefreshed = async () => {
+      if (!refreshPromise) {
+        refreshPromise = (async () => {
+          const outcome = await runRefresh({ reason: "fetch-401" });
+          if (outcome === "success") {
+            await refreshSession({ silent: true });
+          } else if (outcome === "unauthorized") {
+            handleUnauthorized();
+          }
+          return outcome;
+        })().finally(() => {
+          refreshPromise = null;
+        });
+      }
+      return refreshPromise;
+    };
+
+    window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = new Request(input, init);
+      const response = await originalFetch(request.clone());
+
+      if (
+        response.status !== 401 ||
+        !user ||
+        !shouldMonitor(request.url) ||
+        shouldBypass(request.url) ||
+        request.headers.get("x-auth-retry") === "1"
+      ) {
+        return response;
+      }
+
+      const outcome = await ensureRefreshed();
+      if (outcome !== "success") {
+        return response;
+      }
+
+      const retryHeaders = new Headers(request.headers);
+      retryHeaders.set("x-auth-retry", "1");
+      const retriedRequest = new Request(request, { headers: retryHeaders });
+      const retryResponse = await originalFetch(retriedRequest);
+      if (retryResponse.status === 401) {
+        handleUnauthorized();
+      }
+      return retryResponse;
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [user, apiBase, runRefresh, refreshSession, handleUnauthorized]);
   // -------------------------------------------------------------------------------
 
   const value = useMemo<AuthContextType>(

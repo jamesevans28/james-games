@@ -6,11 +6,20 @@ import { games, GameMeta } from "../../games";
 import { fetchRatingSummaries, RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, primeRatingCache } from "../../utils/ratingCache";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
+import { useAuth } from "../../context/AuthProvider";
 // import NameDialog from "../../components/NameDialog";
 // useSession removed — currently not needed on the home page
 
+const FEATURED_GAME_ID = "hoop-city";
+
 export default function GameHub() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isBetaTester = Boolean(user?.betaTester);
+  const visibleGames = useMemo(() => {
+    return isBetaTester ? games : games.filter((game) => !game.betaOnly);
+  }, [isBetaTester]);
+  const betaGames = useMemo(() => games.filter((game) => game.betaOnly), []);
   const [ratings, setRatings] = useState<Record<string, RatingSummary>>(() => {
     const initial: Record<string, RatingSummary> = {};
     games.forEach((game) => {
@@ -23,8 +32,9 @@ export default function GameHub() {
   useEffect(() => {
     let cancelled = false;
     const loadRatings = async () => {
+      if (!visibleGames.length) return;
       try {
-        const summaries = await fetchRatingSummaries(games.map((g) => g.id));
+        const summaries = await fetchRatingSummaries(visibleGames.map((g) => g.id));
         if (cancelled) return;
         primeRatingCache(summaries);
         setRatings((prev) => {
@@ -44,15 +54,15 @@ export default function GameHub() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, []);
+  }, [visibleGames]);
 
   usePresenceReporter({ status: "looking_for_game", enabled: true });
 
   const randomGame = useMemo(() => {
-    if (!games.length) return null;
-    const index = Math.floor(Math.random() * games.length);
-    return games[index] ?? null;
-  }, []);
+    if (!visibleGames.length) return null;
+    const index = Math.floor(Math.random() * visibleGames.length);
+    return visibleGames[index] ?? null;
+  }, [visibleGames]);
 
   // Filter games into curated buckets for the home experience
   const { recentDrops, recentlyUpdated, favouriteGames, evergreenGames, heroGame } = useMemo(() => {
@@ -62,7 +72,7 @@ export default function GameHub() {
     const fresh: GameMeta[] = [];
     const updated: GameMeta[] = [];
 
-    games.forEach((game) => {
+    visibleGames.forEach((game) => {
       if (game.createdAt) {
         const createdDate = new Date(game.createdAt);
         if (!Number.isNaN(createdDate.getTime()) && createdDate >= cutoff) {
@@ -87,13 +97,13 @@ export default function GameHub() {
     const freshIds = new Set(fresh.map((g) => g.id));
     const uniqueUpdated = updated.filter((game) => !freshIds.has(game.id));
 
-    const favs = [...games]
+    const favs = [...visibleGames]
       .filter((g) => ratings[g.id] && typeof ratings[g.id].avgRating === "number")
       .sort((a, b) => (ratings[b.id].avgRating || 0) - (ratings[a.id].avgRating || 0))
       .slice(0, 2);
 
     const usedIds = new Set<string>([...freshIds, ...uniqueUpdated.map((g) => g.id)]);
-    const evergreen = games
+    const evergreen = visibleGames
       .filter((game) => !usedIds.has(game.id))
       .sort((a, b) => {
         const scoreA = ratings[a.id]?.avgRating ?? 0;
@@ -102,7 +112,7 @@ export default function GameHub() {
         return scoreB - scoreA;
       });
 
-    const hero = fresh[0] ?? uniqueUpdated[0] ?? favs[0] ?? games[0] ?? null;
+    const hero = fresh[0] ?? uniqueUpdated[0] ?? favs[0] ?? visibleGames[0] ?? null;
 
     return {
       recentDrops: fresh,
@@ -111,7 +121,7 @@ export default function GameHub() {
       evergreenGames: evergreen,
       heroGame: hero,
     };
-  }, [ratings]);
+  }, [ratings, visibleGames]);
 
   const formatRelativeLabel = (iso?: string | null, prefix = "Updated") => {
     if (!iso) return null;
@@ -131,22 +141,18 @@ export default function GameHub() {
     return `${summary.avgRating?.toFixed(1) ?? "-"} avg · ${summary.ratingCount} ratings`;
   };
 
-  const heroRatingLine = heroGame ? ratingSummaryLine(heroGame.id) : null;
-  const heroTimestamp = heroGame
+  const featuredGame =
+    visibleGames.find((g) => g.id === FEATURED_GAME_ID) ?? heroGame ?? visibleGames[0] ?? null;
+
+  const heroRatingLine = featuredGame ? ratingSummaryLine(featuredGame.id) : null;
+  const heroTimestamp = featuredGame
     ? formatRelativeLabel(
-        heroGame.updatedAt ?? heroGame.createdAt,
-        heroGame.updatedAt ? "Updated" : "Added"
+        featuredGame.updatedAt ?? featuredGame.createdAt,
+        featuredGame.updatedAt ? "Updated" : "Added"
       )
     : null;
 
-  const fallbackGameId = heroGame?.id ?? randomGame?.id ?? games[0]?.id;
-  const leaderboardGameId =
-    heroGame?.id ||
-    recentlyUpdated[0]?.id ||
-    recentDrops[0]?.id ||
-    favouriteGames[0]?.id ||
-    evergreenGames[0]?.id ||
-    fallbackGameId;
+  const fallbackGameId = featuredGame?.id ?? randomGame?.id ?? visibleGames[0]?.id;
   const quickActions = [
     {
       title: "Invite friends",
@@ -154,16 +160,16 @@ export default function GameHub() {
       cta: "Open followers",
       action: () => navigate("/followers"),
     },
-    {
-      title: "Leaderboards",
-      body: "See the top scores for every game in one place.",
-      cta: "View leaderboard",
-      action: () => {
-        if (leaderboardGameId) {
-          navigate(`/leaderboard/${leaderboardGameId}`);
-        }
-      },
-    },
+    // {
+    //   title: "Leaderboards",
+    //   body: "See the top scores for every game in one place.",
+    //   cta: "View leaderboard",
+    //   action: () => {
+    //     if (leaderboardGameId) {
+    //       navigate(`/leaderboard/${leaderboardGameId}`);
+    //     }
+    //   },
+    // },
     {
       title: "Surprise me",
       body: randomGame
@@ -256,30 +262,30 @@ export default function GameHub() {
         }}
       />
 
-      {heroGame && (
+      {featuredGame && (
         <section className="w-full bg-gradient-to-br from-emerald-50 via-white to-blue-50 border-b border-gray-100">
           <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col gap-6 md:flex-row md:items-center">
             <div className="flex-1 space-y-3">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
                 Featured game
               </p>
-              <h1 className="text-3xl font-extrabold text-black">{heroGame.title}</h1>
-              {heroGame.description && (
-                <p className="text-gray-600 text-sm leading-relaxed">{heroGame.description}</p>
+              <h1 className="text-3xl font-extrabold text-black">{featuredGame.title}</h1>
+              {featuredGame.description && (
+                <p className="text-gray-600 text-sm leading-relaxed">{featuredGame.description}</p>
               )}
               {heroRatingLine && <p className="text-xs text-gray-500">{heroRatingLine}</p>}
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
                   className="px-4 py-2 rounded-full bg-black text-white text-sm font-semibold"
-                  onClick={() => navigate(`/games/${heroGame.id}`)}
+                  onClick={() => navigate(`/games/${featuredGame.id}`)}
                 >
                   Play now
                 </button>
                 <button
                   type="button"
                   className="px-4 py-2 rounded-full border border-black/20 text-sm font-semibold"
-                  onClick={() => navigate(`/leaderboard/${heroGame.id}`)}
+                  onClick={() => navigate(`/leaderboard/${featuredGame.id}`)}
                 >
                   View leaderboard
                 </button>
@@ -288,7 +294,7 @@ export default function GameHub() {
             <div
               className="flex-1 min-h-[220px] rounded-2xl border border-white/60 shadow-inner overflow-hidden relative"
               style={{
-                backgroundImage: `url(${heroGame.thumbnail || "/assets/logo.png"})`,
+                backgroundImage: `url(${featuredGame.thumbnail || "/assets/logo.png"})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
               }}
@@ -330,6 +336,24 @@ export default function GameHub() {
           ))}
         </div>
       </section>
+
+      {isBetaTester && betaGames.length > 0 && (
+        <HomeSection
+          title="Games in development"
+          subtitle="Early builds just for beta testers. Expect bugs and share feedback!"
+        >
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            {betaGames.map((game) => (
+              <GameCard
+                key={game.id}
+                game={game}
+                badge="In dev"
+                metaLine={formatRelativeLabel(game.updatedAt, "Updated") ?? "Testing build"}
+              />
+            ))}
+          </div>
+        </HomeSection>
+      )}
 
       {recentlyUpdated.length > 0 && (
         <HomeSection
