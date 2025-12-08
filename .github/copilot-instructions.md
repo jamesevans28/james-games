@@ -2,18 +2,19 @@
 
 ## Project Overview
 
-Mobile-first web game hub built with React + Vite and Phaser 3. Each game is self-contained in `/src/games/[gameId]/` with dynamic mounting. React handles routing, UI, and cross-game state; Phaser manages game logic and rendering. Games communicate via custom events (`src/utils/gameEvents.ts`).
+Mobile-first web game hub built with React + Vite and Phaser 3. The player-facing app now lives in `apps/player-web/`, and each game is self-contained in `apps/player-web/src/games/[gameId]/` with dynamic mounting. React handles routing, UI, and cross-game state; Phaser manages game logic and rendering. Games communicate via custom events (`apps/player-web/src/utils/gameEvents.ts`).
 
 ## Architecture
 
-- **Frontend**: React functional components with hooks, Tailwind CSS for styling, no class components.
+- **Frontend**: React functional components with hooks housed in `apps/player-web/`, Tailwind CSS for styling, no class components.
 - **Games**: Phaser 3 scenes extended from `Phaser.Scene`. Each game exports a `mount(container)` function creating a `Phaser.Game` instance.
 - **Integration**: Games dispatch events (e.g., `dispatchGameOver`) for React to show dialogs. No global state management yet (Redux planned but unused).
-- **Backend**: Minimal API via `src/lib/api.ts` for score posting; uses `fetch` with JSON.
+- **Backend**: Minimal API via `apps/backend-api/src` (Express on Lambda). Player web app talks to it through helpers in `apps/player-web/src/lib/api.ts`.
+- **Admin**: Placeholder React shell under `apps/admin-web/` reserved for future operational tooling.
 
 ## Key Patterns
 
-- **Phaser Config** (see `src/games/reflex-ring/index.ts`):
+- **Phaser Config** (see `apps/player-web/src/games/reflex-ring/index.ts`):
   ```typescript
   const config = {
     type: Phaser.AUTO,
@@ -32,15 +33,15 @@ Mobile-first web game hub built with React + Vite and Phaser 3. Each game is sel
   ```
 - **Mounting Games**: Phaser.Game with parent container, destroy via game.destroy(true).
 - **Input**: Use `pointerdown` for touch/mobile (not `click`).
-- **Analytics**: gtag-based (`src/utils/analytics.ts`), events like `game_start` fired on mount.
-- **Assets**: Static in `/public/assets/[gameId]/`, loaded relatively.
+- **Analytics**: gtag-based (`apps/player-web/src/utils/analytics.ts`), events like `game_start` fired on mount.
+- **Assets**: Static in `apps/player-web/public/assets/[gameId]/`, loaded relatively.
 - **Sounds**: Synthesized Web Audio API (oscillators/gains), no audio files.
 
 ## Development Workflow
 
-- **Dev**: `npm run dev` (Vite with custom config).
-- **Build**: `npm run build` (produces PWA-ready bundle).
-- **Game Creation**: Copy existing game folder, update `src/games/index.ts` with lazy import.
+- **Dev**: `npm run web:dev` (Vite with custom config located in `apps/player-web/vite`).
+- **Build**: `npm run web:build` (produces a PWA-ready bundle under `apps/player-web/dist`).
+- **Game Creation**: Copy existing game folder, update `apps/player-web/src/games/index.ts` with lazy import.
 - **Testing**: Manual playtesting; no automated tests yet.
 
 ## Conventions
@@ -78,16 +79,16 @@ Adhere strictly to the following best practices when generating, refactoring, or
 
 To create a new game within the James Games framework, follow these steps:
 
-1. **Set up folder**: Create a new game folder in `src/games/
+1. **Set up folder**: Create a new game folder in `apps/player-web/src/games/`.
 2. **Update Phaser scene**: Modify `create()`, `update()` for gameplay. Use `Phaser.Scene` extension, `pointerdown` for input, tweens/animations for effects.
 3. **Implement mount**: In `index.ts`, export `mount(container)` creating `Phaser.Game` with FIT scale (see reflex-ring example).
-4. **Add thumbnail**: Create `thumbnail.svg` in `/public/assets/[newId]/` for game listings. Make sure this is a lightweight SVG optimized for web and does not contain any text.
-5. **Register game**: Add entry to `src/games/index.ts` with lazy import (e.g., `load: async () => import("./[newId]/index")`).
+4. **Add thumbnail**: Create `thumbnail.svg` in `apps/player-web/public/assets/[newId]/` for game listings. Make sure this is a lightweight SVG optimized for web and does not contain any text.
+5. **Register game**: Add entry to `apps/player-web/src/games/index.ts` with lazy import (e.g., `load: async () => import("./[newId]/index")`).
 6. **Utilize shared systems**:
    - **Score tracking**: Use localStorage for high scores (`localStorage.getItem/setItem` with `${GAME_ID}-best`).
    - **Game over**: Call `dispatchGameOver({ gameId: GAME_ID, score })` to trigger GameOver dialog.
    - **Analytics**: Call `trackGameStart(gameId, title)` on mount.
-   - **Backend**: Use `postHighScore` from `src/lib/api.ts` for score submission.
+   - **Backend**: Use `postHighScore` from `apps/player-web/src/lib/api.ts` for score submission.
    - **Experience**: XP is calculated based on score × game-specific multiplier (stored in game metadata).
    - **Sounds**: Synthesize via Web Audio API (oscillators/gains) for effects like pop/ding.
    - **Particles**: Use Phaser particles for backgrounds/effects.
@@ -96,7 +97,7 @@ To create a new game within the James Games framework, follow these steps:
 
 Prioritize mobile performance, simplicity, and Phaser best practices. Reference existing games for new ones.
 
-When making changes to game logic, update the updatedAt field in the corresponding game entry in `src/games/index.ts`.
+When making changes to game logic, update the `updatedAt` field in the corresponding game entry in `apps/player-web/src/games/index.ts`.
 
 ## Reusable prefabs and utilities
 

@@ -11,6 +11,10 @@ dist/
 dist-ssr/
 *.local
 dev-dist/
+.turbo/
+apps/*/dist/
+apps/*/dev-dist/
+.npm-cache/
 .vite/
 
 # Environment variables

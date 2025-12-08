@@ -1,11 +1,11 @@
 // Generate a basic sitemap.xml and robots.txt based on the games registry
-// Heuristic parse of src/games/index.ts to find ids. Assumes consistent formatting.
+// Heuristic parse of apps/player-web/src/games/index.ts to find ids. Assumes consistent formatting.
 import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const gamesIndex = path.join(root, "src/games/index.ts");
-const publicDir = path.join(root, "public");
+const gamesIndex = path.join(root, "apps/player-web/src/games/index.ts");
+const publicDir = path.join(root, "apps/player-web/public");
 await fs.promises.mkdir(publicDir, { recursive: true });
 
 const domain = process.env.SITE_ORIGIN || "https://games4james.com";

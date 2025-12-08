@@ -1,0 +1,40 @@
+{
+  "name": "@james-games/player-web",
+  "description": "Mobile-first Phaser minigames hub for James Games.",
+  "version": "1.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite --config vite/config.dev.mjs",
+    "build": "vite build --config vite/config.prod.mjs",
+    "generate-snapadile-assets": "node ../../scripts/generate-snapadile-assets.mjs",
+    "generate-car-crash-assets": "node ../../scripts/generate-car-crash-assets.mjs",
+    "generate-sitemap": "node ../../scripts/generate-sitemap.mjs"
+  },
+  "dependencies": {
+    "aws-amplify": "^6.5.2",
+    "phaser": "^3.90.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.1.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "@tailwindcss/postcss": "^4.1.17",
+    "@tailwindcss/typography": "^0.5.19",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^5.1.0",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.22.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "postcss": "^8.5.6",
+    "pureimage": "^0.3.17",
+    "tailwindcss": "^4.1.17",
+    "terser": "^5.28.1",
+    "typescript": "~5.7.2",
+    "vite": "^7.1.12",
+    "vite-plugin-pwa": "^1.1.0"
+  }
+}

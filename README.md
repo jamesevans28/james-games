@@ -1,187 +1,87 @@
-# Phaser Editor React TypeScript Template
+# James Games Monolith
 
-This is a Phaser Editor v4 project template that uses React TypeScript for bundling. It supports hot-reloading for quick development workflow and includes scripts to generate production-ready builds.
+James Games is now structured as a single npm workspace that houses the player-facing web hub, the Express/Lambda backend, and a placeholder admin console. Shared documentation, scripts, and infrastructure live at the repository root while each app has its own build tooling under `apps/`.
 
-### Versions
-
-This template has been updated for:
-
-- [Phaser 3.88.2](https://github.com/phaserjs/phaser)
-- Phaser Editor v4.0 and above
-
-![screenshot](screenshot.png)
-
-## What is Phaser Editor?
-
-Phaser Editor enables you to visually create Phaser games. Instead of entering numbers in your code to position Game Objects, you can drag and drop them into place, tweak their animations, adjust their physics bodies, enable special effects, and more. It's quicker and faster for both artists and developers alike and publishes pure Phaser code.
-
-See more at [phaser.io](https://phaser.io/editor)
+```
+apps/
+  player-web/   <-- React + Phaser experience customers use today
+  backend-api/  <-- Express server bundled for AWS Lambda
+  admin-web/    <-- React placeholder for the future operations console
+docs/
+scripts/
+```
 
 ## Requirements
 
-[Node.js](https://nodejs.org) is required to install dependencies and run scripts via `npm`.
+- Node.js 20+
+- npm 10+ (npm workspaces)
+- AWS credentials for backend/dev commands where required
 
-An active subscription to Phaser Editor is required to load and use this template within it.
+Run `npm install` once at the repo root to install dependencies for every workspace.
 
-## Available Commands
+## App Commands
 
-| Command         | Description                                    |
-| --------------- | ---------------------------------------------- |
-| `npm install`   | Install project dependencies                   |
-| `npm run dev`   | Launch a development web server                |
-| `npm run build` | Create a production build in the `dist` folder |
+| Area        | Dev Server                                        | Production Build                                           |
+| ----------- | ------------------------------------------------- | ---------------------------------------------------------- |
+| Player web  | `npm run web:dev`                                 | `npm run web:build` (outputs to `apps/player-web/dist`)    |
+| Backend API | `npm run backend:dev` (local Express/Lambda shim) | `npm run backend:build` (emits to `apps/backend-api/dist`) |
+| Admin web   | `npm run admin:dev`                               | `npm run admin:build`                                      |
 
-## Writing Code
+Additional helpers:
 
-After cloning the repo, run `npm install` from your project directory.
+- `npm run web:asset:snapadile`
+- `npm run web:asset:car-crash`
+- `npm run web:generate-sitemap`
 
-To start the local development server use `npm run dev`.
+These scripts rely on the shared `scripts/` folder and write into `apps/player-web/public/assets`.
 
-## Deploying to Production
+## Player Web (apps/player-web)
 
-To create a production build use the command `npm run build`.
+- React + Vite frontend that mounts Phaser mini-games located in `apps/player-web/src/games/*`.
+- Assets are served from `apps/player-web/public/assets/[gameId]/`.
+- Tailwind/PostCSS config is scoped to the directory so multiple apps can evolve independently.
+- Use `npm run web:dev` while working on games; Vite runs on port `3000` by default.
 
-This will take your game code and build it into a single bundle, ready for deployment. This bundle is saved to the `dist` folder. Please note that some templates save to the `build` folder instead. The deployment script will also copy any assets your project imported, or stored in the public assets folder.
+## Backend API (apps/backend-api)
 
-To deploy your game, upload _all_ of the contents of the `dist` folder to a public-facing web server.
+- Express app compiled to Lambda-compatible handlers via `npm run backend:build`.
+- Development server (`backend:dev`) spins up the lambda adapter defined in `src/dev-server.ts`.
+- Experience/leveling data lives under `apps/backend-api/src/data/experienceLevels.ts`. Override defaults by setting `TABLE_EXPERIENCE_LEVELS` in your `.env.local` inside this package.
 
-**Note:** In some templates, the `dist` folder has been renamed to `build` to remain within that framework's conventions.
+New/important routes:
 
-## Experience & Leveling
+- `POST /experience/runs` – record one session and award XP
+- `GET /experience/summary` – return the caller’s progress snapshot
 
-- Level requirements (1–100) are generated from a mobile-friendly playtime curve in `app/src/data/experienceLevels.ts`. Provide a DynamoDB table name via `TABLE_EXPERIENCE_LEVELS` to override the defaults.
-- New backend endpoints:
-  - `POST /experience/runs` — records a single game session by game id + duration and awards XP server-side.
-  - `GET /experience/summary` — returns the caller’s latest level/progress snapshot, used by the client to render the progress bar.
-- User rows now persist `xpLevel`, `xpProgress`, `xpTotal`, and `xpUpdatedAt`. Existing users are lazily upgraded the first time they earn XP.
-- Frontend surfaces level progress on the in-game score dialog, profile page, followers list, and leaderboards. Ensure the API base URL exposes the new routes before deploying.
+User rows store `xpLevel`, `xpProgress`, `xpTotal`, and `xpUpdatedAt`. Existing accounts are upgraded lazily the first time XP is recorded.
 
-## CI/CD: GitHub Actions → AWS S3
+## Admin Web (apps/admin-web)
 
-This repo includes a workflow at `.github/workflows/deploy.yml` that builds and deploys to an S3 bucket using GitHub OIDC (no long‑lived AWS keys).
+React Vite shell that currently displays a placeholder screen. Use it as the foundation for moderation dashboards, release controls, etc. The app reserves port `3100` in dev mode.
 
-### 1) Create an S3 bucket
+## Deploying the Player App
 
-- Example: `james-games-site` in your chosen region.
-- You can enable S3 Static Website Hosting, or (recommended) put CloudFront in front of the bucket for HTTPS and caching.
+A GitHub Actions workflow (`.github/workflows/deploy.yml`) builds `apps/player-web` with Vite and syncs the resulting `dist/` folder to S3 using GitHub OIDC. Configure the following secrets/variables:
 
-### 2) Create an IAM Role for GitHub OIDC
+- `AWS_ROLE_TO_ASSUME`
+- `AWS_REGION`
+- `S3_BUCKET`
+- `CLOUDFRONT_DISTRIBUTION_ID` (optional)
 
-Create a role in IAM with a trust policy for GitHub’s OIDC provider:
+The workflow installs dependencies, runs `npm run web:build`, and `aws s3 sync`s the output. `index.html` is re-uploaded with `Cache-Control: no-store` before optionally invalidating CloudFront.
 
-Trust policy (replace `<ACCOUNT_ID>` and repo path if you fork):
+## Development Tips
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": { "token.actions.githubusercontent.com:aud": "sts.amazonaws.com" },
-        "StringLike": {
-          "token.actions.githubusercontent.com:sub": [
-            "repo:jamesevans28/james-games:ref:refs/heads/main",
-            "repo:jamesevans28/james-games:environment:*"
-          ]
-        }
-      }
-    }
-  ]
-}
-```
+- All shared docs and scripts stay at the repository root. App-specific configs (Vite, Tailwind, tsconfig, etc.) sit next to their respective source code under `apps/*`.
+- Phaser games dispatch UI events through `apps/player-web/src/utils/gameEvents.ts`. Prefer central utilities over per-game globals.
+- When creating a new game, update `apps/player-web/src/games/index.ts` and remember to bump the `updatedAt` field for the entry.
 
-Attach an inline permissions policy restricted to your bucket (and optional CloudFront invalidation):
+## Experience & Leveling Surfacing
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "BucketList",
-      "Effect": "Allow",
-      "Action": ["s3:ListBucket"],
-      "Resource": "arn:aws:s3:::james-games-site"
-    },
-    {
-      "Sid": "BucketWrite",
-      "Effect": "Allow",
-      "Action": ["s3:PutObject", "s3:DeleteObject", "s3:PutObjectAcl"],
-      "Resource": "arn:aws:s3:::james-games-site/*"
-    },
-    {
-      "Sid": "InvalidateCloudFront",
-      "Effect": "Allow",
-      "Action": ["cloudfront:CreateInvalidation"],
-      "Resource": "*"
-    }
-  ]
-}
-```
+- The frontend shows XP progress inside score dialogs, profile, followers, and leaderboards.
+- Ensure backend routes above are deployed before rolling out new XP-driven UI to production.
 
-Record the Role ARN, e.g. `arn:aws:iam::<ACCOUNT_ID>:role/github-oidc-james-games`.
+## Support & Community
 
-### 3) Configure GitHub Secrets / Variables
-
-In GitHub → Settings → Secrets and variables → Actions:
-
-- Secrets
-  - `AWS_ROLE_TO_ASSUME` = your IAM Role ARN
-- Variables (or Secrets)
-  - `AWS_REGION` = e.g. `us-east-1`
-  - `S3_BUCKET` = e.g. `james-games-site`
-  - `CLOUDFRONT_DISTRIBUTION_ID` = optional distribution id
-
-### 4) Deploy
-
-Push to `main` or run the workflow manually. The workflow will:
-
-- Install dependencies and build with Vite (`npm run build`)
-- `aws s3 sync dist/ s3://$S3_BUCKET --delete`
-- Re-upload `index.html` with `Cache-Control: no-store` to avoid stale HTML
-- Optionally create a CloudFront invalidation
-
-## Phaser Editor considerations
-
-### Excluding files from the project
-
-You don't want to add every file in this template to your Phaser Editor project. For example, the whole of `node_modules` can be excluded.
-
-The `/.skip` file lists the folders and files to exclude from the editor's project.
-
-[Learn more about resource filtering in Phaser Editor](https://phaser.io/editor/docs/misc/resources-filtering)
-
-### Asset Pack
-
-Phaser has the ability to load what are known as 'asset packs'. These are JSON files that describe all of the content that your game needs to load, such as images, audio, and fonts. Phaser Editor will generate and use asset packs intensively and tools such as the Scene Editor depend upon the information stored in the asset pack files.
-
-You can have multiple asset packs per project, which is the recommended practice for larger games, allowing you to load only the pack of assets the game requires at that specific point.
-
-In this template, we have pre-configured two types of asset packs: `boot-asset-pack.json` and `preload-asset-pack.json`.
-
-The `boot-asset-pack.json` file is used to load assets when the game first boots. Typically, you would store a small selection of initial assets in here, such as a loading screen image and progress bar.
-
-The `preload-asset-pack.json` in this template contains the rest of the assets the game needs. You are free to create additional packs as required, but for the sake of simplicity, this template has been configured with just these two packs.
-
-[Learn more about Asset Pack loading in Phaser](https://newdocs.phaser.io/docs/3.80.0/Phaser.Loader.LoaderPlugin#pack)
-
-## Join the Phaser Community!
-
-We love to see what developers like you create with Phaser! It really motivates us to keep improving. So please join our community and show off your work 😄
-
-**Visit:** The [Phaser website](https://phaser.io) and follow on [Phaser Twitter](https://twitter.com/phaser_)<br />
-**Play:** Some of the amazing games [#madewithphaser](https://twitter.com/search?q=%23madewithphaser&src=typed_query&f=live)<br />
-**Learn:** [API Docs](https://newdocs.phaser.io), [Support Forum](https://phaser.discourse.group/) and [StackOverflow](https://stackoverflow.com/questions/tagged/phaser-framework)<br />
-**Discord:** Join us on [Discord](https://discord.gg/phaser)<br />
-**Code:** 2000+ [Examples](https://labs.phaser.io)<br />
-**Read:** The [Phaser World](https://phaser.io/community/newsletter) Newsletter<br />
-
-Created by [Phaser Studio](mailto:support@phaser.io). Powered by coffee, anime, pixels and love.
-
-The Phaser logo and characters are &copy; 2011 - 2025 Phaser Studio Inc.
-
-All rights reserved.
+- Phaser documentation: [https://newdocs.phaser.io](https://newdocs.phaser.io)
+- Questions? Open an issue in this repo or contact the James Games team.

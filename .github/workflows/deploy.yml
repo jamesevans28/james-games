@@ -1,4 +1,4 @@
-name: Deploy to S3
+name: Deploy Apps
 
 on:
   push:
@@ -11,13 +11,18 @@ permissions:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
-  S3_BUCKET: ${{ vars.S3_BUCKET }}
-  CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+  # Player Web (PWA)
+  WEB_S3_BUCKET: ${{ vars.WEB_S3_BUCKET }}
+  WEB_CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.WEB_CLOUDFRONT_DISTRIBUTION_ID }}
+  # Admin Web
+  ADMIN_S3_BUCKET: ${{ vars.ADMIN_S3_BUCKET }}
+  ADMIN_CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.ADMIN_CLOUDFRONT_DISTRIBUTION_ID }}
+  # Backend (Lambda)
   LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
   TABLE_NAME: ${{ vars.TABLE_NAME }}
 
 jobs:
-  build-and-deploy:
+  player-web:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,17 +34,19 @@ jobs:
           node-version: 20
           cache: "npm"
 
-      - name: Install dependencies
+      - name: Install dependencies (workspace)
         run: |
           npm ci || npm install
 
-      - name: Generate assets (optional)
+      - name: Generate player assets (optional)
+        working-directory: apps/player-web
         run: |
           npm run generate-snapadile-assets --if-present
           npm run generate-car-crash-assets --if-present
           npm run generate-sitemap --if-present
 
-      - name: Build
+      - name: Build player-web
+        working-directory: apps/player-web
         run: npm run build
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
@@ -50,55 +57,70 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Sync site to S3
-        if: ${{ env.S3_BUCKET != '' }}
+      - name: Sync player site to S3
+        if: ${{ env.WEB_S3_BUCKET != '' }}
         run: |
-          aws s3 sync ./dist s3://${{ env.S3_BUCKET }} --delete --follow-symlinks
+          aws s3 sync ./apps/player-web/dist s3://${{ env.WEB_S3_BUCKET }} --delete --follow-symlinks
 
       # Set long-cache headers for hashed assets (Vite outputs hashed filenames)
-      - name: Cache-control for static assets
-        if: ${{ env.S3_BUCKET != '' }}
+      - name: Cache-control for player static assets
+        if: ${{ env.WEB_S3_BUCKET != '' }}
         run: |
-          if [ -d "dist/assets" ]; then
-            aws s3 cp ./dist/assets s3://${{ env.S3_BUCKET }}/assets \
+          if [ -d "apps/player-web/dist/assets" ]; then
+            aws s3 cp ./apps/player-web/dist/assets s3://${{ env.WEB_S3_BUCKET }}/assets \
               --recursive \
               --metadata-directive REPLACE \
               --cache-control "public, max-age=31536000, immutable"
           fi
 
       # Ensure HTML entry points are not cached by browsers/CDN
-      - name: Set Cache-Control for index.html
-        if: ${{ env.S3_BUCKET != '' }}
+      - name: Set Cache-Control for player index.html
+        if: ${{ env.WEB_S3_BUCKET != '' }}
         run: |
-          aws s3 cp s3://${{ env.S3_BUCKET }}/index.html s3://${{ env.S3_BUCKET }}/index.html \
+          aws s3 cp s3://${{ env.WEB_S3_BUCKET }}/index.html s3://${{ env.WEB_S3_BUCKET }}/index.html \
             --metadata-directive REPLACE \
             --cache-control "no-store, no-cache, must-revalidate, max-age=0" \
             --content-type text/html
 
-      - name: Invalidate CloudFront cache (optional)
-        if: ${{ env.CLOUDFRONT_DISTRIBUTION_ID != '' }}
+      - name: Invalidate player CloudFront cache (optional)
+        if: ${{ env.WEB_CLOUDFRONT_DISTRIBUTION_ID != '' }}
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --distribution-id ${{ env.WEB_CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
 
-      # --- Backend (Lambda) deploy ---
+  backend-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies (workspace)
+        run: |
+          npm ci || npm install
+
       - name: Build backend (Lambda)
-        working-directory: app
+        working-directory: apps/backend-api
         run: |
           npm ci || npm install
           npm run build
 
       - name: Package Lambda bundle
         if: ${{ env.LAMBDA_FUNCTION_NAME != '' }}
-        working-directory: app
+        working-directory: apps/backend-api
         run: |
           rm -f bundle.zip
           zip -r bundle.zip dist node_modules package.json package-lock.json
 
       - name: Deploy Lambda code
         if: ${{ env.LAMBDA_FUNCTION_NAME != '' }}
-        working-directory: app
+        working-directory: apps/backend-api
         run: |
           aws lambda update-function-code \
             --function-name "${{ env.LAMBDA_FUNCTION_NAME }}" \
@@ -110,3 +132,59 @@ jobs:
           aws lambda update-function-configuration \
             --function-name "${{ env.LAMBDA_FUNCTION_NAME }}" \
             --environment "Variables={TABLE_NAME=${{ env.TABLE_NAME }},AWS_NODEJS_CONNECTION_REUSE_ENABLED=1}"
+
+  admin-web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies (workspace)
+        run: |
+          npm ci || npm install
+
+      - name: Build admin-web
+        working-directory: apps/admin-web
+        run: npm run build
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync admin site to S3
+        if: ${{ env.ADMIN_S3_BUCKET != '' }}
+        run: |
+          aws s3 sync ./apps/admin-web/dist s3://${{ env.ADMIN_S3_BUCKET }} --delete --follow-symlinks
+
+      - name: Cache-control for admin static assets
+        if: ${{ env.ADMIN_S3_BUCKET != '' }}
+        run: |
+          if [ -d "apps/admin-web/dist/assets" ]; then
+            aws s3 cp ./apps/admin-web/dist/assets s3://${{ env.ADMIN_S3_BUCKET }}/assets \
+              --recursive \
+              --metadata-directive REPLACE \
+              --cache-control "public, max-age=31536000, immutable"
+          fi
+
+      - name: Set Cache-Control for admin index.html
+        if: ${{ env.ADMIN_S3_BUCKET != '' }}
+        run: |
+          aws s3 cp s3://${{ env.ADMIN_S3_BUCKET }}/index.html s3://${{ env.ADMIN_S3_BUCKET }}/index.html \
+            --metadata-directive REPLACE \
+            --cache-control "no-store, no-cache, must-revalidate, max-age=0" \
+            --content-type text/html
+
+      - name: Invalidate admin CloudFront cache (optional)
+        if: ${{ env.ADMIN_CLOUDFRONT_DISTRIBUTION_ID != '' }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ env.ADMIN_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"

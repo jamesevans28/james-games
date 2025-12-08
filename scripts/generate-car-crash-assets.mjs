@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import PImage from "pureimage";
 
-const outDir = path.resolve(process.cwd(), "public/assets/car-crash");
+const outDir = path.resolve(process.cwd(), "apps/player-web/public/assets/car-crash");
 await fs.promises.mkdir(outDir, { recursive: true });
 
 async function save(img, file) {
