@@ -38,11 +38,9 @@ jobs:
         run: |
           npm ci || npm install
 
-      - name: Generate player assets (optional)
+      - name: Generate sitemap for player-web
         working-directory: apps/player-web
         run: |
-          npm run generate-snapadile-assets --if-present
-          npm run generate-car-crash-assets --if-present
           npm run generate-sitemap --if-present
 
       - name: Build player-web
