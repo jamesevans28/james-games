@@ -116,6 +116,17 @@ jobs:
           rm -f bundle.zip
           zip -r bundle.zip dist node_modules package.json package-lock.json
 
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Debug AWS identity
+        run: |
+          echo "Checking AWS caller identity"
+          aws sts get-caller-identity || true
+
       - name: Deploy Lambda code
         if: ${{ env.LAMBDA_FUNCTION_NAME != '' }}
         working-directory: apps/backend-api
