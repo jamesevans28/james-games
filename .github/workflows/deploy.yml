@@ -103,24 +103,20 @@ jobs:
         run: |
           npm ci || npm install
 
-      - name: Install backend dependencies
+      - name: Install backend dependencies (prod only)
         working-directory: apps/backend-api
-        run: npm install
+        run: npm install --omit=dev --workspaces=false
 
       - name: Build backend (Lambda)
         working-directory: apps/backend-api
         run: npm run build
-
-      - name: Prune dev dependencies
-        working-directory: apps/backend-api
-        run: npm prune --omit=dev
 
       - name: Package Lambda bundle
         if: ${{ env.LAMBDA_FUNCTION_NAME != '' }}
         working-directory: apps/backend-api
         run: |
           rm -f bundle.zip
-          zip -r bundle.zip dist node_modules package.json package-lock.json
+          zip -r bundle.zip dist node_modules package.json
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
