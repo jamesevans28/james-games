@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import clsx from "clsx";
 
 const titles: Record<string, string> = {
+  "/": "Dashboard",
   "/users": "User Management",
   "/games": "Games Configuration",
 };

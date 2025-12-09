@@ -4,6 +4,7 @@ import { RequireAdmin } from "./routes/RequireAdmin";
 import { LoginPage } from "./pages/LoginPage";
 import { UsersPage } from "./pages/UsersPage";
 import { GamesPage } from "./pages/GamesPage";
+import { HomePage } from "./pages/HomePage";
 
 export default function App() {
   return (
@@ -12,12 +13,12 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route element={<RequireAdmin />}>
           <Route element={<AdminLayout />}>
-            <Route path="/" element={<Navigate to="/users" replace />} />
+            <Route path="/" element={<HomePage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="/games" element={<GamesPage />} />
           </Route>
         </Route>
-        <Route path="*" element={<Navigate to="/users" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

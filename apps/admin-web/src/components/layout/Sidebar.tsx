@@ -1,9 +1,10 @@
 import { NavLink } from "react-router-dom";
-import { Users, Gamepad2, LogOut } from "lucide-react";
+import { Users, Gamepad2, LogOut, LayoutDashboard } from "lucide-react";
 import clsx from "clsx";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 
 const navItems = [
+  { label: "Dashboard", to: "/", icon: LayoutDashboard },
   { label: "Users", to: "/users", icon: Users },
   { label: "Games", to: "/games", icon: Gamepad2 },
 ];

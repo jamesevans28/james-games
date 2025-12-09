@@ -12,6 +12,7 @@ import {
   update as updateGame,
 } from "../controllers/gamesConfigController.js";
 import { show as getGameStats } from "../controllers/adminGameStatsController.js";
+import { dashboard as getDashboardMetrics } from "../controllers/adminMetricsController.js";
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.post("/games", createGame);
 router.get("/games/:gameId", getGame);
 router.get("/games/:gameId/stats", getGameStats);
 router.patch("/games/:gameId", updateGame);
+router.get("/metrics/dashboard", getDashboardMetrics);
 
 export default router;

@@ -77,6 +77,30 @@ export type GameConfig = {
   updatedAt?: string | null;
 };
 
+export type DashboardMetrics = {
+  timeframe: { since: string; days: number };
+  totals: {
+    users: number;
+    betaTesters: number;
+    admins: number;
+    newUsers7d: number;
+    gamesLive: number;
+  };
+  activity: {
+    activeUsers7d: number;
+    totalPlays7d: number;
+    avgScore7d: number;
+  };
+  topGames: Array<{
+    gameId: string;
+    title: string;
+    thumbnail?: string | null;
+    plays7d: number;
+    share: number;
+  }>;
+  recommendations: string[];
+};
+
 export type GameStats = {
   gameId: string;
   totalPlays: number;
@@ -140,6 +164,7 @@ export const adminApi = {
       method: "PATCH",
       body: JSON.stringify(payload),
     }),
+  getDashboardMetrics: () => request<DashboardMetrics>(`/admin/metrics/dashboard`),
 };
 
 export function normalizeAccount(
