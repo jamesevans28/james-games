@@ -25,7 +25,9 @@ export function HomePage() {
           <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Command Center</p>
           <h1 className="text-3xl font-semibold text-white">Platform Pulse</h1>
           {metrics && (
-            <p className="text-sm text-slate-400">Tracking the last 7 days since {timeframeLabel}</p>
+            <p className="text-sm text-slate-400">
+              Tracking the last 7 days since {timeframeLabel}
+            </p>
           )}
         </div>
       </div>
@@ -73,13 +75,13 @@ export function HomePage() {
                   <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Top Games</p>
                   <h2 className="text-xl font-semibold text-white">Most played this week</h2>
                 </div>
-                <span className="text-xs text-slate-400">Share of {metrics.activity.totalPlays7d} plays</span>
+                <span className="text-xs text-slate-400">
+                  Share of {metrics.activity.totalPlays7d} plays
+                </span>
               </header>
               <div className="space-y-4">
                 {metrics.topGames.length ? (
-                  metrics.topGames.map((game) => (
-                    <TopGameRow key={game.gameId} game={game} />
-                  ))
+                  metrics.topGames.map((game) => <TopGameRow key={game.gameId} game={game} />)
                 ) : (
                   <p className="text-sm text-slate-500">No recent sessions recorded.</p>
                 )}
@@ -99,9 +101,8 @@ export function HomePage() {
               </ul>
               <div className="rounded-xl border border-slate-800/80 bg-slate-950/80 p-4 text-xs text-slate-400">
                 <p>
-                  {metrics.totals.gamesLive} games live • {metrics.totals.users} total players • {metrics.activity.totalPlays7d}
-                  {" "}
-                  plays this week
+                  {metrics.totals.gamesLive} games live • {metrics.totals.users} total players •{" "}
+                  {metrics.activity.totalPlays7d} plays this week
                 </p>
               </div>
             </div>
@@ -142,11 +143,7 @@ function MetricCard({
   );
 }
 
-function TopGameRow({
-  game,
-}: {
-  game: DashboardMetrics["topGames"][number];
-}) {
+function TopGameRow({ game }: { game: DashboardMetrics["topGames"][number] }) {
   const percent = Math.round(game.share * 100);
   return (
     <div className="space-y-2">
@@ -163,7 +160,10 @@ function TopGameRow({
         <p className="text-xs text-slate-400">{percent}%</p>
       </div>
       <div className="h-2 w-full rounded-full bg-slate-800">
-        <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-sky-400" style={{ width: `${percent}%` }} />
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-sky-400"
+          style={{ width: `${percent}%` }}
+        />
       </div>
     </div>
   );

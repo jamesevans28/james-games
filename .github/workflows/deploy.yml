@@ -103,11 +103,17 @@ jobs:
         run: |
           npm ci || npm install
 
+      - name: Install backend dependencies
+        working-directory: apps/backend-api
+        run: npm install
+
       - name: Build backend (Lambda)
         working-directory: apps/backend-api
-        run: |
-          npm ci || npm install
-          npm run build
+        run: npm run build
+
+      - name: Prune dev dependencies
+        working-directory: apps/backend-api
+        run: npm prune --omit=dev
 
       - name: Package Lambda bundle
         if: ${{ env.LAMBDA_FUNCTION_NAME != '' }}
