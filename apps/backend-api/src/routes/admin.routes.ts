@@ -22,6 +22,7 @@ router.get("/users", listUsers);
 router.get("/users/:userId", getUser);
 router.patch("/users/:userId", updateUser);
 router.put("/users/:userId", updateUser);
+router.post("/users/:userId", updateUser);
 
 router.get("/games", listGames);
 router.post("/games", createGame);
@@ -29,6 +30,7 @@ router.get("/games/:gameId", getGame);
 router.get("/games/:gameId/stats", getGameStats);
 router.patch("/games/:gameId", updateGame);
 router.put("/games/:gameId", updateGame);
+router.post("/games/:gameId", updateGame);
 router.get("/metrics/dashboard", getDashboardMetrics);
 
 export default router;

@@ -146,7 +146,7 @@ export const adminApi = {
     payload: { email?: string; password?: string; betaTester?: boolean; admin?: boolean }
   ) =>
     request<AdminUserDetail>(`/admin/users/${userId}`, {
-      method: "PUT",
+      method: "POST",
       body: JSON.stringify(payload),
     }),
   listGames: (params: { cursor?: string; limit?: number }) => {
@@ -161,7 +161,7 @@ export const adminApi = {
     request<GameConfig>(`/admin/games`, { method: "POST", body: JSON.stringify(payload) }),
   updateGame: (gameId: string, payload: Partial<GameConfig>) =>
     request<GameConfig>(`/admin/games/${gameId}`, {
-      method: "PUT",
+      method: "POST",
       body: JSON.stringify(payload),
     }),
   getDashboardMetrics: () => request<DashboardMetrics>(`/admin/metrics/dashboard`),
