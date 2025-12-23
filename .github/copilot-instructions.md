@@ -1,115 +1,200 @@
-# James Games - AI Coding Guidelines
+# James Games — Copilot Instructions
 
-## Project Overview
+These are project-specific guidelines for AI-assisted coding in this repo.
 
-Mobile-first web game hub built with React + Vite and Phaser 3. The player-facing app now lives in `apps/player-web/`, and each game is self-contained in `apps/player-web/src/games/[gameId]/` with dynamic mounting. React handles routing, UI, and cross-game state; Phaser manages game logic and rendering. Games communicate via custom events (`apps/player-web/src/utils/gameEvents.ts`).
+## Repo Overview
 
-## Architecture
+This is a monorepo containing:
 
-- **Frontend**: React functional components with hooks housed in `apps/player-web/`, Tailwind CSS for styling, no class components.
-- **Games**: Phaser 3 scenes extended from `Phaser.Scene`. Each game exports a `mount(container)` function creating a `Phaser.Game` instance.
-- **Integration**: Games dispatch events (e.g., `dispatchGameOver`) for React to show dialogs. No global state management yet (Redux planned but unused).
-- **Backend**: Minimal API via `apps/backend-api/src` (Express on Lambda). Player web app talks to it through helpers in `apps/player-web/src/lib/api.ts`.
-- **Admin**: Placeholder React shell under `apps/admin-web/` reserved for future operational tooling.
+- `apps/player-web/`: Player-facing React + Vite PWA. Mobile-first UI.
+- `apps/player-web/src/games/`: Each game lives in `apps/player-web/src/games/<gameId>/` and is mounted dynamically.
+- `apps/backend-api/`: Express API deployed to AWS Lambda.
+- `apps/admin-web/`: Admin React + Vite app used for operational tooling.
 
-## Key Patterns
+Key integration points:
 
-- **Phaser Config** (see `apps/player-web/src/games/reflex-ring/index.ts`):
-  ```typescript
-  const config = {
-    type: Phaser.AUTO,
+- **Game ↔ App events**: `apps/player-web/src/utils/gameEvents.ts`
+- **Player-web API client**: `apps/player-web/src/lib/api.ts`
+- **Admin-web API client**: `apps/admin-web/src/lib/api.ts`
+- **Game registry + metadata**: `apps/player-web/src/games/index.ts`
+
+## Core Principles
+
+1. **Mobile-first**: portrait layout, touch-first input, stable 60 FPS.
+2. **Keep games isolated, share logic intentionally**: game-specific rendering stays in the game folder; reusable logic moves to shared utilities.
+3. **Prefer pure logic**: write game rules as testable, side-effect-free functions where possible.
+4. **Avoid global state**: no cross-game globals; communicate via events and the existing API helpers.
+
+## Frontend (React) Rules
+
+- Use React function components and hooks.
+- Use Tailwind via existing tokens and patterns; do not invent new themes.
+- Keep routing/UI in `apps/player-web/src/` and game logic in `apps/player-web/src/games/`.
+- Auth is cookie-based via backend; keep calls using `credentials: "include"`.
+
+## Game Architecture (Phaser)
+
+Games are Phaser-based but mounted from React.
+
+### Expected Game Shape
+
+- Each game exports `mount(container: HTMLElement)` which returns an object with `destroy()`.
+- Use `pointerdown`/touch-friendly input (avoid `click`).
+- Use `Phaser.Scale.FIT` and `CENTER_BOTH` for consistent portrait scaling.
+
+### Clean Architecture Layers (per game)
+
+When adding new games (or refactoring existing ones), prefer this folder layout **inside** `apps/player-web/src/games/<gameId>/`:
+
+- `entities/`: Plain domain objects with no Phaser dependencies.
+- `useCases/`: Pure functions that implement rules (movement, scoring, win/lose, collisions as math).
+- `adapters/`: Phaser-specific bridge code (sprites, sounds, particles, input mapping).
+- `scenes/`: `Phaser.Scene` classes and orchestration.
+
+This is a guideline, not a hard requirement for legacy games. New games should follow it.
+
+## Shared / Reusable Game Logic (Important)
+
+This project will accumulate many games. To keep velocity high:
+
+### What belongs in shared code
+
+Prefer shared modules for:
+
+- **Math + geometry**: vectors, easing helpers, collision math, interpolation.
+- **Timers / state machines**: deterministic gameplay loops, cooldowns, wave logic.
+- **Scoring + difficulty curves**: reusable curves, combo rules, pacing utilities.
+- **Input helpers**: drag/aim/hold semantics as framework-agnostic helpers (Phaser wiring stays in adapters/scenes).
+- **Audio synth helpers**: Web Audio utilities used by multiple games.
+- **Common UI helpers**: score formatting, best-score persistence helpers.
+
+### Where shared code should live
+
+- **Game-only shared utilities (preferred)**: `apps/player-web/src/game/`
+  - Use this for cross-game logic that is part of gameplay (difficulty, spawners, cooldowns, scoring rules, input semantics, math helpers).
+  - Keep it Phaser-agnostic when possible.
+- **App/React utilities (integration + UI)**: `apps/player-web/src/utils/`
+  - Use this for app-layer helpers like analytics, share links, caches, and `gameEvents`.
+
+Avoid copying the same logic across multiple game folders. If you copy/paste something twice, that’s the moment to extract it.
+
+### Extraction triggers (rule of thumb)
+
+- **Second implementation wins**: if you implement the same mechanic twice (even slightly differently), extract a shared helper.
+- **Parameterizable differences**: if the only differences are numbers/timings/curves, make those inputs/config.
+- **Bug fixed twice**: if you fix the same class of bug in 2 games, extract the fix into a shared utility to harden it once.
+
+### Shared module conventions
+
+- Put game-only building blocks in `apps/player-web/src/game/` with names like:
+  - `game/difficulty.ts` (difficulty curves)
+  - `game/cooldowns.ts` (cooldown timers)
+  - `game/spawn.ts` (spawn schedules)
+  - `game/rng.ts` (seeded/random helpers)
+  - `game/math/*` (geometry/interpolation)
+- Put app/integration helpers in `apps/player-web/src/utils/` (e.g., analytics, `gameEvents`).
+- Shared modules should expose **small functions** and **plain data types**; avoid exporting Phaser types.
+
+### Hardening rule
+
+When extracting shared logic:
+
+- Make it **Phaser-agnostic** when possible (pure TS/JS).
+- Keep APIs small and stable.
+- Add clear docs/comments _only when it improves reuse_ (no noisy commentary).
+
+### Do / Don’t (avoid duplicated systems)
+
+**Do**
+
+- Extract reusable mechanics once they appear in 2+ games (spawners, difficulty curves, cooldown timers, combo rules).
+- Keep shared modules pure and deterministic where possible (input → output; no Phaser types).
+- Design shared utilities as small building blocks (e.g., `nextDifficulty(state, score, elapsedMs)`), not one giant “engine”.
+- Put Phaser wiring in the game’s `adapters/` or `scenes/`, and call shared/pure logic from there.
+- Write shared code to be “future-game friendly”: explicit inputs, minimal hidden assumptions, and stable return shapes.
+
+**Don’t**
+
+- Copy/paste a spawner/timer/state-machine across game folders; extract it.
+- Let shared utilities import from a specific game folder.
+- Couple shared logic to Phaser runtime objects (sprites, scenes, tweens). Pass plain data instead.
+- Over-generalize prematurely. Only abstract what’s proven common.
+- Add new “frameworks” or global singletons for cross-game state.
+
+## Key Patterns & Conventions
+
+### Phaser config pattern
+
+Use the established portrait config pattern (see existing games like `apps/player-web/src/games/reflex-ring/index.ts`):
+
+```ts
+const config: Phaser.Types.Core.GameConfig = {
+  type: Phaser.AUTO,
+  width: 540,
+  height: 960,
+  parent: container,
+  transparent: true,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
     width: 540,
     height: 960,
-    parent: container,
-    transparent: true,
-    scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: 540,
-      height: 960,
-    },
-    scene: [ReflexRingGame],
-  };
-  ```
-- **Mounting Games**: Phaser.Game with parent container, destroy via game.destroy(true).
-- **Input**: Use `pointerdown` for touch/mobile (not `click`).
-- **Analytics**: gtag-based (`apps/player-web/src/utils/analytics.ts`), events like `game_start` fired on mount.
-- **Assets**: Static in `apps/player-web/public/assets/[gameId]/`, loaded relatively.
-- **Sounds**: Synthesized Web Audio API (oscillators/gains), no audio files.
+  },
+  scene: [MainScene],
+};
+```
+
+### Assets
+
+- Store assets under `apps/player-web/public/assets/<gameId>/`.
+- Prefer lightweight SVG thumbnails (no text).
+
+### Analytics
+
+- Use `apps/player-web/src/utils/analytics.ts`.
+- Fire a game-start event on mount (follow existing patterns).
+
+### Scores / XP
+
+- Post high scores via `apps/player-web/src/lib/api.ts`.
+- XP is score × `xpMultiplier` from `apps/player-web/src/games/index.ts`.
+- Local best score should use `localStorage` with a game-scoped key.
 
 ## Development Workflow
 
-- **Dev**: `npm run web:dev` (Vite with custom config located in `apps/player-web/vite`).
-- **Build**: `npm run web:build` (produces a PWA-ready bundle under `apps/player-web/dist`).
-- **Game Creation**: Copy existing game folder, update `apps/player-web/src/games/index.ts` with lazy import.
-- **Testing**: Manual playtesting; no automated tests yet.
+- Dev (player): `npm run web:dev`
+- Build (player): `npm run web:build`
+- Build (admin): `npm run admin:build`
+- Build (backend): `npm run backend:build`
 
-## Conventions
+Testing is currently mostly manual playtesting. When writing new logic that is Phaser-agnostic (entities/useCases/shared utilities), prefer pure functions so unit tests can be added later with minimal refactor.
 
-Adhere strictly to the following best practices when generating, refactoring, or extending Phaser 3 game code. These guidelines prioritize code organization, performance, maintainability, and testing efficiency.
+## Creating a New Game Checklist
 
-1. Code Organization & Project Structure
-   Modularity First: Use modern ES6 modules (import/export) for all code organization. Avoid global scope pollution.
-   Scene-Based Architecture:
-   Every distinct game state must be a class extending Phaser.Scene (e.g., BootScene, PreloadScene, MainMenuScene, GameScene).
-   Each scene class must reside in its own dedicated file.
-   Decoupled Logic: Input handling (keyboard, pointer) must be handled at the Scene level or by a dedicated input manager plugin, not inside individual game objects (like Player or Enemy sprites).
-   Asset & Config Constants:
-   Use a centralized constants.js or config.js file for all asset keys, paths, magic numbers, and configuration strings.
-   Always reference these constants (Config.ASSET_KEYS.PLAYER_SHIP) rather than using raw strings ('player-ship').
-   Component-Based Design: For complex systems (like inventory, stats, or specific behaviors), use a simple Entity Component System (ECS) pattern or composition over inheritance where applicable.
-2. Performance Best Practices
-   Minimize Draw Calls:
-   Utilize texture atlases/sprite sheets generated by a texture packer for related assets.
-   Prefer Tilemaps over individually placed sprites for static level geometry.
-   Efficient Memory Management:
-   Implement Object Pooling for highly dynamic, frequently created/destroyed objects (bullets, explosions, enemies). Recycle objects instead of creating new instances constantly to minimize garbage collection pauses.
-   Optimize update() Loops: Keep the core update(time, delta) methods in scenes and objects lean. Delegate complex logic to external systems or state machines that run conditionally.
-   Cache References: Store local references to frequently accessed objects, configurations, and game systems (this.player = ...) rather than looking them up dynamically every frame.
-3. Naming Conventions & Style
-   Classes: Use PascalCase (e.g., PlayerShip, BootScene).
-   Variables/Functions: Use camelCase (e.g., playerScore, handleInput()).
-   Constants: Use UPPER_SNAKE_CASE (e.g., MAX_SPEED, PLAYER_ATLAS_KEY).
-   Clarity over Brevity: Variable and function names should clearly describe their purpose (e.g., calculateDamage() instead of calcDmg()).
-4. Testing & Debugging (When Applicable)
-   Testable Units: Write logic functions to be side-effect-free where possible, making them easier to unit test independently of the Phaser rendering engine.
-   Phaser Debug Tools: Use built-in Phaser debug features (e.g., this.physics.world.debugGraphic) rather than relying solely on console.log() for physics debugging.
+1. Create `apps/player-web/src/games/<gameId>/` with `index.ts` exporting `mount()`.
+2. Add assets under `apps/player-web/public/assets/<gameId>/` and a `thumbnail.svg`.
+3. Register the game in `apps/player-web/src/games/index.ts` with a lazy `load()`.
+4. If you change gameplay logic for an existing game, update the `updatedAt` field in `apps/player-web/src/games/index.ts`.
+5. Prefer touch input (`pointerdown`) and keep frame-time stable.
 
-## Creating a New Game
+## Performance Guidelines (Phaser)
 
-To create a new game within the James Games framework, follow these steps:
+- Keep `update(time, delta)` lean; move conditional logic into state machines/use cases.
+- Use pooling for frequently created/destroyed objects (particles, bullets, enemies).
+- Cache references; don’t repeatedly look up the same objects each frame.
+- Minimize draw calls (sprite sheets/atlases when appropriate).
 
-1. **Set up folder**: Create a new game folder in `apps/player-web/src/games/`.
-2. **Update Phaser scene**: Modify `create()`, `update()` for gameplay. Use `Phaser.Scene` extension, `pointerdown` for input, tweens/animations for effects.
-3. **Implement mount**: In `index.ts`, export `mount(container)` creating `Phaser.Game` with FIT scale (see reflex-ring example).
-4. **Add thumbnail**: Create `thumbnail.svg` in `apps/player-web/public/assets/[newId]/` for game listings. Make sure this is a lightweight SVG optimized for web and does not contain any text.
-5. **Register game**: Add entry to `apps/player-web/src/games/index.ts` with lazy import (e.g., `load: async () => import("./[newId]/index")`).
-6. **Utilize shared systems**:
-   - **Score tracking**: Use localStorage for high scores (`localStorage.getItem/setItem` with `${GAME_ID}-best`).
-   - **Game over**: Call `dispatchGameOver({ gameId: GAME_ID, score })` to trigger GameOver dialog.
-   - **Analytics**: Call `trackGameStart(gameId, title)` on mount.
-   - **Backend**: Use `postHighScore` from `apps/player-web/src/lib/api.ts` for score submission.
-   - **Experience**: XP is calculated based on score × game-specific multiplier (stored in game metadata).
-   - **Sounds**: Synthesize via Web Audio API (oscillators/gains) for effects like pop/ding.
-   - **Particles**: Use Phaser particles for backgrounds/effects.
-7. **Incorporate shared components**: Games integrate with React via events; GameOver dialog handles post-game UI automatically.
-8. **Patterns to follow**: Touch-optimized, 60 FPS, portrait mode, modular scenes, commented logic. Test on mobile, ensure no global state.
+## Naming & Style
 
-Prioritize mobile performance, simplicity, and Phaser best practices. Reference existing games for new ones.
+- Classes: `PascalCase`
+- Functions/vars: `camelCase`
+- Constants: `UPPER_SNAKE_CASE`
+- Prefer clarity over cleverness.
 
-When making changes to game logic, update the `updatedAt` field in the corresponding game entry in `apps/player-web/src/games/index.ts`.
+## Copilot Prompting Tips
 
-## Reusable prefabs and utilities
+Good prompts reference the architecture:
 
-When creating new games, consider leveraging the following reusable prefabs and utilities available in the codebase to streamline development:
-
-- **PlayerPrefab**: A base class for player-controlled sprites with built-in movement and input handling.
-- **EnemyPrefab**: A base class for enemy sprites with common behaviors like movement patterns and collision handling.
-- **UI Components**: Pre-built Phaser UI elements such as buttons, score displays, and health bars.
-- **GameEvents**: Utility functions for dispatching and listening to custom game events to facilitate communication between Phaser and React.
-- **AudioManager**: A utility for managing sound effects and music using the Web Audio API.
-- **ParticleEffects**: Pre-configured particle emitters for common visual effects like explosions and trails.
-- **InputManager**: A centralized input handling utility to manage touch and pointer events across different scenes.
-- **ScoreManager**: A utility for tracking and storing high scores using localStorage.
-- **Analytics**: Functions for tracking game events and user interactions with Google Analytics (gtag).
-  Utilizing these prefabs and utilities can help maintain consistency across games, reduce development time, and ensure adherence to best practices outlined in this document.
+- “Create a Phaser-agnostic use case for scoring and difficulty curves.”
+- “Extract this duplicated spawn logic into a shared utility under `apps/player-web/src/utils/`.”
+- “Implement a small FSM helper (pure TS) suitable for multiple games.”
