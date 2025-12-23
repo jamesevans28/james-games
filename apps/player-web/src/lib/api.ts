@@ -1,4 +1,21 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+// NOTE: Vite only auto-loads .env files from the app root (apps/player-web).
+// In this repo we also have a root-level .env.local, so we keep a safe dev default.
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
+
+async function tryRefreshSession(): Promise<boolean> {
+  // Refresh token is stored in HttpOnly cookies; we can't inspect it client-side.
+  // The safest way to detect availability is to call /auth/refresh.
+  try {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+      cache: "no-store",
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
 export type RatingSummary = {
   gameId: string;
@@ -96,8 +113,23 @@ export async function postHighScore(args: { gameId: string; score: number }) {
     body: JSON.stringify(args),
   });
   if (!res.ok) {
-    // Surface 401 as a no-op for unauthenticated users — they simply won't post
-    if (res.status === 401) return;
+    // If access token expired but refresh token cookie exists, refresh and retry once.
+    if (res.status === 401) {
+      const refreshed = await tryRefreshSession();
+      if (!refreshed) return;
+
+      const retryRes = await fetch(`${API_BASE}/scores`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-auth-retry": "1" },
+        credentials: "include",
+        body: JSON.stringify(args),
+      });
+      if (!retryRes.ok) {
+        if (retryRes.status === 401) return;
+        throw new Error(`Failed to submit score: ${retryRes.status}`);
+      }
+      return retryRes.json();
+    }
     throw new Error(`Failed to submit score: ${res.status}`);
   }
   return res.json();
@@ -115,7 +147,20 @@ export async function postExperienceRun(args: {
     credentials: "include",
     body: JSON.stringify(args),
   });
-  if (res.status === 401) throw new Error("signin_required");
+  if (res.status === 401) {
+    const refreshed = await tryRefreshSession();
+    if (!refreshed) throw new Error("signin_required");
+
+    const retryRes = await fetch(`${API_BASE}/experience/runs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-auth-retry": "1" },
+      credentials: "include",
+      body: JSON.stringify(args),
+    });
+    if (retryRes.status === 401) throw new Error("signin_required");
+    if (!retryRes.ok) throw new Error(`Failed to award experience: ${retryRes.status}`);
+    return (await retryRes.json()) as { awardedXp: number; summary: ExperienceSummary };
+  }
   if (!res.ok) throw new Error(`Failed to award experience: ${res.status}`);
   return (await res.json()) as { awardedXp: number; summary: ExperienceSummary };
 }

@@ -104,20 +104,32 @@ function AnimatedExperienceBar({
   startProgress,
   endLevel,
   endProgress,
-  required,
+  startRequired,
+  endRequired,
   awardedXp,
 }: {
   startLevel: number;
   startProgress: number;
   endLevel: number;
   endProgress: number;
-  required: number;
+  startRequired: number;
+  endRequired: number;
   awardedXp: number;
 }) {
   const [displayLevel, setDisplayLevel] = useState(startLevel);
   const [displayProgress, setDisplayProgress] = useState(startProgress);
   const [displayPercent, setDisplayPercent] = useState(0);
+  const [displayRequired, setDisplayRequired] = useState(startRequired);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // Keep the bar accurate even when no XP was awarded (or before the award response arrives).
+  useEffect(() => {
+    setDisplayLevel(startLevel);
+    setDisplayProgress(startProgress);
+    setDisplayRequired(startRequired);
+    const safe = Math.max(1, startRequired || 1);
+    setDisplayPercent(Math.min(100, (startProgress / safe) * 100));
+  }, [startLevel, startProgress, startRequired]);
 
   useEffect(() => {
     if (awardedXp <= 0) return;
@@ -134,24 +146,27 @@ function AnimatedExperienceBar({
         // Same level, just animate progress
         const currentProgress = startProgress + (endProgress - startProgress) * progress;
         setDisplayProgress(currentProgress);
-        const safeRequired = Math.max(1, required || 1);
+        setDisplayRequired(endRequired);
+        const safeRequired = Math.max(1, endRequired || 1);
         setDisplayPercent(Math.min(100, (currentProgress / safeRequired) * 100));
       } else {
         // Level up animation
         if (progress < 0.5) {
           // First half: fill to 100%
           const fillProgress = progress * 2;
-          const currentProgress = startProgress + (required - startProgress) * fillProgress;
+          setDisplayRequired(startRequired);
+          const safeRequired = Math.max(1, startRequired || 1);
+          const currentProgress = startProgress + (safeRequired - startProgress) * fillProgress;
           setDisplayProgress(currentProgress);
-          const safeRequired = Math.max(1, required || 1);
           setDisplayPercent(Math.min(100, (currentProgress / safeRequired) * 100));
         } else {
           // Second half: new level, fill from 0 to end
           setDisplayLevel(endLevel);
+          setDisplayRequired(endRequired);
           const fillProgress = (progress - 0.5) * 2;
           const currentProgress = endProgress * fillProgress;
           setDisplayProgress(currentProgress);
-          const safeRequired = Math.max(1, required || 1);
+          const safeRequired = Math.max(1, endRequired || 1);
           setDisplayPercent(Math.min(100, (currentProgress / safeRequired) * 100));
         }
       }
@@ -161,16 +176,17 @@ function AnimatedExperienceBar({
       } else {
         setDisplayLevel(endLevel);
         setDisplayProgress(endProgress);
-        const safeRequired = Math.max(1, required || 1);
+        setDisplayRequired(endRequired);
+        const safeRequired = Math.max(1, endRequired || 1);
         setDisplayPercent(Math.min(100, (endProgress / safeRequired) * 100));
         setIsAnimating(false);
       }
     };
 
     animate();
-  }, [startLevel, startProgress, endLevel, endProgress, required, awardedXp]);
+  }, [startLevel, startProgress, endLevel, endProgress, startRequired, endRequired, awardedXp]);
 
-  const safeRequired = Math.max(1, required || 1);
+  const safeRequired = Math.max(1, displayRequired || 1);
 
   return (
     <div className="space-y-2">
@@ -293,12 +309,18 @@ export default function GameOver({
     postExperienceRun({ gameId, score, xpMultiplier })
       .then(({ summary, awardedXp }) => {
         if (canceled) return;
-        setEndExperience(summary);
+        // Backend may return { summary: null } in edge cases; don't crash the dialog.
+        setEndExperience(summary ?? currentExperience ?? null);
         setXpAwarded(awardedXp);
         setXpPending(false);
 
         // Check for level up
-        if (currentExperience && summary.level > currentExperience.level) {
+        if (
+          currentExperience &&
+          summary &&
+          typeof summary.level === "number" &&
+          summary.level > currentExperience.level
+        ) {
           setTimeout(() => {
             setShowLevelUp(true);
           }, 1500); // Show after XP animation completes
@@ -376,7 +398,8 @@ export default function GameOver({
                   startProgress={startExperience.progress}
                   endLevel={endExperience.level}
                   endProgress={endExperience.progress}
-                  required={endExperience.required}
+                  startRequired={startExperience.required}
+                  endRequired={endExperience.required}
                   awardedXp={xpAwarded ?? 0}
                 />
               ) : (

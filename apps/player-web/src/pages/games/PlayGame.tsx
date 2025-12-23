@@ -30,7 +30,7 @@ export default function PlayGame() {
   const { gameId } = useParams();
   const navigate = useNavigate();
   const meta = useMemo(() => games.find((g) => g.id === gameId), [gameId]);
-  const { user } = useAuth();
+  const { user, ensureSession } = useAuth();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const destroyRef = useRef<null | (() => void)>(null);
   const mountingRef = useRef(false);
@@ -86,6 +86,14 @@ export default function PlayGame() {
       setRatingPromptOpen(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    // When entering a game route, opportunistically restore session if a refresh token exists.
+    // This prevents long-idle users (expired access token) from silently losing score posts.
+    if (!meta) return;
+    if (user) return;
+    void ensureSession({ silent: true, reason: "game-entry" });
+  }, [meta, user, ensureSession]);
 
   // Helper to mount the game immediately
   const mountGame = useCallback(async () => {
@@ -318,6 +326,18 @@ export default function PlayGame() {
       <GameHeader
         title={meta?.title ?? "Unknown Game"}
         leaderboardTo={meta ? `/leaderboard/${meta.id}` : undefined}
+        onBack={() => {
+          if (playing) {
+            setShowScore(false);
+            setPendingRatingTrigger(false);
+            setRatingPromptOpen(false);
+            setRatingError(null);
+            setLastScore(null);
+            setPlaying(false);
+            return;
+          }
+          navigate("/");
+        }}
       />
 
       {error && <div className="p-4 text-red-400">{error}</div>}
@@ -327,8 +347,16 @@ export default function PlayGame() {
         </div>
       )}
 
+      {playing && (
+        <div
+          aria-hidden
+          className="fixed inset-x-0 bottom-0 z-0 pointer-events-none bg-gradient-to-br from-fuchsia-700 via-purple-700 to-fuchsia-700"
+          style={{ top: "var(--header-h)" }}
+        />
+      )}
+
       <div
-        className="game-stage"
+        className="game-stage z-10"
         data-state={playing ? "visible" : "hidden"}
         aria-hidden={!playing}
       >

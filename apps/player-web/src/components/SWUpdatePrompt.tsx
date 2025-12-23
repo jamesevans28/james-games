@@ -7,6 +7,7 @@ export default function SWUpdatePrompt() {
   const [isUpdating, setIsUpdating] = useState(false);
   const lastUpdateCheck = useRef<number>(0);
   const updatingRef = useRef(false);
+  const promptedKey = "pwa:updatePrompted";
 
   const setSuppressionWindow = useCallback((ms: number) => {
     try {
@@ -20,28 +21,42 @@ export default function SWUpdatePrompt() {
     if (sessionStorage.getItem("pwa:updateDismissed") === "1") return true;
     if (skipUpdateOnce) return true;
     try {
+      // If we've already shown the banner for the currently-waiting SW, don't show it again
+      // on every fresh app launch.
+      if (localStorage.getItem(promptedKey) === "1") return true;
+    } catch {
+      /* ignore */
+    }
+    try {
       const until = Number(localStorage.getItem("pwa:updateSuppressUntil") || "0");
       if (until > Date.now()) return true;
     } catch {
       /* ignore */
     }
     return false;
-  }, [skipUpdateOnce]);
+  }, [skipUpdateOnce, promptedKey]);
 
   const maybeShowPrompt = useCallback(() => {
     if (shouldSuppress()) return;
     const now = Date.now();
     if (now - lastUpdateCheck.current < 30000) return;
     lastUpdateCheck.current = now;
+    try {
+      localStorage.setItem(promptedKey, "1");
+    } catch {
+      /* ignore */
+    }
     setShow(true);
-  }, [shouldSuppress]);
+  }, [shouldSuppress, promptedKey]);
 
   const { needRefresh, updateServiceWorker } = useRegisterSW({
     immediate: true,
     onRegisteredSW(_swUrl, registration) {
-      if (registration?.waiting) {
-        maybeShowPrompt();
-      }
+      // Don't show just because `waiting` exists at startup; that leads to
+      // “new version available” every time the app opens if the user previously
+      // chose not to update.
+      // We only show when the register hook signals an actual refresh is needed.
+      void registration;
     },
     onRegisterError(error: unknown) {
       // eslint-disable-next-line no-console
@@ -64,6 +79,12 @@ export default function SWUpdatePrompt() {
     const onControllerChange = () => {
       setShow(false);
       setSuppressionWindow(15000);
+      try {
+        // A new SW took control; allow prompting again for future updates.
+        localStorage.removeItem(promptedKey);
+      } catch {
+        /* ignore */
+      }
       if (updatingRef.current) {
         window.location.reload();
       }

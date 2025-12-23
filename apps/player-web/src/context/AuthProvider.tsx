@@ -60,6 +60,13 @@ type AuthContextType = {
    * avoid making protected calls when the user is not logged in.
    */
   refreshSession: (opts?: { silent?: boolean }) => Promise<void>;
+
+  /**
+   * Ensure the browser has a fresh access token (if a refresh token exists).
+   * Safe to call even when the user is currently null.
+   * Returns true if refresh succeeded (or a cached session is available), false otherwise.
+   */
+  ensureSession: (opts?: { silent?: boolean; reason?: string }) => Promise<boolean>;
 };
 
 const SESSION_CACHE_KEY = "auth:session";
@@ -396,6 +403,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
+  const ensureSession = useCallback(
+    async (opts?: { silent?: boolean; reason?: string }) => {
+      const silent = !!opts?.silent;
+      if (!silent) setLoading(true);
+      try {
+        const outcome = await runRefresh({ reason: opts?.reason ?? "ensure" });
+        if (outcome === "success") {
+          const fetched = await fetchMe();
+          if (!fetched) hydrateUserFromCache(OFFLINE_CACHE_GRACE_MS);
+          return true;
+        }
+        if (outcome === "unauthorized") {
+          handleUnauthorized();
+          return false;
+        }
+        // Network / transient failure: fall back to cached session if present.
+        const fallbackUser = readSessionCache(OFFLINE_CACHE_GRACE_MS);
+        if (fallbackUser) {
+          setUser((prev) => prev ?? fallbackUser);
+          persistSessionCache(fallbackUser);
+          return true;
+        }
+        return false;
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [runRefresh, fetchMe, hydrateUserFromCache, handleUnauthorized]
+  );
+
   const performScheduledRefresh = useCallback(async () => {
     if (!user) return;
     const last = getLastRefreshTimestamp();
@@ -603,6 +640,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let refreshPromise: Promise<RefreshOutcome> | null = null;
     const normalizedApi = apiBase.replace(/\/$/, "");
 
+    const isApiLikePath = (pathname: string) => {
+      return (
+        pathname === "/me" ||
+        pathname.startsWith("/auth/") ||
+        pathname.startsWith("/scores") ||
+        pathname.startsWith("/experience") ||
+        pathname.startsWith("/ratings") ||
+        pathname.startsWith("/followers") ||
+        pathname.startsWith("/users") ||
+        pathname.startsWith("/presence") ||
+        pathname.startsWith("/api/")
+      );
+    };
+
     const shouldBypass = (url: string) => {
       return (
         url.includes("/auth/refresh") ||
@@ -613,7 +664,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const shouldMonitor = (url: string) => {
-      return normalizedApi && url.startsWith(normalizedApi);
+      try {
+        const parsed = new URL(url, window.location.origin);
+        if (normalizedApi) {
+          try {
+            const apiUrl = new URL(normalizedApi);
+            if (parsed.origin === apiUrl.origin) return isApiLikePath(parsed.pathname);
+          } catch {
+            // ignore
+          }
+        }
+        // Support same-origin / proxied APIs.
+        if (parsed.origin === window.location.origin) return isApiLikePath(parsed.pathname);
+        return false;
+      } catch {
+        return false;
+      }
+    };
+
+    const shouldAttemptRefresh = () => {
+      if (user) return true;
+      // If we have a cached session, there's a good chance a refresh token cookie exists.
+      const cached = readSessionCache(OFFLINE_CACHE_GRACE_MS);
+      return !!cached;
     };
 
     const ensureRefreshed = async () => {
@@ -639,11 +712,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (
         response.status !== 401 ||
-        !user ||
         !shouldMonitor(request.url) ||
         shouldBypass(request.url) ||
         request.headers.get("x-auth-retry") === "1"
       ) {
+        return response;
+      }
+
+      if (!shouldAttemptRefresh()) {
         return response;
       }
 
@@ -669,8 +745,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // -------------------------------------------------------------------------------
 
   const value = useMemo<AuthContextType>(
-    () => ({ user, loading, signUp, signIn, signOut, refreshSession }),
-    [user, loading, signUp, signIn, signOut, refreshSession]
+    () => ({ user, loading, signUp, signIn, signOut, refreshSession, ensureSession }),
+    [user, loading, signUp, signIn, signOut, refreshSession, ensureSession]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

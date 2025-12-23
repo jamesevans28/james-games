@@ -1,5 +1,4 @@
 import { Outlet, useLocation } from "react-router-dom";
-import AuthBanner from "../AuthBanner";
 import Header from "./Header";
 
 export default function RootLayout() {
@@ -18,7 +17,6 @@ export default function RootLayout() {
   return (
     <div className="min-h-screen w-full bg-white text-black font-sans">
       {!hideGlobalHeader && <Header />}
-      {!hideGlobalHeader && <AuthBanner />}
       <main className="w-full h-full">
         <Outlet />
       </main>
