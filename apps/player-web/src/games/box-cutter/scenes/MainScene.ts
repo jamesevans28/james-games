@@ -513,18 +513,21 @@ export class MainScene extends Phaser.Scene {
     const minY = this.state.playBounds.y + e.radius;
     const maxY = this.state.playBounds.y + this.state.playBounds.height - e.radius;
 
+    // Sub-step to avoid tunneling through thin (cell-sized) live walls.
     const stepX = e.velocityX * deltaSeconds;
     const stepY = e.velocityY * deltaSeconds;
-
-    // Sub-step to avoid tunneling through thin (cell-sized) live walls.
     const maxStep = Math.max(Math.abs(stepX), Math.abs(stepY));
     const subSteps = Math.max(1, Math.min(30, Math.ceil(maxStep / (this.grid.cellSize * 0.75))));
-    const dx = stepX / subSteps;
-    const dy = stepY / subSteps;
+    const dt = deltaSeconds / subSteps;
 
     for (let s = 0; s < subSteps; s++) {
       // Live wall hit is instant game over.
       if (this.circleOverlapsMask(this.wallMask, e.x, e.y, e.radius)) return true;
+
+      // IMPORTANT: recompute per-substep deltas from the *current* velocity.
+      // On low-FPS/mobile, bounces can occur mid-frame; using a fixed dx/dy can pin the ball to walls.
+      const dx = e.velocityX * dt;
+      const dy = e.velocityY * dt;
 
       // X axis collision against bounds + filled.
       let nextX = e.x + dx;
