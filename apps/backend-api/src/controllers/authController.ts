@@ -22,6 +22,16 @@ export async function signup(req: Request, res: Response) {
     const tokens = signinResp.AuthenticationResult;
     if (!tokens?.IdToken || !tokens?.AccessToken)
       return res.status(401).json({ error: "Authentication failed" });
+
+    // Prefer Cognito's canonical username for subsequent refresh flows.
+    // This avoids SECRET_HASH mismatch when users sign in with an alias (e.g. email).
+    let canonicalUsername = username;
+    try {
+      const payload: any = await verifyIdToken(tokens.IdToken);
+      canonicalUsername = payload?.["cognito:username"] || canonicalUsername;
+    } catch {
+      // If token verification fails here, fall back to the provided username.
+    }
     setSessionCookies(
       res,
       {
@@ -30,7 +40,7 @@ export async function signup(req: Request, res: Response) {
         refresh_token: tokens.RefreshToken,
         expires_in: tokens.ExpiresIn,
       },
-      username
+      canonicalUsername
     );
     try {
       const payload: any = await verifyIdToken(tokens.IdToken);
@@ -61,6 +71,15 @@ export async function signin(req: Request, res: Response) {
     const tokens = signinResp.AuthenticationResult;
     if (!tokens?.IdToken || !tokens?.AccessToken)
       return res.status(401).json({ error: "Authentication failed" });
+
+    // Prefer Cognito's canonical username for subsequent refresh flows.
+    let canonicalUsername = username;
+    try {
+      const payload: any = await verifyIdToken(tokens.IdToken);
+      canonicalUsername = payload?.["cognito:username"] || canonicalUsername;
+    } catch {
+      // If token verification fails here, fall back to the provided username.
+    }
     setSessionCookies(
       res,
       {
@@ -69,7 +88,7 @@ export async function signin(req: Request, res: Response) {
         refresh_token: tokens.RefreshToken,
         expires_in: tokens.ExpiresIn,
       },
-      username
+      canonicalUsername
     );
     res.json({ ok: true });
   } catch (e: any) {
