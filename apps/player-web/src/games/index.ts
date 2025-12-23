@@ -234,4 +234,20 @@ export const games: GameMeta[] = [
     },
     betaOnly: true,
   },
+  {
+    id: "box-cutter",
+    title: "Box Cutter",
+    description: "Draw lines to capture territory while avoiding the bouncing enemy ball.",
+    objective: "Capture 75% of the screen by drawing enclosed areas without getting hit.",
+    controls: "Use the on-screen directional pad to move your sparkly ball.",
+    thumbnail: "/assets/box-cutter/thumbnail.svg",
+    xpMultiplier: 0.4,
+    createdAt: "2025-12-23T00:00:00.000Z",
+    updatedAt: "2025-12-23T00:00:00.000Z",
+    load: async () => {
+      const mod = await import("./box-cutter/index");
+      return { mount: mod.mount };
+    },
+    betaOnly: true,
+  },
 ];

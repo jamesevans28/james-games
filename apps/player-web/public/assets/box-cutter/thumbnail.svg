@@ -1,0 +1,29 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="200" height="200" fill="#000000"/>
+  
+  <!-- Outer border -->
+  <rect x="20" y="20" width="160" height="160" fill="none" stroke="#ffffff" stroke-width="4"/>
+  
+  <!-- Inner filled area (showing progress) -->
+  <rect x="20" y="20" width="80" height="80" fill="#444444" opacity="0.7"/>
+  
+  <!-- Drawing line (cyan) -->
+  <polyline points="20,100 60,140 100,140" fill="none" stroke="#00ffff" stroke-width="3"/>
+  
+  <!-- Player ball (sparkly cyan circle) -->
+  <circle cx="100" cy="140" r="8" fill="#00ffff">
+    <animate attributeName="opacity" values="1;0.5;1" dur="1s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- Enemy ball (red) -->
+  <circle cx="120" cy="60" r="10" fill="#ff0000"/>
+  
+  <!-- Sparkle effects -->
+  <circle cx="95" cy="135" r="2" fill="#ffffff" opacity="0.8">
+    <animate attributeName="opacity" values="0;1;0" dur="0.8s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="105" cy="145" r="2" fill="#ffffff" opacity="0.8">
+    <animate attributeName="opacity" values="0;1;0" dur="0.8s" begin="0.2s" repeatCount="indefinite"/>
+  </circle>
+</svg>
