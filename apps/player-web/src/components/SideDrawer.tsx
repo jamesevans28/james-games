@@ -20,6 +20,9 @@ export default function SideDrawer({
   hasUnreadNotifications,
   onNotificationsOpen,
 }: Props) {
+  const buildLabel = import.meta.env.DEV
+    ? "local"
+    : import.meta.env.VITE_BUILD_NUMBER || "unknown";
   const { user } = useSession();
   const profilePath = user?.userId ? `/profile/${user.userId}` : "/profile";
   const linkClass =
@@ -307,6 +310,8 @@ export default function SideDrawer({
                 </Link>
               </div>
             )}
+
+            <div className="mt-3 text-[10px] text-gray-400 text-center">Build {buildLabel}</div>
           </div>
         </div>
       </div>
