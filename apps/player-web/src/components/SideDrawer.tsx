@@ -20,9 +20,7 @@ export default function SideDrawer({
   hasUnreadNotifications,
   onNotificationsOpen,
 }: Props) {
-  const buildLabel = import.meta.env.DEV
-    ? "local"
-    : import.meta.env.VITE_BUILD_NUMBER || "unknown";
+  const buildLabel = import.meta.env.DEV ? "local" : import.meta.env.VITE_BUILD_NUMBER || "unknown";
   const { user } = useSession();
   const profilePath = user?.userId ? `/profile/${user.userId}` : "/profile";
   const linkClass =

@@ -15,10 +15,10 @@ export const config = {
   appBaseUrl: process.env.APP_BASE_URL || "http://localhost:8787",
   region: process.env.COGNITO_REGION || process.env.AWS_REGION || "ap-southeast-2",
   cognito: {
-    userPoolId: process.env.COGNITO_USER_POOL_ID || "",
-    clientId: process.env.COGNITO_CLIENT_ID || "",
-    clientSecret: process.env.COGNITO_CLIENT_SECRET || "",
-    domain: process.env.COGNITO_DOMAIN || "",
+    userPoolId: (process.env.COGNITO_USER_POOL_ID || "").trim(),
+    clientId: (process.env.COGNITO_CLIENT_ID || "").trim(),
+    clientSecret: (process.env.COGNITO_CLIENT_SECRET || "").trim(),
+    domain: (process.env.COGNITO_DOMAIN || "").trim(),
   },
   tables: {
     // SCORES_TABLE allows switching to the new table name (e.g. games4james-scores)
