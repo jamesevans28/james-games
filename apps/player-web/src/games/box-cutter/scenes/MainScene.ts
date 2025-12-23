@@ -232,7 +232,8 @@ export class MainScene extends Phaser.Scene {
       return;
     }
 
-    const deltaSeconds = delta / 1000;
+    // Clamp delta to keep physics stable on mobile (prevents tunneling/sticking after a hitch).
+    const deltaSeconds = Math.min(delta / 1000, 1 / 30);
 
     // Update player on grid
     this.updatePlayer(deltaSeconds);

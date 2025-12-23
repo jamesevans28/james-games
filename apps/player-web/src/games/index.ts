@@ -241,7 +241,7 @@ export const games: GameMeta[] = [
     objective: "Capture 75% of the screen by drawing enclosed areas without getting hit.",
     controls: "Use the on-screen directional pad to move your sparkly ball.",
     thumbnail: "/assets/box-cutter/thumbnail.svg",
-    xpMultiplier: 0.4,
+    xpMultiplier: 0.1,
     createdAt: "2025-12-23T00:00:00.000Z",
     updatedAt: "2025-12-23T00:00:00.000Z",
     load: async () => {
