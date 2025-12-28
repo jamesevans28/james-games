@@ -1,7 +1,10 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { getRandomCategory, getRandomWord, type Category } from "./data";
-import { createOnScreenKeyboard, type OnScreenKeyboardInstance } from "../../game/ui/onScreenKeyboard";
+import {
+  createOnScreenKeyboard,
+  type OnScreenKeyboardInstance,
+} from "../../game/ui/onScreenKeyboard";
 
 const PLAY_WIDTH = 540;
 const PLAY_HEIGHT = 960;
@@ -986,7 +989,10 @@ export default class WordRushGameScene extends Phaser.Scene {
             this.updateInputDisplay();
           }
         } else if (key === "SPACE") {
-          if (this.currentInput.length > 0 && this.currentInput[this.currentInput.length - 1] !== " ") {
+          if (
+            this.currentInput.length > 0 &&
+            this.currentInput[this.currentInput.length - 1] !== " "
+          ) {
             this.currentInput += " ";
             this.updateInputDisplay();
           }

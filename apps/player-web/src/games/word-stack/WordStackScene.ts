@@ -1,6 +1,9 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
-import { createOnScreenKeyboard, type OnScreenKeyboardInstance } from "../../game/ui/onScreenKeyboard";
+import {
+  createOnScreenKeyboard,
+  type OnScreenKeyboardInstance,
+} from "../../game/ui/onScreenKeyboard";
 import { getFiveLetterWordSet } from "../../game/words/dictionary";
 import { SCRABBLE_LETTER_SCORES, scoreScrabbleWord } from "../../game/words/scrabble";
 
@@ -144,7 +147,11 @@ export default class WordStackScene extends Phaser.Scene {
   }
 
   private updateAvailableWordsText() {
-    if (this.gamePhase !== "play" || this.offeredTiles.length === 0 || this.currentWord.length !== 5) {
+    if (
+      this.gamePhase !== "play" ||
+      this.offeredTiles.length === 0 ||
+      this.currentWord.length !== 5
+    ) {
       this.availableWordsText.setVisible(false);
       return;
     }
@@ -203,14 +210,12 @@ export default class WordStackScene extends Phaser.Scene {
       .setOrigin(0, 0);
 
     this.turnsText = this.add
-      .text(PLAY_WIDTH - 15, 85, `Turns: 0/${MAX_TURNS}`,
-        {
-          fontFamily: "Arial, sans-serif",
-          fontSize: "18px",
-          fontStyle: "bold",
-          color: "#fbbf24",
-        }
-      )
+      .text(PLAY_WIDTH - 15, 85, `Turns: 0/${MAX_TURNS}`, {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "18px",
+        fontStyle: "bold",
+        color: "#fbbf24",
+      })
       .setOrigin(1, 0);
 
     this.statusText = this.add
@@ -511,7 +516,13 @@ export default class WordStackScene extends Phaser.Scene {
         container.setSize(tileSizeCurrent, tileSizeCurrent);
         container.setData("ws:current", true);
         this.currentWordContainer.add(container);
-        this.currentWordTiles.push({ index: i, container, tile: bg, text: txt, scoreText: scoreTxt });
+        this.currentWordTiles.push({
+          index: i,
+          container,
+          tile: bg,
+          text: txt,
+          scoreText: scoreTxt,
+        });
       }
     }
 
@@ -604,7 +615,9 @@ export default class WordStackScene extends Phaser.Scene {
       });
 
       const unconstrainedCandidates = CONSONANTS.filter((l) => !exclude.has(l));
-      const c = pickRandom(constrainedCandidates.length > 0 ? constrainedCandidates : unconstrainedCandidates);
+      const c = pickRandom(
+        constrainedCandidates.length > 0 ? constrainedCandidates : unconstrainedCandidates
+      );
 
       exclude.add(c);
       offers.push({ type: "consonant", letter: c });
@@ -620,7 +633,11 @@ export default class WordStackScene extends Phaser.Scene {
     const vowelsY = PLAY_HEIGHT - 210;
     const consonantsY = PLAY_HEIGHT - 120;
 
-    const createOfferTile = (offer: { type: OfferedLetterType; letter: string }, x: number, y: number) => {
+    const createOfferTile = (
+      offer: { type: OfferedLetterType; letter: string },
+      x: number,
+      y: number
+    ) => {
       const container = this.add.container(x, y);
       const fill = offer.type === "vowel" ? 0x34d399 : 0x60a5fa;
 
@@ -781,7 +798,9 @@ export default class WordStackScene extends Phaser.Scene {
     });
 
     const unconstrainedCandidates = pool.filter((l) => !exclude.has(l));
-    offered.letter = pickRandom(constrainedCandidates.length > 0 ? constrainedCandidates : unconstrainedCandidates);
+    offered.letter = pickRandom(
+      constrainedCandidates.length > 0 ? constrainedCandidates : unconstrainedCandidates
+    );
     offered.text.setText(offered.letter);
     offered.scoreText.setText(String(SCRABBLE_LETTER_SCORES[offered.letter] ?? 0));
 
