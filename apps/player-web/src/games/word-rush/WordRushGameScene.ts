@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { getRandomCategory, getRandomWord, type Category } from "./data";
+import { createOnScreenKeyboard, type OnScreenKeyboardInstance } from "../../game/ui/onScreenKeyboard";
 
 const PLAY_WIDTH = 540;
 const PLAY_HEIGHT = 960;
@@ -29,7 +30,7 @@ export default class WordRushGameScene extends Phaser.Scene {
   private giveUpButton!: Phaser.GameObjects.Container;
   private buyLetterButton!: Phaser.GameObjects.Container;
   private submitButton!: Phaser.GameObjects.Container;
-  private onScreenKeyboard!: Phaser.GameObjects.Container;
+  private onScreenKeyboard?: OnScreenKeyboardInstance;
   private keyboardKeys: Map<string, Phaser.GameObjects.Container> = new Map();
   private tiles: TileData[] = [];
   private currentInput: string = "";
@@ -958,173 +959,53 @@ export default class WordRushGameScene extends Phaser.Scene {
   }
 
   private createOnScreenKeyboard() {
-    // Create Wordle-style on-screen keyboard at the bottom using full width
     const keyboardY = PLAY_HEIGHT - 242;
-    this.onScreenKeyboard = this.add.container(PLAY_WIDTH / 2, keyboardY);
+
+    this.onScreenKeyboard?.destroy();
     this.keyboardKeys.clear();
 
-    const sidePadding = 8; // Padding from screen edges
-    const availableWidth = PLAY_WIDTH - sidePadding * 2;
-    const keySpacing = 4; // Spacing between keys
-    const keyHeight = 56;
+    this.onScreenKeyboard = createOnScreenKeyboard(this, {
+      centerX: PLAY_WIDTH / 2,
+      topY: keyboardY,
+      enabled: () => this.gameActive,
+      getKeyFill: (letter) => {
+        const isSelected = this.selectedLetters.includes(letter);
+        const isBought = this.boughtLetters.includes(letter);
+        if (isBought) return 0x10b981;
+        if (isSelected) return 0x3b82f6;
+        return 0x818384;
+      },
+      onKey: (key) => {
+        const now = Date.now();
+        if (now - this.lastKeyPressTime < this.KEY_DEBOUNCE_MS) return;
+        this.lastKeyPressTime = now;
 
-    // QWERTY layout rows
-    const rows = [
-      ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
-      ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
-      ["Z", "X", "C", "V", "B", "N", "M"],
-      ["SPACE", "BACKSPACE"],
-    ];
-
-    rows.forEach((row, rowIndex) => {
-      // Find the longest row to determine base key width
-      const maxRowKeys = Math.max(
-        ...rows.map((r) => {
-          // Count regular keys (SPACE and BACKSPACE don't affect the base width calculation)
-          return r.filter((k) => k.length === 1).length;
-        })
-      );
-
-      // Calculate key width based on the longest row (10 keys in top row)
-      const totalSpacing = (maxRowKeys - 1) * keySpacing;
-      const keyWidth = (availableWidth - totalSpacing) / maxRowKeys;
-
-      // Calculate this row's width
-      let rowWidth = 0;
-      row.forEach((key) => {
         if (key === "BACKSPACE") {
-          rowWidth += keyWidth * 2 + keySpacing; // 2x width
-        } else if (key === "SPACE") {
-          rowWidth += keyWidth * 5 + keySpacing; // 5x width
-        } else {
-          rowWidth += keyWidth + keySpacing;
-        }
-      });
-      rowWidth -= keySpacing; // Remove last spacing
-
-      let startX = -rowWidth / 2;
-      const rowY = rowIndex * (keyHeight + keySpacing);
-
-      row.forEach((key) => {
-        // Regular keys use base width, special keys are larger
-        let width = keyWidth;
-        if (key === "BACKSPACE") {
-          width = keyWidth * 2;
-        } else if (key === "SPACE") {
-          width = keyWidth * 5;
-        }
-
-        // Create key container
-        const keyContainer = this.add.container(startX + width / 2, rowY);
-
-        // Key background
-        const bg = this.add.rectangle(0, 0, width, keyHeight, 0x818384);
-        bg.setStrokeStyle(1, 0x565758);
-
-        // Key label
-        let label = key;
-        let fontSize = "20px";
-        if (key === "BACKSPACE") {
-          label = "⌫";
-          fontSize = "26px";
-        } else if (key === "SPACE") {
-          label = "";
-          fontSize = "16px";
-        }
-
-        const keyText = this.add
-          .text(0, 0, label, {
-            fontFamily: "Arial, sans-serif",
-            fontSize: fontSize,
-            fontStyle: "bold",
-            color: "#ffffff",
-          })
-          .setOrigin(0.5);
-
-        keyContainer.add([bg, keyText]);
-        keyContainer.setSize(width, keyHeight);
-        keyContainer.setInteractive({ useHandCursor: true });
-
-        // Store letter keys for highlighting
-        if (key.length === 1) {
-          this.keyboardKeys.set(key, keyContainer);
-        }
-
-        // Handle key press with debouncing
-        keyContainer.on("pointerdown", () => {
-          if (!this.gameActive) return;
-
-          const now = Date.now();
-          if (now - this.lastKeyPressTime < this.KEY_DEBOUNCE_MS) return;
-          this.lastKeyPressTime = now;
-
-          // Update input immediately (no delay)
-          if (key === "BACKSPACE") {
-            if (this.currentInput.length > 0) {
-              this.currentInput = this.currentInput.slice(0, -1);
-              this.updateInputDisplay();
-            }
-          } else if (key === "SPACE") {
-            // Prevent double spaces
-            if (
-              this.currentInput.length > 0 &&
-              this.currentInput[this.currentInput.length - 1] !== " "
-            ) {
-              this.currentInput += " ";
-              this.updateInputDisplay();
-            }
-          } else {
-            // Regular letter
-            this.currentInput += key;
+          if (this.currentInput.length > 0) {
+            this.currentInput = this.currentInput.slice(0, -1);
             this.updateInputDisplay();
           }
-
-          // Play sound asynchronously (non-blocking)
-          this.time.delayedCall(0, () => this.playSelectSound());
-        });
-
-        // Hover effects
-        keyContainer.on("pointerover", () => {
-          bg.setFillStyle(0x565758);
-        });
-
-        keyContainer.on("pointerout", () => {
-          const isSelected = this.selectedLetters.includes(key);
-          const isBought = this.boughtLetters.includes(key);
-
-          if (isBought) {
-            bg.setFillStyle(0x10b981); // Green for bought letters
-          } else if (isSelected) {
-            bg.setFillStyle(0x3b82f6); // Blue for selected letters
-          } else {
-            bg.setFillStyle(0x818384); // Default gray
+        } else if (key === "SPACE") {
+          if (this.currentInput.length > 0 && this.currentInput[this.currentInput.length - 1] !== " ") {
+            this.currentInput += " ";
+            this.updateInputDisplay();
           }
-        });
+        } else if (/^[A-Z]$/.test(key)) {
+          this.currentInput += key;
+          this.updateInputDisplay();
+        }
 
-        this.onScreenKeyboard.add(keyContainer);
-        startX += width + keySpacing;
-      });
+        this.time.delayedCall(0, () => this.playSelectSound());
+      },
+      showSpace: true,
+      showBackspace: true,
     });
+
+    this.keyboardKeys = this.onScreenKeyboard.letterKeys;
   }
 
   private highlightSelectedKeys() {
-    // Highlight keys that match selected letters (blue)
-    this.selectedLetters.forEach((letter) => {
-      const keyContainer = this.keyboardKeys.get(letter);
-      if (keyContainer) {
-        const bg = keyContainer.getAt(0) as Phaser.GameObjects.Rectangle;
-        bg.setFillStyle(0x3b82f6); // Blue highlight for selected
-      }
-    });
-
-    // Highlight bought letters (green) - these override selected letters
-    this.boughtLetters.forEach((letter) => {
-      const keyContainer = this.keyboardKeys.get(letter);
-      if (keyContainer) {
-        const bg = keyContainer.getAt(0) as Phaser.GameObjects.Rectangle;
-        bg.setFillStyle(0x10b981); // Green highlight for bought
-      }
-    });
+    this.onScreenKeyboard?.refresh();
   }
 
   private playErrorSound() {

@@ -19,5 +19,8 @@
     "backend:start": "npm run start --workspace apps/backend-api",
     "admin:dev": "npm run dev --workspace apps/admin-web",
     "admin:build": "npm run build --workspace apps/admin-web"
+  },
+  "devDependencies": {
+    "word-list": "^4.1.0"
   }
 }

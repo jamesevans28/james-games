@@ -15,6 +15,22 @@ export type GameMeta = {
 
 export const games: GameMeta[] = [
   {
+    id: "word-stack",
+    title: "Word Stack",
+    description:
+      "Start with a 5-letter word, then drag offered letters to create new valid words. Six turns max.",
+    objective: "Build a stack of valid 5-letter words using the offered letters.",
+    controls: "Type your first word, then drag a letter tile onto the word.",
+    thumbnail: "/assets/word-stack/thumbnail.svg",
+    xpMultiplier: 1.0,
+    createdAt: "2025-12-26T00:00:00.000Z",
+    updatedAt: "2025-12-26T00:00:00.000Z",
+    load: async () => {
+      const mod = await import("./word-stack/index");
+      return { mount: mod.mount };
+    },
+  },
+  {
     id: "reflex-ring",
     title: "Reflex Ring",
     description: "Tap precisely as the arrow hits the highlighted segment. Speeds up over time.",
@@ -241,7 +257,7 @@ export const games: GameMeta[] = [
     objective: "Capture 75% of the screen by drawing enclosed areas without getting hit.",
     controls: "Use the on-screen directional pad to move your sparkly ball.",
     thumbnail: "/assets/box-cutter/thumbnail.svg",
-    xpMultiplier: 0.1,
+    xpMultiplier: 0.03,
     createdAt: "2025-12-23T00:00:00.000Z",
     updatedAt: "2025-12-23T00:00:00.000Z",
     load: async () => {
