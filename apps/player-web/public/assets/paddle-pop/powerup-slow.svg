@@ -1,0 +1,37 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="iceA" x1="18" y1="6" x2="50" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E0F2FE"/>
+      <stop offset="0.55" stop-color="#93C5FD"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="iceB" x1="18" y1="10" x2="44" y2="50" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#BFDBFE" stop-opacity="0.35"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="2.2" result="b"/>
+      <feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.75 0" result="g"/>
+      <feMerge>
+        <feMergeNode in="g"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- outer glow -->
+  <path filter="url(#glow)" d="M32 6 L46 18 L44 36 L32 58 L20 36 L18 18 Z" fill="url(#iceA)"/>
+
+  <!-- facets -->
+  <path d="M32 6 L39.5 20 L32 26 L24.5 20 Z" fill="url(#iceB)"/>
+  <path d="M18 18 L24.5 20 L20 36 L14 28 Z" fill="#BFDBFE" fill-opacity="0.55"/>
+  <path d="M46 18 L50 28 L44 36 L39.5 20 Z" fill="#BFDBFE" fill-opacity="0.45"/>
+  <path d="M24.5 20 L32 26 L32 58 L20 36 Z" fill="#93C5FD" fill-opacity="0.55"/>
+  <path d="M39.5 20 L44 36 L32 58 L32 26 Z" fill="#60A5FA" fill-opacity="0.50"/>
+
+  <!-- crisp outline -->
+  <path d="M32 6 L46 18 L44 36 L32 58 L20 36 L18 18 Z" stroke="#E0F2FE" stroke-width="2.2" stroke-linejoin="round"/>
+
+  <!-- highlight cut -->
+  <path d="M26.5 13.5 L31 9.8 L29.5 18.5 L25.2 20.2 Z" fill="#FFFFFF" fill-opacity="0.65"/>
+</svg>

@@ -26,17 +26,20 @@ interface ActivePowerUps {
 
 export default class PaddlePopScene extends Phaser.Scene {
   private paddle!: Phaser.Physics.Arcade.Image;
-  private ball!: Phaser.Physics.Arcade.Image;
   private scoreText!: Phaser.GameObjects.Text;
+  private bestText!: Phaser.GameObjects.Text;
+  private balls!: Phaser.Physics.Arcade.Group;
 
   private score: number = 0;
+  private bestScore: number = 0;
   private activePowerUps: ActivePowerUps = {};
   private lastSpeedInc: number = 0;
   private lastBonusSpawn: number = 0;
   private movingLeft = false;
   private movingRight = false;
   private lastObstacleSpawn = 0;
-  private ballSpeedScale = 1; // affected by slow power-up
+  private slowMultiplier = 1; // affected by slow power-up
+  private currentNominalSpeed = BALL_BASE_SPEED;
   private lastPowerSpawn = 0;
   private gameActive = false;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -45,12 +48,20 @@ export default class PaddlePopScene extends Phaser.Scene {
   private bottomFlames?: any;
   private bonusCount = 0;
   private fireballInterval = 4000; // starts at 4s, decreases over time
+  private splitEvent?: Phaser.Time.TimerEvent;
+  private splitWarningEvent?: Phaser.Time.TimerEvent;
+  private ballLastPaddleHit = new Map<Phaser.Physics.Arcade.Image, number>();
+  private ballLastPaddleScore = new Map<Phaser.Physics.Arcade.Image, number>();
+  private ballPrevPos = new Map<Phaser.Physics.Arcade.Image, { x: number; y: number }>();
+  private activeBonusDiscs = new Set<Phaser.GameObjects.Image>();
 
   constructor() {
     super("PaddlePop");
   }
 
   preload() {
+    this.load.svg("paddle-pop-bg", "/assets/paddle-pop/background.svg", { scale: 1 });
+    this.load.svg("paddle-pop-pu-slow", "/assets/paddle-pop/powerup-slow.svg", { scale: 1 });
     this.createArrowTexture("uiLeft", true);
     this.createArrowTexture("uiRight", false);
   }
@@ -60,40 +71,65 @@ export default class PaddlePopScene extends Phaser.Scene {
     this.createBorder();
     this.createUI();
     this.createPaddle();
-    this.createBall();
+    this.createBalls();
     this.createControls();
     this.createBottomFlames();
     this.cursors = this.input.keyboard!.createCursorKeys();
     // this.obstacles = this.physics.add.group();
 
-    // Collisions
+    // Paddle bounce: use a collider for reliable contact detection, but gate it so we only
+    // process hits when the ball is moving downward into the paddle.
     this.physics.add.collider(
-      this.ball,
+      this.balls,
       this.paddle as any,
       this.onBallPaddleHit as any,
-      undefined,
+      (ballObj: any) => {
+        const ball = ballObj as Phaser.Physics.Arcade.Image;
+        const body = ball.body as Phaser.Physics.Arcade.Body | undefined;
+        return !!body && body.velocity.y > 0;
+      },
       this
     );
-    this.physics.world.setBoundsCollision(true, true, true, false); // no bottom bound (miss condition)
+    // Explicitly set world bounds to match our fixed playfield (needed for reliable side bounces)
+    this.physics.world.setBounds(0, 0, PLAY_WIDTH, PLAY_HEIGHT, true, true, true, false);
 
     // Countdown start
     this.startCountdown().then(() => {
       this.gameActive = true;
-      this.launchBall();
+      const now = this.time.now;
+      this.lastSpeedInc = now;
+      this.lastBonusSpawn = now;
+      this.lastObstacleSpawn = now;
+      this.lastPowerSpawn = now;
+
+      const splitIntervalMs = 35000;
+      const warningMs = 3000;
+
+      this.splitWarningEvent = this.time.addEvent({
+        delay: splitIntervalMs - warningMs,
+        loop: true,
+        callback: () => {
+          if (!this.gameActive) return;
+          this.cameras.main.shake(warningMs, 0.006);
+        },
+        callbackScope: this,
+      });
+
+      this.splitEvent = this.time.addEvent({
+        delay: splitIntervalMs,
+        loop: true,
+        callback: this.splitOneBallIntoThree,
+        callbackScope: this,
+      });
+      this.launchInitialBall();
     });
   }
 
   private createBackground() {
-    const g = this.add.graphics();
-    g.fillStyle(0x1f2937, 1);
-    g.fillRect(0, 0, PLAY_WIDTH, PLAY_HEIGHT);
-    // subtle pattern
-    g.lineStyle(1, 0x243041, 0.4);
-    for (let y = 0; y < PLAY_HEIGHT; y += 48) {
-      for (let x = 0; x < PLAY_WIDTH; x += 48) {
-        g.strokeRect(x + 8, y + 8, 32, 32);
-      }
-    }
+    this.add
+      .image(PLAY_WIDTH / 2, PLAY_HEIGHT / 2, "paddle-pop-bg")
+      .setDisplaySize(PLAY_WIDTH, PLAY_HEIGHT)
+      .setDepth(-100);
   }
 
   private createBorder() {
@@ -117,6 +153,7 @@ export default class PaddlePopScene extends Phaser.Scene {
   }
 
   private createUI() {
+    this.bestScore = Number(localStorage.getItem("paddle-pop-best") || 0) || 0;
     this.scoreText = this.add
       .text(270, 930, "Score: 0", {
         fontFamily: "Fredoka, sans-serif",
@@ -124,6 +161,15 @@ export default class PaddlePopScene extends Phaser.Scene {
         color: "#ffffff",
       })
       .setOrigin(0.5, 1);
+
+    this.bestText = this.add
+      .text(270, 958, `High: ${this.bestScore}`, {
+        fontFamily: "Fredoka, sans-serif",
+        fontSize: "18px",
+        color: "#ffffff",
+      })
+      .setOrigin(0.5, 1)
+      .setAlpha(0.85);
   }
 
   private createPaddle() {
@@ -147,24 +193,49 @@ export default class PaddlePopScene extends Phaser.Scene {
     }
     this.paddle = this.physics.add.image(PLAY_WIDTH / 2, PADDLE_Y, key);
     this.paddle.setImmovable(true);
-    this.paddle.setPushable(false);
-    this.paddle.setCollideWorldBounds(true);
-    (this.paddle.body as Phaser.Physics.Arcade.Body).allowGravity = false;
+    const body = this.paddle.body as Phaser.Physics.Arcade.Body;
+    body.allowGravity = false;
+    body.immovable = true;
+    body.setSize(this.paddle.displayWidth, this.paddle.displayHeight, true);
   }
 
-  private createBall() {
-    const g = this.add.graphics();
-    g.fillStyle(0x9ca3af, 1);
-    g.fillCircle(BALL_RADIUS, BALL_RADIUS, BALL_RADIUS);
-    g.lineStyle(2, 0xffffff, 0.6);
-    g.strokeCircle(BALL_RADIUS, BALL_RADIUS, BALL_RADIUS - 2);
-    g.generateTexture("marble", BALL_RADIUS * 2 + 2, BALL_RADIUS * 2 + 2);
-    g.destroy();
-    this.ball = this.physics.add
-      .image(PLAY_WIDTH / 2, PADDLE_Y - 60, "marble")
-      .setCircle(BALL_RADIUS);
-    this.ball.setBounce(1, 1);
-    this.ball.setCollideWorldBounds(true);
+  private createBalls() {
+    if (!this.textures.exists("marble")) {
+      const g = this.add.graphics();
+      g.fillStyle(0x9ca3af, 1);
+      g.fillCircle(BALL_RADIUS, BALL_RADIUS, BALL_RADIUS);
+      g.lineStyle(2, 0xffffff, 0.6);
+      g.strokeCircle(BALL_RADIUS, BALL_RADIUS, BALL_RADIUS - 2);
+      g.generateTexture("marble", BALL_RADIUS * 2 + 2, BALL_RADIUS * 2 + 2);
+      g.destroy();
+    }
+
+    this.balls = this.physics.add.group();
+    this.createBallAt(PLAY_WIDTH / 2, PADDLE_Y - 60, this.currentNominalSpeed);
+  }
+
+  private getActiveBalls(): Phaser.Physics.Arcade.Image[] {
+    return (this.balls.getChildren() as Phaser.Physics.Arcade.Image[]).filter((b) => b.active);
+  }
+
+  private getBallNominalSpeed(ball: Phaser.Physics.Arcade.Image): number {
+    const s = Number(ball.getData("nominalSpeed"));
+    return Number.isFinite(s) && s > 0 ? s : this.currentNominalSpeed;
+  }
+
+  private createBallAt(x: number, y: number, nominalSpeed: number) {
+    const ball = this.physics.add.image(x, y, "marble").setCircle(BALL_RADIUS);
+    ball.setBounce(1, 1);
+    ball.setCollideWorldBounds(true);
+    ball.setData("nominalSpeed", nominalSpeed);
+    const body = ball.body as Phaser.Physics.Arcade.Body;
+    body.onWorldBounds = true;
+    body.checkCollision.up = true;
+    body.checkCollision.left = true;
+    body.checkCollision.right = true;
+    body.checkCollision.down = true;
+    this.balls.add(ball);
+    return ball;
   }
 
   private createControls() {
@@ -240,11 +311,32 @@ export default class PaddlePopScene extends Phaser.Scene {
     this.paddle.x = Phaser.Math.Clamp(this.paddle.x + dir * speed * dt, half, PLAY_WIDTH - half);
   }
 
-  private launchBall() {
+  private launchBall(ball: Phaser.Physics.Arcade.Image) {
     const angle = Phaser.Math.FloatBetween(-Math.PI / 3, (-2 * Math.PI) / 3); // upward random
-    const vx = Math.cos(angle) * BALL_BASE_SPEED;
-    const vy = Math.sin(angle) * BALL_BASE_SPEED;
-    this.ball.setVelocity(vx, vy);
+    const desiredSpeed = Phaser.Math.Clamp(
+      this.getBallNominalSpeed(ball) * this.slowMultiplier,
+      BALL_BASE_SPEED * 0.5,
+      BALL_MAX_SPEED
+    );
+    const vx = Math.cos(angle) * desiredSpeed;
+    const vy = Math.sin(angle) * desiredSpeed;
+    ball.setVelocity(vx, vy);
+  }
+
+  private launchInitialBall() {
+    const balls = this.getActiveBalls();
+    if (!balls.length) return;
+    this.launchBall(balls[0]);
+  }
+
+  private addScore(delta: number) {
+    this.score += delta;
+    if (this.score > this.bestScore) {
+      this.bestScore = this.score;
+      localStorage.setItem("paddle-pop-best", String(this.bestScore));
+    }
+    this.scoreText.setText(`Score: ${this.score}`);
+    this.bestText.setText(`High: ${this.bestScore}`);
   }
 
   private startCountdown(): Promise<void> {
@@ -279,18 +371,53 @@ export default class PaddlePopScene extends Phaser.Scene {
     });
   }
 
+  private bounceBallOffPaddle(
+    ball: Phaser.Physics.Arcade.Image,
+    paddle: Phaser.Physics.Arcade.Image
+  ) {
+    if (!this.gameActive || !ball.active || !paddle.active) return;
+
+    const body = ball.body as Phaser.Physics.Arcade.Body | undefined;
+    if (!body) return;
+
+    // Force it upward no matter what.
+    const paddleTop = paddle.y - paddle.displayHeight / 2;
+    const desiredY = paddleTop - BALL_RADIUS - 2;
+    body.position.y = desiredY - body.height / 2;
+    ball.y = desiredY;
+
+    this.ballLastPaddleHit.set(ball, this.time.now);
+
+    const relativeRaw = (ball.x - paddle.x) / (paddle.displayWidth / 2); // -1..1
+    const relative = Phaser.Math.Clamp(relativeRaw, -1, 1);
+
+    const speed = Phaser.Math.Clamp(
+      this.getBallNominalSpeed(ball) * this.slowMultiplier,
+      BALL_BASE_SPEED * 0.5,
+      BALL_MAX_SPEED
+    );
+
+    const maxVx = speed * 0.85;
+    const vx = Phaser.Math.Clamp(relative * maxVx, -maxVx, maxVx);
+    const vy = -Math.max(speed * 0.45, Math.sqrt(Math.max(0, speed * speed - vx * vx)));
+    ball.setVelocity(vx, vy);
+
+    const lastScoreAt = this.ballLastPaddleScore.get(ball) || 0;
+    if (this.time.now - lastScoreAt > 120) {
+      this.ballLastPaddleScore.set(ball, this.time.now);
+      this.addScore(1);
+    }
+  }
+
   private onBallPaddleHit = (ballObj: any, paddleObj: any) => {
     const ball = ballObj as Phaser.Physics.Arcade.Image;
     const paddle = paddleObj as Phaser.Physics.Arcade.Image;
-    const relative = (ball.x - paddle.x) / (paddle.displayWidth / 2); // -1..1
-    const speed = (ball.body!.velocity as Phaser.Math.Vector2).length();
-    const angle = Phaser.Math.DegToRad(270 + relative * 60); // vary rebound angle
-    const newVx = Math.cos(angle) * speed;
-    const newVy = Math.sin(angle) * speed;
-    ball.setVelocity(newVx, newVy);
-    // Increment score
-    this.score += 1;
-    this.scoreText.setText(`Score: ${this.score}`);
+
+    const body = ball.body as Phaser.Physics.Arcade.Body | undefined;
+    if (!body) return;
+    if (body.velocity.y <= 0) return;
+
+    this.bounceBallOffPaddle(ball, paddle);
   };
 
   update(time: number, delta: number): void {
@@ -306,57 +433,136 @@ export default class PaddlePopScene extends Phaser.Scene {
       else if (right && !left) this.movePaddle(1, dt);
     }
 
-    // Speed increase over time
-    if (this.gameActive && time - this.lastSpeedInc > SPEED_INCREASE_INTERVAL) {
-      this.lastSpeedInc = time;
-      const v = this.ball.body!.velocity;
-      const currentSpeed = v.length();
-      const target = Math.min(currentSpeed + SPEED_INCREASE_AMOUNT, BALL_MAX_SPEED);
-      const factor = target / currentSpeed;
-      this.ball.setVelocity(v.x * factor, v.y * factor);
+    // Keep paddle locked to bottom line (defensive)
+    if (this.paddle?.active) {
+      this.paddle.y = PADDLE_Y;
+      const body = this.paddle.body as Phaser.Physics.Arcade.Body | undefined;
+      if (body) {
+        body.setVelocity(0, 0);
+        // Keep physics body in sync with visual size (important when scaling for big power-up)
+        body.setSize(this.paddle.displayWidth, this.paddle.displayHeight, true);
+      }
     }
 
-    // Keep ball speed consistent (respect power-up scale)
-    if (this.gameActive && this.ball.body) {
-      const v = this.ball.body.velocity;
-      const current = v.length();
-      const base = Phaser.Math.Clamp(current, BALL_BASE_SPEED * 0.6, BALL_MAX_SPEED);
-      const desired = Phaser.Math.Clamp(
-        base * this.ballSpeedScale,
-        BALL_BASE_SPEED * 0.5,
+    // Speed increase over time
+    if (
+      this.gameActive &&
+      !this.activePowerUps.slow &&
+      time - this.lastSpeedInc > SPEED_INCREASE_INTERVAL
+    ) {
+      this.lastSpeedInc = time;
+      this.currentNominalSpeed = Math.min(
+        this.currentNominalSpeed + SPEED_INCREASE_AMOUNT,
         BALL_MAX_SPEED
       );
-      const f = desired / (current || desired);
-      this.ball.setVelocity(v.x * f, v.y * f);
+      for (const ball of this.getActiveBalls()) {
+        ball.setData("nominalSpeed", this.currentNominalSpeed);
+      }
     }
 
-    // Ball fell off bottom -> end game (no auto-restart)
-    if (this.gameActive && this.ball.y > PLAY_HEIGHT) {
-      this.endGame();
-      return;
+    // Keep each ball speed consistent (respect slow multiplier)
+    if (this.gameActive) {
+      for (const ball of this.getActiveBalls()) {
+        // Skip normalization briefly after paddle hit to let bounce take effect
+        const lastHit = this.ballLastPaddleHit.get(ball) || 0;
+        if (time - lastHit < 100) continue;
+
+        const body = ball.body as Phaser.Physics.Arcade.Body | undefined;
+        if (!body) continue;
+        const v = body.velocity;
+        const current = v.length();
+        const desired = Phaser.Math.Clamp(
+          this.getBallNominalSpeed(ball) * this.slowMultiplier,
+          BALL_BASE_SPEED * 0.5,
+          BALL_MAX_SPEED
+        );
+        if (current < 1) {
+          ball.setVelocity(0, -desired);
+          continue;
+        }
+        const f = desired / current;
+        ball.setVelocity(v.x * f, v.y * f);
+      }
+    }
+
+    // Continuous collision check to prevent tunneling through the paddle at high speed.
+    // If a ball crosses the paddle top between frames, treat it as a paddle hit.
+    if (this.gameActive && this.paddle?.active) {
+      const paddle = this.paddle;
+      const paddleTop = paddle.y - paddle.displayHeight / 2;
+      const hitY = paddleTop - BALL_RADIUS - 1;
+      const halfW = paddle.displayWidth / 2;
+      for (const ball of this.getActiveBalls()) {
+        const body = ball.body as Phaser.Physics.Arcade.Body | undefined;
+        if (!body) continue;
+        if (body.velocity.y <= 0) continue;
+
+        const prev = this.ballPrevPos.get(ball);
+        const prevY = prev?.y ?? ball.y;
+        if (prevY <= hitY && ball.y >= hitY) {
+          if (Math.abs(ball.x - paddle.x) <= halfW + BALL_RADIUS) {
+            this.bounceBallOffPaddle(ball, paddle);
+          }
+        }
+      }
+    }
+
+    // Balls fell off bottom -> remove; game continues while any remain
+    if (this.gameActive) {
+      for (const ball of this.getActiveBalls()) {
+        // Safety clamp/bounce for left/right/top (prevents edge tunneling)
+        const body = ball.body as Phaser.Physics.Arcade.Body | undefined;
+        if (body) {
+          const r = BALL_RADIUS;
+          if (ball.x < r) {
+            ball.x = r;
+            body.velocity.x = Math.abs(body.velocity.x || 0);
+          } else if (ball.x > PLAY_WIDTH - r) {
+            ball.x = PLAY_WIDTH - r;
+            body.velocity.x = -Math.abs(body.velocity.x || 0);
+          }
+          if (ball.y < r) {
+            ball.y = r;
+            body.velocity.y = Math.abs(body.velocity.y || 0);
+          }
+        }
+
+        if (ball.y > PLAY_HEIGHT + 40) {
+          ball.destroy();
+        }
+      }
+      if (this.getActiveBalls().length === 0) {
+        this.endGame();
+        return;
+      }
+    }
+
+    // Manual scoring-disc hits (deterministic bounce + scoring)
+    if (this.gameActive && this.activeBonusDiscs.size) {
+      this.handleBonusDiscHits(time);
     }
 
     // Power-up expiration visuals (placeholder)
     const now = time;
     if (this.activePowerUps.slow && now > this.activePowerUps.slow) {
       this.activePowerUps.slow = undefined;
-      this.ball.clearTint();
-      this.ballSpeedScale = 1;
+      this.slowMultiplier = 1;
+      for (const ball of this.getActiveBalls()) ball.clearTint();
     }
     if (this.activePowerUps.big && now > this.activePowerUps.big) {
       this.activePowerUps.big = undefined;
       this.resetPaddleSize();
     }
 
-    // Spawn bonus discs
-    if (time - this.lastBonusSpawn > BONUS_SPAWN_INTERVAL) {
+    // Spawn bonus discs (after countdown)
+    if (this.gameActive && time - this.lastBonusSpawn > BONUS_SPAWN_INTERVAL) {
       this.lastBonusSpawn = time;
       const numToSpawn = Math.random() < 0.4 ? 2 : 1; // sometimes 2
       for (let i = 0; i < numToSpawn && this.bonusCount < 3; i++) {
         this.spawnBonus();
       }
     } // Spawn obstacles occasionally
-    if (time - this.lastObstacleSpawn > this.fireballInterval) {
+    if (this.gameActive && time - this.lastObstacleSpawn > this.fireballInterval) {
       this.lastObstacleSpawn = time;
       this.spawnObstacle();
       // Ramp frequency: decrease interval every 10s
@@ -380,6 +586,86 @@ export default class PaddlePopScene extends Phaser.Scene {
         }
       }
     }
+
+    // Track previous positions for tunneling checks
+    if (this.gameActive) {
+      for (const ball of this.getActiveBalls()) {
+        this.ballPrevPos.set(ball, { x: ball.x, y: ball.y });
+      }
+    }
+  }
+
+  private handleBonusDiscHits(time: number) {
+    const discs = Array.from(this.activeBonusDiscs).filter((d) => d.active);
+    if (!discs.length) return;
+
+    const balls = this.getActiveBalls();
+    if (!balls.length) return;
+
+    for (const disc of discs) {
+      const value = Number(disc.getData("value") || 0);
+      const discRadius = Number(disc.getData("radius") || 26);
+      const lastHit = Number(disc.getData("lastHit") || 0);
+      if (time - lastHit < 140) continue;
+
+      for (const ball of balls) {
+        const body = ball.body as Phaser.Physics.Arcade.Body | undefined;
+        if (!body) continue;
+
+        const dx = ball.x - disc.x;
+        const dy = ball.y - disc.y;
+        const rSum = discRadius + BALL_RADIUS;
+        const dist2 = dx * dx + dy * dy;
+        if (dist2 > rSum * rSum) continue;
+
+        // Incoming direction from previous frame (fallback to velocity)
+        const prev = this.ballPrevPos.get(ball);
+        let inX = ball.x - (prev?.x ?? ball.x);
+        let inY = ball.y - (prev?.y ?? ball.y);
+        let inLen = Math.sqrt(inX * inX + inY * inY);
+        if (inLen < 1e-3) {
+          inX = body.velocity.x;
+          inY = body.velocity.y;
+          inLen = Math.sqrt(inX * inX + inY * inY);
+        }
+        if (inLen < 1e-3) break;
+        const dirX = inX / inLen;
+        const dirY = inY / inLen;
+
+        // Normal from disc to ball at impact (if center overlap, use opposite incoming)
+        const nLen = Math.sqrt(dist2);
+        let nx = nLen > 1e-6 ? dx / nLen : -dirX;
+        let ny = nLen > 1e-6 ? dy / nLen : -dirY;
+
+        // Reflect direction about normal
+        const dot = dirX * nx + dirY * ny;
+        let rx = dirX - 2 * dot * nx;
+        let ry = dirY - 2 * dot * ny;
+        const rLen = Math.max(1e-6, Math.sqrt(rx * rx + ry * ry));
+        rx /= rLen;
+        ry /= rLen;
+
+        // Push ball outside disc so it can't remain intersecting
+        const outX = disc.x + nx * (rSum + 0.5);
+        const outY = disc.y + ny * (rSum + 0.5);
+        body.position.set(outX - body.width / 2, outY - body.height / 2);
+        ball.setPosition(outX, outY);
+
+        const speed = Phaser.Math.Clamp(
+          this.getBallNominalSpeed(ball) * this.slowMultiplier,
+          BALL_BASE_SPEED * 0.5,
+          BALL_MAX_SPEED
+        );
+        ball.setVelocity(rx * speed, ry * speed);
+
+        disc.setData("lastHit", time);
+        if (value > 0) {
+          this.addScore(value);
+          this.cameras.main.shake(70, 0.008);
+        }
+        break;
+      }
+    }
   }
 
   private spawnBonus() {
@@ -398,10 +684,11 @@ export default class PaddlePopScene extends Phaser.Scene {
     }
     const bx = Phaser.Math.Between(60, PLAY_WIDTH - 60);
     const by = Phaser.Math.Between(140, 720);
-    const bonus = this.physics.add.image(bx, by, texKey);
-    bonus.setImmovable(true);
-    (bonus.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
-    bonus.setCircle(26, 0, 0);
+    const bonus = this.add.image(bx, by, texKey);
+    bonus.setData("value", value);
+    bonus.setData("radius", 26);
+    bonus.setData("lastHit", 0);
+    this.activeBonusDiscs.add(bonus);
     const label = this.add
       .text(bx, by, `+${value}`, {
         fontFamily: "Fredoka, sans-serif",
@@ -409,10 +696,6 @@ export default class PaddlePopScene extends Phaser.Scene {
         color: "#000",
       })
       .setOrigin(0.5);
-    // grow-in animation
-    bonus.setScale(0);
-    label.setScale(0);
-    this.tweens.add({ targets: [bonus, label], scale: 1, duration: 250, ease: "Back.Out" });
     this.bonusCount++;
 
     // Countdown ring
@@ -429,19 +712,6 @@ export default class PaddlePopScene extends Phaser.Scene {
     };
     drawRing();
 
-    // Collider so ball bounces off and scores, but bonus persists
-    bonus.setData("lastScore", 0);
-    this.physics.add.collider(this.ball, bonus, () => {
-      if (!bonus.active) return;
-      const last = bonus.getData("lastScore") as number;
-      if (this.time.now - last > 300) {
-        bonus.setData("lastScore", this.time.now);
-        this.score += value;
-        this.scoreText.setText(`Score: ${this.score}`);
-        this.cameras.main.shake(70, 0.008);
-      }
-    });
-
     // Lifetime
     this.time.delayedCall(BONUS_LIFETIME, () => {
       if (bonus.active) {
@@ -454,6 +724,7 @@ export default class PaddlePopScene extends Phaser.Scene {
           blendMode: "ADD",
         });
         this.time.delayedCall(450, () => explode.destroy());
+        this.activeBonusDiscs.delete(bonus);
         bonus.destroy();
         label.destroy();
         ring.destroy();
@@ -475,6 +746,8 @@ export default class PaddlePopScene extends Phaser.Scene {
 
   private resetPaddleSize() {
     this.paddle.setScale(1, 1);
+    const body = this.paddle.body as Phaser.Physics.Arcade.Body | undefined;
+    body?.setSize(this.paddle.displayWidth, this.paddle.displayHeight, true);
   }
 
   private spawnObstacle() {
@@ -531,8 +804,11 @@ export default class PaddlePopScene extends Phaser.Scene {
       this.gameActive = false;
       this.movingLeft = false;
       this.movingRight = false;
-      this.ball.setVelocity(0, 0);
-      (this.ball.body as Phaser.Physics.Arcade.Body).enable = false;
+      for (const ball of this.getActiveBalls()) {
+        ball.setVelocity(0, 0);
+        const body = ball.body as Phaser.Physics.Arcade.Body | undefined;
+        if (body) body.enable = false;
+      }
       // Explosion and delayed end game so player can see it
       const explode = this.add.particles(sprite.x, sprite.y, "marble", {
         speed: { min: 120, max: 240 },
@@ -562,35 +838,8 @@ export default class PaddlePopScene extends Phaser.Scene {
   // Power-up API: spawn and apply effects
   private spawnPowerUpAt(x: number, y: number, kind: "slow" | "big") {
     // Create textures once
-    const iceKey = "pu-ice";
+    const iceKey = "paddle-pop-pu-slow";
     const bigKey = "pu-big";
-    if (!this.textures.exists(iceKey)) {
-      const gg = this.add.graphics();
-      // Glowing ice crystal (diamond)
-      gg.fillStyle(0x93c5fd, 1);
-      gg.fillPoints(
-        [
-          { x: 0, y: -16 },
-          { x: 12, y: 0 },
-          { x: 0, y: 16 },
-          { x: -12, y: 0 },
-        ],
-        true
-      );
-      gg.lineStyle(2, 0xbfdbfe, 1);
-      gg.strokePoints(
-        [
-          { x: 0, y: -16 },
-          { x: 12, y: 0 },
-          { x: 0, y: 16 },
-          { x: -12, y: 0 },
-          { x: 0, y: -16 },
-        ],
-        false
-      );
-      gg.generateTexture(iceKey, 40, 40);
-      gg.destroy();
-    }
     if (!this.textures.exists(bigKey)) {
       const gg2 = this.add.graphics();
       // Orange glowing bar
@@ -643,12 +892,15 @@ export default class PaddlePopScene extends Phaser.Scene {
           check.remove();
           return;
         }
-        if (Phaser.Math.Distance.Between(this.ball.x, this.ball.y, sprite.x, sprite.y) < 24) {
-          if (kind === "slow") this.applySlow();
-          else this.applyBigPaddle();
-          sprite.destroy();
-          emitter.destroy();
-          check.remove();
+        for (const ball of this.getActiveBalls()) {
+          if (Phaser.Math.Distance.Between(ball.x, ball.y, sprite.x, sprite.y) < 24) {
+            if (kind === "slow") this.applySlow();
+            else this.applyBigPaddle();
+            sprite.destroy();
+            emitter.destroy();
+            check.remove();
+            break;
+          }
         }
       },
     });
@@ -663,40 +915,82 @@ export default class PaddlePopScene extends Phaser.Scene {
   }
 
   private applySlow() {
-    this.ballSpeedScale = 0.75;
-    this.ball.setTint(0x60a5fa); // icy blue
+    this.slowMultiplier = 0.75;
+    for (const ball of this.getActiveBalls()) ball.setTint(0x60a5fa); // icy blue
     this.activePowerUps.slow = this.time.now + POWERUP_DURATION_MS;
     // sparkle trail
-    const particles = this.add.particles(0, 0, "marble", {
-      scale: { start: 0.3, end: 0 },
-      lifespan: 300,
-      frequency: 80,
-      follow: this.ball,
-      tint: 0x93c5fd,
-      blendMode: "ADD",
-    });
-    this.time.delayedCall(POWERUP_DURATION_MS, () => particles.destroy());
+    const emitters = this.getActiveBalls().map((ball) =>
+      this.add.particles(0, 0, "marble", {
+        scale: { start: 0.3, end: 0 },
+        lifespan: 300,
+        frequency: 80,
+        follow: ball,
+        tint: 0x93c5fd,
+        blendMode: "ADD",
+      })
+    );
+    this.time.delayedCall(POWERUP_DURATION_MS, () => emitters.forEach((e) => e.destroy()));
+  }
+
+  private splitOneBallIntoThree() {
+    if (!this.gameActive) return;
+    const balls = this.getActiveBalls();
+    if (!balls.length) return;
+
+    const source = balls[0];
+    const body = source.body as Phaser.Physics.Arcade.Body | undefined;
+    const v = body?.velocity;
+    const baseAngle =
+      v && v.length() > 1 ? Math.atan2(v.y, v.x) : Phaser.Math.FloatBetween(-2.6, -0.6);
+    const speed = Phaser.Math.Clamp(
+      this.getBallNominalSpeed(source) * this.slowMultiplier,
+      BALL_BASE_SPEED * 0.5,
+      BALL_MAX_SPEED
+    );
+    const spread = Phaser.Math.DegToRad(25);
+    const angles = [baseAngle, baseAngle + spread, baseAngle - spread];
+
+    source.setVelocity(Math.cos(angles[0]) * speed, Math.sin(angles[0]) * speed);
+    const nominal = this.getBallNominalSpeed(source);
+    const b1 = this.createBallAt(source.x + 10, source.y, nominal);
+    const b2 = this.createBallAt(source.x - 10, source.y, nominal);
+    b1.setVelocity(Math.cos(angles[1]) * speed, Math.sin(angles[1]) * speed);
+    b2.setVelocity(Math.cos(angles[2]) * speed, Math.sin(angles[2]) * speed);
+    if (this.activePowerUps.slow) {
+      b1.setTint(0x60a5fa);
+      b2.setTint(0x60a5fa);
+    }
   }
 
   private applyBigPaddle() {
     this.activePowerUps.big = this.time.now + POWERUP_DURATION_MS;
+    // Ensure paddle stays fully visible during the whole effect
+    this.paddle.setAlpha(1);
     this.tweens.add({
       targets: this.paddle,
       scaleX: 1.25,
       duration: 250,
       yoyo: false,
       ease: "Quad.easeOut",
+      onUpdate: () => {
+        const body = this.paddle.body as Phaser.Physics.Arcade.Body | undefined;
+        body?.setSize(this.paddle.displayWidth, this.paddle.displayHeight, true);
+      },
     });
-    // flash with alpha instead of visible
+    // Flash without changing transparency (avoid leaving paddle semi-transparent)
     const flash = this.time.addEvent({
       delay: 100,
       repeat: 8,
       callback: () => {
-        this.paddle.setAlpha(this.paddle.alpha === 1 ? 0.3 : 1);
+        // Toggle a quick "bright" flash while keeping alpha at 1
+        if (this.paddle.isTinted) this.paddle.clearTint();
+        else this.paddle.setTintFill(0xffffff);
+        this.paddle.setAlpha(1);
       },
     });
     this.time.delayedCall(POWERUP_DURATION_MS, () => {
       flash.remove();
+      this.paddle.clearTint();
       this.paddle.setAlpha(1);
       this.resetPaddleSize();
     });
@@ -745,6 +1039,8 @@ export default class PaddlePopScene extends Phaser.Scene {
     if (this.ended) return;
     this.ended = true;
     this.gameActive = false;
+    this.splitEvent?.remove(false);
+    this.splitWarningEvent?.remove(false);
     dispatchGameOver({ gameId: "paddle-pop", score: this.score, ts: Date.now() });
     // Stop all motion and timers; no auto-restart
     this.physics.world.pause();

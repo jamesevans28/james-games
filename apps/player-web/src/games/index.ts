@@ -149,7 +149,7 @@ export const games: GameMeta[] = [
     thumbnail: "/assets/paddle-pop/thumbnail.svg",
     xpMultiplier: 5.13,
     createdAt: "2025-11-05T00:00:00.000Z",
-    updatedAt: "2025-11-25T00:00:00.000Z",
+    updatedAt: "2025-12-29T00:00:00.000Z",
     load: async () => {
       const mod = await import("./paddle-pop/index");
       return { mount: mod.mount };
