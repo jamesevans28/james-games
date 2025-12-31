@@ -8,6 +8,7 @@ import { ProfileAvatar } from "../../components/profile";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import { SITE_URL } from "../../utils/seoKeywords";
 
 export default function LeaderboardPage() {
   const { gameId } = useParams();
@@ -94,11 +95,29 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-white text-flingo-800 flex flex-col">
       <Seo
-        title={meta ? `${meta.title} Leaderboard — flingo.fun` : "Leaderboard — flingo.fun"}
-        description={`Top scores for ${meta?.title ?? "this game"} on flingo.fun.`}
-        url={`https://flingo.fun/leaderboard/${meta?.id ?? ""}`}
-        canonical={`https://flingo.fun/leaderboard/${meta?.id ?? ""}`}
-        image={"https://flingo.fun/assets/logo.png"}
+        title={
+          meta
+            ? `${meta.title} Leaderboard — Top Scores | flingo.fun`
+            : "Game Leaderboard — flingo.fun"
+        }
+        description={
+          meta
+            ? `See the top scores and compete on the ${meta.title} leaderboard at flingo.fun. Free online game - play now!`
+            : "View top scores on flingo.fun leaderboards."
+        }
+        url={`${SITE_URL}/leaderboard/${meta?.id ?? ""}`}
+        canonical={`${SITE_URL}/leaderboard/${meta?.id ?? ""}`}
+        image={
+          meta?.thumbnail
+            ? `${SITE_URL}${meta.thumbnail}`
+            : `${SITE_URL}/assets/shared/logo_square.png`
+        }
+        keywords={
+          meta
+            ? `${meta.title} leaderboard, ${meta.title} high scores, free game scores, top players`
+            : "game leaderboard, high scores"
+        }
+        noindex={true}
       />
       <header className="fixed top-0 left-0 right-0 z-50 h-14">
         <div className="h-full flex items-center justify-between px-3 bg-white/95 backdrop-blur text-flingo-800 border-b-2 border-flingo-100">

@@ -7,6 +7,13 @@ import { fetchRatingSummaries, RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, primeRatingCache } from "../../utils/ratingCache";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { useAuth } from "../../context/FirebaseAuthProvider";
+import {
+  buildWebsiteJsonLd,
+  buildGameCollectionJsonLd,
+  buildOrganizationJsonLd,
+  SITE_KEYWORDS,
+  SITE_URL,
+} from "../../utils/seoKeywords";
 // import NameDialog from "../../components/NameDialog";
 // useSession removed — currently not needed on the home page
 
@@ -245,23 +252,17 @@ export default function GameHub() {
   return (
     <div className="min-h-screen flex flex-col">
       <Seo
-        title="Free Online Games | Play Fun Games at Flingo.fun"
-        description="Play free online games at Flingo.fun! Fun, fast, skill-based games you can play instantly on your phone or browser. Join now and test your reflexes!"
-        url="https://flingo.fun/"
-        canonical="https://flingo.fun/"
-        image="https://flingo.fun/assets/shared/flingo-logo.svg"
-        jsonLd={{
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: "Flingo.fun",
-          url: "https://flingo.fun/",
-          description:
-            "Play free online games at Flingo.fun! Fun, fast, skill-based games you can play instantly on your phone or browser.",
-          publisher: {
-            "@type": "Organization",
-            name: "Flingo.fun",
-          },
-        }}
+        title="Free Online Games for Kids & Families | Play Instantly at flingo.fun"
+        description="Play free online games at flingo.fun! Kid-friendly, browser-based arcade and skill games. No download, no ads - just tap and play on any device!"
+        url={`${SITE_URL}/`}
+        canonical={`${SITE_URL}/`}
+        image={`${SITE_URL}/assets/shared/logo_square.png`}
+        keywords={SITE_KEYWORDS.join(", ")}
+        jsonLd={[
+          buildWebsiteJsonLd(),
+          buildOrganizationJsonLd(),
+          buildGameCollectionJsonLd(visibleGames),
+        ]}
       />
 
       {featuredGame && (

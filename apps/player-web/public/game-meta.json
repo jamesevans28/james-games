@@ -1,0 +1,128 @@
+[
+  {
+    "id": "word-stack",
+    "title": "Word Stack",
+    "description": "Build a stack of 5-letter words by dragging letters! Free word puzzle game - play instantly in your browser.",
+    "thumbnail": "/assets/word-stack/thumbnail.svg",
+    "url": "https://flingo.fun/games/word-stack",
+    "createdAt": "2025-12-26T00:00:00.000Z",
+    "updatedAt": "2025-12-26T00:00:00.000Z"
+  },
+  {
+    "id": "reflex-ring",
+    "title": "Reflex Ring",
+    "description": "Tap precisely as the arrow hits the highlighted segment. Speeds up over time.",
+    "thumbnail": "/assets/reflex-ring/thumbnail.svg",
+    "url": "https://flingo.fun/games/reflex-ring",
+    "createdAt": "2025-09-15T00:00:00.000Z",
+    "updatedAt": "2025-11-26T00:00:00.000Z"
+  },
+  {
+    "id": "snapadile",
+    "title": "Snapadile",
+    "description": "Tap the crocs before they reach your raft. More and faster crocs over time.",
+    "thumbnail": "/assets/snapadile/thumbnail.svg",
+    "url": "https://flingo.fun/games/snapadile",
+    "createdAt": "2025-09-16T00:00:00.000Z",
+    "updatedAt": "2025-11-25T00:00:00.000Z"
+  },
+  {
+    "id": "car-crash",
+    "title": "Car Crash",
+    "description": "Switch lanes to dodge incoming cars. Step-based movement with growing difficulty.",
+    "thumbnail": "/assets/car-crash/thumbnail.svg",
+    "url": "https://flingo.fun/games/car-crash",
+    "createdAt": "2025-09-17T00:00:00.000Z",
+    "updatedAt": "2025-11-25T00:00:00.000Z"
+  },
+  {
+    "id": "fill-the-cup",
+    "title": "Fill the Cup",
+    "description": "Hold to pour water and fill each glass to the highlighted band. Smaller targets over time.",
+    "thumbnail": "/assets/fill-the-cup/thumbnail.svg",
+    "url": "https://flingo.fun/games/fill-the-cup",
+    "createdAt": "2025-11-01T00:00:00.000Z",
+    "updatedAt": "2025-11-25T00:00:00.000Z"
+  },
+  {
+    "id": "flash-bash",
+    "title": "Flash Bash",
+    "description": "Watch the sequence of colored shapes, then mimic them before time runs out. Sequences get longer!",
+    "thumbnail": "/assets/flash-bash/thumbnail.svg",
+    "url": "https://flingo.fun/games/flash-bash",
+    "createdAt": "2025-11-04T00:00:00.000Z",
+    "updatedAt": "2025-11-25T00:00:00.000Z"
+  },
+  {
+    "id": "ho-ho-home-delivery",
+    "title": "Ho Ho Home Delivery",
+    "description": "Drop presents into chimneys from Santa's sleigh. Nail the landing, avoid misses. 3 lives!",
+    "thumbnail": "/assets/ho-ho-home-delivery/thumbnail.svg",
+    "url": "https://flingo.fun/games/ho-ho-home-delivery",
+    "createdAt": "2025-11-05T00:00:00.000Z",
+    "updatedAt": "2025-11-25T00:00:00.000Z"
+  },
+  {
+    "id": "ready-steady-shoot",
+    "title": "Ready Steady Shoot",
+    "description": "Hold to pick angle, hold to pick power, then release to shoot. Swish for 2 points! 3 lives.",
+    "thumbnail": "/assets/ready-steady-shoot/thumbnail.svg",
+    "url": "https://flingo.fun/games/ready-steady-shoot",
+    "createdAt": "2025-11-05T00:00:00.000Z",
+    "updatedAt": "2025-11-25T00:00:00.000Z"
+  },
+  {
+    "id": "paddle-pop",
+    "title": "Paddle Pop",
+    "description": "Deflect the marble, collect power-ups, hit bonus discs, avoid falling obstacles.",
+    "thumbnail": "/assets/paddle-pop/thumbnail.svg",
+    "url": "https://flingo.fun/games/paddle-pop",
+    "createdAt": "2025-11-05T00:00:00.000Z",
+    "updatedAt": "2025-12-29T00:00:00.000Z"
+  },
+  {
+    "id": "word-rush",
+    "title": "Word Rush with Tom",
+    "description": "Guess words and phrases with your selected letters. 2-minute timer per level!",
+    "thumbnail": "/assets/word-rush/thumbnail.svg",
+    "url": "https://flingo.fun/games/word-rush",
+    "createdAt": "2025-11-05T00:00:00.000Z",
+    "updatedAt": "2025-11-25T00:00:00.000Z"
+  },
+  {
+    "id": "serpento",
+    "title": "Serpento",
+    "description": "Classic snake game. Turn left/right to collect food, avoid walls and yourself. Gets faster as you grow!",
+    "thumbnail": "/assets/serpento/thumbnail.svg",
+    "url": "https://flingo.fun/games/serpento",
+    "createdAt": "2025-11-17T00:00:00.000Z",
+    "updatedAt": "2025-11-25T00:00:00.000Z"
+  },
+  {
+    "id": "blocker",
+    "title": "Blocker",
+    "description": "Drag puzzle pieces into a 8x8 board, clear full lines, trigger power blocks, and chase combos before you run out of moves.",
+    "thumbnail": "/assets/blocker/thumbnail.svg",
+    "url": "https://flingo.fun/games/blocker",
+    "createdAt": "2025-11-24T00:00:00.000Z",
+    "updatedAt": "2025-11-25T00:00:00.000Z"
+  },
+  {
+    "id": "hoop-city",
+    "title": "Hoop City",
+    "description": "Tap to keep the ball afloat while threading every vertical hoop as the city scrolls by.",
+    "thumbnail": "/assets/hoop-city/thumbnail.svg",
+    "url": "https://flingo.fun/games/hoop-city",
+    "createdAt": "2025-11-28T00:00:00.000Z",
+    "updatedAt": "2025-12-02T00:00:00.000Z"
+  },
+  {
+    "id": "cosmic-clash",
+    "title": "Cosmic Clash",
+    "description": "Space Invaders-style shooter. Auto-fire at descending aliens, collect power-ups, survive waves!",
+    "thumbnail": "/assets/cosmic-clash/thumbnail.svg",
+    "url": "https://flingo.fun/games/cosmic-clash",
+    "createdAt": "2025-11-21T00:00:00.000Z",
+    "updatedAt": "2025-11-25T00:00:00.000Z"
+  }
+]

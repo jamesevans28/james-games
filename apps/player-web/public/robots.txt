@@ -1,4 +1,18 @@
+# robots.txt for flingo.fun
+# Free online games - kid friendly, browser-based gaming
+
 User-agent: *
 Allow: /
 
+# Block admin/settings pages from indexing
+Disallow: /settings
+Disallow: /notifications
+Disallow: /followers
+Disallow: /login
+Disallow: /signup
+
+# Sitemap location
 Sitemap: https://flingo.fun/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1

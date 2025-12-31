@@ -14,6 +14,7 @@ import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { ExperienceBar } from "../../components/ExperienceBar";
 import Seo from "../../components/Seo";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import { SITE_URL } from "../../utils/seoKeywords";
 
 interface ProfileResponse {
   profile: {
@@ -153,12 +154,13 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
       <Seo
-        title={`${data.profile.screenName ?? "Player"} — Flingo.fun Profile`}
+        title={`${data.profile.screenName ?? "Player"} — Profile | flingo.fun`}
         description={`Check out ${
           data.profile.screenName ?? "Player"
-        }'s stats and high scores on Flingo.fun.`}
-        url={`https://flingo.fun/profile/${userId}`}
-        canonical={`https://flingo.fun/profile/${userId}`}
+        }'s game stats and high scores on flingo.fun - free online games for everyone.`}
+        url={`${SITE_URL}/profile/${userId}`}
+        canonical={`${SITE_URL}/profile/${userId}`}
+        noindex={true}
       />
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">

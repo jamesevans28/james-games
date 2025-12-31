@@ -14,6 +14,12 @@ import { fetchRatingSummary, submitRating, RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import {
+  buildGameJsonLd,
+  buildGameKeywords,
+  getGameSeoDescription,
+  SITE_URL,
+} from "../../utils/seoKeywords";
 
 const PLAY_COUNT_PREFIX = "rating:plays:";
 const RATING_PROMPT_INTERVAL = 10;
@@ -297,43 +303,53 @@ export default function PlayGame() {
 
   const jsonLd = useMemo(() => {
     if (!meta) return undefined;
-    return {
-      "@context": "https://schema.org",
-      "@type": "VideoGame",
-      name: meta.title,
-      description: meta.description,
-      image: meta.thumbnail ? `https://flingo.fun${meta.thumbnail}` : undefined,
-      url: `https://flingo.fun/games/${meta.id}`,
-      genre: "Arcade",
-      author: {
-        "@type": "Organization",
-        name: "flingo.fun",
-      },
-      applicationCategory: "Game",
-      operatingSystem: "Any",
-      aggregateRating: ratingSummary?.avgRating
-        ? {
-            "@type": "AggregateRating",
-            ratingValue: ratingSummary.avgRating,
-            ratingCount: ratingSummary.ratingCount,
-            bestRating: 5,
-            worstRating: 1,
-          }
-        : undefined,
-    };
+    const baseJsonLd = buildGameJsonLd(meta);
+    // Add aggregate rating if available
+    if (ratingSummary?.avgRating && ratingSummary?.ratingCount) {
+      return {
+        ...baseJsonLd,
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: ratingSummary.avgRating,
+          ratingCount: ratingSummary.ratingCount,
+          bestRating: 5,
+          worstRating: 1,
+        },
+      };
+    }
+    return baseJsonLd;
   }, [meta, ratingSummary]);
+
+  const seoDescription = useMemo(() => {
+    if (!meta)
+      return "Play free online games at flingo.fun. Fun, fast, skill-based games you can play instantly on your phone or browser.";
+    return getGameSeoDescription(meta.id, meta.description);
+  }, [meta]);
+
+  const seoKeywords = useMemo(() => {
+    return meta ? buildGameKeywords(meta.id) : "";
+  }, [meta]);
 
   return (
     <div className="min-h-screen bg-white text-flingo-800 flex flex-col">
       <Seo
-        title={meta ? `${meta.title} — Play Free at flingo.fun` : "Play Free Games at flingo.fun"}
-        description={
-          meta?.description ||
-          "Play free online games at flingo.fun. Fun, fast, skill-based games you can play instantly on your phone or browser."
+        title={
+          meta
+            ? `${meta.title} — Free Online Game | Play Now at flingo.fun`
+            : "Play Free Online Games at flingo.fun"
         }
-        url={`https://flingo.fun/games/${meta?.id ?? ""}`}
-        canonical={`https://flingo.fun/games/${meta?.id ?? ""}`}
-        image={meta?.thumbnail ? `https://flingo.fun${meta.thumbnail}` : "/assets/logo.png"}
+        description={seoDescription}
+        url={`${SITE_URL}/games/${meta?.id ?? ""}`}
+        canonical={`${SITE_URL}/games/${meta?.id ?? ""}`}
+        image={
+          meta?.thumbnail
+            ? `${SITE_URL}${meta.thumbnail}`
+            : `${SITE_URL}/assets/shared/logo_square.png`
+        }
+        keywords={seoKeywords}
+        ogType="game"
+        articlePublishedTime={meta?.createdAt}
+        articleModifiedTime={meta?.updatedAt}
         jsonLd={jsonLd}
       />
 

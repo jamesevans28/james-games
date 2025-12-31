@@ -5,10 +5,12 @@
   "private": true,
   "scripts": {
     "dev": "vite --config vite/config.dev.mjs",
-    "build": "vite build --config vite/config.prod.mjs",
+    "build": "npm run generate-seo && vite build --config vite/config.prod.mjs",
+    "build:no-seo": "vite build --config vite/config.prod.mjs",
     "generate-snapadile-assets": "cd ../.. && node scripts/generate-snapadile-assets.mjs",
     "generate-car-crash-assets": "cd ../.. && node scripts/generate-car-crash-assets.mjs",
-    "generate-sitemap": "cd ../.. && node scripts/generate-sitemap.mjs"
+    "generate-sitemap": "cd ../.. && node scripts/generate-sitemap.mjs",
+    "generate-seo": "cd ../.. && SITE_ORIGIN=https://flingo.fun node scripts/generate-sitemap.mjs"
   },
   "dependencies": {
     "firebase": "^12.7.0",

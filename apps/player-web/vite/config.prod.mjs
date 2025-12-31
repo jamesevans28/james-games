@@ -89,15 +89,19 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: "flingo.fun",
+        name: "flingo.fun - Free Online Games",
         short_name: "flingo",
-        description: "Play free, fast, skill-based games in your browser.",
+        description:
+          "Play free, kid-friendly browser games instantly! Arcade, puzzle, word games and more - no download required.",
         theme_color: "#A855F7",
         background_color: "#FFFFFF",
         display: "standalone",
         orientation: "portrait",
         scope: "/",
         start_url: "/",
+        categories: ["games", "entertainment", "kids"],
+        lang: "en-US",
+        dir: "ltr",
         icons: [
           {
             src: "/assets/shared/logo_square.png",
@@ -110,6 +114,16 @@ export default defineConfig({
             sizes: "512x512",
             type: "image/png",
             purpose: "any",
+          },
+        ],
+        screenshots: [],
+        shortcuts: [
+          {
+            name: "Browse Games",
+            short_name: "Games",
+            description: "Browse all free games",
+            url: "/",
+            icons: [{ src: "/assets/shared/logo_square.png", sizes: "96x96" }],
           },
         ],
       },
