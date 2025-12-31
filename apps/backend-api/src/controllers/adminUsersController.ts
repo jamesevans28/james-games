@@ -28,11 +28,11 @@ export async function show(req: Request, res: Response) {
 export async function update(req: Request, res: Response) {
   const userId = req.params.userId;
   if (!userId) return res.status(400).json({ error: "userId_required" });
-  const { email, password, betaTester, admin } = req.body || {};
+  // Note: Password management is now handled through Firebase Auth
+  const { email, betaTester, admin } = req.body || {};
   try {
     const updated = await updateAdminUser(userId, {
       email,
-      password,
       betaTester,
       admin,
     });

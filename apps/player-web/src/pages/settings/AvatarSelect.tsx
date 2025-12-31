@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ProfileAvatar } from "../../components/profile";
 import { useSession } from "../../hooks/useSession";
-import { useAuth } from "../../context/AuthProvider";
+import { useAuth } from "../../context/FirebaseAuthProvider";
 import { updatePreferences } from "../../lib/api";
 
 const TOTAL = 89;
@@ -11,7 +11,7 @@ const EXCLUDED_AVATARS = [26];
 
 export default function AvatarSelectPage() {
   const { user } = useSession();
-  const { refreshSession } = useAuth();
+  const { refreshProfile } = useAuth();
   const [selected, setSelected] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export default function AvatarSelectPage() {
       try {
         await updatePreferences({ avatar: n });
         // refresh local session so AuthProvider picks up the new avatar
-        await refreshSession({ silent: true });
+        await refreshProfile();
         // Show a brief confirmation toast
         setToast("Avatar saved");
         if (toastTimer.current) window.clearTimeout(toastTimer.current);
@@ -46,7 +46,7 @@ export default function AvatarSelectPage() {
         setSaving(false);
       }
     },
-    [refreshSession, saving]
+    [refreshProfile, saving]
   );
 
   // Cleanup any pending toast timer on unmount

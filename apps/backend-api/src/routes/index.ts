@@ -1,5 +1,5 @@
 import { Router } from "express";
-import authRoutes from "./auth.routes.js";
+import firebaseAuthRoutes from "./firebaseAuth.routes.js";
 import usersRoutes from "./users.routes.js";
 import scoresRoutes from "./scores.routes.js";
 import followersRoutes from "./followers.routes.js";
@@ -18,7 +18,9 @@ const router = Router();
 // Backwards-compatible top-level /me route (keeps SPA calls working)
 router.get("/me", requireAuth, me);
 
-router.use("/auth", authRoutes);
+// Firebase auth routes
+router.use("/auth/firebase", firebaseAuthRoutes);
+
 router.use("/users", usersRoutes);
 router.use("/scores", scoresRoutes);
 router.use("/followers", followersRoutes);

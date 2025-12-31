@@ -1,8 +1,6 @@
 import { Router } from "express";
 import {
   me,
-  startEmailUpdate,
-  verifyEmail,
   changeScreenName,
   updatePreferences,
   updateSettings,
@@ -14,8 +12,7 @@ const router = Router();
 
 // Logged-in protected
 router.get("/me", requireAuth, me);
-router.post("/email", requireAuth, startEmailUpdate);
-router.post("/email/verify", requireAuth, verifyEmail);
+// Note: Email update/verification is now handled through Firebase Auth linked providers.
 router.post("/screen-name", requireAuth, changeScreenName);
 router.post("/preferences", requireAuth, updatePreferences);
 router.patch("/settings", requireAuth, updateSettings); // unified settings endpoint (screenName for now)

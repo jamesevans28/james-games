@@ -69,6 +69,7 @@ export async function putUser(args: {
   screenName: string;
   emailProvided: boolean;
   email?: string | null;
+  validated?: boolean;
   betaTester?: boolean;
   admin?: boolean;
 }) {
@@ -78,7 +79,7 @@ export async function putUser(args: {
     screenName: args.screenName,
     emailProvided: args.emailProvided,
     email: args.email ?? null,
-    validated: false,
+    validated: args.validated ?? false,
     xpLevel: 1,
     xpProgress: 0,
     xpTotal: 0,

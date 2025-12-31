@@ -1,14 +1,8 @@
 import { DynamoDBDocumentClient, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import {
-  AdminGetUserCommand,
-  AdminUpdateUserAttributesCommand,
-  AdminSetUserPasswordCommand,
-} from "@aws-sdk/client-cognito-identity-provider";
 import { Buffer } from "node:buffer";
-import { dynamoClient, cognitoClient } from "../config/aws.js";
+import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
 import { getUser, updateUserEmailMetadata } from "./dynamoService.js";
-import type { AttributeType } from "@aws-sdk/client-cognito-identity-provider";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
@@ -96,32 +90,16 @@ export async function listUsers(opts: { limit?: number; cursor?: string; search?
   };
 }
 
-function mapAttributes(attrs: AttributeType[] | undefined) {
-  const map: Record<string, string> = {};
-  (attrs || []).forEach((attr) => {
-    if (attr.Name) map[attr.Name] = attr.Value ?? "";
-  });
-  return map;
-}
-
 export async function getAdminUser(userId: string) {
-  const [profile, cognito] = await Promise.all([
-    getUser(userId),
-    cognitoClient
-      .send(new AdminGetUserCommand({ UserPoolId: config.cognito.userPoolId, Username: userId }))
-      .catch(() => undefined),
-  ]);
-  const attrMap = mapAttributes(cognito?.UserAttributes);
+  const profile = await getUser(userId);
   const user: AdminUserSummary = normalizeUser(profile || { userId });
   return {
     ...user,
-    email: user.email ?? attrMap.email ?? null,
-    emailVerified: attrMap.email_verified === "true",
-    emailProvided:
-      user.emailProvided ?? (attrMap["custom:email_provided"] === "true" ? true : undefined),
-    status: cognito?.UserStatus,
-    enabled: cognito?.Enabled ?? true,
-    cognitoUsername: cognito?.Username,
+    email: user.email ?? null,
+    emailVerified: profile?.validated ?? false,
+    emailProvided: user.emailProvided ?? false,
+    accountType: profile?.accountType ?? "unknown",
+    enabled: true,
   };
 }
 
@@ -129,52 +107,21 @@ export async function updateAdminUser(
   userId: string,
   changes: {
     email?: string;
-    password?: string;
     betaTester?: boolean;
     admin?: boolean;
   }
 ) {
-  if (
-    !changes.email &&
-    !changes.password &&
-    changes.betaTester === undefined &&
-    changes.admin === undefined
-  ) {
+  // Note: Password management is now handled through Firebase Auth.
+  // Admin can only update DynamoDB metadata (betaTester, admin flags).
+  if (!changes.email && changes.betaTester === undefined && changes.admin === undefined) {
     throw new Error("no_changes_provided");
   }
 
   const tasks: Array<Promise<any>> = [];
 
   if (changes.email) {
-    tasks.push(
-      (async () => {
-        await cognitoClient.send(
-          new AdminUpdateUserAttributesCommand({
-            UserPoolId: config.cognito.userPoolId,
-            Username: userId,
-            UserAttributes: [
-              { Name: "email", Value: changes.email },
-              { Name: "custom:email_provided", Value: "true" },
-            ],
-          })
-        );
-        await updateUserEmailMetadata(userId, { email: changes.email, emailProvided: true });
-      })()
-    );
-  }
-
-  if (changes.password) {
-    if (changes.password.length < 8) throw new Error("password_too_short");
-    tasks.push(
-      cognitoClient.send(
-        new AdminSetUserPasswordCommand({
-          UserPoolId: config.cognito.userPoolId,
-          Username: userId,
-          Password: changes.password,
-          Permanent: true,
-        })
-      )
-    );
+    // Update email in DynamoDB only (Firebase manages actual auth email)
+    tasks.push(updateUserEmailMetadata(userId, { email: changes.email, emailProvided: true }));
   }
 
   if (changes.betaTester !== undefined || changes.admin !== undefined) {

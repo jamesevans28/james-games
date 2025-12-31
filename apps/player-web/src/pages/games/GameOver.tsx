@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { postHighScore, postExperienceRun, type ExperienceSummary } from "../../lib/api";
-import { useAuth } from "../../context/AuthProvider";
+import { useAuth } from "../../context/FirebaseAuthProvider";
 
 type Props = {
   open: boolean;
@@ -230,7 +230,7 @@ export default function GameOver({
 }: Props) {
   const postedRef = useRef<string | null>(null);
   const xpPostedRef = useRef<string | null>(null);
-  const { user, refreshSession } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [startExperience, setStartExperience] = useState<ExperienceSummary | null>(null);
   const [endExperience, setEndExperience] = useState<ExperienceSummary | null>(null);
   const [xpAwarded, setXpAwarded] = useState<number | null>(null);
@@ -326,7 +326,7 @@ export default function GameOver({
           }, 1500); // Show after XP animation completes
         }
 
-        void refreshSession({ silent: true });
+        void refreshProfile();
       })
       .catch((err: any) => {
         if (canceled) return;
@@ -341,7 +341,7 @@ export default function GameOver({
     return () => {
       canceled = true;
     };
-  }, [open, user?.userId, gameId, score, xpMultiplier, refreshSession, user?.experience]);
+  }, [open, user?.userId, gameId, score, xpMultiplier, refreshProfile, user?.experience]);
 
   if (!open) return null;
 

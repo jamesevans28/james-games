@@ -9,7 +9,8 @@ export default function Header() {
   const { user } = useSession();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
-  const isAuthenticated = !!user;
+  // Anonymous users should still see login/signup options
+  const isAuthenticated = !!user && !user.isAnonymous;
   const { hasUnread, markRead } = useNotificationsIndicator();
 
   return (

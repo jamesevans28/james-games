@@ -9,7 +9,7 @@ import {
 } from "../../lib/api";
 import { ProfileAvatar } from "../../components/profile";
 import ShareFollowCodeCard from "../../components/ShareFollowCodeCard";
-import { useAuth } from "../../context/AuthProvider";
+import { useAuth } from "../../context/FirebaseAuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { ExperienceBar } from "../../components/ExperienceBar";
 import Seo from "../../components/Seo";

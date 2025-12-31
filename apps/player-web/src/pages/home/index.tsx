@@ -6,7 +6,7 @@ import { games, GameMeta } from "../../games";
 import { fetchRatingSummaries, RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, primeRatingCache } from "../../utils/ratingCache";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
-import { useAuth } from "../../context/AuthProvider";
+import { useAuth } from "../../context/FirebaseAuthProvider";
 // import NameDialog from "../../components/NameDialog";
 // useSession removed — currently not needed on the home page
 

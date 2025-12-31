@@ -13,12 +13,12 @@ export const config = {
     .map((s: string) => s.trim())
     .filter(Boolean),
   appBaseUrl: process.env.APP_BASE_URL || "http://localhost:8787",
-  region: process.env.COGNITO_REGION || process.env.AWS_REGION || "ap-southeast-2",
-  cognito: {
-    userPoolId: (process.env.COGNITO_USER_POOL_ID || "").trim(),
-    clientId: (process.env.COGNITO_CLIENT_ID || "").trim(),
-    clientSecret: (process.env.COGNITO_CLIENT_SECRET || "").trim(),
-    domain: (process.env.COGNITO_DOMAIN || "").trim(),
+  region: process.env.AWS_REGION || "ap-southeast-2",
+  // Firebase configuration
+  firebase: {
+    projectId: (process.env.FIREBASE_PROJECT_ID || "").trim(),
+    clientEmail: (process.env.FIREBASE_CLIENT_EMAIL || "").trim(),
+    privateKey: (process.env.FIREBASE_PRIVATE_KEY || "").trim(),
   },
   tables: {
     // SCORES_TABLE allows switching to the new table name (e.g. games4james-scores)

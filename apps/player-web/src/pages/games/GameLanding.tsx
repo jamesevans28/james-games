@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthProvider";
+import { useAuth } from "../../context/FirebaseAuthProvider";
 import { trackShare } from "../../utils/analytics";
 import { GameMeta } from "../../games";
 import {
@@ -409,7 +409,9 @@ function LeaderboardSection({
               <li
                 key={`${r?.screenName ?? "anon"}-${rank}`}
                 className={`flex items-center justify-between px-3 py-2 text-sm ${
-                  hasProfile ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-black" : ""
+                  hasProfile
+                    ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-black"
+                    : ""
                 }`}
                 role={hasProfile ? "button" : undefined}
                 tabIndex={hasProfile ? 0 : undefined}
@@ -554,7 +556,9 @@ function FollowingNowStrip({
     return <div className="mt-4 text-sm text-gray-500">Checking who&apos;s playing…</div>;
   }
   if (!activity.length)
-    return <div className="mt-4 text-sm text-gray-500">No players you follow are here right now.</div>;
+    return (
+      <div className="mt-4 text-sm text-gray-500">No players you follow are here right now.</div>
+    );
   return (
     <div className="mt-4">
       <h3 className="text-sm font-semibold text-gray-600 mb-2">Players you follow</h3>

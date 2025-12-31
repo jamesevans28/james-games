@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ProfileAvatar } from "./profile";
 import { useSession } from "../hooks/useSession";
-import { useAuth } from "../context/AuthProvider";
+import { useAuth } from "../context/FirebaseAuthProvider";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
@@ -136,21 +136,21 @@ export default function SideDrawer({
               >
                 <svg className="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path
-                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z"
+                    d="M12 15a3 3 0 100-6 3 3 0 000 6z"
                     stroke="currentColor"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                   <path
-                    d="M4 20v-1c0-2.21 3.58-4 8-4s8 1.79 8 4v1"
+                    d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"
                     stroke="currentColor"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                 </svg>
-                <span>Change screen name</span>
+                <span>Account settings</span>
               </Link>
 
               <Link
@@ -279,6 +279,16 @@ export default function SideDrawer({
                   </div>
                 </div>
               </Link>
+            ) : user ? (
+              <div className="flex items-center gap-3 mb-3 px-2 py-1">
+                <ProfileAvatar user={user} size={48} />
+                <div className="min-w-0">
+                  <div className="text-xs text-gray-500 leading-tight">Playing as guest</div>
+                  <div className="text-sm font-semibold text-gray-900 truncate max-w-[12rem]">
+                    {(user as any)?.screenName || "Guest"}
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="flex items-center gap-3 mb-3">
                 <ProfileAvatar user={{ avatar: 1 }} size={48} />

@@ -1,13 +1,6 @@
 import type { Request, Response } from "express";
-import {
-  CognitoIdentityProviderClient,
-  AdminUpdateUserAttributesCommand,
-  GetUserAttributeVerificationCodeCommand,
-  VerifyUserAttributeCommand,
-} from "@aws-sdk/client-cognito-identity-provider";
 import { config } from "../config/index.js";
 import userService from "../services/userService.js";
-import { cognitoClient } from "../config/aws.js";
 import {
   countFollowers,
   countFollowing,
@@ -49,33 +42,8 @@ export async function me(req: Request, res: Response) {
   }
 }
 
-export async function startEmailUpdate(req: Request, res: Response) {
-  // @ts-ignore
-  const userId = req.user?.userId as string;
-  const { email } = (req.body || {}) as { email?: string };
-  if (!email) return res.status(400).json({ error: "email required" });
-  try {
-    const accessToken = (req as any).cookies?.accessToken as string | undefined;
-    await userService.startEmailUpdateForUser(userId, email, accessToken);
-    res.json({ ok: true });
-  } catch (e: any) {
-    res.status(400).json({ error: e?.message || "failed to start email update" });
-  }
-}
-
-export async function verifyEmail(req: Request, res: Response) {
-  // @ts-ignore
-  const userId = req.user?.userId as string;
-  const { code } = (req.body || {}) as { code?: string };
-  if (!code) return res.status(400).json({ error: "code required" });
-  try {
-    const accessToken = (req as any).cookies?.accessToken as string | undefined;
-    await userService.verifyEmailForUser(userId, accessToken, code);
-    res.json({ ok: true });
-  } catch (e: any) {
-    res.status(400).json({ error: e?.message || "verify failed" });
-  }
-}
+// Note: Email verification is now handled through Firebase Auth linked providers.
+// Users can link their account to Google/Apple which provides verified email.
 
 export async function changeScreenName(req: Request, res: Response) {
   // @ts-ignore

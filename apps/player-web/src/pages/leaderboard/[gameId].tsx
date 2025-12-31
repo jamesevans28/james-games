@@ -5,7 +5,7 @@ import { getTopScores, ScoreEntry } from "../../lib/api";
 import { getUserName } from "../../utils/user";
 import Seo from "../../components/Seo";
 import { ProfileAvatar } from "../../components/profile";
-import { useAuth } from "../../context/AuthProvider";
+import { useAuth } from "../../context/FirebaseAuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 
 export default function LeaderboardPage() {

@@ -2,20 +2,20 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import GameHub from "./pages/home";
 import PlayGame from "./pages/games/PlayGame";
 import LeaderboardPage from "./pages/leaderboard/[gameId]";
-import LoginPage from "./pages/login";
-import SignupPage from "./pages/signup";
+import LoginPage from "./pages/firebase-login";
 import RootLayout from "./components/layout/RootLayout";
 import SettingsScreen from "./pages/settings";
 import AvatarSelect from "./pages/settings/AvatarSelect";
 import FollowersPage from "./pages/followers";
 import ProfilePage from "./pages/profile/[userId]";
 import NotificationsPage from "./pages/notifications";
-import { RequireAuth } from "./components/RouteGuards";
+import { RequireAuth, RequireRegistered } from "./components/RouteGuards";
 import SWUpdatePrompt from "./components/SWUpdatePrompt";
 import InstallPWA from "./components/InstallPWA";
 import IOSInstallHint from "./components/IOSInstallHint";
 import SplashScreen from "./components/SplashScreen";
-import { AuthProvider } from "./context/AuthProvider";
+import AccountUpgradeBanner from "./components/AccountUpgradeBanner";
+import { AuthProvider } from "./context/FirebaseAuthProvider";
 import PageTransition from "./components/PageTransition";
 
 function AppRoutes() {
@@ -27,37 +27,37 @@ function AppRoutes() {
         <Route element={<RootLayout />}>
           <Route path="/" element={<GameHub />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/signup" element={<LoginPage />} />
           <Route
             path="/settings"
             element={
-              <RequireAuth>
+              <RequireRegistered>
                 <SettingsScreen />
-              </RequireAuth>
+              </RequireRegistered>
             }
           />
           <Route
             path="/settings/avatar"
             element={
-              <RequireAuth>
+              <RequireRegistered>
                 <AvatarSelect />
-              </RequireAuth>
+              </RequireRegistered>
             }
           />
           <Route
             path="/followers"
             element={
-              <RequireAuth>
+              <RequireRegistered>
                 <FollowersPage />
-              </RequireAuth>
+              </RequireRegistered>
             }
           />
           <Route
             path="/notifications"
             element={
-              <RequireAuth>
+              <RequireRegistered>
                 <NotificationsPage />
-              </RequireAuth>
+              </RequireRegistered>
             }
           />
           <Route path="/profile/:userId" element={<ProfilePage />} />
@@ -77,6 +77,7 @@ export default function App() {
         <SWUpdatePrompt />
         <InstallPWA />
         <IOSInstallHint />
+        <AccountUpgradeBanner />
         <AppRoutes />
       </BrowserRouter>
     </AuthProvider>

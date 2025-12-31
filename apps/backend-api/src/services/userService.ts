@@ -1,11 +1,4 @@
-import {
-  CognitoIdentityProviderClient,
-  AdminUpdateUserAttributesCommand,
-  GetUserAttributeVerificationCodeCommand,
-  VerifyUserAttributeCommand,
-} from "@aws-sdk/client-cognito-identity-provider";
 import { config } from "../config/index.js";
-import { cognitoClient } from "../config/aws.js";
 import {
   getUser,
   updateUserEmailMetadata,
@@ -25,8 +18,105 @@ import { buildSummary } from "./experienceService.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
+// Fun adjectives and nouns for generating playful screen names
+const ADJECTIVES = [
+  "Brave",
+  "Cheeky",
+  "Clever",
+  "Curious",
+  "Daring",
+  "Eager",
+  "Fearless",
+  "Gentle",
+  "Happy",
+  "Jolly",
+  "Keen",
+  "Lively",
+  "Merry",
+  "Noble",
+  "Playful",
+  "Quick",
+  "Silly",
+  "Swift",
+  "Witty",
+  "Zany",
+  "Awesome",
+  "Bold",
+  "Cool",
+  "Dazzling",
+  "Epic",
+  "Funky",
+  "Giggly",
+  "Hyper",
+  "Jazzy",
+  "Kooky",
+  "Lucky",
+  "Mighty",
+  "Nifty",
+  "Peppy",
+  "Quirky",
+  "Rowdy",
+  "Snappy",
+  "Cheerful",
+  "Bouncy",
+  "Zippy",
+];
+
+const NOUNS = [
+  "Koala",
+  "Panda",
+  "Tiger",
+  "Eagle",
+  "Dolphin",
+  "Penguin",
+  "Otter",
+  "Fox",
+  "Wolf",
+  "Bear",
+  "Hawk",
+  "Owl",
+  "Rabbit",
+  "Squirrel",
+  "Deer",
+  "Lion",
+  "Cheetah",
+  "Turtle",
+  "Hedgehog",
+  "Monkey",
+  "Parrot",
+  "Racoon",
+  "Badger",
+  "Beaver",
+  "Falcon",
+  "Jaguar",
+  "Lemur",
+  "Lynx",
+  "Moose",
+  "Peacock",
+  "Platypus",
+  "Puma",
+  "Raven",
+  "Seal",
+  "Shark",
+  "Sloth",
+  "Swan",
+  "Walrus",
+  "Whale",
+  "Zebra",
+];
+
+/**
+ * Generate a fun, playful screen name by combining a random adjective and noun.
+ * Examples: "BraveKoala", "CheekySquirrel", "MightyPenguin"
+ */
+export function generatePlayfulName(): string {
+  const adjective = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+  return `${adjective}${noun}`;
+}
+
 // High-level user service that consolidates user/profile/settings logic.
-// Controllers should call these functions instead of talking to Dynamo/Cognito directly.
+// Controllers should call these functions instead of talking to Dynamo directly.
 
 export async function getProfile(userId: string) {
   const profile = await getUser(userId);
@@ -172,61 +262,11 @@ export async function updatePreferencesForUser(userId: string, patch: Record<str
   return updateUserPreferences(userId, patch);
 }
 
-export async function startEmailUpdateForUser(userId: string, email: string, accessToken?: string) {
-  if (!email) throw new Error("email required");
-  // update attributes in Cognito
-  await cognitoClient.send(
-    new AdminUpdateUserAttributesCommand({
-      UserPoolId: config.cognito.userPoolId,
-      Username: userId,
-      UserAttributes: [
-        { Name: "email", Value: email },
-        { Name: "custom:email_provided", Value: "true" },
-      ],
-    })
-  );
-
-  if (accessToken) {
-    try {
-      await cognitoClient.send(
-        new GetUserAttributeVerificationCodeCommand({
-          AccessToken: accessToken,
-          AttributeName: "email",
-        })
-      );
-    } catch (e: any) {
-      // Non-fatal for server-side flow; caller can still rely on the admin update above.
-    }
-  }
-
-  await updateUserEmailMetadata(userId, { emailProvided: true, email });
-  return { ok: true };
-}
-
-export async function verifyEmailForUser(
-  userId: string,
-  accessToken: string | undefined,
-  code: string
-) {
-  if (!accessToken) throw new Error("no access token");
-  if (!code) throw new Error("code required");
-
-  await cognitoClient.send(
-    new VerifyUserAttributeCommand({
-      AccessToken: accessToken,
-      AttributeName: "email",
-      Code: code,
-    })
-  );
-
-  await updateUserEmailMetadata(userId, { validated: true });
-  return { ok: true };
-}
+// Note: Email update/verification is now handled through Firebase Auth linked accounts.
+// Users can link their account to a social provider (Google/Apple) which will provide verified email.
 
 export default {
   getProfile,
   changeScreenName,
   updatePreferencesForUser,
-  startEmailUpdateForUser,
-  verifyEmailForUser,
 };

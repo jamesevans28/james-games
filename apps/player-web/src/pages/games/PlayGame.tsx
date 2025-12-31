@@ -8,7 +8,7 @@ import Seo from "../../components/Seo";
 import GameLanding from "./GameLanding";
 import GameOver from "./GameOver";
 import { onGameOver } from "../../utils/gameEvents";
-import { useAuth } from "../../context/AuthProvider";
+import { useAuth } from "../../context/FirebaseAuthProvider";
 import RatingPromptModal from "../../components/RatingPromptModal";
 import { fetchRatingSummary, submitRating, RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";

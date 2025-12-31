@@ -10,7 +10,7 @@ import {
 import { games } from "../../games";
 import { ProfileAvatar } from "../../components/profile";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
-import { useAuth } from "../../context/AuthProvider";
+import { useAuth } from "../../context/FirebaseAuthProvider";
 import ShareFollowCodeCard from "../../components/ShareFollowCodeCard";
 
 const STATUS_LABELS: Record<PresenceStatus, string> = {
