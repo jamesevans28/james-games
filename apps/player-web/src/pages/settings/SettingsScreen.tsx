@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { fetchMe, updateSettings } from "../../lib/api";
 import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import { OfflineBanner } from "../../components/OfflineBanner";
 
 export default function SettingsScreen() {
   const {
@@ -42,6 +44,8 @@ export default function SettingsScreen() {
   const [pinSuccess, setPinSuccess] = useState(false);
   const [changingPin, setChangingPin] = useState(false);
 
+  const { isOnline } = useOnlineStatus();
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -67,6 +71,10 @@ export default function SettingsScreen() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!dirty) return;
+    if (!navigator.onLine) {
+      setError("You're offline. Connect to save changes.");
+      return;
+    }
     try {
       setSaving(true);
       setError(null);
@@ -77,7 +85,11 @@ export default function SettingsScreen() {
       setTimeout(() => setSuccess(false), 2500);
       await refreshProfile();
     } catch (e: any) {
-      setError(e?.message || "Failed to update");
+      if (!navigator.onLine) {
+        setError("You're offline. Connect to save changes.");
+      } else {
+        setError(e?.message || "Failed to update");
+      }
     } finally {
       setSaving(false);
     }
@@ -85,12 +97,20 @@ export default function SettingsScreen() {
 
   async function handleLinkGoogle() {
     setLinkError(null);
+    if (!navigator.onLine) {
+      setLinkError("You're offline. Connect to link accounts.");
+      return;
+    }
     setLinkingProvider("google");
     try {
       await linkGoogle();
       await refreshProfile();
     } catch (e: any) {
-      setLinkError(e?.message || "Failed to link Google account");
+      if (!navigator.onLine) {
+        setLinkError("You're offline. Connect to link accounts.");
+      } else {
+        setLinkError(e?.message || "Failed to link Google account");
+      }
     } finally {
       setLinkingProvider(null);
     }
@@ -98,6 +118,10 @@ export default function SettingsScreen() {
 
   async function handleLinkApple() {
     setLinkError(null);
+    if (!navigator.onLine) {
+      setLinkError("You're offline. Connect to link accounts.");
+      return;
+    }
     setLinkingProvider("apple");
     try {
       await linkApple();
@@ -115,6 +139,10 @@ export default function SettingsScreen() {
       setEmailError("Please enter a valid email address");
       return;
     }
+    if (!navigator.onLine) {
+      setEmailError("You're offline. Connect to add email.");
+      return;
+    }
 
     setEmailError(null);
     setEmailSuccess(null);
@@ -130,7 +158,11 @@ export default function SettingsScreen() {
       }
       setEmail("");
     } catch (e: any) {
-      setEmailError(e?.message || "Failed to add email");
+      if (!navigator.onLine) {
+        setEmailError("You're offline. Connect to add email.");
+      } else {
+        setEmailError(e?.message || "Failed to add email");
+      }
     } finally {
       setAddingEmail(false);
     }
@@ -139,12 +171,20 @@ export default function SettingsScreen() {
   async function handleSendVerification() {
     setEmailError(null);
     setEmailSuccess(null);
+    if (!navigator.onLine) {
+      setEmailError("You're offline. Connect to send verification email.");
+      return;
+    }
     setSendingVerification(true);
     try {
       await sendVerificationEmail();
       setEmailSuccess("Verification email sent! Check your inbox.");
     } catch (e: any) {
-      setEmailError(e?.message || "Failed to send verification email");
+      if (!navigator.onLine) {
+        setEmailError("You're offline. Connect to send verification email.");
+      } else {
+        setEmailError(e?.message || "Failed to send verification email");
+      }
     } finally {
       setSendingVerification(false);
     }
@@ -153,6 +193,10 @@ export default function SettingsScreen() {
   async function handleCheckVerification() {
     setEmailError(null);
     setEmailSuccess(null);
+    if (!navigator.onLine) {
+      setEmailError("You're offline. Connect to check verification status.");
+      return;
+    }
     setCheckingVerification(true);
     try {
       const isVerified = await checkEmailVerified();
@@ -164,7 +208,11 @@ export default function SettingsScreen() {
         );
       }
     } catch (e: any) {
-      setEmailError(e?.message || "Failed to check verification status");
+      if (!navigator.onLine) {
+        setEmailError("You're offline. Connect to check verification status.");
+      } else {
+        setEmailError(e?.message || "Failed to check verification status");
+      }
     } finally {
       setCheckingVerification(false);
     }
@@ -174,6 +222,11 @@ export default function SettingsScreen() {
     e.preventDefault();
     setPinError(null);
     setPinSuccess(false);
+
+    if (!navigator.onLine) {
+      setPinError("You're offline. Connect to change PIN.");
+      return;
+    }
 
     if (!/^\d{4,8}$/.test(newPin)) {
       setPinError("New PIN must be 4-8 digits");
@@ -195,7 +248,11 @@ export default function SettingsScreen() {
       setShowPinChange(false);
       setTimeout(() => setPinSuccess(false), 3000);
     } catch (e: any) {
-      setPinError(e?.message || "Failed to change PIN");
+      if (!navigator.onLine) {
+        setPinError("You're offline. Connect to change PIN.");
+      } else {
+        setPinError(e?.message || "Failed to change PIN");
+      }
     } finally {
       setChangingPin(false);
     }
@@ -211,6 +268,9 @@ export default function SettingsScreen() {
   return (
     <div className="max-w-xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4 text-black">Account Settings</h1>
+
+      {/* Offline Banner */}
+      {!isOnline && <OfflineBanner className="mb-4" />}
 
       {/* Screen Name Section */}
       <form onSubmit={handleSubmit} className="space-y-4 mb-8">

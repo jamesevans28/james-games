@@ -7,6 +7,7 @@ import Seo from "../../components/Seo";
 import { ProfileAvatar } from "../../components/profile";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
+import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 
 export default function LeaderboardPage() {
   const { gameId } = useParams();
@@ -18,6 +19,7 @@ export default function LeaderboardPage() {
   const [tabError, setTabError] = useState<string | null>(null);
   const myName = useMemo(() => getUserName() || "", []);
   const { user } = useAuth();
+  const { isOnline } = useOnlineStatus();
   usePresenceReporter({
     status: "browsing_leaderboard",
     gameId: meta?.id,
@@ -40,6 +42,15 @@ export default function LeaderboardPage() {
       setLoading(true);
       setError(null);
       setTabError(null);
+
+      // Check if offline before attempting to fetch
+      if (!navigator.onLine) {
+        setRows([]);
+        setLoading(false);
+        setError("You're offline. Connect to the internet to view the leaderboard.");
+        return;
+      }
+
       const scope = activeTab === "following" ? "following" : undefined;
       if (scope === "following" && !user) {
         setRows([]);
@@ -57,6 +68,9 @@ export default function LeaderboardPage() {
             setRows([]);
             setTabError("Sign in to see scores from people you follow.");
           }
+        } else if (!navigator.onLine) {
+          if (!cancelled)
+            setError("You're offline. Connect to the internet to view the leaderboard.");
         } else {
           if (!cancelled) setError("Failed to load leaderboard");
         }
@@ -68,7 +82,7 @@ export default function LeaderboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [gameId, activeTab, user?.userId]);
+  }, [gameId, activeTab, user?.userId, isOnline]);
 
   function handleTabChange(next: "overall" | "following") {
     setActiveTab(next);

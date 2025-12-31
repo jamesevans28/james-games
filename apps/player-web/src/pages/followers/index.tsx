@@ -12,6 +12,8 @@ import { ProfileAvatar } from "../../components/profile";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import ShareFollowCodeCard from "../../components/ShareFollowCodeCard";
+import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import { OfflineBanner } from "../../components/OfflineBanner";
 
 const STATUS_LABELS: Record<PresenceStatus, string> = {
   looking_for_game: "Online",
@@ -50,6 +52,7 @@ export default function FollowersPage() {
     null
   );
   const { user } = useAuth();
+  const { isOnline } = useOnlineStatus();
   const [searchParams, setSearchParams] = useSearchParams();
   const anchor = searchParams.get("view") === "followers" ? "followers" : "following";
 
@@ -58,11 +61,23 @@ export default function FollowersPage() {
   const refresh = useCallback(async () => {
     setError(null);
     setLoading(true);
+
+    // Check if offline
+    if (!navigator.onLine) {
+      setError("You're offline. Connect to view followers.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const summary = await fetchFollowersSummary();
       setData(summary);
     } catch (err: any) {
-      setError(err?.message || "Failed to load followers");
+      if (!navigator.onLine) {
+        setError("You're offline. Connect to view followers.");
+      } else {
+        setError(err?.message || "Failed to load followers");
+      }
     } finally {
       setLoading(false);
     }
@@ -283,6 +298,7 @@ export default function FollowersPage() {
           Back to games
         </Link>
       </div>
+      {!isOnline && <OfflineBanner className="mt-4" />}
       {loading && <div className="mt-4 text-gray-600">Loading...</div>}
       {error && !loading && <div className="mt-4 text-sm text-red-600">{error}</div>}
       {user?.userId && (

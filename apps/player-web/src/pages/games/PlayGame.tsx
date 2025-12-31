@@ -13,6 +13,7 @@ import RatingPromptModal from "../../components/RatingPromptModal";
 import { fetchRatingSummary, submitRating, RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
+import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 
 const PLAY_COUNT_PREFIX = "rating:plays:";
 const RATING_PROMPT_INTERVAL = 10;
@@ -100,12 +101,20 @@ export default function PlayGame() {
     if (mountingRef.current) return;
     mountingRef.current = true;
     setMounting(true);
+    setError(null);
     try {
       if (!meta) {
         setError("Game not found");
         return;
       }
       if (!containerRef.current) return;
+
+      // Check if online before attempting to load (games are loaded on demand)
+      if (!navigator.onLine) {
+        setError("You're offline. Connect to the internet to load this game.");
+        return;
+      }
+
       const mod = await meta.load();
       // Destroy any previous instance first
       if (destroyRef.current) {
@@ -119,7 +128,12 @@ export default function PlayGame() {
       trackGameStart(meta.id, meta.title);
     } catch (e) {
       console.error(e);
-      setError("Failed to load game");
+      // Check if it's a network error
+      if (!navigator.onLine) {
+        setError("You're offline. Connect to the internet to load this game.");
+      } else {
+        setError("Failed to load game. Please check your connection and try again.");
+      }
     } finally {
       mountingRef.current = false;
       setMounting(false);

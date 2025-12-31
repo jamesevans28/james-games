@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/FirebaseAuthProvider";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import { OfflineBanner } from "../components/OfflineBanner";
 
 type AuthMode = "login" | "register";
 
@@ -29,6 +31,7 @@ export default function FirebaseLoginPage() {
   const [screenName, setScreenName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [triedSubmit, setTriedSubmit] = useState(false);
+  const { isOnline } = useOnlineStatus();
 
   // Update mode when route changes
   useEffect(() => {
@@ -81,6 +84,12 @@ export default function FirebaseLoginPage() {
     setTriedSubmit(true);
     setError(null);
 
+    // Check if offline
+    if (!navigator.onLine) {
+      setError("You're offline. Connect to the internet to sign in.");
+      return;
+    }
+
     const validationErrors = validate();
     if (validationErrors.length > 0) {
       setError(validationErrors[0]);
@@ -98,37 +107,62 @@ export default function FirebaseLoginPage() {
       const returnTo = params.get("state") || "/";
       navigate(returnTo, { replace: true });
     } catch (err: any) {
-      setError(err?.message || "Authentication failed");
+      if (!navigator.onLine) {
+        setError("You're offline. Connect to the internet to sign in.");
+      } else {
+        setError(err?.message || "Authentication failed");
+      }
     }
   };
 
   const handleGoogleSignIn = async () => {
     setError(null);
+    // Check if offline
+    if (!navigator.onLine) {
+      setError("You're offline. Connect to the internet to sign in.");
+      return;
+    }
     try {
       await signInWithGoogle();
       const params = new URLSearchParams(window.location.search);
       const returnTo = params.get("state") || "/";
       navigate(returnTo, { replace: true });
     } catch (err: any) {
-      setError(err?.message || "Google sign in failed");
+      if (!navigator.onLine) {
+        setError("You're offline. Connect to the internet to sign in.");
+      } else {
+        setError(err?.message || "Google sign in failed");
+      }
     }
   };
 
   const handleAppleSignIn = async () => {
     setError(null);
+    // Check if offline
+    if (!navigator.onLine) {
+      setError("You're offline. Connect to the internet to sign in.");
+      return;
+    }
     try {
       await signInWithApple();
       const params = new URLSearchParams(window.location.search);
       const returnTo = params.get("state") || "/";
       navigate(returnTo, { replace: true });
     } catch (err: any) {
-      setError(err?.message || "Apple sign in failed");
+      if (!navigator.onLine) {
+        setError("You're offline. Connect to the internet to sign in.");
+      } else {
+        setError(err?.message || "Apple sign in failed");
+      }
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#FFEDD5] via-[#FFF7ED] to-[#FEF3C7] p-6">
       <div className="max-w-lg w-full p-6 bg-white/90 backdrop-blur rounded-3xl shadow-2xl border-2 border-[#fde68a]">
+        {/* Offline Banner */}
+        {!isOnline && <OfflineBanner className="mb-4" />}
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <button

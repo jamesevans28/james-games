@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { postHighScore, postExperienceRun, type ExperienceSummary } from "../../lib/api";
 import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 
 type Props = {
   open: boolean;
@@ -231,16 +232,19 @@ export default function GameOver({
   const postedRef = useRef<string | null>(null);
   const xpPostedRef = useRef<string | null>(null);
   const { user, refreshProfile } = useAuth();
+  const { isOnline } = useOnlineStatus();
   const [startExperience, setStartExperience] = useState<ExperienceSummary | null>(null);
   const [endExperience, setEndExperience] = useState<ExperienceSummary | null>(null);
   const [xpAwarded, setXpAwarded] = useState<number | null>(null);
   const [xpPending, setXpPending] = useState(false);
   const [xpError, setXpError] = useState<string | null>(null);
+  const [scoreError, setScoreError] = useState<string | null>(null);
   const [showLevelUp, setShowLevelUp] = useState(false);
 
   useEffect(() => {
     if (!open) {
       console.log("GameOver: not posting score because dialog is not open");
+      setScoreError(null);
       return;
     }
     const s = Number(score || 0);
@@ -262,7 +266,15 @@ export default function GameOver({
       return;
     }
 
+    // Check if offline
+    if (!navigator.onLine) {
+      console.log("GameOver: not posting score because device is offline");
+      setScoreError("You're offline. Score will not be saved.");
+      return;
+    }
+
     postedRef.current = sig;
+    setScoreError(null);
     void postHighScore({ gameId, score: s })
       .then((res) => {
         console.log("GameOver: posted score", { gameId, score: s });
@@ -271,8 +283,14 @@ export default function GameOver({
       .catch((e) => {
         postedRef.current = null;
         console.warn("Failed to post high score", e);
+        // Check if the error was due to going offline
+        if (!navigator.onLine) {
+          setScoreError("You're offline. Score could not be saved.");
+        } else {
+          setScoreError("Could not save score. Please try again.");
+        }
       });
-  }, [open, score, gameId, user]);
+  }, [open, score, gameId, user, isOnline]);
 
   useEffect(() => {
     if (!open) {
@@ -295,6 +313,13 @@ export default function GameOver({
     if (!open || !user || !gameId || !score || score <= 0) return;
     const sig = `${gameId}:${score}`;
     if (xpPostedRef.current === sig) return;
+
+    // Check if offline before attempting XP post
+    if (!navigator.onLine) {
+      setXpError("You're offline. XP will not be awarded.");
+      return;
+    }
+
     xpPostedRef.current = sig;
     setXpPending(true);
     setXpError(null);
@@ -332,6 +357,8 @@ export default function GameOver({
         if (canceled) return;
         if (err?.message === "signin_required") {
           setXpError("Sign in to earn experience.");
+        } else if (!navigator.onLine) {
+          setXpError("You're offline. XP could not be awarded.");
         } else {
           setXpError(err?.message || "Could not add experience right now.");
         }
@@ -341,7 +368,7 @@ export default function GameOver({
     return () => {
       canceled = true;
     };
-  }, [open, user?.userId, gameId, score, xpMultiplier, refreshProfile, user?.experience]);
+  }, [open, user?.userId, gameId, score, xpMultiplier, refreshProfile, user?.experience, isOnline]);
 
   if (!open) return null;
 
@@ -380,6 +407,19 @@ export default function GameOver({
           </div>
           <div className="px-5 py-6">
             <div className="text-5xl font-extrabold text-center text-black">{score ?? 0}</div>
+            {scoreError && (
+              <p className="text-xs text-amber-600 mt-2 text-center flex items-center justify-center gap-1">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M18.364 5.636a9 9 0 010 12.728m-3.536-3.536a4 4 0 010-5.656m-7.072 9.192a9 9 0 010-12.728m3.536 3.536a4 4 0 010 5.656"
+                  />
+                </svg>
+                {scoreError}
+              </p>
+            )}
           </div>
           {user ? (
             <div className="px-5 pb-5 border-t border-gray-100">

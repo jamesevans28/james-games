@@ -13,6 +13,7 @@ import { useAuth } from "../../context/FirebaseAuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { ExperienceBar } from "../../components/ExperienceBar";
 import Seo from "../../components/Seo";
+import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 
 interface ProfileResponse {
   profile: {
@@ -39,6 +40,7 @@ interface ProfileResponse {
 export default function ProfilePage() {
   const { userId } = useParams();
   const { user } = useAuth();
+  const { isOnline } = useOnlineStatus();
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +56,16 @@ export default function ProfilePage() {
       setLoading(true);
       setError(null);
       setNotFound(false);
+
+      // Check if offline
+      if (!navigator.onLine) {
+        if (!cancelled) {
+          setError("You're offline. Connect to view this profile.");
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
         const res = await fetchUserProfile(userId);
         if (!res) {
@@ -68,6 +80,8 @@ export default function ProfilePage() {
         if (err?.message === "user_not_found" || err?.status === 404) {
           setNotFound(true);
           setData(null);
+        } else if (!navigator.onLine) {
+          setError("You're offline. Connect to view this profile.");
         } else {
           setError(err?.message || "Failed to load profile");
         }
