@@ -144,12 +144,19 @@ jobs:
             --function-name "${{ env.LAMBDA_FUNCTION_NAME }}" \
             --zip-file fileb://bundle.zip
 
+      - name: Wait for Lambda update to complete
+        if: ${{ env.LAMBDA_FUNCTION_NAME != '' }}
+        run: |
+          echo "Waiting for Lambda function to finish updating..."
+          aws lambda wait function-updated \
+            --function-name "${{ env.LAMBDA_FUNCTION_NAME }}"
+
       - name: Update Lambda env
         if: ${{ env.LAMBDA_FUNCTION_NAME != '' }}
         run: |
           aws lambda update-function-configuration \
             --function-name "${{ env.LAMBDA_FUNCTION_NAME }}" \
-            --environment "Variables={TABLE_NAME=${{ vars.TABLE_NAME }},AWS_NODEJS_CONNECTION_REUSE_ENABLED=1,FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},CORS_ALLOWED_ORIGINS=${{ vars.CORS_ALLOWED_ORIGINS }}}"
+            --environment "Variables={TABLE_NAME=${{ vars.TABLE_NAME }},SCORES_TABLE=${{ vars.SCORES_TABLE }},TABLE_USERS=${{ vars.TABLE_USERS }},TABLE_RATINGS=${{ vars.TABLE_RATINGS }},TABLE_RATING_SUMMARY=${{ vars.TABLE_RATING_SUMMARY }},TABLE_FOLLOWS=${{ vars.TABLE_FOLLOWS }},TABLE_PRESENCE=${{ vars.TABLE_PRESENCE }},TABLE_USER_GAME_STATS=${{ vars.TABLE_USER_GAME_STATS }},TABLE_EXPERIENCE_LEVELS=${{ vars.TABLE_EXPERIENCE_LEVELS }},TABLE_GAME_CONFIG=${{ vars.TABLE_GAME_CONFIG }},AWS_NODEJS_CONNECTION_REUSE_ENABLED=1,FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},CORS_ALLOWED_ORIGINS=${{ vars.CORS_ALLOWED_ORIGINS }}}"
 
   admin-web:
     runs-on: ubuntu-latest
