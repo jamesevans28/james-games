@@ -23,12 +23,17 @@ export default function SplashScreen() {
 
   if (!show) return null;
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-gradient-to-br from-fuchsia-700 via-purple-700 to-fuchsia-700">
-      <img
-        src="/assets/shared/logo_square.png"
-        alt="Games4James"
-        className="w-40 h-40 rounded-2xl shadow-2xl"
-      />
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-gradient-to-br from-flingo-500 via-flingo-700 to-flingo-800">
+      <div className="flex flex-col items-center gap-4 animate-float">
+        <img
+          src="/assets/shared/flingo-logo.svg"
+          alt="Flingo.fun"
+          className="w-32 h-32 drop-shadow-2xl"
+        />
+        <span className="text-2xl font-bold text-white">
+          flingo<span className="text-candy-pink">.fun</span>
+        </span>
+      </div>
     </div>
   );
 }

@@ -50,23 +50,25 @@ export function ExperienceBar({
           {Math.round(progress)}/{safeRequired} XP
         </span>
       </div> */}
-      <div className="relative h-4 rounded-full bg-gray-200 overflow-hidden">
+      <div className="relative h-4 rounded-full bg-flingo-100 overflow-hidden border-2 border-flingo-200">
         <div
           className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
           style={{
             width: `${fillPercent}%`,
             backgroundImage:
               "repeating-linear-gradient(45deg, rgba(255,255,255,0.35) 0, rgba(255,255,255,0.35) 8px, transparent 8px, transparent 16px)",
-            backgroundColor: "#ffd54f",
-            boxShadow: celebrate ? "0 0 18px rgba(255, 214, 79, 0.7)" : "0 0 12px rgba(0,0,0,0.15)",
+            background: "linear-gradient(90deg, #A855F7 0%, #7C3AED 50%, #6366F1 100%)",
+            boxShadow: celebrate
+              ? "0 0 18px rgba(168, 85, 247, 0.6)"
+              : "0 0 12px rgba(168, 85, 247, 0.3)",
           }}
         />
         <div className="absolute inset-0 opacity-40 bg-gradient-to-r from-white via-transparent to-white pointer-events-none" />
       </div>
-      <div className="flex items-center justify-between text-xs text-gray-600">
+      <div className="flex items-center justify-between text-xs text-flingo-700 font-medium">
         <span>Level {level}</span>
         {pendingText && (
-          <span className="text-emerald-600 font-semibold animate-bounce">{pendingText}</span>
+          <span className="text-candy-mint font-bold animate-bounce">{pendingText}</span>
         )}
       </div>
     </div>

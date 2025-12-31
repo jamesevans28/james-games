@@ -14,7 +14,7 @@ export default function Seo({
   description,
   url,
   image,
-  siteName = "Games4James",
+  siteName = "flingo.fun",
   noindex,
   canonical,
   jsonLd,

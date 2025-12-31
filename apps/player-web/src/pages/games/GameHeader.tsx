@@ -7,20 +7,15 @@ interface Props {
   onBack?: () => void;
 }
 
-export default function GameHeader({
-  title,
-  brand = "games4james.com",
-  leaderboardTo,
-  onBack,
-}: Props) {
+export default function GameHeader({ title, brand = "flingo.fun", leaderboardTo, onBack }: Props) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-14">
-      <div className="h-full flex items-center justify-between px-3 bg-white text-black border-b border-gray-200">
+      <div className="h-full flex items-center justify-between px-3 bg-white/95 backdrop-blur text-flingo-800 border-b-2 border-flingo-100">
         {onBack ? (
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white hover:bg-gray-50 transition-colors px-3 py-1.5"
+            className="inline-flex items-center gap-2 rounded-full border-2 border-flingo-200 bg-white hover:bg-flingo-50 transition-colors px-3 py-1.5 text-flingo-700"
             aria-label="Back"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -36,7 +31,7 @@ export default function GameHeader({
         ) : (
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white hover:bg-gray-50 transition-colors px-3 py-1.5"
+            className="inline-flex items-center gap-2 rounded-full border-2 border-flingo-200 bg-white hover:bg-flingo-50 transition-colors px-3 py-1.5 text-flingo-700"
             aria-label="Back to games"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -52,15 +47,15 @@ export default function GameHeader({
         )}
 
         <div className="text-center pointer-events-none select-none">
-          <div className="text-lg font-extrabold">{title}</div>
-          <div className="text-[10px] text-gray-500 leading-none">{brand}</div>
+          <div className="text-lg font-extrabold text-flingo-800">{title}</div>
+          <div className="text-[10px] text-flingo-500 leading-none font-medium">{brand}</div>
         </div>
 
         <div className="flex items-center gap-2">
           {leaderboardTo && (
             <Link
               to={leaderboardTo}
-              className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white hover:bg-gray-50 transition-colors px-3 py-1.5"
+              className="inline-flex items-center gap-2 rounded-full border-2 border-flingo-200 bg-white hover:bg-flingo-50 transition-colors px-3 py-1.5 text-flingo-700"
               aria-label="Open leaderboard"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">

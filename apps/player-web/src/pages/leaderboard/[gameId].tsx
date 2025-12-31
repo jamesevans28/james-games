@@ -92,19 +92,19 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-black flex flex-col">
+    <div className="min-h-screen bg-white text-flingo-800 flex flex-col">
       <Seo
-        title={meta ? `${meta.title} Leaderboard — Games4James` : "Leaderboard — Games4James"}
-        description={`Top scores for ${meta?.title ?? "this game"} on Games4James.`}
-        url={`https://games4james.com/leaderboard/${meta?.id ?? ""}`}
-        canonical={`https://games4james.com/leaderboard/${meta?.id ?? ""}`}
-        image={"https://games4james.com/assets/logo.png"}
+        title={meta ? `${meta.title} Leaderboard — flingo.fun` : "Leaderboard — flingo.fun"}
+        description={`Top scores for ${meta?.title ?? "this game"} on flingo.fun.`}
+        url={`https://flingo.fun/leaderboard/${meta?.id ?? ""}`}
+        canonical={`https://flingo.fun/leaderboard/${meta?.id ?? ""}`}
+        image={"https://flingo.fun/assets/logo.png"}
       />
       <header className="fixed top-0 left-0 right-0 z-50 h-14">
-        <div className="h-full flex items-center justify-between px-3 bg-white text-black border-b border-gray-200">
+        <div className="h-full flex items-center justify-between px-3 bg-white/95 backdrop-blur text-flingo-800 border-b-2 border-flingo-100">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center rounded-md px-3 py-1.5"
+            className="inline-flex items-center rounded-full px-3 py-1.5 text-flingo-600 hover:bg-flingo-50 transition-colors"
             aria-label="Close leaderboard"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -117,7 +117,7 @@ export default function LeaderboardPage() {
             </svg>
           </button>
           <div className="text-center pointer-events-none select-none">
-            <div className="text-lg font-extrabold">{meta?.title ?? "Game"}</div>
+            <div className="text-lg font-extrabold text-flingo-800">{meta?.title ?? "Game"}</div>
           </div>
           <div className="w-[84px]" />
         </div>
@@ -135,10 +135,10 @@ export default function LeaderboardPage() {
               type="button"
               role="tab"
               aria-selected={activeTab === tab.id}
-              className={`flex-1 rounded-full border px-3 py-2 text-sm font-semibold transition-colors ${
+              className={`flex-1 rounded-full border-2 px-3 py-2 text-sm font-bold transition-colors ${
                 activeTab === tab.id
-                  ? "bg-black text-white border-black"
-                  : "bg-white text-black border-gray-300"
+                  ? "bg-gradient-to-r from-flingo-500 to-flingo-600 text-white border-flingo-500 shadow-fun"
+                  : "bg-white text-flingo-600 border-flingo-200 hover:bg-flingo-50"
               }`}
               onClick={() => handleTabChange(tab.id)}
             >
@@ -146,11 +146,11 @@ export default function LeaderboardPage() {
             </button>
           ))}
         </div>
-        {loading && <div className="text-gray-700">Loading…</div>}
+        {loading && <div className="text-flingo-600">Loading…</div>}
         {error && <div className="text-red-600">{error}</div>}
         {tabError && <div className="text-sm text-orange-600 mb-3">{tabError}</div>}
         {!loading && !error && (
-          <ol className="rounded-lg overflow-hidden bg-white border border-gray-200">
+          <ol className="rounded-2xl overflow-hidden bg-white border-2 border-flingo-100">
             {rows.map((r, i) => {
               const isMe = myName && r.screenName === myName;
               const medal = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : null;
@@ -165,11 +165,11 @@ export default function LeaderboardPage() {
                 if (r.userId) navigate(`/profile/${r.userId}`);
               };
               const baseRowClass =
-                "flex items-center justify-between px-4 py-3 border-b border-gray-200 last:border-b-0 " +
+                "flex items-center justify-between px-4 py-3 border-b border-flingo-100 last:border-b-0 " +
                 (isMe
-                  ? "bg-amber-50"
+                  ? "bg-flingo-50"
                   : medal === "gold"
-                  ? "bg-yellow-50"
+                  ? "bg-candy-yellow/10"
                   : medal === "silver"
                   ? "bg-gray-50"
                   : medal === "bronze"
@@ -181,7 +181,7 @@ export default function LeaderboardPage() {
                   className={
                     baseRowClass +
                     (hasProfile
-                      ? " cursor-pointer focus:outline-none focus:ring-2 focus:ring-black"
+                      ? " cursor-pointer focus:outline-none focus:ring-2 focus:ring-flingo-400 hover:bg-flingo-50"
                       : "")
                   }
                   role={hasProfile ? "button" : undefined}
@@ -200,7 +200,7 @@ export default function LeaderboardPage() {
                   aria-label={hasProfile ? `View ${r.screenName}'s profile` : undefined}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="w-7 text-gray-500 font-mono">{i + 1}.</span>
+                    <span className="w-7 text-flingo-500 font-mono">{i + 1}.</span>
                     <div className="relative flex items-center">
                       <ProfileAvatar
                         user={{ avatar: r.avatar }}
@@ -229,29 +229,34 @@ export default function LeaderboardPage() {
                     <div className="min-w-0">
                       <span
                         className={
-                          "font-semibold truncate max-w-[210px] md:max-w-[260px] " +
+                          "font-bold truncate max-w-[210px] md:max-w-[260px] " +
                           (isMe
-                            ? "text-amber-700"
+                            ? "text-flingo-700"
                             : medal
                             ? `text-[${medalColors[medal].text}]`
-                            : "")
+                            : "text-flingo-800")
                         }
                         title={r.screenName}
                       >
                         {r.screenName}
                       </span>
                       {typeof r.level === "number" && (
-                        <div className="text-[11px] text-gray-500">Level {r.level}</div>
+                        <div className="text-[11px] text-flingo-500">Level {r.level}</div>
                       )}
                     </div>
                   </div>
-                  <div className={"text-right font-mono " + (isMe ? "text-amber-700" : "")}>
+                  <div
+                    className={
+                      "text-right font-mono font-bold " +
+                      (isMe ? "text-flingo-700" : "text-flingo-600")
+                    }
+                  >
                     {r.score}
                   </div>
                 </li>
               );
             })}
-            {rows.length === 0 && <div className="px-4 py-6 text-gray-500">No scores yet.</div>}
+            {rows.length === 0 && <div className="px-4 py-6 text-flingo-500">No scores yet.</div>}
           </ol>
         )}
       </div>

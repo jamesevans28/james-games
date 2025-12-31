@@ -1,11 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: "./",
   plugins: [
+    tailwindcss(),
     react(),
     VitePWA({
       registerType: "autoUpdate",
@@ -31,7 +33,7 @@ export default defineConfig({
           },
           {
             // External API domain (optional)
-            urlPattern: /^https:\/\/api\.games4james\.com\/.*/,
+            urlPattern: /^https:\/\/api\.flingo\.fun\/.*/,
             handler: "NetworkFirst",
             options: {
               cacheName: "api-external-cache",
@@ -59,11 +61,11 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: "Games4James",
-        short_name: "G4J",
+        name: "flingo.fun",
+        short_name: "flingo",
         description: "Play free, fast, skill-based games in your browser.",
-        theme_color: "#000000",
-        background_color: "#000000",
+        theme_color: "#A855F7",
+        background_color: "#FFFFFF",
         display: "standalone",
         orientation: "portrait",
         scope: "/",

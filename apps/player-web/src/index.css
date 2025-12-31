@@ -1,71 +1,211 @@
 @import "tailwindcss";
 
-/* Ensure root takes full height; body classes are in index.html */
-html,
-body,
-#root {
-  height: 100%;
+@theme {
+  /* Flingo brand colors (purple gradient) */
+  --color-flingo-50: #faf5ff;
+  --color-flingo-100: #f3e8ff;
+  --color-flingo-200: #e9d5ff;
+  --color-flingo-300: #d8b4fe;
+  --color-flingo-400: #c084fc;
+  --color-flingo-500: #a855f7;
+  --color-flingo-600: #9333ea;
+  --color-flingo-700: #7c3aed;
+  --color-flingo-800: #6366f1;
+  --color-flingo-900: #4c1d95;
+
+  /* Candy accent colors */
+  --color-candy-pink: #f472b6;
+  --color-candy-yellow: #fbbf24;
+  --color-candy-mint: #34d399;
+  --color-candy-sky: #60a5fa;
+
+  /* Font families */
+  --font-sans: "Fredoka", Arial, sans-serif;
+  --font-display: "Fredoka", Arial, sans-serif;
+
+  /* Custom shadows */
+  --shadow-fun: 0 4px 20px -2px rgba(168, 85, 247, 0.25);
+  --shadow-fun-lg: 0 8px 30px -4px rgba(168, 85, 247, 0.35);
+  --shadow-card: 0 2px 12px -2px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 8px 24px -4px rgba(168, 85, 247, 0.2);
+
+  /* Border radius */
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
+
+  /* Animations */
+  --animate-wiggle: wiggle 1s ease-in-out infinite;
+  --animate-float: float 3s ease-in-out infinite;
 }
 
-/* Override browser default body margin (typically 8px) */
-body {
-  margin: 0;
-  font-family: "Fredoka", Arial, Helvetica, sans-serif;
+/* ======================================
+   Custom Animations
+   ====================================== */
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
 }
 
-/* Phaser canvas fills the game container */
-#game-container {
-  position: relative;
-  overflow: hidden;
-}
-#game-container canvas {
-  /* Let Phaser Scale manager control CSS size to preserve aspect ratio */
-  display: block;
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
-/* Remove tap highlight color on mobile for links/buttons to avoid purple highlight */
-a,
-button {
-  -webkit-tap-highlight-color: transparent;
+.animate-wiggle {
+  animation: wiggle 1s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ======================================
+   Base Styles
+   ====================================== */
+
+@layer base {
+  /* Ensure root takes full height */
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  /* Override browser default body margin (typically 8px) */
+  body {
+    margin: 0;
+    font-family: "Fredoka", Arial, Helvetica, sans-serif;
+    background: linear-gradient(180deg, #faf5ff 0%, #fff7ed 50%, #ecfdf5 100%);
+    min-height: 100vh;
+    color: #374151; /* gray-700 for excellent readability */
+  }
+
+  /* Default heading color, but allow Tailwind utilities to override */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: #1f2937; /* gray-800 */
+  }
+
+  /* Phaser canvas fills the game container */
+  #game-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  #game-container canvas {
+    /* Let Phaser Scale manager control CSS size to preserve aspect ratio */
+    display: block;
+  }
+
+  /* Remove tap highlight color on mobile for links/buttons */
+  a,
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 :root {
-  --header-h: 56px;
-}
-/* Theme colors */
-:root {
-  --color-primary: #4aa3ff; /* relaxing blue */
-  --color-primary-hover: #2f90ff;
-  --color-secondary: #6b7280; /* neutral secondary */
-  --btn-radius: 8px;
+  --header-h: 64px;
+
+  /* Flingo brand colors (CSS variables for non-Tailwind usage) */
+  --flingo-primary: #a855f7;
+  --flingo-primary-hover: #9333ea;
+  --flingo-secondary: #7c3aed;
+  --flingo-accent: #6366f1;
+
+  /* Candy accent colors */
+  --candy-pink: #f472b6;
+  --candy-yellow: #fbbf24;
+  --candy-mint: #34d399;
+  --candy-sky: #60a5fa;
+
+  --btn-radius: 9999px;
 }
 
-/* Button helpers */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  border-radius: var(--btn-radius);
-  font-weight: 700;
+/* Button base styles */
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--btn-radius);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px -2px rgba(168, 85, 247, 0.3);
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #9333ea 0%, #6366f1 100%);
+    box-shadow: 0 4px 16px -2px rgba(168, 85, 247, 0.45);
+  }
+
+  .btn-secondary {
+    background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
+    color: white;
+  }
+
+  .btn-outline {
+    background: white;
+    color: var(--flingo-primary);
+    border: 2px solid var(--flingo-primary);
+    box-shadow: none;
+  }
+
+  .btn-outline:hover {
+    background: var(--flingo-primary);
+    color: white;
+  }
+
+  .card {
+    background: white;
+    border-radius: 1rem;
+    border: 2px solid rgba(168, 85, 247, 0.1);
+    box-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+  }
+
+  .card:hover {
+    border-color: rgba(168, 85, 247, 0.25);
+    box-shadow: 0 8px 24px -4px rgba(168, 85, 247, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .card-interactive {
+    cursor: pointer;
+  }
+
+  .card-interactive:active {
+    transform: scale(0.98);
+  }
 }
-.btn-primary {
-  background-color: var(--color-primary);
-  color: white;
-}
-.btn-primary:hover {
-  background-color: var(--color-primary-hover);
-}
-.btn-secondary {
-  background-color: var(--color-secondary);
-  color: white;
-}
-.btn-outline {
-  background: white;
-  color: black;
-  border: 1px solid #e5e7eb;
-}
+/* Game screen sizing */
 .game-screen {
   height: calc(100dvh - var(--header-h));
   height: calc(100vh - var(--header-h)); /* fallback */
@@ -85,7 +225,7 @@ button {
   opacity: 0;
   pointer-events: none;
   transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1), opacity 450ms ease;
-  background-image: url("/assets/bg.png");
+  background: linear-gradient(180deg, #faf5ff 0%, #ede9fe 100%);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -119,7 +259,7 @@ button {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  background: white;
+  background: linear-gradient(180deg, #faf5ff 0%, #fff7ed 50%, #ecfdf5 100%);
 }
 
 .page-transition-wrapper {
@@ -134,7 +274,7 @@ button {
   right: 0;
   width: 100%;
   min-height: 100vh;
-  background: white;
+  background: linear-gradient(180deg, #faf5ff 0%, #fff7ed 50%, #ecfdf5 100%);
 }
 
 /* Forward transition (entering game page) */

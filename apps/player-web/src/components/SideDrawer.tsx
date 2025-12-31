@@ -24,7 +24,7 @@ export default function SideDrawer({
   const { user } = useSession();
   const profilePath = user?.userId ? `/profile/${user.userId}` : "/profile";
   const linkClass =
-    "w-full text-left inline-flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium text-gray-800 bg-white border border-gray-200 hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors";
+    "w-full text-left inline-flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold text-flingo-800 bg-white border-2 border-flingo-100 hover:border-flingo-300 hover:bg-flingo-50 focus:outline-none focus:ring-2 focus:ring-flingo-400 transition-all";
 
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -50,7 +50,7 @@ export default function SideDrawer({
       className={`fixed inset-0 z-[10000] ${open ? "pointer-events-auto" : "pointer-events-none"}`}
     >
       <div
-        className={`absolute inset-0 bg-black/40 transition-opacity ${
+        className={`absolute inset-0 bg-flingo-900/40 backdrop-blur-sm transition-opacity ${
           open ? "opacity-100" : "opacity-0"
         }`}
         onClick={onClose}
@@ -58,19 +58,16 @@ export default function SideDrawer({
 
       <div
         ref={panelRef}
-        className={`fixed top-0 bottom-0 right-0 w-80 max-w-[85vw] bg-white shadow-xl border-l border-gray-200 transition-transform ${
+        className={`fixed top-0 bottom-0 right-0 w-80 max-w-[85vw] bg-gradient-to-b from-white via-white to-flingo-50 shadow-2xl border-l-2 border-flingo-200 transition-transform ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
         role="dialog"
         aria-modal="true"
       >
-        <div className="flex flex-col h-full bg-gradient-to-b from-white via-white to-slate-100">
-          <div className="border-b border-gray-200 px-6 py-6 bg-white flex items-center justify-center shadow-sm">
-            <img
-              src="/assets/shared/logo_square.png"
-              alt="Games4James"
-              className="w-32 h-32 object-contain"
-            />
+        <div className="flex flex-col h-full">
+          {/* Logo header */}
+          <div className="px-6 py-6 bg-white flex items-center justify-center border-b-2 border-flingo-100">
+            <img src="/assets/shared/flingo-logo.svg" alt="Flingo.fun" className="w-24 h-24" />
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
@@ -82,7 +79,12 @@ export default function SideDrawer({
                 role="button"
                 aria-pressed="false"
               >
-                <svg className="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <svg
+                  className="w-5 h-5 text-flingo-500"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
                   <path
                     d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"
                     stroke="currentColor"
@@ -103,7 +105,7 @@ export default function SideDrawer({
                   aria-pressed="false"
                 >
                   <svg
-                    className="w-5 h-5 text-gray-500"
+                    className="w-5 h-5 text-flingo-500"
                     viewBox="0 0 24 24"
                     fill="none"
                     aria-hidden
@@ -134,7 +136,12 @@ export default function SideDrawer({
                 role="button"
                 aria-pressed="false"
               >
-                <svg className="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <svg
+                  className="w-5 h-5 text-flingo-500"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
                   <path
                     d="M12 15a3 3 0 100-6 3 3 0 000 6z"
                     stroke="currentColor"
@@ -160,7 +167,12 @@ export default function SideDrawer({
                 role="button"
                 aria-pressed="false"
               >
-                <svg className="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <svg
+                  className="w-5 h-5 text-flingo-500"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
                   <rect
                     x="3"
                     y="3"
@@ -192,14 +204,13 @@ export default function SideDrawer({
                 <span>Choose avatar</span>
               </Link>
 
-              <Link
-                to="/followers"
-                className={linkClass}
-                onClick={onClose}
-                role="button"
-                aria-pressed="false"
-              >
-                <svg className="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <Link to="/followers" className={linkClass} onClick={onClose} role="button">
+                <svg
+                  className="w-5 h-5 text-flingo-500"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
                   <path
                     d="M12 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4z"
                     stroke="currentColor"
@@ -233,7 +244,7 @@ export default function SideDrawer({
                   aria-pressed="false"
                 >
                   <svg
-                    className="w-5 h-5 text-gray-500"
+                    className="w-5 h-5 text-flingo-500"
                     viewBox="0 0 24 24"
                     fill="none"
                     aria-hidden
@@ -256,7 +267,10 @@ export default function SideDrawer({
                   <span className="flex items-center gap-1">
                     Notifications
                     {hasUnreadNotifications && (
-                      <span className="inline-flex w-2 h-2 rounded-full bg-red-500" aria-hidden />
+                      <span
+                        className="inline-flex w-2 h-2 rounded-full bg-candy-pink"
+                        aria-hidden
+                      />
                     )}
                   </span>
                 </Link>
@@ -264,36 +278,40 @@ export default function SideDrawer({
             </nav>
           </div>
 
-          <div className="p-4 border-t border-gray-200 bg-white">
+          <div className="p-4 border-t-2 border-flingo-100 bg-white">
             {isAuthenticated ? (
               <Link
                 to={profilePath}
                 onClick={onClose}
-                className="flex items-center gap-3 mb-3 hover:bg-gray-50 rounded-lg px-2 py-1"
+                className="flex items-center gap-3 mb-3 hover:bg-flingo-50 rounded-xl px-2 py-2 transition-colors"
               >
                 <ProfileAvatar user={user} size={48} />
                 <div className="min-w-0">
-                  <div className="text-xs text-gray-500 leading-tight">Signed in as</div>
-                  <div className="text-sm font-semibold text-gray-900 truncate max-w-[12rem]">
+                  <div className="text-xs text-flingo-500 leading-tight font-medium">
+                    Signed in as
+                  </div>
+                  <div className="text-sm font-bold text-flingo-900 truncate max-w-[12rem]">
                     {(user as any)?.screenName || "Player"}
                   </div>
                 </div>
               </Link>
             ) : user ? (
-              <div className="flex items-center gap-3 mb-3 px-2 py-1">
+              <div className="flex items-center gap-3 mb-3 px-2 py-2">
                 <ProfileAvatar user={user} size={48} />
                 <div className="min-w-0">
-                  <div className="text-xs text-gray-500 leading-tight">Playing as guest</div>
-                  <div className="text-sm font-semibold text-gray-900 truncate max-w-[12rem]">
+                  <div className="text-xs text-flingo-500 leading-tight font-medium">
+                    Playing as guest
+                  </div>
+                  <div className="text-sm font-bold text-flingo-900 truncate max-w-[12rem]">
                     {(user as any)?.screenName || "Guest"}
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-3 px-2">
                 <ProfileAvatar user={{ avatar: 1 }} size={48} />
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-gray-900">Not logged in</div>
+                  <div className="text-sm font-bold text-flingo-900">Not logged in</div>
                 </div>
               </div>
             )}
@@ -304,14 +322,14 @@ export default function SideDrawer({
               <div className="flex gap-2">
                 <Link
                   to="/login"
-                  className="flex-1 inline-flex items-center justify-center px-4 py-2 rounded-md border border-gray-300 text-gray-800 hover:bg-gray-100 transition-colors"
+                  className="flex-1 inline-flex items-center justify-center px-4 py-2.5 rounded-full border-2 border-flingo-200 text-flingo-700 font-semibold hover:bg-flingo-50 transition-colors"
                   onClick={onClose}
                 >
                   Log in
                 </Link>
                 <Link
                   to="/signup"
-                  className="flex-1 inline-flex items-center justify-center px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  className="flex-1 inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-gradient-to-r from-flingo-500 to-flingo-700 text-white font-semibold hover:from-flingo-600 hover:to-flingo-800 transition-all shadow-fun"
                   onClick={onClose}
                 >
                   Sign up
@@ -319,7 +337,9 @@ export default function SideDrawer({
               </div>
             )}
 
-            <div className="mt-3 text-[10px] text-gray-400 text-center">Build {buildLabel}</div>
+            <div className="mt-4 text-[10px] text-flingo-400 text-center font-medium">
+              Build {buildLabel}
+            </div>
           </div>
         </div>
       </div>
@@ -350,7 +370,7 @@ function LogoutButton({ onClose }: { onClose: () => void }) {
     <button
       onClick={handleLogout}
       disabled={busy}
-      className="w-full inline-flex items-center justify-center px-4 py-2 rounded-md border border-gray-300 text-gray-800 hover:bg-gray-100 transition-colors"
+      className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-full border-2 border-flingo-200 text-flingo-700 font-semibold hover:bg-flingo-50 transition-colors disabled:opacity-50"
     >
       {busy ? "Signing out..." : "Log out"}
     </button>

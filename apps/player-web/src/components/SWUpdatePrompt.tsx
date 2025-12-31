@@ -147,7 +147,7 @@ export default function SWUpdatePrompt() {
   return (
     <>
       {show && (
-        <div className="fixed inset-x-0 bottom-3 mx-auto w-[92%] max-w-md rounded-xl bg-neutral-900/90 backdrop-blur px-4 py-3 shadow-lg border border-neutral-700 text-sm z-50">
+        <div className="fixed inset-x-0 bottom-3 mx-auto w-[92%] max-w-md rounded-xl bg-neutral-900/90 backdrop-blur px-4 py-3 shadow-fun border border-neutral-700 text-sm z-50">
           <div className="flex items-center justify-between gap-3">
             <span className="text-neutral-100">New version available</span>
             <div className="flex gap-2">

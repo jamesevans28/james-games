@@ -212,7 +212,7 @@ export default function GameLanding({ meta, onPlay }: Props) {
       <div className="pt-16 px-4 max-w-4xl mx-auto">
         {/* Hero image */}
         <div
-          className="h-56 bg-cover bg-center rounded"
+          className="h-56 bg-cover bg-center rounded-2xl border-2 border-flingo-100 shadow-card"
           style={{ backgroundImage: `url(${meta.thumbnail || "/assets/logo.png"})` }}
           title={meta.title}
         />
@@ -220,9 +220,9 @@ export default function GameLanding({ meta, onPlay }: Props) {
         {user && <FollowingNowStrip loading={activityLoading} activity={activity} />}
 
         <div className="mt-4">
-          <h1 className="text-2xl font-extrabold mb-1 text-black">{meta.title}</h1>
+          <h1 className="text-2xl font-extrabold mb-1 text-flingo-800">{meta.title}</h1>
           {meta.description && (
-            <p className="text-gray-600 text-sm leading-relaxed">{meta.description}</p>
+            <p className="text-flingo-600 text-sm leading-relaxed">{meta.description}</p>
           )}
           {/* Leaderboard Top 3 + 4-10 */}
           <LeaderboardSection top={top} loading={loading} error={error} myBest={myBest} />
@@ -239,17 +239,17 @@ export default function GameLanding({ meta, onPlay }: Props) {
 
           {/* metadata list */}
           <div className="mt-6">
-            <ul className="w-full bg-white text-sm text-gray-700 divide-y divide-gray-200 border border-gray-200 rounded">
+            <ul className="w-full bg-white text-sm text-flingo-700 divide-y divide-flingo-100 border-2 border-flingo-100 rounded-2xl overflow-hidden">
               {meta.createdAt && (
-                <li className="px-3 py-2 flex justify-between">
-                  <span>Created</span>
-                  <span>{fmtDateShort(meta.createdAt) ?? "—"}</span>
+                <li className="px-4 py-3 flex justify-between">
+                  <span className="font-medium">Created</span>
+                  <span className="text-flingo-500">{fmtDateShort(meta.createdAt) ?? "—"}</span>
                 </li>
               )}
               {meta.updatedAt && (
-                <li className="px-3 py-2 flex justify-between">
-                  <span>Updated</span>
-                  <span>{fmtDateShort(meta.updatedAt) ?? "—"}</span>
+                <li className="px-4 py-3 flex justify-between">
+                  <span className="font-medium">Updated</span>
+                  <span className="text-flingo-500">{fmtDateShort(meta.updatedAt) ?? "—"}</span>
                 </li>
               )}
             </ul>
@@ -258,7 +258,7 @@ export default function GameLanding({ meta, onPlay }: Props) {
       </div>
 
       {/* sticky footer with Play + Share */}
-      <div className="fixed left-0 right-0 bottom-0 bg-white border-t border-gray-200 px-4 py-3">
+      <div className="fixed left-0 right-0 bottom-0 bg-white/95 backdrop-blur border-t-2 border-flingo-100 px-4 py-3">
         <div className="max-w-4xl mx-auto flex gap-3">
           <button type="button" className="btn btn-primary flex-1" onClick={onPlay}>
             Play
@@ -323,9 +323,9 @@ function LeaderboardSection({
   // eslint-disable-next-line no-console
   console.debug("LeaderboardSection", { top, loading, error, userName, user });
 
-  if (loading) return <div className="mt-4 text-gray-600">Loading…</div>;
+  if (loading) return <div className="mt-4 text-flingo-600">Loading…</div>;
   if (error) return <div className="mt-4 text-red-600">{error}</div>;
-  if (!top || top.length === 0) return <div className="mt-4 text-gray-600">No scores yet.</div>;
+  if (!top || top.length === 0) return <div className="mt-4 text-flingo-600">No scores yet.</div>;
 
   const first = top[0];
   const second = top[1];
@@ -380,9 +380,9 @@ function LeaderboardSection({
 
       {/* If visitor is not logged in, show hint about logging in to record scores */}
       {!user && (
-        <div className="mt-3 p-3 rounded border border-yellow-200 bg-yellow-50 text-yellow-800 text-sm">
+        <div className="mt-3 p-4 rounded-2xl border-2 border-candy-yellow/50 bg-candy-yellow/10 text-flingo-700 text-sm">
           To record your scores you need to be logged in.{" "}
-          <Link to="/login" className="underline">
+          <Link to="/login" className="underline text-flingo-600 font-semibold">
             Sign in
           </Link>{" "}
           or create an account.
@@ -393,7 +393,7 @@ function LeaderboardSection({
       <div className="mt-4">
         <ol
           start={4}
-          className="w-full bg-white divide-y divide-gray-200 border border-gray-200 rounded"
+          className="w-full bg-white divide-y divide-flingo-100 border-2 border-flingo-100 rounded-2xl overflow-hidden"
         >
           {top.slice(3, 10).map((r, i) => {
             const rank = 4 + i;
@@ -408,9 +408,9 @@ function LeaderboardSection({
             return (
               <li
                 key={`${r?.screenName ?? "anon"}-${rank}`}
-                className={`flex items-center justify-between px-3 py-2 text-sm ${
+                className={`flex items-center justify-between px-4 py-3 text-sm ${
                   hasProfile
-                    ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-black"
+                    ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-flingo-400 hover:bg-flingo-50"
                     : ""
                 }`}
                 role={hasProfile ? "button" : undefined}
@@ -428,15 +428,17 @@ function LeaderboardSection({
                 }
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-gray-500 font-mono w-6">#{rank}</span>
-                  <span className="truncate text-black">{r?.screenName ?? "—"}</span>
+                  <span className="text-flingo-400 font-mono w-6">#{rank}</span>
+                  <span className="truncate text-flingo-800 font-medium">
+                    {r?.screenName ?? "—"}
+                  </span>
                   {isYou && (
-                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 border border-blue-200">
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-flingo-100 text-flingo-700 border border-flingo-200">
                       your top score
                     </span>
                   )}
                 </div>
-                <span className="font-mono text-black">{r?.score ?? 0}</span>
+                <span className="font-mono font-bold text-flingo-700">{r?.score ?? 0}</span>
               </li>
             );
           })}
@@ -446,10 +448,10 @@ function LeaderboardSection({
       {/* If the user is logged in but none of their scores made the top leaderboard,
             show their personal best so they know what to try to beat. */}
       {user && !userTopRow && myBest > 0 && (
-        <div className="mt-4 p-3 rounded border border-gray-200 bg-white text-sm text-gray-700">
-          <div className="font-semibold">Your personal best</div>
-          <div className="mt-2 text-2xl font-bold">{myBest}</div>
-          <div className="mt-1 text-xs text-gray-500">
+        <div className="mt-4 p-4 rounded-2xl border-2 border-flingo-100 bg-white text-sm text-flingo-700">
+          <div className="font-bold text-flingo-800">Your personal best</div>
+          <div className="mt-2 text-2xl font-bold text-flingo-600">{myBest}</div>
+          <div className="mt-1 text-xs text-flingo-500">
             Keep playing to submit this score to the leaderboards.
           </div>
         </div>
@@ -478,19 +480,23 @@ function RatingSummaryCard({
   const avg = summary?.avgRating ?? 0;
   const count = summary?.ratingCount ?? 0;
   return (
-    <div className="mt-6 border border-gray-200 rounded-lg p-4 bg-white">
+    <div className="mt-6 border-2 border-flingo-100 rounded-2xl p-5 bg-white">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-wide text-gray-500">Overall rating</p>
-          <div className="text-3xl font-extrabold text-black">{loading ? "—" : avg.toFixed(1)}</div>
-          <p className="text-xs text-gray-500">{count} total ratings</p>
+          <p className="text-xs uppercase tracking-wide text-flingo-500 font-semibold">
+            Overall rating
+          </p>
+          <div className="text-3xl font-extrabold text-flingo-800">
+            {loading ? "—" : avg.toFixed(1)}
+          </div>
+          <p className="text-xs text-flingo-500">{count} total ratings</p>
         </div>
         <RatingStars value={avg} readOnly size="sm" />
       </div>
-      <div className="mt-4 border-t border-gray-100 pt-4">
+      <div className="mt-4 border-t border-flingo-100 pt-4">
         {user ? (
           <div>
-            <p className="text-sm font-semibold text-black flex items-center">
+            <p className="text-sm font-bold text-flingo-800 flex items-center">
               Your rating
               {submitting && (
                 <svg
@@ -526,8 +532,8 @@ function RatingSummaryCard({
             {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
           </div>
         ) : (
-          <p className="text-sm text-gray-600">
-            <Link to="/login" className="text-blue-600 underline">
+          <p className="text-sm text-flingo-600">
+            <Link to="/login" className="text-flingo-600 underline font-semibold">
               Sign in
             </Link>{" "}
             to rate this game.
@@ -553,15 +559,15 @@ function FollowingNowStrip({
   activity: FollowingActivityEntry[];
 }) {
   if (loading && !activity.length) {
-    return <div className="mt-4 text-sm text-gray-500">Checking who&apos;s playing…</div>;
+    return <div className="mt-4 text-sm text-flingo-500">Checking who&apos;s playing…</div>;
   }
   if (!activity.length)
     return (
-      <div className="mt-4 text-sm text-gray-500">No players you follow are here right now.</div>
+      <div className="mt-4 text-sm text-flingo-500">No players you follow are here right now.</div>
     );
   return (
     <div className="mt-4">
-      <h3 className="text-sm font-semibold text-gray-600 mb-2">Players you follow</h3>
+      <h3 className="text-sm font-bold text-flingo-700 mb-2">Players you follow</h3>
       <div className="flex gap-4 overflow-x-auto pb-2">
         {activity.map((entry) => (
           <Link
@@ -576,11 +582,11 @@ function FollowingNowStrip({
               strokeWidth={2}
               title={entry.targetScreenName ?? "Player"}
             />
-            <span className="mt-2 text-xs font-semibold text-black text-center truncate max-w-[80px]">
+            <span className="mt-2 text-xs font-bold text-flingo-800 text-center truncate max-w-[80px]">
               {entry.targetScreenName ?? "Player"}
             </span>
             {entry.presence?.status && (
-              <span className="mt-1 text-[11px] text-gray-500 text-center">
+              <span className="mt-1 text-[11px] text-flingo-500 text-center">
                 {STATUS_LABELS[entry.presence.status] || "Online"}
               </span>
             )}
@@ -619,9 +625,13 @@ function TopBox({
   return (
     <div className="flex-1 min-w-0">
       <div
-        className={`rounded-lg border border-gray-200 p-3 flex flex-col items-center justify-between ${
+        className={`rounded-2xl border-2 border-flingo-100 p-3 flex flex-col items-center justify-between ${
           tall ? "min-h-48" : "min-h-40"
-        } ${interactive ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-black" : ""}`}
+        } ${
+          interactive
+            ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-flingo-400 hover:border-flingo-200"
+            : ""
+        }`}
         style={{ background: `linear-gradient(to top, ${medalBg} 0%, transparent 60%)` }}
         role={interactive ? "button" : undefined}
         tabIndex={interactive ? 0 : undefined}
@@ -638,7 +648,7 @@ function TopBox({
         }
       >
         <div className="w-full flex flex-col items-center min-w-0">
-          <div className="text-xs text-gray-500 font-semibold">#{pos}</div>
+          <div className="text-xs text-flingo-500 font-bold">#{pos}</div>
           <div className="mt-2">
             <ProfileAvatar
               user={{ avatar: row?.avatar ?? 1 }}
@@ -650,11 +660,11 @@ function TopBox({
               title={row?.screenName ?? "Player"}
             />
           </div>
-          <div className="mt-2 text-sm font-medium text-black truncate max-w-full text-center min-w-0">
+          <div className="mt-2 text-sm font-bold text-flingo-800 truncate max-w-full text-center min-w-0">
             <span className="truncate block max-w-full">{row?.screenName ?? "—"}</span>
             {/** show small badge for user's top score */}
             {isUserBest && (
-              <div className="mt-1 inline-block px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700 rounded-full">
+              <div className="mt-1 inline-block px-2 py-0.5 text-[10px] font-semibold bg-flingo-100 text-flingo-700 rounded-full">
                 your top score
               </div>
             )}

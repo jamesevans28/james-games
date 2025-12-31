@@ -1,4 +1,4 @@
-const DEFAULT_BASE = "https://games4james.com";
+const DEFAULT_BASE = "https://flingo.fun";
 
 export function buildProfileLink(userId: string) {
   if (!userId) return DEFAULT_BASE;
@@ -14,12 +14,12 @@ export async function shareProfileLink(opts: {
   isSelf?: boolean;
 }) {
   const url = buildProfileLink(opts.userId);
-  const name = opts.screenName?.trim() || "Games4James player";
+  const name = opts.screenName?.trim() || "flingo.fun player";
   const shareData = {
-    title: `${name} on Games4James`,
+    title: `${name} on flingo.fun`,
     text: opts.isSelf
-      ? `Follow me on Games4James! Here's my link: ${url}`
-      : `Follow ${name} on Games4James: ${url}`,
+      ? `Follow me on flingo.fun! Here's my link: ${url}`
+      : `Follow ${name} on flingo.fun: ${url}`,
     url,
   };
 

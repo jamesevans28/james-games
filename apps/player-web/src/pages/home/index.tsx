@@ -198,31 +198,33 @@ export default function GameHub() {
     const summary = ratings[game.id];
     return (
       <div
-        className="relative bg-white rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+        className="relative bg-white rounded-2xl border-2 border-flingo-100 overflow-hidden cursor-pointer hover:border-flingo-300 hover:shadow-fun transition-all active:scale-[0.98]"
         onClick={() => navigate(`/games/${game.id}`)}
       >
         {badge && (
-          <span className="absolute top-2 left-2 z-10 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide rounded-full bg-black/80 text-white">
+          <span className="absolute top-2 left-2 z-10 inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full bg-gradient-to-r from-flingo-500 to-flingo-700 text-white shadow-sm">
             {badge}
           </span>
         )}
         <div
-          className="aspect-square bg-cover bg-center"
-          style={{ backgroundImage: `url(${game.thumbnail || "/assets/logo.png"})` }}
+          className="aspect-square bg-cover bg-center bg-flingo-50"
+          style={{ backgroundImage: `url(${game.thumbnail || "/assets/shared/flingo-logo.svg"})` }}
           title={game.title}
         />
-        <div className="px-3 py-2">
-          <h3 className="text-sm font-semibold truncate text-black">{game.title}</h3>
+        <div className="px-3 py-3">
+          <h3 className="text-sm font-bold truncate text-flingo-900">{game.title}</h3>
           {metaLine && (
-            <p className="text-[11px] text-gray-500 uppercase tracking-wide mt-0.5">{metaLine}</p>
+            <p className="text-[11px] text-flingo-500 uppercase tracking-wide mt-0.5 font-medium">
+              {metaLine}
+            </p>
           )}
-          <div className="mt-1 flex items-center gap-1 text-xs text-gray-600">
+          <div className="mt-1.5 flex items-center gap-1 text-xs text-flingo-600">
             <svg
-              width="12"
-              height="12"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
-              fill={summary ? "#F59E0B" : "none"}
-              stroke="#F59E0B"
+              fill={summary ? "#FBBF24" : "none"}
+              stroke="#FBBF24"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -230,10 +232,10 @@ export default function GameHub() {
             >
               <path d="M12 2.5l3.09 6.26 6.91.99-5 4.87 1.18 6.88L12 17.77 5.82 21.5l1.18-6.88-5-4.87 6.91-.99L12 2.5z" />
             </svg>
-            <span className="font-semibold text-black">
+            <span className="font-bold text-flingo-800">
               {summary ? summary.avgRating.toFixed(1) : "—"}
             </span>
-            <span className="text-gray-400">({summary?.ratingCount ?? 0})</span>
+            <span className="text-flingo-400">({summary?.ratingCount ?? 0})</span>
           </div>
         </div>
       </div>
@@ -241,67 +243,73 @@ export default function GameHub() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-black flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Seo
-        title="Free Online Games | Play Skill, Reflex & Arcade Games at Games4James"
-        description="Play free online games made by James! Fun, fast, skill-based games you can play instantly on your phone or browser. Join Games4James today and test your reflexes."
-        url="https://games4james.com/"
-        canonical="https://games4james.com/"
-        image="https://games4james.com/assets/logo.png"
+        title="Free Online Games | Play Fun Games at Flingo.fun"
+        description="Play free online games at Flingo.fun! Fun, fast, skill-based games you can play instantly on your phone or browser. Join now and test your reflexes!"
+        url="https://flingo.fun/"
+        canonical="https://flingo.fun/"
+        image="https://flingo.fun/assets/shared/flingo-logo.svg"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "WebSite",
-          name: "Games4James",
-          url: "https://games4james.com/",
+          name: "Flingo.fun",
+          url: "https://flingo.fun/",
           description:
-            "Play free online games made by James! Fun, fast, skill-based games you can play instantly on your phone or browser.",
+            "Play free online games at Flingo.fun! Fun, fast, skill-based games you can play instantly on your phone or browser.",
           publisher: {
-            "@type": "Person",
-            name: "James",
+            "@type": "Organization",
+            name: "Flingo.fun",
           },
         }}
       />
 
       {featuredGame && (
-        <section className="w-full bg-gradient-to-br from-emerald-50 via-white to-blue-50 border-b border-gray-100">
+        <section className="w-full bg-gradient-to-br from-flingo-100 via-white to-candy-pink/10 border-b-2 border-flingo-100">
           <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col gap-6 md:flex-row md:items-center">
-            <div className="flex-1 space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
-                Featured game
+            <div className="flex-1 space-y-4">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-flingo-600">
+                ⭐ Featured game
               </p>
-              <h1 className="text-3xl font-extrabold text-black">{featuredGame.title}</h1>
+              <h1 className="text-3xl font-extrabold text-flingo-900">{featuredGame.title}</h1>
               {featuredGame.description && (
-                <p className="text-gray-600 text-sm leading-relaxed">{featuredGame.description}</p>
+                <p className="text-flingo-600 text-sm leading-relaxed">
+                  {featuredGame.description}
+                </p>
               )}
-              {heroRatingLine && <p className="text-xs text-gray-500">{heroRatingLine}</p>}
-              <div className="flex flex-wrap gap-3">
+              {heroRatingLine && (
+                <p className="text-xs text-flingo-500 font-medium">{heroRatingLine}</p>
+              )}
+              <div className="flex flex-wrap gap-3 pt-2">
                 <button
                   type="button"
-                  className="px-4 py-2 rounded-full bg-black text-white text-sm font-semibold"
+                  className="px-6 py-3 rounded-full bg-gradient-to-r from-flingo-500 to-flingo-700 text-white text-sm font-bold shadow-fun hover:shadow-fun-lg hover:from-flingo-600 hover:to-flingo-800 transition-all active:scale-95"
                   onClick={() => navigate(`/games/${featuredGame.id}`)}
                 >
-                  Play now
+                  🎮 Play now
                 </button>
                 <button
                   type="button"
-                  className="px-4 py-2 rounded-full border border-black/20 text-sm font-semibold"
+                  className="px-6 py-3 rounded-full border-2 border-flingo-200 text-flingo-700 text-sm font-bold hover:bg-flingo-50 hover:border-flingo-300 transition-all"
                   onClick={() => navigate(`/leaderboard/${featuredGame.id}`)}
                 >
-                  View leaderboard
+                  🏆 Leaderboard
                 </button>
               </div>
             </div>
             <div
-              className="flex-1 min-h-[220px] rounded-2xl border border-white/60 shadow-inner overflow-hidden relative"
+              className="flex-1 min-h-[220px] rounded-3xl border-2 border-flingo-200 shadow-card overflow-hidden relative"
               style={{
-                backgroundImage: `url(${featuredGame.thumbnail || "/assets/logo.png"})`,
+                backgroundImage: `url(${
+                  featuredGame.thumbnail || "/assets/shared/flingo-logo.svg"
+                })`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-tr from-black/50 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-flingo-900/60 to-transparent" />
               <div className="relative z-10 h-full flex items-end p-4">
-                <div className="text-white text-sm font-semibold">
+                <div className="text-white text-sm font-bold bg-flingo-500/80 px-3 py-1.5 rounded-full">
                   {heroTimestamp ?? "Now playing"}
                 </div>
               </div>
@@ -317,11 +325,11 @@ export default function GameHub() {
               key={action.title}
               type="button"
               onClick={action.action}
-              className="text-left rounded-2xl border border-gray-200 bg-white/80 shadow-sm p-4 hover:border-black/20 hover:-translate-y-0.5 transition-all"
+              className="text-left rounded-2xl border-2 border-flingo-100 bg-white shadow-card p-4 hover:border-flingo-300 hover:shadow-fun hover:-translate-y-1 transition-all active:scale-[0.98]"
             >
-              <p className="text-sm font-semibold text-black">{action.title}</p>
-              <p className="text-xs text-gray-500 mt-1">{action.body}</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-600">
+              <p className="text-sm font-bold text-flingo-800">{action.title}</p>
+              <p className="text-xs text-flingo-500 mt-1">{action.body}</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-flingo-600">
                 {action.cta}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                   <path
@@ -428,8 +436,8 @@ function HomeSection({
   return (
     <section className="w-full max-w-6xl mx-auto px-4 py-6">
       <div className="mb-4">
-        <h2 className="text-xl font-bold text-black">{title}</h2>
-        {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+        <h2 className="text-xl font-bold text-flingo-900">{title}</h2>
+        {subtitle && <p className="text-sm text-flingo-500 mt-1">{subtitle}</p>}
       </div>
       {children}
     </section>

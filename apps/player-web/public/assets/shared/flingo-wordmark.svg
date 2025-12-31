@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" fill="none">
+  <!-- Flingo text wordmark with playful styling -->
+  <defs>
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#A855F7"/>
+      <stop offset="50%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Main text "flingo" -->
+  <text x="5" y="45" font-family="Fredoka, Arial, sans-serif" font-size="42" font-weight="700" fill="url(#textGradient)">
+    flingo
+  </text>
+  
+  <!-- .fun suffix -->
+  <text x="165" y="45" font-family="Fredoka, Arial, sans-serif" font-size="42" font-weight="700" fill="#F472B6">
+    .fun
+  </text>
+  
+  <!-- Decorative dot accents -->
+  <circle cx="230" cy="12" r="5" fill="#FBBF24"/>
+  <circle cx="8" cy="15" r="3" fill="#34D399"/>
+</svg>

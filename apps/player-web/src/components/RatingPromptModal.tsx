@@ -39,10 +39,12 @@ export default function RatingPromptModal({
   return (
     <div className="fixed inset-0 z-[11000] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/70" onClick={onSkip} />
-      <div className="relative w-full max-w-md mx-4 rounded-2xl bg-white border border-gray-200 shadow-2xl p-6 text-black">
+      <div className="relative w-full max-w-md mx-4 rounded-3xl bg-white border-2 border-flingo-100 shadow-fun-lg p-6 text-black">
         <div className="text-center">
-          <p className="text-sm uppercase tracking-wide text-gray-500">Rate this game</p>
-          <h3 className="text-2xl font-bold mt-1">{gameTitle}</h3>
+          <p className="text-sm uppercase tracking-wide text-flingo-500 font-semibold">
+            Rate this game
+          </p>
+          <h3 className="text-2xl font-bold text-flingo-800 mt-1">{gameTitle}</h3>
         </div>
 
         <div className="mt-5 flex flex-col items-center gap-3">
@@ -53,9 +55,9 @@ export default function RatingPromptModal({
             size="md"
           />
           {loading ? (
-            <p className="text-sm text-gray-500">Loading rating…</p>
+            <p className="text-sm text-flingo-500">Loading rating…</p>
           ) : (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-flingo-600">
               Average {avgRating?.toFixed(1) ?? "—"} ({ratingCount ?? 0} ratings)
             </p>
           )}

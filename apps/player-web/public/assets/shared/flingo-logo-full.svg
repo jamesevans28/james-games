@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100" fill="none">
+  <!-- Combined logo with icon and wordmark -->
+  <defs>
+    <linearGradient id="fullMainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A855F7"/>
+      <stop offset="50%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+    <linearGradient id="fullStrokeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="50%" stop-color="#F472B6"/>
+      <stop offset="100%" stop-color="#60A5FA"/>
+    </linearGradient>
+    <linearGradient id="fullTextGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#A855F7"/>
+      <stop offset="50%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Icon portion -->
+  <g transform="translate(5, 5)">
+    <!-- Main circular badge -->
+    <circle cx="45" cy="45" r="43" fill="url(#fullMainGradient)"/>
+    <circle cx="45" cy="45" r="43" stroke="url(#fullStrokeGradient)" stroke-width="3"/>
+    
+    <!-- Inner glow ring -->
+    <circle cx="45" cy="45" r="36" fill="none" stroke="#FFF" stroke-width="1.5" opacity="0.3"/>
+    
+    <!-- F letter -->
+    <g transform="translate(25, 20)">
+      <path d="M8 0H32C34 0 35.5 1.5 35.5 3.5V8.5C35.5 10.5 34 12 32 12H20V21H30C32 21 33.5 22.5 33.5 24.5V29.5C33.5 31.5 32 33 30 33H20V47C20 49 18.5 50.5 16.5 50.5H8C6 50.5 4.5 49 4.5 47V3.5C4.5 1.5 6 0 8 0Z" fill="#FFF"/>
+    </g>
+    
+    <!-- Accent dots -->
+    <circle cx="72" cy="25" r="5" fill="#FBBF24"/>
+    <circle cx="80" cy="38" r="3" fill="#F472B6"/>
+    <circle cx="18" cy="70" r="4" fill="#34D399"/>
+  </g>
+  
+  <!-- Wordmark portion -->
+  <text x="105" y="62" font-family="Fredoka, Arial, sans-serif" font-size="38" font-weight="700" fill="url(#fullTextGradient)">
+    flingo
+  </text>
+  <text x="227" y="62" font-family="Fredoka, Arial, sans-serif" font-size="38" font-weight="700" fill="#F472B6">
+    .fun
+  </text>
+  
+  <!-- Top sparkle -->
+  <path d="M285 15L287 21L293 23L287 25L285 31L283 25L277 23L283 21Z" fill="#FBBF24"/>
+</svg>

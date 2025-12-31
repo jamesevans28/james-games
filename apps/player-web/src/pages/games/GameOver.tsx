@@ -77,7 +77,7 @@ function LevelUpModal({ level, onClose }: { level: number; onClose: () => void }
       <div className="fixed inset-0 z-[10001] flex items-center justify-center">
         <div className="absolute inset-0 bg-black/80" onClick={onClose} />
         <div
-          className="relative bg-gradient-to-b from-yellow-50 to-orange-50 rounded-2xl p-8 max-w-sm mx-4 shadow-2xl border-4 border-yellow-400 text-center"
+          className="relative bg-gradient-to-b from-candy-yellow/30 to-candy-yellow/10 rounded-3xl p-8 max-w-sm mx-4 shadow-fun-lg border-4 border-candy-yellow text-center"
           style={{ animation: "glow-pulse 2s ease-in-out infinite" }}
         >
           <div
@@ -86,11 +86,11 @@ function LevelUpModal({ level, onClose }: { level: number; onClose: () => void }
           >
             🏆
           </div>
-          <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-orange-600 mb-2">
+          <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-candy-yellow to-amber-600 mb-2">
             LEVEL UP!
           </h2>
-          <p className="text-5xl font-extrabold text-orange-600 mb-4">Level {level}</p>
-          <p className="text-gray-700 mb-6">Congratulations! You've reached a new level!</p>
+          <p className="text-5xl font-extrabold text-flingo-700 mb-4">Level {level}</p>
+          <p className="text-flingo-600 mb-6">Congratulations! You've reached a new level!</p>
           <button type="button" className="btn btn-primary px-8 py-3 text-lg" onClick={onClose}>
             Continue
           </button>
@@ -191,31 +191,29 @@ function AnimatedExperienceBar({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between text-xs uppercase tracking-wide text-gray-500">
+      <div className="flex items-center justify-between text-xs uppercase tracking-wide text-flingo-500 font-semibold">
         <span>Level {displayLevel}</span>
         <span>
           {Math.round(displayProgress)}/{safeRequired} XP
         </span>
       </div>
-      <div className="relative h-4 rounded-full bg-gray-200 overflow-hidden">
+      <div className="relative h-4 rounded-full bg-flingo-100 overflow-hidden border-2 border-flingo-200">
         <div
           className="absolute inset-y-0 left-0 rounded-full"
           style={{
             width: `${displayPercent}%`,
             backgroundImage:
               "repeating-linear-gradient(45deg, rgba(255,255,255,0.35) 0, rgba(255,255,255,0.35) 8px, transparent 8px, transparent 16px)",
-            backgroundColor: "#ffd54f",
+            background: "linear-gradient(90deg, #A855F7 0%, #7C3AED 50%, #6366F1 100%)",
             boxShadow: isAnimating
-              ? "0 0 18px rgba(255, 214, 79, 0.7)"
-              : "0 0 12px rgba(0,0,0,0.15)",
+              ? "0 0 18px rgba(168, 85, 247, 0.6)"
+              : "0 0 12px rgba(168, 85, 247, 0.3)",
             transition: "none",
           }}
         />
         <div className="absolute inset-0 opacity-40 bg-gradient-to-r from-white via-transparent to-white pointer-events-none" />
       </div>
-      {awardedXp > 0 && (
-        <div className="text-xs text-emerald-600 font-semibold">+{awardedXp} XP</div>
-      )}
+      {awardedXp > 0 && <div className="text-xs text-candy-mint font-bold">+{awardedXp} XP</div>}
     </div>
   );
 }
@@ -400,13 +398,13 @@ export default function GameOver({
     <>
       <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center">
         <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-        <div className="relative w-full sm:w-auto sm:min-w-[320px] max-w-md mx-3 mb-6 sm:mb-0 rounded-lg overflow-hidden border border-gray-200 bg-white shadow-xl">
-          <div className="px-5 py-4 border-b border-gray-200">
-            <div className="text-lg font-extrabold text-black">{phrase}</div>
-            <div className="text-gray-600 text-sm">Your score</div>
+        <div className="relative w-full sm:w-auto sm:min-w-[320px] max-w-md mx-3 mb-6 sm:mb-0 rounded-3xl overflow-hidden border-2 border-flingo-100 bg-white shadow-fun-lg">
+          <div className="px-5 py-4 border-b-2 border-flingo-100">
+            <div className="text-lg font-extrabold text-flingo-800">{phrase}</div>
+            <div className="text-flingo-500 text-sm font-medium">Your score</div>
           </div>
           <div className="px-5 py-6">
-            <div className="text-5xl font-extrabold text-center text-black">{score ?? 0}</div>
+            <div className="text-5xl font-extrabold text-center text-flingo-700">{score ?? 0}</div>
             {scoreError && (
               <p className="text-xs text-amber-600 mt-2 text-center flex items-center justify-center gap-1">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -422,15 +420,15 @@ export default function GameOver({
             )}
           </div>
           {user ? (
-            <div className="px-5 pb-5 border-t border-gray-100">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm font-semibold text-black flex items-center gap-1">
+            <div className="px-5 pb-5 border-t-2 border-flingo-100">
+              <div className="flex items-center justify-between mb-2 pt-4">
+                <div className="text-sm font-bold text-flingo-800 flex items-center gap-1">
                   <span role="img" aria-hidden>
                     ✨
                   </span>
                   Level progress
                 </div>
-                <div className="text-xs text-gray-500">{xpPending ? "Adding XP…" : ""}</div>
+                <div className="text-xs text-flingo-500">{xpPending ? "Adding XP…" : ""}</div>
               </div>
               {startExperience && endExperience ? (
                 <AnimatedExperienceBar
@@ -443,14 +441,14 @@ export default function GameOver({
                   awardedXp={xpAwarded ?? 0}
                 />
               ) : (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-flingo-500">
                   Play more runs to unlock experience tracking.
                 </p>
               )}
               {xpError && <p className="text-xs text-red-500 mt-2">{xpError}</p>}
             </div>
           ) : (
-            <div className="px-5 pb-4 border-t border-gray-100 text-xs text-gray-500">
+            <div className="px-5 pb-4 border-t-2 border-flingo-100 text-xs text-flingo-500 pt-4">
               Sign in to earn experience, level up, and unlock a shiny progress bar!
             </div>
           )}

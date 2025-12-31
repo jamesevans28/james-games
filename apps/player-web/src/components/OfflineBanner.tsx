@@ -19,11 +19,11 @@ export function OfflineBanner({
 
   return (
     <div
-      className={`bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-center gap-3 ${className}`}
+      className={`bg-candy-yellow/20 border-2 border-candy-yellow/50 text-amber-800 px-4 py-3 rounded-2xl flex items-center gap-3 ${className}`}
       role="alert"
     >
       <svg
-        className="w-5 h-5 flex-shrink-0"
+        className="w-5 h-5 flex-shrink-0 text-candy-yellow"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -36,7 +36,7 @@ export function OfflineBanner({
         />
         <circle cx="12" cy="12" r="3" />
       </svg>
-      <span className="text-sm">{message}</span>
+      <span className="text-sm font-medium">{message}</span>
     </div>
   );
 }
@@ -62,11 +62,11 @@ export function OfflineFullPage({
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-flingo-50 via-white to-candy-pink/10 p-4">
       <div className="text-center max-w-sm">
-        <div className="w-16 h-16 mx-auto mb-4 bg-amber-100 rounded-full flex items-center justify-center">
+        <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-candy-yellow/30 to-candy-yellow/10 rounded-full flex items-center justify-center border-2 border-candy-yellow/30">
           <svg
-            className="w-8 h-8 text-amber-600"
+            className="w-10 h-10 text-candy-yellow"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -80,12 +80,12 @@ export function OfflineFullPage({
             <line x1="1" y1="1" x2="23" y2="23" strokeWidth="2" />
           </svg>
         </div>
-        <h1 className="text-xl font-bold text-gray-900 mb-2">{title}</h1>
-        <p className="text-gray-600 mb-6">{message}</p>
+        <h1 className="text-2xl font-bold text-flingo-800 mb-2">{title}</h1>
+        <p className="text-flingo-600 mb-6">{message}</p>
         {onRetry && (
           <button
             onClick={onRetry}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-6 py-3 bg-gradient-to-r from-flingo-500 to-flingo-600 text-white rounded-full font-semibold shadow-fun hover:shadow-fun-lg transition-all"
           >
             Try again
           </button>

@@ -15,7 +15,13 @@ export default function RootLayout() {
     pathname.startsWith("/leaderboard/");
 
   return (
-    <div className="min-h-screen w-full bg-white text-black font-sans">
+    <div
+      className="min-h-screen w-full font-sans text-gray-800"
+      style={{
+        background:
+          "linear-gradient(180deg, #FAF5FF 0%, rgba(255, 247, 237, 0.3) 50%, rgba(236, 253, 245, 0.3) 100%)",
+      }}
+    >
       {!hideGlobalHeader && <Header />}
       <main className="w-full h-full">
         <Outlet />

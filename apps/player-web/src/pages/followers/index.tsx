@@ -188,7 +188,7 @@ export default function FollowersPage() {
   const renderFollowing = () => {
     if (!data) return null;
     if (data.following.length === 0) {
-      return <p className="text-sm text-gray-600">You&apos;re not following anyone yet.</p>;
+      return <p className="text-sm text-flingo-600">You&apos;re not following anyone yet.</p>;
     }
     return (
       <ul className="space-y-3">
@@ -202,20 +202,22 @@ export default function FollowersPage() {
           return (
             <li
               key={`${profileId}-${edge.createdAt}`}
-              className="flex items-center justify-between border border-gray-200 rounded-lg p-3"
+              className="flex items-center justify-between border-2 border-flingo-100 rounded-2xl p-4 hover:border-flingo-200 transition-colors"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <ProfileAvatar user={{ avatar }} size={48} />
                 <div className="min-w-0">
                   <Link
                     to={`/profile/${profileId}`}
-                    className="text-sm font-semibold text-black truncate block"
+                    className="text-sm font-bold text-flingo-800 truncate block hover:text-flingo-600"
                   >
                     {displayName}
                   </Link>
-                  {presenceText && <div className="text-xs text-gray-500">{presenceText}</div>}
+                  {presenceText && (
+                    <div className="text-xs text-candy-mint font-medium">{presenceText}</div>
+                  )}
                   {(levelText || lastOnline) && (
-                    <div className="text-xs text-gray-400 flex flex-wrap gap-2 mt-0.5">
+                    <div className="text-xs text-flingo-400 flex flex-wrap gap-2 mt-0.5">
                       {levelText && <span>{levelText}</span>}
                       {lastOnline && <span>{lastOnline}</span>}
                     </div>
@@ -250,7 +252,7 @@ export default function FollowersPage() {
   const renderFollowers = () => {
     if (!data) return null;
     if (data.followers.length === 0) {
-      return <p className="text-sm text-gray-600">No one is following you yet.</p>;
+      return <p className="text-sm text-flingo-600">No one is following you yet.</p>;
     }
     return (
       <ul className="space-y-3">
@@ -259,24 +261,24 @@ export default function FollowersPage() {
           return (
             <li
               key={`${edge.userId}-${edge.createdAt}`}
-              className="flex items-center justify-between border border-gray-200 rounded-lg p-3"
+              className="flex items-center justify-between border-2 border-flingo-100 rounded-2xl p-4 hover:border-flingo-200 transition-colors"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <ProfileAvatar user={{ avatar: edge.avatar ?? 1 }} size={48} />
                 <div className="min-w-0">
                   <Link
                     to={`/profile/${edge.userId}`}
-                    className="text-sm font-semibold text-black truncate block"
+                    className="text-sm font-bold text-flingo-800 truncate block hover:text-flingo-600"
                   >
                     {edge.screenName ?? "Player"}
                   </Link>
                 </div>
               </div>
               {isFollowing ? (
-                <span className="text-xs text-gray-500">Following</span>
+                <span className="text-xs text-flingo-500 font-medium">Following</span>
               ) : (
                 <button
-                  className="text-xs font-semibold text-blue-600 border border-blue-200 rounded-full px-3 py-1"
+                  className="text-xs font-bold text-flingo-600 border-2 border-flingo-200 rounded-full px-4 py-1.5 hover:bg-flingo-50 transition-colors"
                   onClick={() => handleFollowBack(edge.userId)}
                   disabled={actionUser === edge.userId}
                 >
@@ -293,13 +295,13 @@ export default function FollowersPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold text-black">Followers</h1>
-        <Link to="/" className="text-sm text-blue-600 underline">
+        <h1 className="text-2xl font-extrabold text-flingo-800">Followers</h1>
+        <Link to="/" className="text-sm text-flingo-600 font-medium hover:text-flingo-800">
           Back to games
         </Link>
       </div>
       {!isOnline && <OfflineBanner className="mt-4" />}
-      {loading && <div className="mt-4 text-gray-600">Loading...</div>}
+      {loading && <div className="mt-4 text-flingo-600">Loading...</div>}
       {error && !loading && <div className="mt-4 text-sm text-red-600">{error}</div>}
       {user?.userId && (
         <div className="mt-6">
@@ -309,17 +311,17 @@ export default function FollowersPage() {
             description="Send your code or personal link so people can follow you without searching. The same code is always visible on your Profile page."
           >
             <div>
-              <label className="text-sm font-semibold text-gray-700" htmlFor="follow-code-input">
+              <label className="text-sm font-bold text-flingo-700" htmlFor="follow-code-input">
                 Follow someone by code
               </label>
-              <p className="text-xs text-gray-500 mb-2">
+              <p className="text-xs text-flingo-500 mb-2">
                 Paste the code they shared with you and we&apos;ll follow them instantly.
               </p>
               <div className="flex flex-col gap-3 md:flex-row">
                 <input
                   id="follow-code-input"
                   type="text"
-                  className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm"
+                  className="flex-1 border-2 border-flingo-200 rounded-full px-4 py-2 text-sm focus:border-flingo-400 focus:outline-none transition-colors"
                   placeholder="e.g. user_123abc"
                   value={codeInput}
                   onChange={(e) => setCodeInput(e.target.value)}
@@ -327,7 +329,7 @@ export default function FollowersPage() {
                 />
                 <button
                   type="button"
-                  className="px-4 py-2 rounded-full text-sm font-semibold border border-green-600 text-white bg-green-600 disabled:opacity-60"
+                  className="px-6 py-2 rounded-full text-sm font-bold border-2 border-candy-mint text-white bg-gradient-to-r from-candy-mint to-emerald-500 disabled:opacity-60 shadow-fun hover:shadow-fun-lg transition-all"
                   onClick={handleFollowByCode}
                   disabled={manualBusy}
                 >
@@ -336,8 +338,8 @@ export default function FollowersPage() {
               </div>
               {manualMessage && (
                 <p
-                  className={`mt-2 text-xs ${
-                    manualStatus === "error" ? "text-red-600" : "text-green-700"
+                  className={`mt-2 text-xs font-medium ${
+                    manualStatus === "error" ? "text-red-600" : "text-candy-mint"
                   }`}
                 >
                   {manualMessage}
@@ -348,8 +350,8 @@ export default function FollowersPage() {
         </div>
       )}
       {!loading && data && (
-        <section className="mt-6 border border-gray-200 rounded-2xl bg-white p-4 shadow-sm">
-          <div className="flex gap-2 bg-gray-100 rounded-full p-1">
+        <section className="mt-6 border-2 border-flingo-100 rounded-2xl bg-white p-5 shadow-card">
+          <div className="flex gap-2 bg-flingo-50 rounded-full p-1">
             {[
               { id: "following" as const, label: `Following (${data.followingCount})` },
               { id: "followers" as const, label: `Followers (${data.followersCount})` },
@@ -357,8 +359,8 @@ export default function FollowersPage() {
               <button
                 key={tab.id}
                 type="button"
-                className={`flex-1 px-4 py-2 text-sm font-semibold rounded-full transition ${
-                  anchor === tab.id ? "bg-white text-black shadow" : "text-gray-500"
+                className={`flex-1 px-4 py-2 text-sm font-bold rounded-full transition ${
+                  anchor === tab.id ? "bg-white text-flingo-700 shadow-fun" : "text-flingo-500"
                 }`}
                 onClick={() => handleTabChange(tab.id)}
               >
@@ -374,9 +376,11 @@ export default function FollowersPage() {
       {confirmUnfollow && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60" onClick={() => setConfirmUnfollow(null)} />
-          <div className="relative bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
-            <h3 className="text-lg font-bold text-black mb-2">Unfollow {confirmUnfollow.name}?</h3>
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="relative bg-white rounded-3xl p-6 max-w-sm mx-4 shadow-fun-lg border-2 border-flingo-100">
+            <h3 className="text-lg font-bold text-flingo-800 mb-2">
+              Unfollow {confirmUnfollow.name}?
+            </h3>
+            <p className="text-sm text-flingo-600 mb-4">
               Are you sure you want to unfollow this player? You can follow them again anytime.
             </p>
             <div className="flex gap-3">
@@ -389,7 +393,7 @@ export default function FollowersPage() {
               </button>
               <button
                 type="button"
-                className="flex-1 px-4 py-2 rounded-full text-sm font-semibold bg-red-600 text-white"
+                className="flex-1 px-4 py-2 rounded-full text-sm font-bold bg-red-500 text-white shadow-fun hover:bg-red-600 transition-colors"
                 onClick={() => handleUnfollow(confirmUnfollow.userId)}
                 disabled={actionUser === confirmUnfollow.userId}
               >

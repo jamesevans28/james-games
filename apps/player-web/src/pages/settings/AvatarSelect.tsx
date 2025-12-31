@@ -66,7 +66,7 @@ export default function AvatarSelectPage() {
       {toast && (
         <div
           aria-live="polite"
-          className="fixed top-4 right-4 bg-green-600 text-white px-3 py-2 rounded shadow-lg text-sm"
+          className="fixed top-4 right-4 bg-green-600 text-white px-3 py-2 rounded shadow-fun text-sm"
         >
           {toast}
         </div>

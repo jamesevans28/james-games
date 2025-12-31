@@ -1,6 +1,7 @@
-// Use CommonJS to avoid Node ESM warnings without changing package.json type
+// PostCSS config
+// Tailwind is handled by @tailwindcss/vite plugin, but we still want autoprefixer.
 module.exports = {
   plugins: {
-    "@tailwindcss/postcss": {},
+    autoprefixer: {},
   },
 };

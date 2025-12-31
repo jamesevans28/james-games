@@ -31,16 +31,19 @@ export default function IOSInstallHint() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-3 mx-auto w-[92%] max-w-md rounded-xl bg-neutral-900/90 backdrop-blur px-4 py-3 shadow-lg border border-neutral-700 text-sm z-50">
+    <div className="fixed inset-x-0 bottom-3 mx-auto w-[92%] max-w-md rounded-2xl bg-gradient-to-r from-flingo-700 to-flingo-800 backdrop-blur px-5 py-4 shadow-fun border-2 border-flingo-500 text-sm z-50">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-neutral-100">
+        <span className="text-white font-medium">
           Install this app: tap
-          <span aria-label="Share" title="Share" className="mx-1">
+          <span aria-label="Share" title="Share" className="mx-1 text-candy-yellow">
             ⎋
           </span>
           then "Add to Home Screen"
         </span>
-        <button className="px-3 py-1.5 rounded-md bg-neutral-700 text-white" onClick={dismiss}>
+        <button
+          className="px-4 py-2 rounded-full bg-white/20 text-white font-bold hover:bg-white/30 transition-colors"
+          onClick={dismiss}
+        >
           Got it
         </button>
       </div>

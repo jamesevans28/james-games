@@ -302,12 +302,12 @@ export default function PlayGame() {
       "@type": "VideoGame",
       name: meta.title,
       description: meta.description,
-      image: meta.thumbnail ? `https://games4james.com${meta.thumbnail}` : undefined,
-      url: `https://games4james.com/games/${meta.id}`,
+      image: meta.thumbnail ? `https://flingo.fun${meta.thumbnail}` : undefined,
+      url: `https://flingo.fun/games/${meta.id}`,
       genre: "Arcade",
       author: {
-        "@type": "Person",
-        name: "James",
+        "@type": "Organization",
+        name: "flingo.fun",
       },
       applicationCategory: "Game",
       operatingSystem: "Any",
@@ -324,16 +324,16 @@ export default function PlayGame() {
   }, [meta, ratingSummary]);
 
   return (
-    <div className="min-h-screen bg-white text-black flex flex-col">
+    <div className="min-h-screen bg-white text-flingo-800 flex flex-col">
       <Seo
-        title={meta ? `${meta.title} — Play Free at Games4James` : "Play Free Games at Games4James"}
+        title={meta ? `${meta.title} — Play Free at flingo.fun` : "Play Free Games at flingo.fun"}
         description={
           meta?.description ||
-          "Play free online games made by James. Fun, fast, skill-based games you can play instantly on your phone or browser."
+          "Play free online games at flingo.fun. Fun, fast, skill-based games you can play instantly on your phone or browser."
         }
-        url={`https://games4james.com/games/${meta?.id ?? ""}`}
-        canonical={`https://games4james.com/games/${meta?.id ?? ""}`}
-        image={meta?.thumbnail ? `https://games4james.com${meta.thumbnail}` : "/assets/logo.png"}
+        url={`https://flingo.fun/games/${meta?.id ?? ""}`}
+        canonical={`https://flingo.fun/games/${meta?.id ?? ""}`}
+        image={meta?.thumbnail ? `https://flingo.fun${meta.thumbnail}` : "/assets/logo.png"}
         jsonLd={jsonLd}
       />
 
@@ -364,7 +364,7 @@ export default function PlayGame() {
       {playing && (
         <div
           aria-hidden
-          className="fixed inset-x-0 bottom-0 z-0 pointer-events-none bg-gradient-to-br from-fuchsia-700 via-purple-700 to-fuchsia-700"
+          className="fixed inset-x-0 bottom-0 z-0 pointer-events-none bg-gradient-to-br from-fuchsia-700 via-flingo-700 to-fuchsia-700"
           style={{ top: "var(--header-h)" }}
         />
       )}
@@ -394,17 +394,17 @@ export default function PlayGame() {
       </div>
 
       {meta && (
-        <article className="prose prose-sm max-w-2xl mx-auto p-6 mt-8 bg-gray-50 rounded-xl border border-gray-200">
-          <h1 className="text-2xl font-bold text-black mb-4">{meta.title}</h1>
+        <article className="prose prose-sm max-w-2xl mx-auto p-6 mt-8 bg-flingo-50 rounded-2xl border-2 border-flingo-100">
+          <h1 className="text-2xl font-bold text-flingo-800 mb-4">{meta.title}</h1>
 
           <section className="mb-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">About this Game</h2>
-            <p className="text-gray-600">{meta.description}</p>
+            <h2 className="text-lg font-bold text-flingo-700 mb-2">About this Game</h2>
+            <p className="text-flingo-600">{meta.description}</p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">How to Play</h2>
-            <ul className="list-disc pl-5 text-gray-600 space-y-2">
+            <h2 className="text-lg font-bold text-flingo-700 mb-2">How to Play</h2>
+            <ul className="list-disc pl-5 text-flingo-600 space-y-2">
               <li>
                 <span className="font-medium">Objective:</span>{" "}
                 {meta.objective || "Score as high as possible."}

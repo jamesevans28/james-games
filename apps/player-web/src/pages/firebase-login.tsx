@@ -41,11 +41,11 @@ export default function FirebaseLoginPage() {
   // Show loading while Firebase initializes
   if (!initialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#FFEDD5] via-[#FFF7ED] to-[#FEF3C7]">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-flingo-50 via-orange-50/30 to-emerald-50/30">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-          <p className="text-xs text-gray-400 mt-2">Initializing Firebase...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-flingo-500 mx-auto mb-4"></div>
+          <p className="text-flingo-600 font-medium">Loading...</p>
+          <p className="text-xs text-flingo-400 mt-2">Getting things ready...</p>
         </div>
       </div>
     );
@@ -158,8 +158,8 @@ export default function FirebaseLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#FFEDD5] via-[#FFF7ED] to-[#FEF3C7] p-6">
-      <div className="max-w-lg w-full p-6 bg-white/90 backdrop-blur rounded-3xl shadow-2xl border-2 border-[#fde68a]">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-flingo-50 via-orange-50/30 to-emerald-50/30 p-6">
+      <div className="max-w-lg w-full p-6 bg-white/95 backdrop-blur-lg rounded-3xl shadow-fun-lg border-2 border-flingo-200">
         {/* Offline Banner */}
         {!isOnline && <OfflineBanner className="mb-4" />}
 
@@ -168,23 +168,26 @@ export default function FirebaseLoginPage() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="text-sm text-neutral-800 hover:underline"
+            className="text-sm text-flingo-600 font-medium hover:text-flingo-800 transition-colors"
           >
             ← Back
           </button>
+          <img src="/assets/shared/flingo-logo-small.svg" alt="Flingo.fun" className="w-10 h-10" />
         </div>
 
         {/* Mode Toggle */}
         <div className="flex justify-center mb-6">
-          <div className="inline-flex bg-gray-100 rounded-full p-1">
+          <div className="inline-flex bg-flingo-100 rounded-full p-1">
             <button
               type="button"
               onClick={() => {
                 setMode("login");
                 setError(null);
               }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                mode === "login" ? "bg-white shadow text-black" : "text-gray-600 hover:text-black"
+              className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
+                mode === "login"
+                  ? "bg-white shadow-card text-flingo-700"
+                  : "text-flingo-500 hover:text-flingo-700"
               }`}
             >
               Sign In
@@ -195,10 +198,10 @@ export default function FirebaseLoginPage() {
                 setMode("register");
                 setError(null);
               }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
                 mode === "register"
-                  ? "bg-white shadow text-black"
-                  : "text-gray-600 hover:text-black"
+                  ? "bg-white shadow-card text-flingo-700"
+                  : "text-flingo-500 hover:text-flingo-700"
               }`}
             >
               Create Account
@@ -207,12 +210,12 @@ export default function FirebaseLoginPage() {
         </div>
 
         {/* Migration Notice Banner */}
-        <div className="mb-5 text-sm p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="font-semibold mb-2 text-blue-800">📢 Account System Update</div>
-          <p className="text-blue-700 mb-2">
+        <div className="mb-5 text-sm p-4 bg-candy-sky/10 border-2 border-candy-sky/30 rounded-2xl">
+          <div className="font-bold mb-2 text-flingo-800">📢 Account System Update</div>
+          <p className="text-flingo-700 mb-2">
             We've upgraded our login system! If you had an account before:
           </p>
-          <ul className="list-disc list-inside space-y-1 text-blue-600 text-xs">
+          <ul className="list-disc list-inside space-y-1 text-flingo-600 text-xs">
             <li>
               <strong>Existing users:</strong> Use "Create Account" with your{" "}
               <strong>same username</strong> and set a new PIN. Your scores and progress will be
@@ -226,9 +229,9 @@ export default function FirebaseLoginPage() {
 
         {/* Info for new users */}
         {mode === "register" && (
-          <div className="mb-5 text-sm text-gray-700 p-4 bg-amber-50 rounded-lg">
-            <div className="font-semibold mb-2">🎮 Why create an account?</div>
-            <ul className="list-disc list-inside space-y-1 text-gray-600">
+          <div className="mb-5 text-sm text-flingo-700 p-4 bg-candy-yellow/10 border-2 border-candy-yellow/30 rounded-2xl">
+            <div className="font-bold mb-2">🎮 Why create an account?</div>
+            <ul className="list-disc list-inside space-y-1 text-flingo-600">
               <li>Save your high scores to leaderboards</li>
               <li>Choose your own avatar</li>
               <li>Follow your friends</li>
@@ -239,7 +242,7 @@ export default function FirebaseLoginPage() {
 
         {/* Error display */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+          <div className="mb-4 p-3 bg-candy-pink/10 border-2 border-candy-pink/30 rounded-2xl text-candy-pink text-sm font-medium">
             {error}
           </div>
         )}
@@ -247,21 +250,21 @@ export default function FirebaseLoginPage() {
         {/* Username + PIN Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
-            <div className="text-sm font-semibold mb-1">Username</div>
+            <div className="text-sm font-bold text-flingo-800 mb-1.5">Username</div>
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full p-3 border-2 rounded-xl shadow-inner placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
+              className="w-full p-3.5 border-2 border-flingo-200 rounded-2xl placeholder-flingo-300 focus:outline-none focus:ring-2 focus:ring-flingo-400 focus:border-flingo-400 transition-all"
               placeholder="Enter your username"
               autoComplete="username"
             />
             {triedSubmit && !username && (
-              <div className="text-red-600 text-xs mt-1">Username is required</div>
+              <div className="text-candy-pink text-xs mt-1 font-medium">Username is required</div>
             )}
           </label>
 
           <label className="block">
-            <div className="text-sm font-semibold mb-1">PIN (4-8 digits)</div>
+            <div className="text-sm font-bold text-flingo-800 mb-1.5">PIN (4-8 digits)</div>
             <input
               value={pin}
               onChange={(e) => {
@@ -273,14 +276,16 @@ export default function FirebaseLoginPage() {
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={8}
-              className="w-full p-3 border-2 rounded-xl shadow-inner placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#60a5fa] font-mono text-xl tracking-widest"
+              className="w-full p-3.5 border-2 border-flingo-200 rounded-2xl placeholder-flingo-300 focus:outline-none focus:ring-2 focus:ring-flingo-400 focus:border-flingo-400 font-mono text-xl tracking-widest transition-all"
               placeholder="••••"
               autoComplete={mode === "register" ? "new-password" : "current-password"}
             />
             {triedSubmit && (!pin || pin.length < 4) && (
-              <div className="text-red-600 text-xs mt-1">PIN must be at least 4 digits</div>
+              <div className="text-candy-pink text-xs mt-1 font-medium">
+                PIN must be at least 4 digits
+              </div>
             )}
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-flingo-500 mt-1.5">
               {mode === "register"
                 ? "Choose a PIN you'll remember — like a birthday or lucky numbers!"
                 : "Enter your 4-8 digit PIN"}
@@ -289,15 +294,17 @@ export default function FirebaseLoginPage() {
 
           {mode === "register" && (
             <label className="block">
-              <div className="text-sm font-semibold mb-1">Screen Name</div>
+              <div className="text-sm font-bold text-flingo-800 mb-1.5">Screen Name</div>
               <input
                 value={screenName}
                 onChange={(e) => setScreenName(e.target.value)}
-                className="w-full p-3 border-2 rounded-xl shadow-inner placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#f472b6]"
+                className="w-full p-3.5 border-2 border-flingo-200 rounded-2xl placeholder-flingo-300 focus:outline-none focus:ring-2 focus:ring-flingo-400 focus:border-flingo-400 transition-all"
                 placeholder="Your display name on leaderboards"
               />
               {triedSubmit && !screenName && (
-                <div className="text-red-600 text-xs mt-1">Screen name is required</div>
+                <div className="text-candy-pink text-xs mt-1 font-medium">
+                  Screen name is required
+                </div>
               )}
             </label>
           )}
@@ -305,17 +312,17 @@ export default function FirebaseLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-gradient-to-r from-[#ff7a45] to-[#ffd36b] text-black rounded-xl font-semibold shadow-lg disabled:opacity-50 transition-transform hover:scale-[1.02]"
+            className="w-full py-3.5 bg-gradient-to-r from-flingo-500 to-flingo-700 text-white rounded-full font-bold shadow-fun disabled:opacity-50 transition-all hover:shadow-fun-lg hover:from-flingo-600 hover:to-flingo-800 active:scale-[0.98]"
           >
-            {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
+            {loading ? "Please wait..." : mode === "login" ? "🚀 Sign In" : "🎉 Create Account"}
           </button>
         </form>
 
         {/* Divider */}
         <div className="flex items-center my-6">
-          <div className="flex-1 border-t border-gray-200"></div>
-          <span className="px-4 text-sm text-gray-500">or continue with</span>
-          <div className="flex-1 border-t border-gray-200"></div>
+          <div className="flex-1 border-t-2 border-flingo-100"></div>
+          <span className="px-4 text-sm text-flingo-500 font-medium">or continue with</span>
+          <div className="flex-1 border-t-2 border-flingo-100"></div>
         </div>
 
         {/* Social Sign In */}
@@ -324,7 +331,7 @@ export default function FirebaseLoginPage() {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full py-3 bg-white border-2 border-gray-200 rounded-xl font-medium shadow-sm hover:bg-gray-50 disabled:opacity-50 flex items-center justify-center gap-3 transition-colors"
+            className="w-full py-3.5 bg-white border-2 border-flingo-200 rounded-full font-semibold hover:bg-flingo-50 hover:border-flingo-300 disabled:opacity-50 flex items-center justify-center gap-3 transition-all"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -351,7 +358,7 @@ export default function FirebaseLoginPage() {
             type="button"
             onClick={handleAppleSignIn}
             disabled={loading}
-            className="w-full py-3 bg-black text-white rounded-xl font-medium shadow-sm hover:bg-gray-900 disabled:opacity-50 flex items-center justify-center gap-3 transition-colors"
+            className="w-full py-3.5 bg-flingo-900 text-white rounded-full font-semibold hover:bg-black disabled:opacity-50 flex items-center justify-center gap-3 transition-all"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
@@ -362,8 +369,8 @@ export default function FirebaseLoginPage() {
 
         {/* Anonymous play notice */}
         {user?.isAnonymous && (
-          <div className="mt-6 text-center text-sm text-gray-500">
-            <p>You're currently playing as a guest.</p>
+          <div className="mt-6 text-center text-sm text-flingo-500">
+            <p className="font-medium">You're currently playing as a guest.</p>
             <p className="text-xs mt-1">
               Create an account to save your progress and compete on leaderboards!
             </p>
