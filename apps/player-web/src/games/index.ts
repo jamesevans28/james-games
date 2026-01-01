@@ -146,7 +146,7 @@ export const games: GameMeta[] = [
     description: "Deflect the marble, collect power-ups, hit bonus discs, avoid falling obstacles.",
     objective: "Keep the ball in the air and hit targets.",
     controls: "Drag the paddle left and right.",
-    thumbnail: "/assets/paddle-pop/thumbnail.svg",
+    thumbnail: "/assets/paddle-pop/paddlepop.jpg",
     xpMultiplier: 5.13,
     createdAt: "2025-11-05T00:00:00.000Z",
     updatedAt: "2025-12-29T00:00:00.000Z",

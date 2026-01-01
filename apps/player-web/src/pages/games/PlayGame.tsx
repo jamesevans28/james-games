@@ -413,7 +413,7 @@ export default function PlayGame() {
       </div>
 
       {meta && (
-        <article className="prose prose-sm max-w-2xl mx-auto p-6 mt-8 bg-flingo-50 rounded-2xl border-2 border-flingo-100">
+        <article className="prose prose-sm max-w-2xl mx-auto p-6 mt-8 mb-24 bg-flingo-50 border-2 border-flingo-100">
           <h1 className="text-2xl font-bold text-flingo-800 mb-4">{meta.title}</h1>
 
           <section className="mb-6">

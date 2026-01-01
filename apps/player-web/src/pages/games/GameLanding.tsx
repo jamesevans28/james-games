@@ -208,11 +208,11 @@ export default function GameLanding({ meta, onPlay }: Props) {
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] pb-24">
+    <div className="min-h-[calc(100vh-64px)] pb-40">
       <div className="pt-16 px-4 max-w-4xl mx-auto">
         {/* Hero image */}
         <div
-          className="h-56 bg-cover bg-center rounded-2xl border-2 border-flingo-100 shadow-card"
+          className="aspect-square w-full max-w-md mx-auto bg-cover bg-center rounded-2xl border-2 border-flingo-100 shadow-card"
           style={{ backgroundImage: `url(${meta.thumbnail || "/assets/logo.png"})` }}
           title={meta.title}
         />
@@ -265,33 +265,25 @@ export default function GameLanding({ meta, onPlay }: Props) {
           </button>
           <button
             type="button"
-            className="btn btn-secondary w-12 flex items-center justify-center"
+            className="btn btn-secondary w-12 h-12 p-0 flex items-center justify-center text-white"
             onClick={handleShare}
             aria-label="Share"
             title="Share"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path
-                d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M16 6l-4-4-4 4"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M12 2v13"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5 text-white"
+            >
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" y1="2" x2="12" y2="15" />
             </svg>
           </button>
         </div>
@@ -561,10 +553,7 @@ function FollowingNowStrip({
   if (loading && !activity.length) {
     return <div className="mt-4 text-sm text-flingo-500">Checking who&apos;s playing…</div>;
   }
-  if (!activity.length)
-    return (
-      <div className="mt-4 text-sm text-flingo-500">No players you follow are here right now.</div>
-    );
+  if (!activity.length) return null;
   return (
     <div className="mt-4">
       <h3 className="text-sm font-bold text-flingo-700 mb-2">Players you follow</h3>
