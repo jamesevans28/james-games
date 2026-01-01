@@ -156,7 +156,24 @@ jobs:
         run: |
           aws lambda update-function-configuration \
             --function-name "${{ env.LAMBDA_FUNCTION_NAME }}" \
-            --environment "Variables={SCORES_TABLE=games4james-scores,TABLE_USERS=games4james-users,TABLE_RATINGS=games4james-gameratings,TABLE_RATING_SUMMARY=games4james-gameratings-summary,TABLE_FOLLOWS=games4james-follows,TABLE_PRESENCE=games4james-presence,TABLE_USER_GAME_STATS=games4james-userGameStats,TABLE_EXPERIENCE_LEVELS=games4james-experience-levels,TABLE_GAME_CONFIG=games4james-game-config,AWS_NODEJS_CONNECTION_REUSE_ENABLED=1,FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }},CORS_ALLOWED_ORIGINS=${{ vars.CORS_ALLOWED_ORIGINS }}}"
+            --environment '{
+              "Variables": {
+                "SCORES_TABLE": "games4james-scores",
+                "TABLE_USERS": "games4james-users",
+                "TABLE_RATINGS": "games4james-gameratings",
+                "TABLE_RATING_SUMMARY": "games4james-gameratings-summary",
+                "TABLE_FOLLOWS": "games4james-follows",
+                "TABLE_PRESENCE": "games4james-presence",
+                "TABLE_USER_GAME_STATS": "games4james-userGameStats",
+                "TABLE_EXPERIENCE_LEVELS": "games4james-experience-levels",
+                "TABLE_GAME_CONFIG": "games4james-game-config",
+                "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
+                "FIREBASE_PROJECT_ID": "'"${{ secrets.FIREBASE_PROJECT_ID }}"'",
+                "FIREBASE_CLIENT_EMAIL": "'"${{ secrets.FIREBASE_CLIENT_EMAIL }}"'",
+                "FIREBASE_PRIVATE_KEY": "'"${{ secrets.FIREBASE_PRIVATE_KEY }}"'",
+                "CORS_ALLOWED_ORIGINS": "'"${{ vars.CORS_ALLOWED_ORIGINS }}"'"
+              }
+            }'
 
   admin-web:
     runs-on: ubuntu-latest
