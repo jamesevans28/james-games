@@ -209,7 +209,7 @@ export const games: GameMeta[] = [
       "Tap to keep the ball afloat while threading every vertical hoop as the city scrolls by.",
     objective: "Float the ball through each hoop without touching the skyline or missing a ring.",
     controls: "Tap anywhere or press space to bounce upward.",
-    thumbnail: "/assets/hoop-city/thumbnail.svg",
+    thumbnail: "/assets/hoop-city/hoopcity.jpg",
     xpMultiplier: 2.15,
     createdAt: "2025-11-28T00:00:00.000Z",
     updatedAt: "2025-12-02T00:00:00.000Z",
