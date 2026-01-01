@@ -1,10 +1,11 @@
 import { Fragment, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { X, Mail, ShieldCheck, Key } from "lucide-react";
+import { X, Mail, ShieldCheck, Key, AtSign } from "lucide-react";
 import { adminApi, AdminUserDetail } from "../../lib/api";
 
 export function UserDrawer({ userId, onClose }: { userId: string | null; onClose: () => void }) {
   const queryClient = useQueryClient();
+  const [usernameDraft, setUsernameDraft] = useState("");
   const [emailDraft, setEmailDraft] = useState("");
   const [passwordDraft, setPasswordDraft] = useState("");
   const [pinDraft, setPinDraft] = useState("");
@@ -19,6 +20,7 @@ export function UserDrawer({ userId, onClose }: { userId: string | null; onClose
 
   useEffect(() => {
     if (userQuery.data) {
+      setUsernameDraft(userQuery.data.username || "");
       setEmailDraft(userQuery.data.email || "");
       setBeta(Boolean(userQuery.data.betaTester));
       setAdmin(Boolean(userQuery.data.admin));
@@ -57,6 +59,10 @@ export function UserDrawer({ userId, onClose }: { userId: string | null; onClose
   const closeDrawer = () => {
     if (!updateMutation.isPending) onClose();
   };
+
+  async function saveUsername() {
+    await updateMutation.mutateAsync({ username: usernameDraft });
+  }
 
   async function saveEmail() {
     await updateMutation.mutateAsync({ email: emailDraft });
@@ -101,6 +107,58 @@ export function UserDrawer({ userId, onClose }: { userId: string | null; onClose
             <p className="text-sm text-slate-400">Loading profile…</p>
           ) : user ? (
             <Fragment>
+              <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
+                <div className="flex items-center gap-3 text-sm text-slate-400">
+                  {" "}
+                  <AtSign className="h-4 w-4" />
+                  <span>Username</span>
+                </div>
+                <input
+                  type="text"
+                  value={usernameDraft}
+                  onChange={(e) => setUsernameDraft(e.target.value)}
+                  placeholder="username (optional)"
+                  className="mt-3 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                />
+                <button
+                  onClick={saveUsername}
+                  disabled={updateMutation.isPending}
+                  className="mt-3 rounded-xl bg-brand-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white disabled:opacity-60"
+                >
+                  Update Username
+                </button>
+                <p className="mt-2 text-xs text-slate-500">
+                  Username for username+PIN authentication. Leave blank if not using this auth
+                  method.
+                </p>
+              </section>
+
+              <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
+                <div className="flex items-center gap-3 text-sm text-slate-400">
+                  {" "}
+                  <AtSign className="h-4 w-4" />
+                  <span>Username</span>
+                </div>
+                <input
+                  type="text"
+                  value={usernameDraft}
+                  onChange={(e) => setUsernameDraft(e.target.value)}
+                  placeholder="username (optional)"
+                  className="mt-3 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                />
+                <button
+                  onClick={saveUsername}
+                  disabled={updateMutation.isPending}
+                  className="mt-3 rounded-xl bg-brand-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white disabled:opacity-60"
+                >
+                  Update Username
+                </button>
+                <p className="mt-2 text-xs text-slate-500">
+                  Username for username+PIN authentication. Leave blank if not using this auth
+                  method.
+                </p>
+              </section>
+
               <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
                 <div className="flex items-center gap-3 text-sm text-slate-400">
                   <Mail className="h-4 w-4" />

@@ -97,6 +97,7 @@ export function UsersPage() {
             <thead className="bg-slate-950/80 text-xs uppercase tracking-widest text-slate-500">
               <tr>
                 <th className="px-4 py-3">User</th>
+                <th className="px-4 py-3">Username</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Flags</th>
                 <th className="px-4 py-3">Updated</th>
@@ -112,6 +113,9 @@ export function UsersPage() {
                   <td className="px-4 py-3">
                     <p className="font-semibold text-white">{user.screenName || "Unnamed"}</p>
                     <p className="text-xs text-slate-500">{user.userId}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="text-sm text-slate-300">{user.username || "—"}</p>
                   </td>
                   <td className="px-4 py-3">
                     <p className="text-sm text-slate-300">{user.email || "—"}</p>
@@ -136,7 +140,7 @@ export function UsersPage() {
               ))}
               {!users.length && !usersQuery.isFetching && (
                 <tr>
-                  <td className="px-4 py-8 text-center text-slate-500" colSpan={4}>
+                  <td className="px-4 py-8 text-center text-slate-500" colSpan={5}>
                     No users found.
                   </td>
                 </tr>

@@ -8,6 +8,7 @@ const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
 export type AdminUserSummary = {
   userId: string;
+  username?: string | null;
   screenName?: string | null;
   email?: string | null;
   emailProvided?: boolean;
@@ -21,6 +22,7 @@ export type AdminUserSummary = {
 function normalizeUser(item: Record<string, any>): AdminUserSummary {
   return {
     userId: item.userId,
+    username: item.username ?? null,
     screenName: item.screenName ?? null,
     email: item.email ?? null,
     emailProvided: item.emailProvided ?? false,
@@ -50,7 +52,7 @@ export async function listUsers(opts: { limit?: number; cursor?: string; search?
   const limit = Math.min(Math.max(Number(opts.limit) || 25, 5), 100);
   let exclusiveStartKey = decodeCursor(opts.cursor);
   const projection =
-    "#id, screenName, email, emailProvided, validated, betaTester, admin, createdAt, updatedAt";
+    "#id, username, screenName, email, emailProvided, validated, betaTester, admin, createdAt, updatedAt";
   let items: AdminUserSummary[] = [];
   let lastEvaluatedKey: Record<string, any> | undefined;
 
@@ -71,6 +73,7 @@ export async function listUsers(opts: { limit?: number; cursor?: string; search?
         pageItems.filter((user) => {
           return (
             user.userId.toLowerCase().includes(query) ||
+            (user.username ?? "").toLowerCase().includes(query) ||
             (user.screenName ?? "").toLowerCase().includes(query) ||
             (user.email ?? "").toLowerCase().includes(query)
           );
@@ -107,13 +110,19 @@ export async function updateAdminUser(
   userId: string,
   changes: {
     email?: string;
+    username?: string;
     betaTester?: boolean;
     admin?: boolean;
   }
 ) {
   // Note: Password management is now handled through Firebase Auth.
   // Admin can only update DynamoDB metadata (betaTester, admin flags).
-  if (!changes.email && changes.betaTester === undefined && changes.admin === undefined) {
+  if (
+    !changes.email &&
+    !changes.username &&
+    changes.betaTester === undefined &&
+    changes.admin === undefined
+  ) {
     throw new Error("no_changes_provided");
   }
 
@@ -124,9 +133,17 @@ export async function updateAdminUser(
     tasks.push(updateUserEmailMetadata(userId, { email: changes.email, emailProvided: true }));
   }
 
-  if (changes.betaTester !== undefined || changes.admin !== undefined) {
+  if (
+    changes.username !== undefined ||
+    changes.betaTester !== undefined ||
+    changes.admin !== undefined
+  ) {
     const sets = ["updatedAt = :u"];
     const values: Record<string, any> = { ":u": new Date().toISOString() };
+    if (changes.username !== undefined) {
+      sets.push("username = :un");
+      values[":un"] = changes.username || null;
+    }
     if (changes.betaTester !== undefined) {
       sets.push("betaTester = :bt");
       values[":bt"] = Boolean(changes.betaTester);

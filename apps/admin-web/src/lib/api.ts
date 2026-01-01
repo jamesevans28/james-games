@@ -50,6 +50,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
 export type AdminAccount = {
   userId: string;
+  username?: string | null;
   screenName?: string | null;
   email?: string | null;
   emailProvided?: boolean;
@@ -155,7 +156,13 @@ export const adminApi = {
   getUser: (userId: string) => request<AdminUserDetail>(`/admin/users/${userId}`),
   updateUser: (
     userId: string,
-    payload: { email?: string; password?: string; betaTester?: boolean; admin?: boolean }
+    payload: {
+      email?: string;
+      password?: string;
+      betaTester?: boolean;
+      admin?: boolean;
+      username?: string;
+    }
   ) =>
     request<AdminUserDetail>(`/admin/users/${userId}`, {
       method: "POST",
