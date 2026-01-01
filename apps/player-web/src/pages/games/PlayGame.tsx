@@ -14,6 +14,7 @@ import { fetchRatingSummary, submitRating, RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import { recordGamePlayed } from "../../hooks/useFeedAlgorithm";
 import {
   buildGameJsonLd,
   buildGameKeywords,
@@ -132,6 +133,8 @@ export default function PlayGame() {
       const { destroy } = mod.mount(containerRef.current);
       destroyRef.current = destroy;
       trackGameStart(meta.id, meta.title);
+      // Record this game as recently played for feed algorithm
+      recordGamePlayed(meta.id);
     } catch (e) {
       console.error(e);
       // Check if it's a network error

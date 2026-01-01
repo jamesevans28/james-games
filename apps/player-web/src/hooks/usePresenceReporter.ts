@@ -10,9 +10,11 @@ export function usePresenceReporter(args: {
   gameTitle?: string;
   enabled?: boolean;
 }) {
-  const { user } = useAuth();
+  const { user, initialized } = useAuth();
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Wait for auth to be initialized before making API calls
+    if (!initialized) return;
     if (!user || !args.enabled) return;
     let cancelled = false;
     let timeoutId: number | null = null;
@@ -40,5 +42,5 @@ export function usePresenceReporter(args: {
       cancelled = true;
       if (timeoutId) window.clearTimeout(timeoutId);
     };
-  }, [user?.userId, args.status, args.gameId, args.gameTitle, args.enabled]);
+  }, [user?.userId, initialized, args.status, args.gameId, args.gameTitle, args.enabled]);
 }

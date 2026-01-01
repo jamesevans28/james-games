@@ -20,6 +20,7 @@ import {
   getIdToken,
   getLinkedProviders,
   sendVerificationEmail,
+  waitForAuthReady,
   type User as FirebaseUser,
 } from "../lib/firebase";
 import { setAuthTokenGetter, type ExperienceSummary } from "../lib/api";
@@ -178,6 +179,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(false);
+  // firebaseReady: true when Firebase SDK has resolved its initial auth state
+  const [firebaseReady, setFirebaseReady] = useState(false);
+  // initialized: true when we have determined auth state (either from Firebase or cache fallback)
+  // For API calls that need auth, use firebaseReady instead
   const [initialized, setInitialized] = useState(false);
   const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
   const initRef = useRef(false);
@@ -270,27 +275,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("FirebaseAuthProvider: initializing...");
 
     // Initialize Firebase
-    const { auth } = initializeFirebase();
-    console.log("FirebaseAuthProvider: Firebase initialized, auth:", !!auth);
+    initializeFirebase();
 
-    // Restore cached session immediately while Firebase initializes
+    // Restore cached session immediately while Firebase initializes (for UI only)
     const cached = readCachedSession();
     if (cached) {
-      console.log("FirebaseAuthProvider: restored cached session", cached.userId);
+      console.log("FirebaseAuthProvider: restored cached session for UI", cached.userId);
       setUser(cached);
-      setInitialized(true);
     }
 
-    // Check current user immediately
-    const currentUser = auth.currentUser;
-    console.log("FirebaseAuthProvider: current user immediately:", currentUser?.uid);
+    // Wait for Firebase Auth to be ready, then process
+    (async () => {
+      try {
+        console.log("FirebaseAuthProvider: waiting for Firebase auth to be ready...");
+        const currentUser = await waitForAuthReady();
+        console.log("FirebaseAuthProvider: Firebase auth ready, user:", currentUser?.uid);
 
-    if (currentUser) {
-      // Already signed in, process immediately
-      (async () => {
-        try {
+        // Firebase is now ready - mark it immediately so hooks can proceed
+        setFirebaseReady(true);
+
+        if (currentUser) {
+          // User exists - fetch their profile
+          setFirebaseUser(currentUser);
           let profile = await fetchProfile(currentUser);
           if (!profile && currentUser.isAnonymous) {
+            console.log("FirebaseAuthProvider: registering anonymous user in backend");
             profile = await registerAnonymousUser(currentUser);
           }
           if (profile) {
@@ -309,76 +318,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(minimalUser);
             persistSession(minimalUser);
           }
-        } catch (err) {
-          console.error("FirebaseAuthProvider: error processing current user", err);
-        } finally {
-          setInitialized(true);
-        }
-      })();
-    } else if (!cached) {
-      // No current user and no cache - set initialized now and let auth state listener handle sign-in
-      console.log("FirebaseAuthProvider: no current user, setting initialized");
-      setInitialized(true);
-      // Try to sign in anonymously
-      signInAsAnonymous()
-        .then(async (result) => {
-          console.log("FirebaseAuthProvider: anonymous sign-in completed", result.user.uid);
-          // Manually process the user since onAuthStateChanged might not fire
-          const fbUser = result.user;
-          setFirebaseUser(fbUser);
-
+        } else {
+          // No user - sign in anonymously
+          console.log("FirebaseAuthProvider: no user, signing in anonymously...");
           try {
+            const result = await signInAsAnonymous();
+            const fbUser = result.user;
+            setFirebaseUser(fbUser);
+
             let profile = await fetchProfile(fbUser);
-            if (!profile && fbUser.isAnonymous) {
-              console.log("FirebaseAuthProvider: registering anonymous user in backend");
+            if (!profile) {
+              console.log("FirebaseAuthProvider: registering new anonymous user");
               profile = await registerAnonymousUser(fbUser);
             }
             if (profile) {
-              console.log(
-                "FirebaseAuthProvider: setting user from profile after anon signin",
-                profile.userId
-              );
               setUser(profile);
               persistSession(profile);
             } else {
               const minimalUser: AuthUser = {
                 userId: fbUser.uid,
-                email: fbUser.email,
-                emailVerified: fbUser.emailVerified,
-                screenName: fbUser.displayName,
+                email: null,
+                emailVerified: false,
+                screenName: null,
                 accountType: "anonymous",
                 providers: [],
                 isAnonymous: true,
               };
-              console.log(
-                "FirebaseAuthProvider: setting minimal user after anon signin",
-                minimalUser.userId
-              );
               setUser(minimalUser);
               persistSession(minimalUser);
             }
           } catch (err) {
-            console.error("FirebaseAuthProvider: error processing anonymous user", err);
-            // Set minimal user even on error
-            const minimalUser: AuthUser = {
-              userId: fbUser.uid,
-              email: null,
-              emailVerified: false,
-              screenName: null,
-              accountType: "anonymous",
-              providers: [],
-              isAnonymous: true,
-            };
-            setUser(minimalUser);
-            persistSession(minimalUser);
+            console.error("FirebaseAuthProvider: anonymous sign-in failed", err);
+            // Still ready, just no user
           }
-        })
-        .catch((err) => {
-          console.error("FirebaseAuthProvider: auto anonymous sign-in failed", err);
-        });
-    }
+        }
+      } catch (err) {
+        console.error("FirebaseAuthProvider: initialization error", err);
+        // Still mark as ready so app doesn't hang
+        setFirebaseReady(true);
+      } finally {
+        setInitialized(true);
+      }
+    })();
 
-    // Subscribe to Firebase auth state changes for future changes
+    // Subscribe to future auth state changes
     const unsubscribe = onAuthChange(async (fbUser) => {
       console.log("FirebaseAuthProvider: auth state changed", fbUser?.uid, fbUser?.isAnonymous);
       setFirebaseUser(fbUser);
@@ -395,7 +378,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         let profile = await fetchProfile(fbUser);
 
         if (!profile && fbUser.isAnonymous) {
-          // Anonymous user not in our DB yet - register them
           console.log("FirebaseAuthProvider: registering anonymous user in backend");
           profile = await registerAnonymousUser(fbUser);
         }
@@ -405,8 +387,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(profile);
           persistSession(profile);
         } else {
-          // Build minimal user from Firebase data (fallback if backend fails)
-          console.log("FirebaseAuthProvider: setting minimal user", fbUser.uid);
           const minimalUser: AuthUser = {
             userId: fbUser.uid,
             email: fbUser.email,
@@ -421,7 +401,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         console.error("FirebaseAuthProvider: auth state change error", err);
-        // Build minimal user from Firebase data even on error
         const minimalUser: AuthUser = {
           userId: fbUser.uid,
           email: fbUser.email,
@@ -431,11 +410,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           providers: getLinkedProviders(fbUser),
           isAnonymous: fbUser.isAnonymous,
         };
-        console.log("FirebaseAuthProvider: setting minimal user after error", minimalUser.userId);
         setUser(minimalUser);
         persistSession(minimalUser);
-      } finally {
-        setInitialized(true);
       }
     });
 
@@ -882,7 +858,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       firebaseUser,
       loading,
-      initialized,
+      initialized: firebaseReady, // Use firebaseReady as the source of truth for "initialized"
       signInAnonymously: handleSignInAnonymously,
       registerWithUsername: handleRegisterWithUsername,
       signInWithUsername: handleSignInWithUsername,
@@ -903,7 +879,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       firebaseUser,
       loading,
-      initialized,
+      firebaseReady,
       handleSignInAnonymously,
       handleRegisterWithUsername,
       handleSignInWithUsername,

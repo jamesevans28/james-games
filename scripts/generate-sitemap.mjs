@@ -91,6 +91,13 @@ const sitemapUrls = [
     changefreq: "daily",
     priority: "1.0",
   },
+  // Games list page
+  {
+    loc: `${domain}/games-list`,
+    lastmod: now,
+    changefreq: "weekly",
+    priority: "0.9",
+  },
   // Individual game pages
   ...gameEntries.map((game) => ({
     loc: `${domain}/games/${game.id}`,

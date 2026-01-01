@@ -93,7 +93,60 @@ export default function SideDrawer({
                     strokeLinejoin="round"
                   />
                 </svg>
-                <span>Games</span>
+                <span>Home</span>
+              </Link>
+
+              <Link
+                to="/games-list"
+                className={linkClass}
+                onClick={onClose}
+                role="button"
+                aria-pressed="false"
+              >
+                <svg
+                  className="w-5 h-5 text-flingo-500"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
+                  <rect
+                    x="3"
+                    y="3"
+                    width="7"
+                    height="7"
+                    rx="1"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <rect
+                    x="14"
+                    y="3"
+                    width="7"
+                    height="7"
+                    rx="1"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <rect
+                    x="3"
+                    y="14"
+                    width="7"
+                    height="7"
+                    rx="1"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <rect
+                    x="14"
+                    y="14"
+                    width="7"
+                    height="7"
+                    rx="1"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+                <span>All Games</span>
               </Link>
 
               {isAuthenticated && user?.userId && (

@@ -128,6 +128,18 @@ export function onAuthChange(callback: (user: User | null) => void): () => void 
   return unsubscribe;
 }
 
+/**
+ * Wait for Firebase Auth to finish initializing and resolve its initial auth state.
+ * This is more reliable than waiting for onAuthStateChanged to fire.
+ */
+export async function waitForAuthReady(): Promise<User | null> {
+  const auth = getFirebaseAuth();
+  // authStateReady() returns a promise that resolves when Firebase has determined
+  // the initial auth state (either signed in or not)
+  await auth.authStateReady();
+  return auth.currentUser;
+}
+
 // Check if user is anonymous
 export function isAnonymousUser(user: User | null): boolean {
   return user?.isAnonymous ?? false;

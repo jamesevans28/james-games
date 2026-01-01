@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import GameHub from "./pages/home";
+import HomeFeed from "./pages/home/HomeFeed";
+import GamesList from "./pages/games-list";
 import PlayGame from "./pages/games/PlayGame";
 import LeaderboardPage from "./pages/leaderboard/[gameId]";
 import LoginPage from "./pages/firebase-login";
@@ -25,7 +26,8 @@ function AppRoutes() {
     <PageTransition>
       <Routes location={location}>
         <Route element={<RootLayout />}>
-          <Route path="/" element={<GameHub />} />
+          <Route path="/" element={<HomeFeed />} />
+          <Route path="/games-list" element={<GamesList />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<LoginPage />} />
           <Route

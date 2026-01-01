@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchFollowNotifications } from "../lib/api";
+import { useAuth } from "../context/FirebaseAuthProvider";
 
 const LAST_SEEN_KEY = "notifications:lastSeen";
 
@@ -22,10 +23,17 @@ export function markNotificationsAsRead(timestamp = getNow()) {
 }
 
 export function useNotificationsIndicator() {
+  const { user, initialized } = useAuth();
   const [hasUnread, setHasUnread] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const checkForUnread = useCallback(async () => {
+    // Don't fetch if not authenticated or auth not initialized
+    if (!initialized || !user) {
+      setHasUnread(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetchFollowNotifications();
@@ -44,9 +52,12 @@ export function useNotificationsIndicator() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [initialized, user]);
 
   useEffect(() => {
+    // Wait for auth to initialize before checking
+    if (!initialized) return;
+
     let cancelled = false;
     const run = async () => {
       if (cancelled) return;
@@ -54,7 +65,7 @@ export function useNotificationsIndicator() {
     };
     run();
     let interval: number | null = null;
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && user) {
       interval = window.setInterval(() => {
         void checkForUnread();
       }, 60000);
@@ -65,7 +76,7 @@ export function useNotificationsIndicator() {
         window.clearInterval(interval);
       }
     };
-  }, [checkForUnread]);
+  }, [checkForUnread, initialized, user]);
 
   const markRead = useCallback(() => {
     markNotificationsAsRead();
