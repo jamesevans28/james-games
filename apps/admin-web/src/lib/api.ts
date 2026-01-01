@@ -1,5 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
 
+import { auth } from "./firebase";
+
 type RequestOptions = RequestInit & { skipJson?: boolean };
 
 export class ApiError extends Error {
@@ -13,12 +15,22 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  // Get Firebase token if available
+  const user = auth.currentUser;
+  const token = user ? await user.getIdToken() : null;
+
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
+    headers,
     ...options,
   });
 
@@ -165,6 +177,11 @@ export const adminApi = {
       body: JSON.stringify(payload),
     }),
   getDashboardMetrics: () => request<DashboardMetrics>(`/admin/metrics/dashboard`),
+  resetUserPin: (userId: string, newPin: string) =>
+    request<{ success: boolean; message: string }>(`/auth/firebase/admin/reset-pin`, {
+      method: "POST",
+      body: JSON.stringify({ userId, newPin }),
+    }),
 };
 
 export function normalizeAccount(

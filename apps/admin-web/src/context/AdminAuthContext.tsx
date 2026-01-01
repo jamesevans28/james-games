@@ -1,10 +1,18 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { adminApi, normalizeAccount, AdminAccount } from "../lib/api";
+import {
+  auth,
+  signInWithGoogle,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+} from "../lib/firebase";
+import type { User as FirebaseUser } from "firebase/auth";
 
 type AdminAuthContextType = {
   user: AdminAccount | null;
+  firebaseUser: FirebaseUser | null;
   loading: boolean;
-  signIn: (credentials: { username: string; password: string }) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -13,6 +21,7 @@ const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefin
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AdminAccount | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   const hydrate = useCallback(async () => {
@@ -23,6 +32,10 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         setUser(account);
       } else {
         setUser(null);
+        // Not an admin, sign out
+        if (auth.currentUser) {
+          await firebaseSignOut();
+        }
       }
     } finally {
       setLoading(false);
@@ -30,34 +43,35 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    (async () => {
-      try {
-        await adminApi.refresh();
-      } catch {
-        /* ignore */
+    // Listen to Firebase auth state changes
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      setFirebaseUser(fbUser);
+
+      if (fbUser) {
+        await hydrate();
+      } else {
+        setUser(null);
+        setLoading(false);
       }
-      await hydrate();
-    })();
+    });
+
+    return () => unsubscribe();
   }, [hydrate]);
 
-  const signIn = useCallback(
-    async ({ username, password }: { username: string; password: string }) => {
-      await adminApi.signIn({ username, password });
-      const payload = await adminApi.fetchMe().catch(() => null);
-      const account = normalizeAccount(payload);
-      if (!account?.admin) {
-        await adminApi.signOut();
-        setUser(null);
-        throw new Error("You do not have admin access.");
-      }
-      setUser(account);
-    },
-    []
-  );
+  const handleSignInWithGoogle = useCallback(async () => {
+    try {
+      await signInWithGoogle();
+      // onAuthStateChanged will handle the rest
+    } catch (error) {
+      console.error("Sign in error:", error);
+      throw error;
+    }
+  }, []);
 
-  const signOut = useCallback(async () => {
-    await adminApi.signOut();
+  const handleSignOut = useCallback(async () => {
+    await firebaseSignOut();
     setUser(null);
+    setFirebaseUser(null);
   }, []);
 
   const refresh = useCallback(async () => {
@@ -67,12 +81,13 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       user,
+      firebaseUser,
       loading,
-      signIn,
-      signOut,
+      signInWithGoogle: handleSignInWithGoogle,
+      signOut: handleSignOut,
       refresh,
     }),
-    [user, loading, signIn, signOut, refresh]
+    [user, firebaseUser, loading, handleSignInWithGoogle, handleSignOut, refresh]
   );
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;

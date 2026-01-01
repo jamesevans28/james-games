@@ -10,6 +10,7 @@ import {
   addEmail,
   sendVerificationEmail,
   checkEmailVerifiedStatus,
+  adminResetUserPin,
 } from "../controllers/firebaseAuthController.js";
 import { attachUser, requireAuth, requireRegisteredAccount } from "../middleware/authGuards.js";
 
@@ -28,5 +29,8 @@ router.post("/change-pin", requireAuth, requireRegisteredAccount, changePin);
 router.post("/add-email", requireAuth, addEmail);
 router.post("/send-verification", requireAuth, sendVerificationEmail);
 router.post("/check-email-verified", requireAuth, checkEmailVerifiedStatus);
+
+// Admin routes
+router.post("/admin/reset-pin", requireAuth, adminResetUserPin);
 
 export default router;

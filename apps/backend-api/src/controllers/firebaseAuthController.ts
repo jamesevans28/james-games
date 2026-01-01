@@ -713,3 +713,56 @@ async function updateUserProviders(
     })
   );
 }
+
+/**
+ * Admin endpoint to reset a user's PIN
+ * POST /auth/firebase/admin/reset-pin
+ */
+export async function adminResetUserPin(req: Request, res: Response) {
+  try {
+    // Check if requester is admin
+    // @ts-ignore
+    const requester = req.user;
+    if (!requester?.userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // Get requester profile to check admin status
+    const requesterProfile = await getUser(requester.userId);
+    if (!requesterProfile?.admin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    const { userId, newPin } = req.body;
+
+    if (!userId || !newPin) {
+      return res.status(400).json({ error: "userId and newPin required" });
+    }
+
+    if (!/^\d{4,8}$/.test(newPin)) {
+      return res.status(400).json({ error: "PIN must be 4-8 digits" });
+    }
+
+    // Hash the new PIN
+    const pinHash = await hashPin(newPin);
+
+    // Update DynamoDB
+    await ddb.send(
+      new UpdateCommand({
+        TableName: config.tables.users,
+        Key: { userId },
+        UpdateExpression: "SET pinHash = :pinHash, updatedAt = :updatedAt",
+        ExpressionAttributeValues: {
+          ":pinHash": pinHash,
+          ":updatedAt": new Date().toISOString(),
+        },
+      })
+    );
+
+    console.log(`Admin ${requester.userId} reset PIN for user: ${userId}`);
+    res.json({ success: true, message: "PIN reset successfully" });
+  } catch (error) {
+    console.error("Error resetting PIN:", error);
+    res.status(500).json({ error: "Failed to reset PIN" });
+  }
+}

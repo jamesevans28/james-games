@@ -1,12 +1,13 @@
 import { Fragment, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { X, Mail, ShieldCheck } from "lucide-react";
+import { X, Mail, ShieldCheck, Key } from "lucide-react";
 import { adminApi, AdminUserDetail } from "../../lib/api";
 
 export function UserDrawer({ userId, onClose }: { userId: string | null; onClose: () => void }) {
   const queryClient = useQueryClient();
   const [emailDraft, setEmailDraft] = useState("");
   const [passwordDraft, setPasswordDraft] = useState("");
+  const [pinDraft, setPinDraft] = useState("");
   const [beta, setBeta] = useState(false);
   const [admin, setAdmin] = useState(false);
 
@@ -22,6 +23,7 @@ export function UserDrawer({ userId, onClose }: { userId: string | null; onClose
       setBeta(Boolean(userQuery.data.betaTester));
       setAdmin(Boolean(userQuery.data.admin));
       setPasswordDraft("");
+      setPinDraft("");
     }
   }, [userQuery.data]);
 
@@ -33,6 +35,19 @@ export function UserDrawer({ userId, onClose }: { userId: string | null; onClose
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.setQueryData(["admin-user", userId], data);
+    },
+  });
+
+  const resetPinMutation = useMutation({
+    mutationFn: ({ userId, newPin }: { userId: string; newPin: string }) => {
+      return adminApi.resetUserPin(userId, newPin);
+    },
+    onSuccess: () => {
+      alert("PIN reset successfully!");
+      setPinDraft("");
+    },
+    onError: (error: any) => {
+      alert(`Failed to reset PIN: ${error.message || "Unknown error"}`);
     },
   });
 
@@ -51,6 +66,15 @@ export function UserDrawer({ userId, onClose }: { userId: string | null; onClose
     if (!passwordDraft) return;
     await updateMutation.mutateAsync({ password: passwordDraft });
     setPasswordDraft("");
+  }
+
+  async function resetPin() {
+    if (!pinDraft || !userId) return;
+    if (!/^\d{4,8}$/.test(pinDraft)) {
+      alert("PIN must be 4-8 digits");
+      return;
+    }
+    await resetPinMutation.mutateAsync({ userId, newPin: pinDraft });
   }
 
   async function saveFlags() {
@@ -118,6 +142,30 @@ export function UserDrawer({ userId, onClose }: { userId: string | null; onClose
                 <p className="mt-2 text-xs text-slate-500">
                   Password must be at least 8 characters. Users will be prompted to change it on
                   next sign-in.
+                </p>
+              </section>
+
+              <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
+                <p className="flex items-center gap-2 text-sm text-slate-400">
+                  <Key className="h-4 w-4" /> Reset PIN
+                </p>
+                <input
+                  type="text"
+                  value={pinDraft}
+                  onChange={(e) => setPinDraft(e.target.value)}
+                  placeholder="Enter new PIN (4-8 digits)"
+                  maxLength={8}
+                  className="mt-3 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                />
+                <button
+                  onClick={resetPin}
+                  disabled={!pinDraft || resetPinMutation.isPending}
+                  className="mt-3 rounded-xl bg-amber-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white disabled:opacity-60"
+                >
+                  {resetPinMutation.isPending ? "Resetting..." : "Reset PIN"}
+                </button>
+                <p className="mt-2 text-xs text-slate-500">
+                  For users with username+PIN accounts. PIN must be 4-8 digits only.
                 </p>
               </section>
 
