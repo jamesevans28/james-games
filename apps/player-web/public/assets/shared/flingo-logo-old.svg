@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Main circular badge background -->
+  <circle cx="100" cy="100" r="95" fill="url(#mainGradient)" />
+  <circle cx="100" cy="100" r="95" stroke="url(#strokeGradient)" stroke-width="5"/>
+  
+  <!-- Inner glow ring -->
+  <circle cx="100" cy="100" r="80" fill="none" stroke="#FFF" stroke-width="2" opacity="0.3"/>
+  
+  <!-- Fun bouncing F letter with playful style -->
+  <g transform="translate(55, 45)">
+    <!-- F letter shadow -->
+    <path d="M20 0H70C75 0 78 3 78 8V18C78 23 75 26 70 26H45V45H65C70 45 73 48 73 53V63C73 68 70 71 65 71H45V100C45 105 42 108 37 108H20C15 108 12 105 12 100V8C12 3 15 0 20 0Z" fill="#7C3AED" opacity="0.3" transform="translate(3, 3)"/>
+    <!-- F letter main -->
+    <path d="M20 0H70C75 0 78 3 78 8V18C78 23 75 26 70 26H45V45H65C70 45 73 48 73 53V63C73 68 70 71 65 71H45V100C45 105 42 108 37 108H20C15 108 12 105 12 100V8C12 3 15 0 20 0Z" fill="#FFF"/>
+  </g>
+  
+  <!-- Decorative bouncing dots/stars -->
+  <circle cx="150" cy="55" r="10" fill="#FBBF24"/>
+  <circle cx="165" cy="80" r="6" fill="#F472B6"/>
+  <circle cx="45" cy="145" r="8" fill="#34D399"/>
+  <circle cx="155" cy="140" r="7" fill="#60A5FA"/>
+  
+  <!-- Sparkle effects -->
+  <g fill="#FFF" opacity="0.8">
+    <path d="M170 40L173 48L181 51L173 54L170 62L167 54L159 51L167 48Z"/>
+    <path d="M35 60L37 65L42 67L37 69L35 74L33 69L28 67L33 65Z" transform="scale(0.7) translate(15, 15)"/>
+  </g>
+  
+  <!-- Gradient definitions -->
+  <defs>
+    <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A855F7"/>
+      <stop offset="50%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+    <linearGradient id="strokeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="50%" stop-color="#F472B6"/>
+      <stop offset="100%" stop-color="#60A5FA"/>
+    </linearGradient>
+  </defs>
+</svg>

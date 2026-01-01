@@ -1,35 +1,55 @@
 @import "tailwindcss";
 
 @theme {
-  /* Flingo brand colors (purple gradient) */
-  --color-flingo-50: #faf5ff;
-  --color-flingo-100: #f3e8ff;
-  --color-flingo-200: #e9d5ff;
-  --color-flingo-300: #d8b4fe;
-  --color-flingo-400: #c084fc;
-  --color-flingo-500: #a855f7;
-  --color-flingo-600: #9333ea;
-  --color-flingo-700: #7c3aed;
-  --color-flingo-800: #6366f1;
-  --color-flingo-900: #4c1d95;
+  /* ========================================
+     NEO-ARCADE THEME: Bold, playful, dark base with neon accents
+     ======================================== */
 
-  /* Candy accent colors */
-  --color-candy-pink: #f472b6;
-  --color-candy-yellow: #fbbf24;
-  --color-candy-mint: #34d399;
-  --color-candy-sky: #60a5fa;
+  /* Core dark palette - deep inky base */
+  --color-flingo-50: #1e2028;
+  --color-flingo-100: #252832;
+  --color-flingo-200: #2d313d;
+  --color-flingo-300: #3a3f4f;
+  --color-flingo-400: #4a5066;
+  --color-flingo-500: #5c6380;
+  --color-flingo-600: #7a829f;
+  --color-flingo-700: #9fa6be;
+  --color-flingo-800: #c4c9d9;
+  --color-flingo-900: #eaecf2;
 
-  /* Font families */
-  --font-sans: "Fredoka", Arial, sans-serif;
-  --font-display: "Fredoka", Arial, sans-serif;
+  /* Neon accent colors - electric & vibrant */
+  --color-neon-lime: #c8ff32;
+  --color-neon-pink: #ff3eb5;
+  --color-neon-blue: #32d4ff;
+  --color-neon-yellow: #ffeb3b;
+  --color-neon-orange: #ff7a32;
+  --color-neon-purple: #b366ff;
 
-  /* Custom shadows */
-  --shadow-fun: 0 4px 20px -2px rgba(168, 85, 247, 0.25);
-  --shadow-fun-lg: 0 8px 30px -4px rgba(168, 85, 247, 0.35);
-  --shadow-card: 0 2px 12px -2px rgba(0, 0, 0, 0.08);
-  --shadow-card-hover: 0 8px 24px -4px rgba(168, 85, 247, 0.2);
+  /* Legacy candy aliases for compatibility */
+  --color-candy-pink: #ff3eb5;
+  --color-candy-yellow: #ffeb3b;
+  --color-candy-mint: #c8ff32;
+  --color-candy-sky: #32d4ff;
 
-  /* Border radius */
+  /* Surface colors for cards/containers */
+  --color-surface-dark: #1a1c23;
+  --color-surface-card: #22252e;
+  --color-surface-elevated: #2a2e38;
+
+  /* Font families - Baloo 2 is chunky and playful */
+  --font-sans: "Baloo 2", "Nunito", Arial, sans-serif;
+  --font-display: "Baloo 2", "Nunito", Arial, sans-serif;
+
+  /* Glow shadows for neon effect */
+  --shadow-neon-lime: 0 0 20px rgba(200, 255, 50, 0.4), 0 0 40px rgba(200, 255, 50, 0.2);
+  --shadow-neon-pink: 0 0 20px rgba(255, 62, 181, 0.4), 0 0 40px rgba(255, 62, 181, 0.2);
+  --shadow-neon-blue: 0 0 20px rgba(50, 212, 255, 0.4), 0 0 40px rgba(50, 212, 255, 0.2);
+  --shadow-fun: 0 4px 20px -2px rgba(200, 255, 50, 0.25);
+  --shadow-fun-lg: 0 8px 30px -4px rgba(200, 255, 50, 0.35);
+  --shadow-card: 0 4px 16px -4px rgba(0, 0, 0, 0.5);
+  --shadow-card-hover: 0 8px 32px -4px rgba(200, 255, 50, 0.3);
+
+  /* Border radius - chunky & playful */
   --radius-2xl: 1rem;
   --radius-3xl: 1.5rem;
   --radius-4xl: 2rem;
@@ -37,6 +57,8 @@
   /* Animations */
   --animate-wiggle: wiggle 1s ease-in-out infinite;
   --animate-float: float 3s ease-in-out infinite;
+  --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
+  --animate-bounce-in: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 /* ======================================
@@ -62,6 +84,50 @@
   }
 }
 
+@keyframes glow-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 8px rgba(200, 255, 50, 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(200, 255, 50, 0.9));
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .animate-wiggle {
   animation: wiggle 1s ease-in-out infinite;
 }
@@ -70,8 +136,25 @@
   animation: float 3s ease-in-out infinite;
 }
 
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+  background-size: 200% 100%;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out forwards;
+}
+
 /* ======================================
-   Base Styles
+   Base Styles - Neo-Arcade Dark Theme
    ====================================== */
 
 @layer base {
@@ -82,23 +165,30 @@
     height: 100%;
   }
 
-  /* Override browser default body margin (typically 8px) */
+  /* Dark base with subtle texture */
   body {
     margin: 0;
-    font-family: "Fredoka", Arial, Helvetica, sans-serif;
-    background: linear-gradient(180deg, #faf5ff 0%, #fff7ed 50%, #ecfdf5 100%);
+    font-family: "Baloo 2", "Nunito", Arial, Helvetica, sans-serif;
+    background: #121318;
+    background-image: radial-gradient(
+        ellipse at 20% 0%,
+        rgba(200, 255, 50, 0.03) 0%,
+        transparent 50%
+      ),
+      radial-gradient(ellipse at 80% 100%, rgba(255, 62, 181, 0.03) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(50, 212, 255, 0.02) 0%, transparent 70%);
     min-height: 100vh;
-    color: #374151; /* gray-700 for excellent readability */
+    color: #eaecf2;
   }
 
-  /* Default heading color, but allow Tailwind utilities to override */
+  /* Headings in bright white */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    color: #1f2937; /* gray-800 */
+    color: #ffffff;
   }
 
   /* Phaser canvas fills the game container */
@@ -108,36 +198,59 @@
   }
 
   #game-container canvas {
-    /* Let Phaser Scale manager control CSS size to preserve aspect ratio */
     display: block;
   }
 
-  /* Remove tap highlight color on mobile for links/buttons */
+  /* Remove tap highlight color on mobile */
   a,
   button {
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Custom scrollbar for dark theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #1a1c23;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #3a3f4f;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #4a5066;
   }
 }
 
 :root {
   --header-h: 64px;
 
-  /* Flingo brand colors (CSS variables for non-Tailwind usage) */
-  --flingo-primary: #a855f7;
-  --flingo-primary-hover: #9333ea;
-  --flingo-secondary: #7c3aed;
-  --flingo-accent: #6366f1;
+  /* Neo-Arcade colors for non-Tailwind usage */
+  --flingo-primary: #c8ff32;
+  --flingo-primary-hover: #b8ef22;
+  --flingo-secondary: #ff3eb5;
+  --flingo-accent: #32d4ff;
 
-  /* Candy accent colors */
-  --candy-pink: #f472b6;
-  --candy-yellow: #fbbf24;
-  --candy-mint: #34d399;
-  --candy-sky: #60a5fa;
+  /* Neon accents */
+  --neon-lime: #c8ff32;
+  --neon-pink: #ff3eb5;
+  --neon-blue: #32d4ff;
+  --neon-yellow: #ffeb3b;
+  --neon-orange: #ff7a32;
+  --neon-purple: #b366ff;
+
+  /* Legacy candy aliases */
+  --candy-pink: #ff3eb5;
+  --candy-yellow: #ffeb3b;
+  --candy-mint: #c8ff32;
+  --candy-sky: #32d4ff;
 
   --btn-radius: 9999px;
 }
 
-/* Button base styles */
+/* Button base styles - Neo-Arcade neon buttons */
 @layer components {
   .btn {
     display: inline-flex;
@@ -149,7 +262,9 @@
     font-weight: 700;
     font-size: 0.9375rem;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px -2px rgba(168, 85, 247, 0.3);
+    box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   .btn:active {
@@ -157,44 +272,53 @@
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
-    color: white;
+    background: linear-gradient(135deg, #c8ff32 0%, #9fdf00 100%);
+    color: #121318;
+    box-shadow: 0 0 20px rgba(200, 255, 50, 0.3);
   }
 
   .btn-primary:hover {
-    background: linear-gradient(135deg, #9333ea 0%, #6366f1 100%);
-    box-shadow: 0 4px 16px -2px rgba(168, 85, 247, 0.45);
+    background: linear-gradient(135deg, #d8ff52 0%, #afef10 100%);
+    box-shadow: 0 0 30px rgba(200, 255, 50, 0.5);
+    transform: translateY(-2px);
   }
 
   .btn-secondary {
-    background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
+    background: linear-gradient(135deg, #ff3eb5 0%, #e02090 100%);
     color: white;
+    box-shadow: 0 0 20px rgba(255, 62, 181, 0.3);
+  }
+
+  .btn-secondary:hover {
+    box-shadow: 0 0 30px rgba(255, 62, 181, 0.5);
+    transform: translateY(-2px);
   }
 
   .btn-outline {
-    background: white;
-    color: var(--flingo-primary);
-    border: 2px solid var(--flingo-primary);
+    background: transparent;
+    color: #c8ff32;
+    border: 2px solid #c8ff32;
     box-shadow: none;
   }
 
   .btn-outline:hover {
-    background: var(--flingo-primary);
-    color: white;
+    background: rgba(200, 255, 50, 0.1);
+    box-shadow: 0 0 20px rgba(200, 255, 50, 0.2);
   }
 
+  /* Card styles for dark theme */
   .card {
-    background: white;
+    background: #22252e;
     border-radius: 1rem;
-    border: 2px solid rgba(168, 85, 247, 0.1);
-    box-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.08);
-    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.4);
+    transition: all 0.25s ease;
   }
 
   .card:hover {
-    border-color: rgba(168, 85, 247, 0.25);
-    box-shadow: 0 8px 24px -4px rgba(168, 85, 247, 0.2);
-    transform: translateY(-2px);
+    border-color: rgba(200, 255, 50, 0.2);
+    box-shadow: 0 8px 32px -8px rgba(200, 255, 50, 0.15);
+    transform: translateY(-4px);
   }
 
   .card-interactive {
@@ -203,6 +327,27 @@
 
   .card-interactive:active {
     transform: scale(0.98);
+  }
+
+  /* Neon text glow effect */
+  .text-glow-lime {
+    text-shadow: 0 0 10px rgba(200, 255, 50, 0.5), 0 0 20px rgba(200, 255, 50, 0.3);
+  }
+
+  .text-glow-pink {
+    text-shadow: 0 0 10px rgba(255, 62, 181, 0.5), 0 0 20px rgba(255, 62, 181, 0.3);
+  }
+
+  .text-glow-blue {
+    text-shadow: 0 0 10px rgba(50, 212, 255, 0.5), 0 0 20px rgba(50, 212, 255, 0.3);
+  }
+
+  /* Gradient text utilities */
+  .text-gradient-neon {
+    background: linear-gradient(135deg, #c8ff32 0%, #32d4ff 50%, #ff3eb5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }
 /* Game screen sizing */
@@ -225,7 +370,7 @@
   opacity: 0;
   pointer-events: none;
   transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1), opacity 450ms ease;
-  background: linear-gradient(180deg, #faf5ff 0%, #ede9fe 100%);
+  background: linear-gradient(180deg, #1a1c23 0%, #22252e 100%);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -254,12 +399,12 @@
   filter: blur(1px);
 }
 
-/* Page slide transitions */
+/* Page slide transitions - dark theme */
 .page-container {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  background: linear-gradient(180deg, #faf5ff 0%, #fff7ed 50%, #ecfdf5 100%);
+  background: #121318;
 }
 
 .page-transition-wrapper {
@@ -274,7 +419,7 @@
   right: 0;
   width: 100%;
   min-height: 100vh;
-  background: linear-gradient(180deg, #faf5ff 0%, #fff7ed 50%, #ecfdf5 100%);
+  background: #121318;
 }
 
 /* Forward transition (entering game page) */

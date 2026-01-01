@@ -212,7 +212,7 @@ export default function GameLanding({ meta, onPlay }: Props) {
       <div className="pt-16 px-4 max-w-4xl mx-auto">
         {/* Hero image */}
         <div
-          className="aspect-square w-full max-w-md mx-auto bg-cover bg-center rounded-2xl border-2 border-flingo-100 shadow-card"
+          className="aspect-square w-full max-w-md mx-auto bg-cover bg-center rounded-2xl border border-flingo-200/30 shadow-card overflow-hidden"
           style={{ backgroundImage: `url(${meta.thumbnail || "/assets/logo.png"})` }}
           title={meta.title}
         />
@@ -220,9 +220,9 @@ export default function GameLanding({ meta, onPlay }: Props) {
         {user && <FollowingNowStrip loading={activityLoading} activity={activity} />}
 
         <div className="mt-4">
-          <h1 className="text-2xl font-extrabold mb-1 text-flingo-800">{meta.title}</h1>
+          <h1 className="text-2xl font-extrabold mb-1 text-flingo-900">{meta.title}</h1>
           {meta.description && (
-            <p className="text-flingo-600 text-sm leading-relaxed">{meta.description}</p>
+            <p className="text-flingo-700 text-sm leading-relaxed">{meta.description}</p>
           )}
           {/* Leaderboard Top 3 + 4-10 */}
           <LeaderboardSection top={top} loading={loading} error={error} myBest={myBest} />
@@ -239,17 +239,17 @@ export default function GameLanding({ meta, onPlay }: Props) {
 
           {/* metadata list */}
           <div className="mt-6">
-            <ul className="w-full bg-white text-sm text-flingo-700 divide-y divide-flingo-100 border-2 border-flingo-100 rounded-2xl overflow-hidden">
+            <ul className="w-full bg-surface-card text-sm text-flingo-800 divide-y divide-flingo-200/30 border border-flingo-200/30 rounded-2xl overflow-hidden">
               {meta.createdAt && (
                 <li className="px-4 py-3 flex justify-between">
                   <span className="font-medium">Created</span>
-                  <span className="text-flingo-500">{fmtDateShort(meta.createdAt) ?? "—"}</span>
+                  <span className="text-flingo-600">{fmtDateShort(meta.createdAt) ?? "—"}</span>
                 </li>
               )}
               {meta.updatedAt && (
                 <li className="px-4 py-3 flex justify-between">
                   <span className="font-medium">Updated</span>
-                  <span className="text-flingo-500">{fmtDateShort(meta.updatedAt) ?? "—"}</span>
+                  <span className="text-flingo-600">{fmtDateShort(meta.updatedAt) ?? "—"}</span>
                 </li>
               )}
             </ul>
@@ -258,14 +258,14 @@ export default function GameLanding({ meta, onPlay }: Props) {
       </div>
 
       {/* sticky footer with Play + Share */}
-      <div className="fixed left-0 right-0 bottom-0 bg-white/95 backdrop-blur border-t-2 border-flingo-100 px-4 py-3">
+      <div className="fixed left-0 right-0 bottom-0 bg-surface-dark/95 backdrop-blur-xl border-t border-flingo-200/30 px-4 py-3">
         <div className="max-w-4xl mx-auto flex gap-3">
           <button type="button" className="btn btn-primary flex-1" onClick={onPlay}>
             Play
           </button>
           <button
             type="button"
-            className="btn btn-secondary w-12 h-12 p-0 flex items-center justify-center text-white"
+            className="btn btn-secondary w-12 h-12 p-0 flex items-center justify-center"
             onClick={handleShare}
             aria-label="Share"
             title="Share"
@@ -316,7 +316,7 @@ function LeaderboardSection({
   console.debug("LeaderboardSection", { top, loading, error, userName, user });
 
   if (loading) return <div className="mt-4 text-flingo-600">Loading…</div>;
-  if (error) return <div className="mt-4 text-red-600">{error}</div>;
+  if (error) return <div className="mt-4 text-neon-pink">{error}</div>;
   if (!top || top.length === 0) return <div className="mt-4 text-flingo-600">No scores yet.</div>;
 
   const first = top[0];
@@ -372,9 +372,9 @@ function LeaderboardSection({
 
       {/* If visitor is not logged in, show hint about logging in to record scores */}
       {!user && (
-        <div className="mt-3 p-4 rounded-2xl border-2 border-candy-yellow/50 bg-candy-yellow/10 text-flingo-700 text-sm">
+        <div className="mt-3 p-4 rounded-2xl border border-neon-yellow/30 bg-neon-yellow/10 text-flingo-800 text-sm">
           To record your scores you need to be logged in.{" "}
-          <Link to="/login" className="underline text-flingo-600 font-semibold">
+          <Link to="/login" className="underline text-neon-lime font-semibold">
             Sign in
           </Link>{" "}
           or create an account.
@@ -385,7 +385,7 @@ function LeaderboardSection({
       <div className="mt-4">
         <ol
           start={4}
-          className="w-full bg-white divide-y divide-flingo-100 border-2 border-flingo-100 rounded-2xl overflow-hidden"
+          className="w-full bg-surface-card divide-y divide-flingo-200/30 border border-flingo-200/30 rounded-2xl overflow-hidden"
         >
           {top.slice(3, 10).map((r, i) => {
             const rank = 4 + i;
@@ -402,7 +402,7 @@ function LeaderboardSection({
                 key={`${r?.screenName ?? "anon"}-${rank}`}
                 className={`flex items-center justify-between px-4 py-3 text-sm ${
                   hasProfile
-                    ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-flingo-400 hover:bg-flingo-50"
+                    ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-neon-lime/50 hover:bg-flingo-100"
                     : ""
                 }`}
                 role={hasProfile ? "button" : undefined}
@@ -420,17 +420,17 @@ function LeaderboardSection({
                 }
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-flingo-400 font-mono w-6">#{rank}</span>
-                  <span className="truncate text-flingo-800 font-medium">
+                  <span className="text-flingo-500 font-mono w-6">#{rank}</span>
+                  <span className="truncate text-flingo-900 font-medium">
                     {r?.screenName ?? "—"}
                   </span>
                   {isYou && (
-                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-flingo-100 text-flingo-700 border border-flingo-200">
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-neon-lime/20 text-neon-lime border border-neon-lime/30">
                       your top score
                     </span>
                   )}
                 </div>
-                <span className="font-mono font-bold text-flingo-700">{r?.score ?? 0}</span>
+                <span className="font-mono font-bold text-neon-lime">{r?.score ?? 0}</span>
               </li>
             );
           })}
@@ -440,10 +440,10 @@ function LeaderboardSection({
       {/* If the user is logged in but none of their scores made the top leaderboard,
             show their personal best so they know what to try to beat. */}
       {user && !userTopRow && myBest > 0 && (
-        <div className="mt-4 p-4 rounded-2xl border-2 border-flingo-100 bg-white text-sm text-flingo-700">
-          <div className="font-bold text-flingo-800">Your personal best</div>
-          <div className="mt-2 text-2xl font-bold text-flingo-600">{myBest}</div>
-          <div className="mt-1 text-xs text-flingo-500">
+        <div className="mt-4 p-4 rounded-2xl border border-flingo-200/30 bg-surface-card text-sm text-flingo-800">
+          <div className="font-bold text-flingo-900">Your personal best</div>
+          <div className="mt-2 text-2xl font-bold text-neon-lime">{myBest}</div>
+          <div className="mt-1 text-xs text-flingo-600">
             Keep playing to submit this score to the leaderboards.
           </div>
         </div>
@@ -472,27 +472,27 @@ function RatingSummaryCard({
   const avg = summary?.avgRating ?? 0;
   const count = summary?.ratingCount ?? 0;
   return (
-    <div className="mt-6 border-2 border-flingo-100 rounded-2xl p-5 bg-white">
+    <div className="mt-6 border border-flingo-200/30 rounded-2xl p-5 bg-surface-card">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-wide text-flingo-500 font-semibold">
+          <p className="text-xs uppercase tracking-wide text-flingo-600 font-semibold">
             Overall rating
           </p>
-          <div className="text-3xl font-extrabold text-flingo-800">
+          <div className="text-3xl font-extrabold text-flingo-900">
             {loading ? "—" : avg.toFixed(1)}
           </div>
-          <p className="text-xs text-flingo-500">{count} total ratings</p>
+          <p className="text-xs text-flingo-600">{count} total ratings</p>
         </div>
         <RatingStars value={avg} readOnly size="sm" />
       </div>
-      <div className="mt-4 border-t border-flingo-100 pt-4">
+      <div className="mt-4 border-t border-flingo-200/30 pt-4">
         {user ? (
           <div>
-            <p className="text-sm font-bold text-flingo-800 flex items-center">
+            <p className="text-sm font-bold text-flingo-900 flex items-center">
               Your rating
               {submitting && (
                 <svg
-                  className="ml-2 w-4 h-4 animate-spin text-gray-500"
+                  className="ml-2 w-4 h-4 animate-spin text-flingo-500"
                   viewBox="0 0 24 24"
                   fill="none"
                   aria-hidden
@@ -521,11 +521,11 @@ function RatingSummaryCard({
                 readOnly={loading || submitting}
               />
             </div>
-            {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
+            {error && <p className="text-xs text-neon-pink mt-2">{error}</p>}
           </div>
         ) : (
-          <p className="text-sm text-flingo-600">
-            <Link to="/login" className="text-flingo-600 underline font-semibold">
+          <p className="text-sm text-flingo-700">
+            <Link to="/login" className="text-neon-lime underline font-semibold">
               Sign in
             </Link>{" "}
             to rate this game.
@@ -614,11 +614,11 @@ function TopBox({
   return (
     <div className="flex-1 min-w-0">
       <div
-        className={`rounded-2xl border-2 border-flingo-100 p-3 flex flex-col items-center justify-between ${
+        className={`rounded-2xl border border-flingo-200/30 p-3 flex flex-col items-center justify-between ${
           tall ? "min-h-48" : "min-h-40"
         } ${
           interactive
-            ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-flingo-400 hover:border-flingo-200"
+            ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-neon-lime hover:border-neon-lime/50"
             : ""
         }`}
         style={{ background: `linear-gradient(to top, ${medalBg} 0%, transparent 60%)` }}

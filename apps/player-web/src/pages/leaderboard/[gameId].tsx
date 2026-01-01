@@ -93,7 +93,7 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-flingo-800 flex flex-col">
+    <div className="min-h-screen bg-surface-dark text-flingo-900 flex flex-col">
       <Seo
         title={
           meta
@@ -120,10 +120,10 @@ export default function LeaderboardPage() {
         noindex={true}
       />
       <header className="fixed top-0 left-0 right-0 z-50 h-14">
-        <div className="h-full flex items-center justify-between px-3 bg-white/95 backdrop-blur text-flingo-800 border-b-2 border-flingo-100">
+        <div className="h-full flex items-center justify-between px-3 bg-surface-dark/95 backdrop-blur text-flingo-900 border-b border-flingo-200/30">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center rounded-full px-3 py-1.5 text-flingo-600 hover:bg-flingo-50 transition-colors"
+            className="inline-flex items-center rounded-full px-3 py-1.5 text-flingo-700 hover:bg-flingo-100 transition-colors"
             aria-label="Close leaderboard"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -136,7 +136,7 @@ export default function LeaderboardPage() {
             </svg>
           </button>
           <div className="text-center pointer-events-none select-none">
-            <div className="text-lg font-extrabold text-flingo-800">{meta?.title ?? "Game"}</div>
+            <div className="text-lg font-extrabold text-flingo-900">{meta?.title ?? "Game"}</div>
           </div>
           <div className="w-[84px]" />
         </div>
@@ -154,10 +154,10 @@ export default function LeaderboardPage() {
               type="button"
               role="tab"
               aria-selected={activeTab === tab.id}
-              className={`flex-1 rounded-full border-2 px-3 py-2 text-sm font-bold transition-colors ${
+              className={`flex-1 rounded-full border px-3 py-2 text-sm font-bold transition-colors ${
                 activeTab === tab.id
-                  ? "bg-gradient-to-r from-flingo-500 to-flingo-600 text-white border-flingo-500 shadow-fun"
-                  : "bg-white text-flingo-600 border-flingo-200 hover:bg-flingo-50"
+                  ? "bg-neon-lime text-surface-dark border-neon-lime shadow-neon-lime"
+                  : "bg-surface-card text-flingo-700 border-flingo-200/30 hover:bg-flingo-100"
               }`}
               onClick={() => handleTabChange(tab.id)}
             >
@@ -165,18 +165,18 @@ export default function LeaderboardPage() {
             </button>
           ))}
         </div>
-        {loading && <div className="text-flingo-600">Loading…</div>}
-        {error && <div className="text-red-600">{error}</div>}
-        {tabError && <div className="text-sm text-orange-600 mb-3">{tabError}</div>}
+        {loading && <div className="text-flingo-700">Loading…</div>}
+        {error && <div className="text-neon-pink">{error}</div>}
+        {tabError && <div className="text-sm text-neon-orange mb-3">{tabError}</div>}
         {!loading && !error && (
-          <ol className="rounded-2xl overflow-hidden bg-white border-2 border-flingo-100">
+          <ol className="rounded-2xl overflow-hidden bg-surface-card border border-flingo-200/30">
             {rows.map((r, i) => {
               const isMe = myName && r.screenName === myName;
               const medal = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : null;
               const medalColors: Record<string, { ring: string; badge: string; text: string }> = {
-                gold: { ring: "#fbbf24", badge: "#f59e0b", text: "#b45309" },
-                silver: { ring: "#e5e7eb", badge: "#9ca3af", text: "#4b5563" },
-                bronze: { ring: "#d97706", badge: "#92400e", text: "#78350f" },
+                gold: { ring: "#fbbf24", badge: "#f59e0b", text: "#fbbf24" },
+                silver: { ring: "#e5e7eb", badge: "#9ca3af", text: "#e5e7eb" },
+                bronze: { ring: "#d97706", badge: "#92400e", text: "#f59e0b" },
               };
               const avatarSize = medal ? 44 : 28;
               const hasProfile = Boolean(r.userId);
@@ -184,15 +184,15 @@ export default function LeaderboardPage() {
                 if (r.userId) navigate(`/profile/${r.userId}`);
               };
               const baseRowClass =
-                "flex items-center justify-between px-4 py-3 border-b border-flingo-100 last:border-b-0 " +
+                "flex items-center justify-between px-4 py-3 border-b border-flingo-200/20 last:border-b-0 " +
                 (isMe
-                  ? "bg-flingo-50"
+                  ? "bg-neon-lime/10"
                   : medal === "gold"
-                  ? "bg-candy-yellow/10"
+                  ? "bg-neon-yellow/10"
                   : medal === "silver"
-                  ? "bg-gray-50"
+                  ? "bg-flingo-200/20"
                   : medal === "bronze"
-                  ? "bg-orange-50"
+                  ? "bg-neon-orange/10"
                   : "");
               return (
                 <li
@@ -200,7 +200,7 @@ export default function LeaderboardPage() {
                   className={
                     baseRowClass +
                     (hasProfile
-                      ? " cursor-pointer focus:outline-none focus:ring-2 focus:ring-flingo-400 hover:bg-flingo-50"
+                      ? " cursor-pointer focus:outline-none focus:ring-2 focus:ring-neon-lime/50 hover:bg-flingo-100"
                       : "")
                   }
                   role={hasProfile ? "button" : undefined}
@@ -219,14 +219,14 @@ export default function LeaderboardPage() {
                   aria-label={hasProfile ? `View ${r.screenName}'s profile` : undefined}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="w-7 text-flingo-500 font-mono">{i + 1}.</span>
+                    <span className="w-7 text-flingo-600 font-mono">{i + 1}.</span>
                     <div className="relative flex items-center">
                       <ProfileAvatar
                         user={{ avatar: r.avatar }}
                         size={avatarSize}
                         borderWidth={medal ? 3 : 2}
                         strokeWidth={medal ? 2 : 1}
-                        borderColor={medal ? medalColors[medal].ring : isMe ? "#f59e0b" : "#3b82f6"}
+                        borderColor={medal ? medalColors[medal].ring : isMe ? "#c8ff32" : "#32d4ff"}
                         title={r.screenName}
                       />
                       {medal && (
@@ -237,7 +237,7 @@ export default function LeaderboardPage() {
                             color: "#fff",
                             width: 18,
                             height: 18,
-                            border: "2px solid #000",
+                            border: "2px solid #1a1c23",
                           }}
                           aria-label={`${medal} medal`}
                         >
@@ -250,24 +250,24 @@ export default function LeaderboardPage() {
                         className={
                           "font-bold truncate max-w-[210px] md:max-w-[260px] " +
                           (isMe
-                            ? "text-flingo-700"
+                            ? "text-neon-lime"
                             : medal
                             ? `text-[${medalColors[medal].text}]`
-                            : "text-flingo-800")
+                            : "text-flingo-900")
                         }
                         title={r.screenName}
                       >
                         {r.screenName}
                       </span>
                       {typeof r.level === "number" && (
-                        <div className="text-[11px] text-flingo-500">Level {r.level}</div>
+                        <div className="text-[11px] text-flingo-600">Level {r.level}</div>
                       )}
                     </div>
                   </div>
                   <div
                     className={
                       "text-right font-mono font-bold " +
-                      (isMe ? "text-flingo-700" : "text-flingo-600")
+                      (isMe ? "text-neon-lime" : "text-flingo-800")
                     }
                   >
                     {r.score}
@@ -275,7 +275,7 @@ export default function LeaderboardPage() {
                 </li>
               );
             })}
-            {rows.length === 0 && <div className="px-4 py-6 text-flingo-500">No scores yet.</div>}
+            {rows.length === 0 && <div className="px-4 py-6 text-flingo-600">No scores yet.</div>}
           </ol>
         )}
       </div>

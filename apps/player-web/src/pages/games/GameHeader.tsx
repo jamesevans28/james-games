@@ -10,12 +10,12 @@ interface Props {
 export default function GameHeader({ title, brand = "flingo.fun", leaderboardTo, onBack }: Props) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-14">
-      <div className="h-full flex items-center justify-between px-3 bg-white/95 backdrop-blur text-flingo-800 border-b-2 border-flingo-100">
+      <div className="h-full flex items-center justify-between px-3 bg-surface-dark/95 backdrop-blur-xl text-flingo-900 border-b border-flingo-200/30">
         {onBack ? (
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 rounded-full border-2 border-flingo-200 bg-white hover:bg-flingo-50 transition-colors px-3 py-1.5 text-flingo-700"
+            className="inline-flex items-center gap-2 rounded-full border border-flingo-300 bg-flingo-100 hover:bg-flingo-200 hover:border-neon-lime/50 transition-colors px-3 py-1.5 text-flingo-800"
             aria-label="Back"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -31,7 +31,7 @@ export default function GameHeader({ title, brand = "flingo.fun", leaderboardTo,
         ) : (
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-flingo-200 bg-white hover:bg-flingo-50 transition-colors px-3 py-1.5 text-flingo-700"
+            className="inline-flex items-center gap-2 rounded-full border border-flingo-300 bg-flingo-100 hover:bg-flingo-200 hover:border-neon-lime/50 transition-colors px-3 py-1.5 text-flingo-800"
             aria-label="Back to games"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -47,15 +47,15 @@ export default function GameHeader({ title, brand = "flingo.fun", leaderboardTo,
         )}
 
         <div className="text-center pointer-events-none select-none">
-          <div className="text-lg font-extrabold text-flingo-800">{title}</div>
-          <div className="text-[10px] text-flingo-500 leading-none font-medium">{brand}</div>
+          <div className="text-lg font-extrabold text-flingo-900">{title}</div>
+          <div className="text-[10px] text-neon-lime leading-none font-medium">{brand}</div>
         </div>
 
         <div className="flex items-center gap-2">
           {leaderboardTo && (
             <Link
               to={leaderboardTo}
-              className="inline-flex items-center gap-2 rounded-full border-2 border-flingo-200 bg-white hover:bg-flingo-50 transition-colors px-3 py-1.5 text-flingo-700"
+              className="inline-flex items-center gap-2 rounded-full border border-flingo-300 bg-flingo-100 hover:bg-flingo-200 hover:border-neon-lime/50 transition-colors px-3 py-1.5 text-flingo-800"
               aria-label="Open leaderboard"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">

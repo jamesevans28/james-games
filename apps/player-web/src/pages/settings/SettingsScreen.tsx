@@ -275,30 +275,30 @@ export default function SettingsScreen() {
       {/* Screen Name Section */}
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 mb-8 p-5 bg-white rounded-2xl border-2 border-flingo-100"
+        className="space-y-4 mb-8 p-5 bg-surface-card rounded-2xl border border-flingo-200/30"
       >
         <div>
-          <label className="block text-sm font-bold text-flingo-800 mb-2">Screen name</label>
+          <label className="block text-sm font-bold text-flingo-900 mb-2">Screen name</label>
           <input
             type="text"
             value={screenName}
             onChange={(e) => setScreenName(e.target.value)}
-            className="w-full border-2 border-flingo-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-flingo-400 focus:border-flingo-400 transition-all"
+            className="w-full bg-flingo-100 border border-flingo-200/50 rounded-xl px-4 py-3 text-sm text-flingo-900 placeholder-flingo-500 focus:outline-none focus:ring-2 focus:ring-neon-lime/50 focus:border-neon-lime/50 transition-all"
             maxLength={24}
             placeholder="Your public name"
           />
-          <p className="mt-2 text-xs text-flingo-500">2–24 characters. Shown on leaderboards.</p>
+          <p className="mt-2 text-xs text-flingo-600">2–24 characters. Shown on leaderboards.</p>
         </div>
-        {error && <div className="text-sm text-candy-pink font-medium">{error}</div>}
-        {success && <div className="text-sm text-candy-mint font-medium">✓ Saved!</div>}
+        {error && <div className="text-sm text-neon-pink font-medium">{error}</div>}
+        {success && <div className="text-sm text-neon-lime font-medium">✓ Saved!</div>}
         <div className="flex gap-2">
           <button
             type="submit"
             disabled={!dirty || saving}
-            className={`px-5 py-2.5 rounded-full text-sm font-bold text-white transition-all ${
+            className={`btn ${
               dirty
-                ? "bg-gradient-to-r from-flingo-500 to-flingo-700 shadow-fun hover:shadow-fun-lg"
-                : "bg-flingo-300 cursor-not-allowed"
+                ? "btn-primary"
+                : "bg-flingo-200 text-flingo-500 cursor-not-allowed rounded-full px-5 py-2.5 text-sm font-bold"
             }`}
           >
             {saving ? "Saving..." : "Save changes"}
@@ -307,19 +307,19 @@ export default function SettingsScreen() {
       </form>
 
       {/* Account Section */}
-      <div className="p-5 bg-white rounded-2xl border-2 border-flingo-100 mb-6">
+      <div className="p-5 bg-surface-card rounded-2xl border border-flingo-200/30 mb-6">
         <h2 className="text-lg font-bold mb-4 text-flingo-900">Account</h2>
 
         {/* Account Type Badge */}
         <div className="mb-4">
-          <span className="text-sm text-flingo-600 font-medium">Account type: </span>
+          <span className="text-sm text-flingo-700 font-medium">Account type: </span>
           <span
             className={`text-xs px-3 py-1 rounded-full font-bold ${
               isAnonymous
-                ? "bg-candy-yellow/20 text-candy-yellow"
+                ? "bg-neon-yellow/20 text-neon-yellow border border-neon-yellow/30"
                 : isUsernamePin
-                ? "bg-candy-sky/20 text-candy-sky"
-                : "bg-candy-mint/20 text-candy-mint"
+                ? "bg-neon-blue/20 text-neon-blue border border-neon-blue/30"
+                : "bg-neon-lime/20 text-neon-lime border border-neon-lime/30"
             }`}
           >
             {isAnonymous ? "Guest" : isUsernamePin ? "Username + PIN" : "Linked Account"}
@@ -329,23 +329,23 @@ export default function SettingsScreen() {
         {/* Username display for username+PIN accounts */}
         {user?.username && (
           <div className="mb-4">
-            <span className="text-sm text-flingo-600 font-medium">Username: </span>
+            <span className="text-sm text-flingo-700 font-medium">Username: </span>
             <span className="text-sm font-bold text-flingo-900">{user.username}</span>
           </div>
         )}
       </div>
 
       {/* Email Section */}
-      <div className="p-5 bg-white rounded-2xl border-2 border-flingo-100 mb-6">
+      <div className="p-5 bg-surface-card rounded-2xl border border-flingo-200/30 mb-6">
         <h2 className="text-lg font-bold mb-4 text-flingo-900">Email Address</h2>
 
         {emailError && (
-          <div className="mb-3 p-3 bg-candy-pink/10 border-2 border-candy-pink/30 text-candy-pink text-sm rounded-xl font-medium">
+          <div className="mb-3 p-3 bg-neon-pink/10 border border-neon-pink/30 text-neon-pink text-sm rounded-xl font-medium">
             {emailError}
           </div>
         )}
         {emailSuccess && (
-          <div className="mb-3 p-3 bg-candy-mint/10 border-2 border-candy-mint/30 text-candy-mint text-sm rounded-xl font-medium">
+          <div className="mb-3 p-3 bg-neon-lime/10 border border-neon-lime/30 text-neon-lime text-sm rounded-xl font-medium">
             {emailSuccess}
           </div>
         )}
@@ -353,14 +353,14 @@ export default function SettingsScreen() {
         {hasEmail ? (
           <div className="space-y-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-flingo-600 font-medium">Email: </span>
+              <span className="text-sm text-flingo-700 font-medium">Email: </span>
               <span className="text-sm text-flingo-900 font-bold">{user?.email}</span>
               {emailVerified ? (
-                <span className="text-xs bg-candy-mint/20 text-candy-mint px-2 py-1 rounded-full font-bold">
+                <span className="text-xs bg-neon-lime/20 text-neon-lime px-2 py-1 rounded-full font-bold border border-neon-lime/30">
                   ✓ Verified
                 </span>
               ) : (
-                <span className="text-xs bg-candy-yellow/20 text-candy-yellow px-2 py-1 rounded-full font-bold">
+                <span className="text-xs bg-neon-yellow/20 text-neon-yellow px-2 py-1 rounded-full font-bold border border-neon-yellow/30">
                   Not verified
                 </span>
               )}
@@ -371,14 +371,14 @@ export default function SettingsScreen() {
                 <button
                   onClick={handleSendVerification}
                   disabled={sendingVerification}
-                  className="px-4 py-2 text-sm bg-gradient-to-r from-flingo-500 to-flingo-700 text-white rounded-full font-bold hover:shadow-fun disabled:opacity-50 transition-all"
+                  className="btn btn-primary text-sm"
                 >
                   {sendingVerification ? "Sending..." : "Resend verification email"}
                 </button>
                 <button
                   onClick={handleCheckVerification}
                   disabled={checkingVerification}
-                  className="px-4 py-2 text-sm bg-white text-flingo-700 border-2 border-flingo-200 rounded-full font-bold hover:bg-flingo-50 disabled:opacity-50 transition-all"
+                  className="btn btn-outline text-sm"
                 >
                   {checkingVerification ? "Checking..." : "I've verified my email"}
                 </button>
@@ -387,7 +387,7 @@ export default function SettingsScreen() {
           </div>
         ) : (
           <form onSubmit={handleAddEmail} className="space-y-3">
-            <p className="text-sm text-flingo-600">
+            <p className="text-sm text-flingo-700">
               Add an email address to help recover your account.
             </p>
             <div className="flex gap-2">
@@ -396,12 +396,12 @@ export default function SettingsScreen() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
-                className="flex-1 border-2 border-flingo-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-flingo-400 focus:border-flingo-400 transition-all"
+                className="flex-1 bg-flingo-100 border border-flingo-200/50 rounded-xl px-4 py-2.5 text-sm text-flingo-900 placeholder-flingo-500 focus:outline-none focus:ring-2 focus:ring-neon-lime/50 focus:border-neon-lime/50 transition-all"
               />
               <button
                 type="submit"
                 disabled={addingEmail || !email}
-                className="px-5 py-2.5 text-sm bg-gradient-to-r from-flingo-500 to-flingo-700 text-white rounded-full font-bold hover:shadow-fun disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="btn btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {addingEmail ? "Adding..." : "Add"}
               </button>
@@ -412,52 +412,49 @@ export default function SettingsScreen() {
 
       {/* PIN Change Section (only for username+PIN accounts) */}
       {isUsernamePin && (
-        <div className="p-5 bg-white rounded-2xl border-2 border-flingo-100 mb-6">
+        <div className="p-5 bg-surface-card rounded-2xl border border-flingo-200/30 mb-6">
           <h2 className="text-lg font-bold mb-4 text-flingo-900">Security</h2>
 
           {pinSuccess && (
-            <div className="mb-3 p-3 bg-candy-mint/10 border-2 border-candy-mint/30 text-candy-mint text-sm rounded-xl font-medium">
+            <div className="mb-3 p-3 bg-neon-lime/10 border border-neon-lime/30 text-neon-lime text-sm rounded-xl font-medium">
               ✓ PIN changed successfully!
             </div>
           )}
 
           {!showPinChange ? (
-            <button
-              onClick={() => setShowPinChange(true)}
-              className="px-5 py-2.5 text-sm bg-white text-flingo-700 border-2 border-flingo-200 rounded-full font-bold hover:bg-flingo-50 transition-all"
-            >
+            <button onClick={() => setShowPinChange(true)} className="btn btn-outline text-sm">
               🔐 Change PIN
             </button>
           ) : (
             <form onSubmit={handleChangePin} className="space-y-4 max-w-xs">
               <div>
-                <label className="block text-sm font-bold text-flingo-800 mb-2">Current PIN</label>
+                <label className="block text-sm font-bold text-flingo-900 mb-2">Current PIN</label>
                 <input
                   type="password"
                   inputMode="numeric"
                   pattern="\d*"
                   value={currentPin}
                   onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                  className="w-full border-2 border-flingo-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-flingo-400 focus:border-flingo-400 transition-all"
+                  className="w-full bg-flingo-100 border border-flingo-200/50 rounded-xl px-4 py-3 text-sm text-flingo-900 placeholder-flingo-500 focus:outline-none focus:ring-2 focus:ring-neon-lime/50 focus:border-neon-lime/50 transition-all"
                   placeholder="Enter current PIN"
                   maxLength={8}
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold text-flingo-800 mb-2">New PIN</label>
+                <label className="block text-sm font-bold text-flingo-900 mb-2">New PIN</label>
                 <input
                   type="password"
                   inputMode="numeric"
                   pattern="\d*"
                   value={newPin}
                   onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                  className="w-full border-2 border-flingo-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-flingo-400 focus:border-flingo-400 transition-all"
+                  className="w-full bg-flingo-100 border border-flingo-200/50 rounded-xl px-4 py-3 text-sm text-flingo-900 placeholder-flingo-500 focus:outline-none focus:ring-2 focus:ring-neon-lime/50 focus:border-neon-lime/50 transition-all"
                   placeholder="4-8 digits"
                   maxLength={8}
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold text-flingo-800 mb-2">
+                <label className="block text-sm font-bold text-flingo-900 mb-2">
                   Confirm new PIN
                 </label>
                 <input
@@ -466,19 +463,19 @@ export default function SettingsScreen() {
                   pattern="\d*"
                   value={confirmPin}
                   onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                  className="w-full border-2 border-flingo-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-flingo-400 focus:border-flingo-400 transition-all"
+                  className="w-full bg-flingo-100 border border-flingo-200/50 rounded-xl px-4 py-3 text-sm text-flingo-900 placeholder-flingo-500 focus:outline-none focus:ring-2 focus:ring-neon-lime/50 focus:border-neon-lime/50 transition-all"
                   placeholder="Confirm new PIN"
                   maxLength={8}
                 />
               </div>
 
-              {pinError && <div className="text-sm text-candy-pink font-medium">{pinError}</div>}
+              {pinError && <div className="text-sm text-neon-pink font-medium">{pinError}</div>}
 
               <div className="flex gap-2">
                 <button
                   type="submit"
                   disabled={changingPin || !currentPin || !newPin || !confirmPin}
-                  className="px-5 py-2.5 text-sm bg-gradient-to-r from-flingo-500 to-flingo-700 text-white rounded-full font-bold hover:shadow-fun disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="btn btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {changingPin ? "Changing..." : "Change PIN"}
                 </button>
@@ -491,7 +488,7 @@ export default function SettingsScreen() {
                     setConfirmPin("");
                     setPinError(null);
                   }}
-                  className="px-5 py-2.5 text-sm bg-white text-flingo-700 border-2 border-flingo-200 rounded-full font-bold hover:bg-flingo-50 transition-all"
+                  className="btn btn-outline text-sm"
                 >
                   Cancel
                 </button>
@@ -502,18 +499,18 @@ export default function SettingsScreen() {
       )}
 
       {/* Linked Providers Section */}
-      <div className="p-5 bg-white rounded-2xl border-2 border-flingo-100">
+      <div className="p-5 bg-surface-card rounded-2xl border border-flingo-200/30">
         <h2 className="text-lg font-bold mb-4 text-flingo-900">Linked Accounts</h2>
 
         {linkError && (
-          <div className="mb-3 p-3 bg-candy-pink/10 border-2 border-candy-pink/30 text-candy-pink text-sm rounded-xl font-medium">
+          <div className="mb-3 p-3 bg-neon-pink/10 border border-neon-pink/30 text-neon-pink text-sm rounded-xl font-medium">
             {linkError}
           </div>
         )}
 
         <div className="flex flex-col gap-3">
           {hasGoogle ? (
-            <div className="flex items-center gap-3 text-sm text-flingo-700 bg-candy-mint/10 p-4 rounded-xl border-2 border-candy-mint/30">
+            <div className="flex items-center gap-3 text-sm text-flingo-800 bg-neon-lime/10 p-4 rounded-xl border border-neon-lime/30">
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
@@ -521,13 +518,13 @@ export default function SettingsScreen() {
                 />
               </svg>
               <span className="font-bold">Google connected</span>
-              <span className="ml-auto text-candy-mint font-bold">✓</span>
+              <span className="ml-auto text-neon-lime font-bold">✓</span>
             </div>
           ) : (
             <button
               onClick={handleLinkGoogle}
               disabled={linkingProvider !== null}
-              className="flex items-center gap-3 text-sm text-flingo-700 bg-white border-2 border-flingo-200 p-4 rounded-xl hover:bg-flingo-50 hover:border-flingo-300 disabled:opacity-50 transition-all"
+              className="flex items-center gap-3 text-sm text-flingo-800 bg-surface-card border border-flingo-200/30 p-4 rounded-xl hover:bg-flingo-100 hover:border-flingo-200/50 disabled:opacity-50 transition-all"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -542,7 +539,7 @@ export default function SettingsScreen() {
           )}
 
           {hasApple ? (
-            <div className="flex items-center gap-3 text-sm text-flingo-700 bg-candy-mint/10 p-4 rounded-xl border-2 border-candy-mint/30">
+            <div className="flex items-center gap-3 text-sm text-flingo-800 bg-neon-lime/10 p-4 rounded-xl border border-neon-lime/30">
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
@@ -550,13 +547,13 @@ export default function SettingsScreen() {
                 />
               </svg>
               <span className="font-bold">Apple connected</span>
-              <span className="ml-auto text-candy-mint font-bold">✓</span>
+              <span className="ml-auto text-neon-lime font-bold">✓</span>
             </div>
           ) : (
             <button
               onClick={handleLinkApple}
               disabled={linkingProvider !== null}
-              className="flex items-center gap-3 text-sm text-flingo-700 bg-white border-2 border-flingo-200 p-4 rounded-xl hover:bg-flingo-50 hover:border-flingo-300 disabled:opacity-50 transition-all"
+              className="flex items-center gap-3 text-sm text-flingo-800 bg-surface-card border border-flingo-200/30 p-4 rounded-xl hover:bg-flingo-100 hover:border-flingo-200/50 disabled:opacity-50 transition-all"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -571,7 +568,7 @@ export default function SettingsScreen() {
           )}
         </div>
 
-        <p className="text-xs text-flingo-500 mt-4">
+        <p className="text-xs text-flingo-600 mt-4">
           Link a social account to sign in more easily and access your account from any device.
         </p>
       </div>

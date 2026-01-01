@@ -101,23 +101,23 @@ export default function GamesList() {
     const summary = ratings[game.id];
     return (
       <div
-        className="relative bg-white rounded-2xl border-2 border-flingo-100 overflow-hidden cursor-pointer hover:border-flingo-300 hover:shadow-fun transition-all active:scale-[0.98]"
+        className="relative bg-surface-card rounded-2xl border border-flingo-200/30 overflow-hidden cursor-pointer hover:border-neon-lime/30 hover:shadow-card-hover transition-all active:scale-[0.98]"
         onClick={() => navigate(`/games/${game.id}`)}
       >
         {badge && (
-          <span className="absolute top-2 left-2 z-10 inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full bg-gradient-to-r from-flingo-500 to-flingo-700 text-white shadow-sm">
+          <span className="absolute top-2 left-2 z-10 inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full bg-gradient-to-r from-neon-lime to-neon-blue text-surface-dark shadow-sm">
             {badge}
           </span>
         )}
         <div
-          className="aspect-square bg-cover bg-center bg-flingo-50"
+          className="aspect-square bg-cover bg-center bg-flingo-100"
           style={{ backgroundImage: `url(${game.thumbnail || "/assets/shared/flingo-logo.svg"})` }}
           title={game.title}
         />
         <div className="px-3 py-3">
           <h3 className="text-sm font-bold truncate text-flingo-900">{game.title}</h3>
           {metaLine && (
-            <p className="text-[11px] text-flingo-500 uppercase tracking-wide mt-0.5 font-medium">
+            <p className="text-[11px] text-neon-lime uppercase tracking-wide mt-0.5 font-medium">
               {metaLine}
             </p>
           )}
@@ -126,8 +126,8 @@ export default function GamesList() {
               width="14"
               height="14"
               viewBox="0 0 24 24"
-              fill={summary ? "#FBBF24" : "none"}
-              stroke="#FBBF24"
+              fill={summary ? "#ffeb3b" : "none"}
+              stroke="#ffeb3b"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -135,10 +135,10 @@ export default function GamesList() {
             >
               <path d="M12 2.5l3.09 6.26 6.91.99-5 4.87 1.18 6.88L12 17.77 5.82 21.5l1.18-6.88-5-4.87 6.91-.99L12 2.5z" />
             </svg>
-            <span className="font-bold text-flingo-800">
+            <span className="font-bold text-flingo-900">
               {summary ? summary.avgRating.toFixed(1) : "—"}
             </span>
-            <span className="text-flingo-400">({summary?.ratingCount ?? 0})</span>
+            <span className="text-flingo-500">({summary?.ratingCount ?? 0})</span>
           </div>
         </div>
       </div>
@@ -162,9 +162,12 @@ export default function GamesList() {
       />
 
       {/* Page header */}
-      <section className="w-full bg-gradient-to-br from-flingo-100 via-white to-candy-pink/10 border-b-2 border-flingo-100">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <h1 className="text-2xl font-extrabold text-flingo-900">All Games</h1>
+      <section className="w-full bg-surface-dark border-b border-flingo-200/30 relative overflow-hidden">
+        {/* Decorative glow */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-neon-lime/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-neon-pink/10 rounded-full blur-[80px]" />
+        <div className="max-w-6xl mx-auto px-4 py-6 relative z-10">
+          <h1 className="text-2xl font-extrabold text-neon-lime text-glow-lime">All Games</h1>
           <p className="text-sm text-flingo-600 mt-1">
             Browse our complete collection of {visibleGames.length} free games
           </p>
@@ -215,7 +218,7 @@ function GamesSection({
     <section className="w-full max-w-6xl mx-auto px-4 py-6">
       <div className="mb-4">
         <h2 className="text-xl font-bold text-flingo-900">{title}</h2>
-        {subtitle && <p className="text-sm text-flingo-500 mt-1">{subtitle}</p>}
+        {subtitle && <p className="text-sm text-flingo-600 mt-1">{subtitle}</p>}
       </div>
       {children}
     </section>

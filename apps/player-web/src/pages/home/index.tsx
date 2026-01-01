@@ -205,27 +205,27 @@ export default function GameHub() {
     const summary = ratings[game.id];
     return (
       <div
-        className="relative bg-white rounded-2xl border-2 border-flingo-100 overflow-hidden cursor-pointer hover:border-flingo-300 hover:shadow-fun transition-all active:scale-[0.98]"
+        className="relative bg-surface-card rounded-2xl border border-flingo-200/30 overflow-hidden cursor-pointer hover:border-neon-lime/50 hover:shadow-card-hover transition-all active:scale-[0.98]"
         onClick={() => navigate(`/games/${game.id}`)}
       >
         {badge && (
-          <span className="absolute top-2 left-2 z-10 inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full bg-gradient-to-r from-flingo-500 to-flingo-700 text-white shadow-sm">
+          <span className="absolute top-2 left-2 z-10 inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full bg-neon-lime text-surface-dark shadow-sm">
             {badge}
           </span>
         )}
         <div
-          className="aspect-square bg-cover bg-center bg-flingo-50"
+          className="aspect-square bg-cover bg-center bg-flingo-100"
           style={{ backgroundImage: `url(${game.thumbnail || "/assets/shared/flingo-logo.svg"})` }}
           title={game.title}
         />
         <div className="px-3 py-3">
           <h3 className="text-sm font-bold truncate text-flingo-900">{game.title}</h3>
           {metaLine && (
-            <p className="text-[11px] text-flingo-500 uppercase tracking-wide mt-0.5 font-medium">
+            <p className="text-[11px] text-flingo-600 uppercase tracking-wide mt-0.5 font-medium">
               {metaLine}
             </p>
           )}
-          <div className="mt-1.5 flex items-center gap-1 text-xs text-flingo-600">
+          <div className="mt-1.5 flex items-center gap-1 text-xs text-flingo-700">
             <svg
               width="14"
               height="14"
@@ -242,7 +242,7 @@ export default function GameHub() {
             <span className="font-bold text-flingo-800">
               {summary ? summary.avgRating.toFixed(1) : "—"}
             </span>
-            <span className="text-flingo-400">({summary?.ratingCount ?? 0})</span>
+            <span className="text-flingo-500">({summary?.ratingCount ?? 0})</span>
           </div>
         </div>
       </div>
@@ -266,32 +266,32 @@ export default function GameHub() {
       />
 
       {featuredGame && (
-        <section className="w-full bg-gradient-to-br from-flingo-100 via-white to-candy-pink/10 border-b-2 border-flingo-100">
+        <section className="w-full bg-surface-dark border-b border-flingo-200/30">
           <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col gap-6 md:flex-row md:items-center">
             <div className="flex-1 space-y-4">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-flingo-600">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-neon-lime">
                 ⭐ Featured game
               </p>
               <h1 className="text-3xl font-extrabold text-flingo-900">{featuredGame.title}</h1>
               {featuredGame.description && (
-                <p className="text-flingo-600 text-sm leading-relaxed">
+                <p className="text-flingo-700 text-sm leading-relaxed">
                   {featuredGame.description}
                 </p>
               )}
               {heroRatingLine && (
-                <p className="text-xs text-flingo-500 font-medium">{heroRatingLine}</p>
+                <p className="text-xs text-flingo-600 font-medium">{heroRatingLine}</p>
               )}
               <div className="flex flex-wrap gap-3 pt-2">
                 <button
                   type="button"
-                  className="px-6 py-3 rounded-full bg-gradient-to-r from-flingo-500 to-flingo-700 text-white text-sm font-bold shadow-fun hover:shadow-fun-lg hover:from-flingo-600 hover:to-flingo-800 transition-all active:scale-95"
+                  className="btn btn-primary"
                   onClick={() => navigate(`/games/${featuredGame.id}`)}
                 >
                   🎮 Play now
                 </button>
                 <button
                   type="button"
-                  className="px-6 py-3 rounded-full border-2 border-flingo-200 text-flingo-700 text-sm font-bold hover:bg-flingo-50 hover:border-flingo-300 transition-all"
+                  className="btn btn-outline"
                   onClick={() => navigate(`/leaderboard/${featuredGame.id}`)}
                 >
                   🏆 Leaderboard
@@ -299,7 +299,7 @@ export default function GameHub() {
               </div>
             </div>
             <div
-              className="flex-1 min-h-[220px] rounded-3xl border-2 border-flingo-200 shadow-card overflow-hidden relative"
+              className="flex-1 min-h-[220px] rounded-3xl border border-flingo-200/30 shadow-card overflow-hidden relative"
               style={{
                 backgroundImage: `url(${
                   featuredGame.thumbnail || "/assets/shared/flingo-logo.svg"
@@ -308,9 +308,9 @@ export default function GameHub() {
                 backgroundPosition: "center",
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-tr from-flingo-900/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-surface-dark/80 to-transparent" />
               <div className="relative z-10 h-full flex items-end p-4">
-                <div className="text-white text-sm font-bold bg-flingo-500/80 px-3 py-1.5 rounded-full">
+                <div className="text-surface-dark text-sm font-bold bg-neon-lime px-3 py-1.5 rounded-full">
                   {heroTimestamp ?? "Now playing"}
                 </div>
               </div>
@@ -326,11 +326,11 @@ export default function GameHub() {
               key={action.title}
               type="button"
               onClick={action.action}
-              className="text-left rounded-2xl border-2 border-flingo-100 bg-white shadow-card p-4 hover:border-flingo-300 hover:shadow-fun hover:-translate-y-1 transition-all active:scale-[0.98]"
+              className="text-left rounded-2xl border border-flingo-200/30 bg-surface-card shadow-card p-4 hover:border-neon-lime/50 hover:shadow-card-hover hover:-translate-y-1 transition-all active:scale-[0.98]"
             >
-              <p className="text-sm font-bold text-flingo-800">{action.title}</p>
-              <p className="text-xs text-flingo-500 mt-1">{action.body}</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-flingo-600">
+              <p className="text-sm font-bold text-flingo-900">{action.title}</p>
+              <p className="text-xs text-flingo-600 mt-1">{action.body}</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-neon-lime">
                 {action.cta}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                   <path

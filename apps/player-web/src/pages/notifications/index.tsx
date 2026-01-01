@@ -82,19 +82,19 @@ export default function NotificationsPage() {
       <div className="flex items-center justify-between mb-4">
         <button
           type="button"
-          className="text-sm text-flingo-600 hover:text-flingo-800 font-medium"
+          className="text-sm text-flingo-700 hover:text-neon-lime font-medium"
           onClick={() => navigate(-1)}
         >
           Back
         </button>
-        <h1 className="text-2xl font-extrabold text-flingo-800">Notifications</h1>
+        <h1 className="text-2xl font-extrabold text-flingo-900">Notifications</h1>
         <div className="w-10" />
       </div>
       {!isOnline && <OfflineBanner className="mb-4" />}
-      {loading && <div className="text-flingo-600">Loading…</div>}
-      {error && <div className="text-sm text-red-600">{error}</div>}
+      {loading && <div className="text-flingo-700">Loading…</div>}
+      {error && <div className="text-sm text-neon-pink">{error}</div>}
       {!loading && !error && notifications.length === 0 && (
-        <p className="text-sm text-flingo-600">
+        <p className="text-sm text-flingo-700">
           No notifications yet. Share your follow code to get started!
         </p>
       )}
@@ -102,16 +102,16 @@ export default function NotificationsPage() {
         {notifications.map((notification) => (
           <li
             key={`${notification.userId}-${notification.createdAt}`}
-            className="flex items-center gap-3 border-2 border-flingo-100 rounded-2xl p-4 bg-white cursor-pointer hover:border-flingo-300 hover:shadow-card transition-all"
+            className="flex items-center gap-3 border border-flingo-200/30 rounded-2xl p-4 bg-surface-card cursor-pointer hover:border-neon-lime/30 hover:shadow-card-hover transition-all"
             onClick={() => navigate(`/profile/${notification.userId}`)}
           >
             <ProfileAvatar user={{ avatar: notification.avatar ?? 1 }} size={48} />
             <div className="flex-1">
-              <p className="text-sm text-flingo-800">
+              <p className="text-sm text-flingo-900">
                 <span className="font-bold">{notification.screenName ?? "Player"}</span> followed
                 you
               </p>
-              <p className="text-xs text-flingo-500">{timeAgo(notification.createdAt)}</p>
+              <p className="text-xs text-flingo-600">{timeAgo(notification.createdAt)}</p>
             </div>
           </li>
         ))}

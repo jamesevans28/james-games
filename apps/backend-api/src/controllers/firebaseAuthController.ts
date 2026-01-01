@@ -202,6 +202,14 @@ export async function loginWithUsername(req: Request, res: Response) {
       return res.status(401).json({ error: "Invalid username or PIN" });
     }
 
+    // Check if user has a PIN hash (migrated users might not)
+    if (!user.pinHash) {
+      recordLoginAttempt(rateLimitKey, false);
+      return res.status(401).json({
+        error: "Account not set up. Please register with this username to set a PIN.",
+      });
+    }
+
     // Verify PIN
     const isValid = await verifyPin(pin, user.pinHash);
     if (!isValid) {

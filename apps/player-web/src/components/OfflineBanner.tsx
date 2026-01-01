@@ -19,11 +19,11 @@ export function OfflineBanner({
 
   return (
     <div
-      className={`bg-candy-yellow/20 border-2 border-candy-yellow/50 text-amber-800 px-4 py-3 rounded-2xl flex items-center gap-3 ${className}`}
+      className={`bg-neon-orange/10 border border-neon-orange/30 text-neon-orange px-4 py-3 rounded-2xl flex items-center gap-3 ${className}`}
       role="alert"
     >
       <svg
-        className="w-5 h-5 flex-shrink-0 text-candy-yellow"
+        className="w-5 h-5 flex-shrink-0 text-neon-orange"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -62,11 +62,11 @@ export function OfflineFullPage({
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-flingo-50 via-white to-candy-pink/10 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-surface-dark p-4">
       <div className="text-center max-w-sm">
-        <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-candy-yellow/30 to-candy-yellow/10 rounded-full flex items-center justify-center border-2 border-candy-yellow/30">
+        <div className="w-20 h-20 mx-auto mb-4 bg-neon-orange/10 rounded-full flex items-center justify-center border border-neon-orange/30">
           <svg
-            className="w-10 h-10 text-candy-yellow"
+            className="w-10 h-10 text-neon-orange"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -80,13 +80,10 @@ export function OfflineFullPage({
             <line x1="1" y1="1" x2="23" y2="23" strokeWidth="2" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-flingo-800 mb-2">{title}</h1>
-        <p className="text-flingo-600 mb-6">{message}</p>
+        <h1 className="text-2xl font-bold text-flingo-900 mb-2">{title}</h1>
+        <p className="text-flingo-700 mb-6">{message}</p>
         {onRetry && (
-          <button
-            onClick={onRetry}
-            className="px-6 py-3 bg-gradient-to-r from-flingo-500 to-flingo-600 text-white rounded-full font-semibold shadow-fun hover:shadow-fun-lg transition-all"
-          >
+          <button onClick={onRetry} className="btn btn-primary">
             Try again
           </button>
         )}

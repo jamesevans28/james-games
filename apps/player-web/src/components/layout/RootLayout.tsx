@@ -16,10 +16,14 @@ export default function RootLayout() {
 
   return (
     <div
-      className="min-h-screen w-full font-sans text-gray-800"
+      className="min-h-screen w-full font-sans text-flingo-900"
       style={{
-        background:
-          "linear-gradient(180deg, #FAF5FF 0%, rgba(255, 247, 237, 0.3) 50%, rgba(236, 253, 245, 0.3) 100%)",
+        background: "#121318",
+        backgroundImage: `
+          radial-gradient(ellipse at 20% 0%, rgba(200, 255, 50, 0.04) 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 100%, rgba(255, 62, 181, 0.04) 0%, transparent 50%),
+          radial-gradient(ellipse at 50% 50%, rgba(50, 212, 255, 0.02) 0%, transparent 70%)
+        `,
       }}
     >
       {!hideGlobalHeader && <Header />}

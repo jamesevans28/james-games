@@ -69,16 +69,16 @@ function LevelUpModal({ level, onClose }: { level: number; onClose: () => void }
           0%, 100% { transform: translateY(0) scale(1); }
           50% { transform: translateY(-20px) scale(1.1); }
         }
-        @keyframes glow-pulse {
-          0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
-          50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); }
+        @keyframes glow-pulse-gold {
+          0%, 100% { box-shadow: 0 0 20px rgba(200, 255, 50, 0.3), 0 0 40px rgba(255, 235, 59, 0.2); }
+          50% { box-shadow: 0 0 40px rgba(200, 255, 50, 0.5), 0 0 60px rgba(255, 235, 59, 0.4); }
         }
       `}</style>
       <div className="fixed inset-0 z-[10001] flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/80" onClick={onClose} />
+        <div className="absolute inset-0 bg-surface-dark/90 backdrop-blur-sm" onClick={onClose} />
         <div
-          className="relative bg-gradient-to-b from-candy-yellow/30 to-candy-yellow/10 rounded-3xl p-8 max-w-sm mx-4 shadow-fun-lg border-4 border-candy-yellow text-center"
-          style={{ animation: "glow-pulse 2s ease-in-out infinite" }}
+          className="relative bg-gradient-to-b from-neon-yellow/20 to-neon-lime/10 rounded-3xl p-8 max-w-sm mx-4 shadow-neon-lime border-2 border-neon-yellow/50 text-center bg-surface-card"
+          style={{ animation: "glow-pulse-gold 2s ease-in-out infinite" }}
         >
           <div
             className="text-8xl mb-4"
@@ -86,11 +86,11 @@ function LevelUpModal({ level, onClose }: { level: number; onClose: () => void }
           >
             🏆
           </div>
-          <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-candy-yellow to-amber-600 mb-2">
+          <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-neon-yellow to-neon-lime mb-2">
             LEVEL UP!
           </h2>
-          <p className="text-5xl font-extrabold text-flingo-700 mb-4">Level {level}</p>
-          <p className="text-flingo-600 mb-6">Congratulations! You've reached a new level!</p>
+          <p className="text-5xl font-extrabold text-flingo-900 mb-4">Level {level}</p>
+          <p className="text-flingo-700 mb-6">Congratulations! You've reached a new level!</p>
           <button type="button" className="btn btn-primary px-8 py-3 text-lg" onClick={onClose}>
             Continue
           </button>
@@ -191,29 +191,29 @@ function AnimatedExperienceBar({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between text-xs uppercase tracking-wide text-flingo-500 font-semibold">
+      <div className="flex items-center justify-between text-xs uppercase tracking-wide text-flingo-600 font-semibold">
         <span>Level {displayLevel}</span>
         <span>
           {Math.round(displayProgress)}/{safeRequired} XP
         </span>
       </div>
-      <div className="relative h-4 rounded-full bg-flingo-100 overflow-hidden border-2 border-flingo-200">
+      <div className="relative h-4 rounded-full bg-flingo-100 overflow-hidden border border-flingo-200/50">
         <div
           className="absolute inset-y-0 left-0 rounded-full"
           style={{
             width: `${displayPercent}%`,
             backgroundImage:
-              "repeating-linear-gradient(45deg, rgba(255,255,255,0.35) 0, rgba(255,255,255,0.35) 8px, transparent 8px, transparent 16px)",
-            background: "linear-gradient(90deg, #A855F7 0%, #7C3AED 50%, #6366F1 100%)",
+              "repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 8px, transparent 8px, transparent 16px)",
+            background: "linear-gradient(90deg, #c8ff32 0%, #32d4ff 50%, #ff3eb5 100%)",
             boxShadow: isAnimating
-              ? "0 0 18px rgba(168, 85, 247, 0.6)"
-              : "0 0 12px rgba(168, 85, 247, 0.3)",
+              ? "0 0 18px rgba(200, 255, 50, 0.6)"
+              : "0 0 12px rgba(200, 255, 50, 0.3)",
             transition: "none",
           }}
         />
-        <div className="absolute inset-0 opacity-40 bg-gradient-to-r from-white via-transparent to-white pointer-events-none" />
+        <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-white via-transparent to-white pointer-events-none" />
       </div>
-      {awardedXp > 0 && <div className="text-xs text-candy-mint font-bold">+{awardedXp} XP</div>}
+      {awardedXp > 0 && <div className="text-xs text-neon-lime font-bold">+{awardedXp} XP</div>}
     </div>
   );
 }
@@ -397,16 +397,16 @@ export default function GameOver({
   return (
     <>
       <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center">
-        <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-        <div className="relative w-full sm:w-auto sm:min-w-[320px] max-w-md mx-3 mb-6 sm:mb-0 rounded-3xl overflow-hidden border-2 border-flingo-100 bg-white shadow-fun-lg">
-          <div className="px-5 py-4 border-b-2 border-flingo-100">
-            <div className="text-lg font-extrabold text-flingo-800">{phrase}</div>
-            <div className="text-flingo-500 text-sm font-medium">Your score</div>
+        <div className="absolute inset-0 bg-surface-dark/80 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative w-full sm:w-auto sm:min-w-[320px] max-w-md mx-3 mb-6 sm:mb-0 rounded-3xl overflow-hidden border border-flingo-200/30 bg-surface-card shadow-card-hover">
+          <div className="px-5 py-4 border-b border-flingo-200/30">
+            <div className="text-lg font-extrabold text-neon-lime text-glow-lime">{phrase}</div>
+            <div className="text-flingo-600 text-sm font-medium">Your score</div>
           </div>
           <div className="px-5 py-6">
-            <div className="text-5xl font-extrabold text-center text-flingo-700">{score ?? 0}</div>
+            <div className="text-5xl font-extrabold text-center text-flingo-900">{score ?? 0}</div>
             {scoreError && (
-              <p className="text-xs text-amber-600 mt-2 text-center flex items-center justify-center gap-1">
+              <p className="text-xs text-neon-orange mt-2 text-center flex items-center justify-center gap-1">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
@@ -420,15 +420,15 @@ export default function GameOver({
             )}
           </div>
           {user ? (
-            <div className="px-5 pb-5 border-t-2 border-flingo-100">
+            <div className="px-5 pb-5 border-t border-flingo-200/30">
               <div className="flex items-center justify-between mb-2 pt-4">
-                <div className="text-sm font-bold text-flingo-800 flex items-center gap-1">
+                <div className="text-sm font-bold text-flingo-900 flex items-center gap-1">
                   <span role="img" aria-hidden>
                     ✨
                   </span>
                   Level progress
                 </div>
-                <div className="text-xs text-flingo-500">{xpPending ? "Adding XP…" : ""}</div>
+                <div className="text-xs text-flingo-600">{xpPending ? "Adding XP…" : ""}</div>
               </div>
               {startExperience && endExperience ? (
                 <AnimatedExperienceBar
@@ -441,14 +441,14 @@ export default function GameOver({
                   awardedXp={xpAwarded ?? 0}
                 />
               ) : (
-                <p className="text-xs text-flingo-500">
+                <p className="text-xs text-flingo-600">
                   Play more runs to unlock experience tracking.
                 </p>
               )}
-              {xpError && <p className="text-xs text-red-500 mt-2">{xpError}</p>}
+              {xpError && <p className="text-xs text-neon-pink mt-2">{xpError}</p>}
             </div>
           ) : (
-            <div className="px-5 pb-4 border-t-2 border-flingo-100 text-xs text-flingo-500 pt-4">
+            <div className="px-5 pb-4 border-t border-flingo-200/30 text-xs text-flingo-600 pt-4">
               Sign in to earn experience, level up, and unlock a shiny progress bar!
             </div>
           )}

@@ -334,7 +334,7 @@ export default function PlayGame() {
   }, [meta]);
 
   return (
-    <div className="min-h-screen bg-white text-flingo-800 flex flex-col">
+    <div className="min-h-screen bg-surface-dark text-flingo-900 flex flex-col">
       <Seo
         title={
           meta
@@ -373,7 +373,7 @@ export default function PlayGame() {
         }}
       />
 
-      {error && <div className="p-4 text-red-400">{error}</div>}
+      {error && <div className="p-4 text-neon-pink">{error}</div>}
       {meta && !error && (
         <div className="landing-panel" data-state={landingState} aria-hidden={playing}>
           <GameLanding meta={meta} onPlay={() => setPlaying(true)} />
@@ -383,7 +383,7 @@ export default function PlayGame() {
       {playing && (
         <div
           aria-hidden
-          className="fixed inset-x-0 bottom-0 z-0 pointer-events-none bg-gradient-to-br from-fuchsia-700 via-flingo-700 to-fuchsia-700"
+          className="fixed inset-x-0 bottom-0 z-0 pointer-events-none bg-gradient-to-br from-surface-dark via-flingo-100 to-surface-dark"
           style={{ top: "var(--header-h)" }}
         />
       )}
@@ -396,40 +396,40 @@ export default function PlayGame() {
         <div
           ref={containerRef}
           id="game-container"
-          className="relative w-full h-full overflow-hidden bg-black"
+          className="relative w-full h-full overflow-hidden bg-surface-dark"
         />
         {mounting && playing && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-[1000]">
+          <div className="absolute inset-0 flex items-center justify-center bg-surface-dark/90 z-[1000]">
             <div className="flex flex-col items-center">
               <img
-                src="/assets/rocket-spinner.svg"
+                src="/assets/shared/flingo-logo.svg"
                 alt="Loading"
-                className="w-32 h-32 animate-pulse"
+                className="w-24 h-24 animate-glow-pulse"
               />
-              <div className="mt-4 text-white font-semibold tracking-[0.35em] text-sm">LOADING</div>
+              <div className="mt-4 text-neon-lime font-bold tracking-[0.35em] text-sm">LOADING</div>
             </div>
           </div>
         )}
       </div>
 
       {meta && (
-        <article className="prose prose-sm max-w-2xl mx-auto p-6 mt-8 mb-24 bg-flingo-50 border-2 border-flingo-100">
-          <h1 className="text-2xl font-bold text-flingo-800 mb-4">{meta.title}</h1>
+        <article className="prose prose-sm max-w-2xl mx-auto p-6 mt-8 mb-24 bg-surface-card border border-flingo-200/30 rounded-2xl">
+          <h1 className="text-2xl font-bold text-flingo-900 mb-4">{meta.title}</h1>
 
           <section className="mb-6">
-            <h2 className="text-lg font-bold text-flingo-700 mb-2">About this Game</h2>
-            <p className="text-flingo-600">{meta.description}</p>
+            <h2 className="text-lg font-bold text-neon-lime mb-2">About this Game</h2>
+            <p className="text-flingo-700">{meta.description}</p>
           </section>
 
           <section>
-            <h2 className="text-lg font-bold text-flingo-700 mb-2">How to Play</h2>
-            <ul className="list-disc pl-5 text-flingo-600 space-y-2">
+            <h2 className="text-lg font-bold text-neon-blue mb-2">How to Play</h2>
+            <ul className="list-disc pl-5 text-flingo-700 space-y-2">
               <li>
-                <span className="font-medium">Objective:</span>{" "}
+                <span className="font-medium text-flingo-900">Objective:</span>{" "}
                 {meta.objective || "Score as high as possible."}
               </li>
               <li>
-                <span className="font-medium">Controls:</span>{" "}
+                <span className="font-medium text-flingo-900">Controls:</span>{" "}
                 {meta.controls || "Tap or click to interact."}
               </li>
             </ul>

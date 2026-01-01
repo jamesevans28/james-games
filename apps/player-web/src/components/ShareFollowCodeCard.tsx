@@ -63,20 +63,20 @@ export default function ShareFollowCodeCard({
   };
 
   return (
-    <section className="border-2 border-flingo-100 rounded-2xl bg-white shadow-card">
+    <section className="border border-flingo-200/30 rounded-2xl bg-surface-card shadow-card">
       <button
         type="button"
         className="w-full flex items-center justify-between px-5 py-4 text-left"
         onClick={() => setExpanded((prev) => !prev)}
         aria-expanded={expanded}
       >
-        <span className="text-lg font-bold text-flingo-800">{heading}</span>
+        <span className="text-lg font-bold text-flingo-900">{heading}</span>
         <svg
           width="16"
           height="16"
           viewBox="0 0 24 24"
           fill="none"
-          className={`transition-transform ${expanded ? "rotate-180" : ""}`}
+          className={`transition-transform text-flingo-700 ${expanded ? "rotate-180" : ""}`}
           aria-hidden
         >
           <path
@@ -90,30 +90,22 @@ export default function ShareFollowCodeCard({
       </button>
       {expanded && (
         <div className="px-5 pb-5">
-          {description && <p className="text-sm text-flingo-600">{description}</p>}
+          {description && <p className="text-sm text-flingo-700">{description}</p>}
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <code className="text-xl font-mono font-bold px-4 py-2 rounded-xl bg-gradient-to-r from-flingo-600 to-flingo-700 text-white shadow-fun">
+            <code className="text-xl font-mono font-bold px-4 py-2 rounded-xl bg-neon-lime text-surface-dark shadow-neon-lime">
               {userId}
             </code>
-            <button
-              type="button"
-              className="px-4 py-2 text-sm font-semibold border-2 border-flingo-200 rounded-full text-flingo-700 hover:bg-flingo-50 transition-colors"
-              onClick={handleCopyCode}
-            >
+            <button type="button" className="btn btn-outline text-sm" onClick={handleCopyCode}>
               Copy code
             </button>
-            <button
-              type="button"
-              className="px-4 py-2 text-sm font-semibold border-2 border-flingo-200 rounded-full text-flingo-700 hover:bg-flingo-50 transition-colors"
-              onClick={handleCopyLink}
-            >
+            <button type="button" className="btn btn-outline text-sm" onClick={handleCopyLink}>
               Copy link
             </button>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border-2 border-flingo-500 text-flingo-600 hover:bg-flingo-50 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border border-neon-blue/50 text-neon-blue hover:bg-neon-blue/10 transition-colors"
               onClick={handleShare}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -142,15 +134,15 @@ export default function ShareFollowCodeCard({
               Share link
             </button>
           </div>
-          <p className="mt-3 text-sm text-flingo-600">
+          <p className="mt-3 text-sm text-flingo-700">
             Anyone can open{" "}
-            <span className="px-1.5 py-0.5 font-mono text-xs text-flingo-800 bg-flingo-50 rounded break-all">
+            <span className="px-1.5 py-0.5 font-mono text-xs text-neon-lime bg-neon-lime/10 rounded break-all">
               {profileLink}
             </span>{" "}
             to follow you instantly.
           </p>
           {children && <div className="mt-4">{children}</div>}
-          {hint && <p className="mt-2 text-xs text-candy-mint font-semibold">{hint}</p>}
+          {hint && <p className="mt-2 text-xs text-neon-lime font-semibold">{hint}</p>}
         </div>
       )}
     </section>

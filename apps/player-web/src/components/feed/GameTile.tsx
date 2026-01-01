@@ -151,7 +151,7 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
   const dateLabel = formatDateLabel();
 
   return (
-    <article className="bg-white border-b border-flingo-100">
+    <article className="bg-surface-card border-b border-flingo-200/30 group/tile">
       {/* Header: Title + Engaging Prompt */}
       <div className="px-4 pt-4 pb-2">
         <div className="flex items-start justify-between gap-2">
@@ -159,7 +159,7 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-flingo-900 truncate">{game.title}</h2>
               {badge && (
-                <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded-full bg-gradient-to-r from-flingo-500 to-flingo-700 text-white">
+                <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded-full bg-gradient-to-r from-neon-lime to-neon-blue text-surface-dark">
                   {badge}
                 </span>
               )}
@@ -176,7 +176,7 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
       <button
         type="button"
         onClick={handlePlayClick}
-        className="w-full aspect-square bg-flingo-50 relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-flingo-400 group"
+        className="w-full aspect-square bg-flingo-100 relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-neon-lime group"
       >
         <img
           src={game.thumbnail || "/assets/shared/flingo-logo.svg"}
@@ -185,14 +185,14 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
           loading="lazy"
         />
         {/* Play overlay on hover/tap */}
-        <div className="absolute inset-0 bg-flingo-900/0 group-hover:bg-flingo-900/20 transition-colors flex items-center justify-center">
-          <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+        <div className="absolute inset-0 bg-surface-dark/0 group-hover:bg-surface-dark/40 transition-colors flex items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-neon-lime flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-neon-lime transform group-hover:scale-100 scale-75">
             <svg
               width="28"
               height="28"
               viewBox="0 0 24 24"
               fill="currentColor"
-              className="text-flingo-600 ml-1"
+              className="text-surface-dark ml-1"
             >
               <path d="M8 5v14l11-7z" />
             </svg>
@@ -209,8 +209,8 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
               width="16"
               height="16"
               viewBox="0 0 24 24"
-              fill={rating?.ratingCount ? "#FBBF24" : "none"}
-              stroke="#FBBF24"
+              fill={rating?.ratingCount ? "#ffeb3b" : "none"}
+              stroke="#ffeb3b"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -218,17 +218,17 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
             >
               <path d="M12 2.5l3.09 6.26 6.91.99-5 4.87 1.18 6.88L12 17.77 5.82 21.5l1.18-6.88-5-4.87 6.91-.99L12 2.5z" />
             </svg>
-            <span className="font-bold text-sm text-flingo-800">
+            <span className="font-bold text-sm text-flingo-900">
               {rating?.avgRating ? rating.avgRating.toFixed(1) : "—"}
             </span>
-            <span className="text-xs text-flingo-400">({rating?.ratingCount ?? 0})</span>
+            <span className="text-xs text-flingo-500">({rating?.ratingCount ?? 0})</span>
           </div>
 
           {/* Date divider */}
           {dateLabel && (
             <>
-              <span className="text-flingo-300">•</span>
-              <span className="text-xs text-flingo-400">{dateLabel}</span>
+              <span className="text-flingo-400">•</span>
+              <span className="text-xs text-flingo-500">{dateLabel}</span>
             </>
           )}
         </div>
@@ -237,7 +237,7 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
         <button
           type="button"
           onClick={handleShare}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-flingo-500 hover:bg-flingo-100 hover:text-flingo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-flingo-400"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-flingo-600 hover:bg-flingo-100 hover:text-neon-lime transition-colors focus:outline-none focus:ring-2 focus:ring-neon-lime/50"
           aria-label={`Share ${game.title}`}
         >
           <svg
@@ -267,14 +267,16 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
           {!descriptionExpanded ? (
             <p className="text-sm text-flingo-700 line-clamp-1">
               {game.description || "Tap to play this game!"}{" "}
-              <span className="text-flingo-500 group-hover:text-flingo-600">more</span>
+              <span className="text-neon-lime group-hover:text-neon-blue transition-colors">
+                more
+              </span>
             </p>
           ) : (
             <div className="space-y-3">
               {game.description && <p className="text-sm text-flingo-700">{game.description}</p>}
               {game.objective && (
                 <div>
-                  <p className="text-xs font-semibold text-flingo-800 uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-neon-lime uppercase tracking-wide">
                     Objective
                   </p>
                   <p className="text-sm text-flingo-600 mt-0.5">{game.objective}</p>
@@ -282,13 +284,15 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
               )}
               {game.controls && (
                 <div>
-                  <p className="text-xs font-semibold text-flingo-800 uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-neon-blue uppercase tracking-wide">
                     How to Play
                   </p>
                   <p className="text-sm text-flingo-600 mt-0.5">{game.controls}</p>
                 </div>
               )}
-              <p className="text-xs text-flingo-400 group-hover:text-flingo-500">tap to collapse</p>
+              <p className="text-xs text-flingo-500 group-hover:text-neon-pink transition-colors">
+                tap to collapse
+              </p>
             </div>
           )}
         </button>
