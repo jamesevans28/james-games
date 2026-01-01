@@ -16,6 +16,7 @@ import InstallPWA from "./components/InstallPWA";
 import IOSInstallHint from "./components/IOSInstallHint";
 import SplashScreen from "./components/SplashScreen";
 import AccountUpgradeBanner from "./components/AccountUpgradeBanner";
+import StreakCelebration from "./components/StreakCelebration";
 import { AuthProvider } from "./context/FirebaseAuthProvider";
 import PageTransition from "./components/PageTransition";
 
@@ -80,6 +81,7 @@ export default function App() {
         <InstallPWA />
         <IOSInstallHint />
         <AccountUpgradeBanner />
+        <StreakCelebration />
         <AppRoutes />
       </BrowserRouter>
     </AuthProvider>

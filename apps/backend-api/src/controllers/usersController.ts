@@ -35,6 +35,10 @@ export async function me(req: Request, res: Response) {
         experience: profile.experience,
         betaTester: profile.betaTester,
         admin: profile.admin,
+        // Streak data
+        currentStreak: profile.currentStreak,
+        longestStreak: profile.longestStreak,
+        lastLoginDate: profile.lastLoginDate,
       },
     });
   } catch (e: any) {
@@ -111,7 +115,11 @@ export async function getPublicProfile(req: Request, res: Response) {
       viewerFollows = await isFollowing(viewerId, targetUserId);
     }
     res.json({
-      profile,
+      profile: {
+        ...profile,
+        // Include streak in public profile
+        currentStreak: profile.currentStreak,
+      },
       followingCount,
       followersCount,
       following: followingEdges.slice(0, 25).map((edge) => ({

@@ -133,6 +133,10 @@ export async function getProfile(userId: string) {
     createdAt: profile?.createdAt ?? null,
     updatedAt: profile?.updatedAt ?? null,
     experience: profile ? buildSummary(profile) : null,
+    // Streak data
+    currentStreak: profile?.currentStreak ?? 0,
+    longestStreak: profile?.longestStreak ?? 0,
+    lastLoginDate: profile?.lastLoginDate ?? null,
   };
 }
 

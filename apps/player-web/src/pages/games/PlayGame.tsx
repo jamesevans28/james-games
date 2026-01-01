@@ -7,7 +7,7 @@ import { trackGameStart } from "../../utils/analytics";
 import Seo from "../../components/Seo";
 import GameLanding from "./GameLanding";
 import GameOver from "./GameOver";
-import { onGameOver } from "../../utils/gameEvents";
+import { onGameOver, dispatchGameStart } from "../../utils/gameEvents";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import RatingPromptModal from "../../components/RatingPromptModal";
 import { fetchRatingSummary, submitRating, RatingSummary } from "../../lib/api";
@@ -47,6 +47,7 @@ export default function PlayGame() {
   const [mounting, setMounting] = useState(false);
   const [showScore, setShowScore] = useState(false);
   const [lastScore, setLastScore] = useState<number | null>(null);
+  const [lastDurationMs, setLastDurationMs] = useState<number | undefined>(undefined);
   const [pendingRatingTrigger, setPendingRatingTrigger] = useState(false);
   const [ratingPromptOpen, setRatingPromptOpen] = useState(false);
   const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(() =>
@@ -132,6 +133,8 @@ export default function PlayGame() {
       }
       const { destroy } = mod.mount(containerRef.current);
       destroyRef.current = destroy;
+      // Dispatch game start event to begin timing
+      dispatchGameStart(meta.id);
       trackGameStart(meta.id, meta.title);
       // Record this game as recently played for feed algorithm
       recordGamePlayed(meta.id);
@@ -268,6 +271,7 @@ export default function PlayGame() {
       if (!meta || d.gameId !== meta.id) return;
       // Keep the game mounted so it's visible in the background
       setLastScore(d.score);
+      setLastDurationMs(d.durationMs);
       setShowScore(true);
       if (user) {
         const count = incrementPlayCounter(meta.id);
@@ -442,6 +446,7 @@ export default function PlayGame() {
         score={lastScore}
         gameId={meta?.id}
         xpMultiplier={meta?.xpMultiplier}
+        durationMs={lastDurationMs}
         onClose={handleCloseScore}
         onPlayAgain={handlePlayAgain}
         onViewLeaderboard={meta ? () => navigate(`/leaderboard/${meta.id}`) : undefined}

@@ -28,6 +28,8 @@ export interface RawScoreItem {
   avatarSnapshot?: number;
   legacyName?: string;
   version?: number;
+  /** Duration of the game session in milliseconds */
+  durationMs?: number;
 }
 
 export interface PublicScoreRow {
@@ -46,6 +48,7 @@ export interface PublicScoreRow {
 export async function putScoreWithUser(args: {
   gameId: string;
   score: number;
+  durationMs?: number;
   userId?: string;
   screenName?: string | null;
   avatar?: number | null;
@@ -58,6 +61,9 @@ export async function putScoreWithUser(args: {
     createdAt: now,
     version: 2,
   };
+  if (args.durationMs !== undefined && args.durationMs > 0) {
+    item.durationMs = args.durationMs;
+  }
   if (args.userId) {
     item.userId = args.userId;
     if (args.screenName) item.screenNameSnapshot = args.screenName;

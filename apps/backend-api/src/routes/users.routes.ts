@@ -6,6 +6,7 @@ import {
   updateSettings,
   getPublicProfile,
 } from "../controllers/usersController.js";
+import { recordStreakCheckin, getStreak } from "../controllers/streakController.js";
 import { requireAuth } from "../middleware/authGuards.js";
 
 const router = Router();
@@ -16,6 +17,10 @@ router.get("/me", requireAuth, me);
 router.post("/screen-name", requireAuth, changeScreenName);
 router.post("/preferences", requireAuth, updatePreferences);
 router.patch("/settings", requireAuth, updateSettings); // unified settings endpoint (screenName for now)
+
+// Streak tracking
+router.get("/streak", requireAuth, getStreak);
+router.post("/streak/checkin", requireAuth, recordStreakCheckin);
 
 // Public profile summary
 router.get("/:userId", getPublicProfile);

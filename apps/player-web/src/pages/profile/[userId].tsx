@@ -22,6 +22,7 @@ interface ProfileResponse {
     screenName?: string | null;
     avatar?: number | null;
     experience?: ExperienceSummary | null;
+    currentStreak?: number;
   };
   followingCount: number;
   followersCount: number;
@@ -253,10 +254,17 @@ export default function ProfilePage() {
           to={data.isSelf ? "/followers?view=following" : undefined}
         />
         <StatCard label="Recent games" value={data.recentGames.length} />
-        <StatCard
-          label="Status"
-          value={data.isSelf ? "This is you" : data.isFollowing ? "Following" : "Not following"}
-        />
+        {(data.profile.currentStreak ?? 0) > 0 ? (
+          <StatCard
+            label="Day Streak"
+            value={<span className="flex items-center gap-1">🔥 {data.profile.currentStreak}</span>}
+          />
+        ) : (
+          <StatCard
+            label="Status"
+            value={data.isSelf ? "This is you" : data.isFollowing ? "Following" : "Not following"}
+          />
+        )}
       </div>
 
       <section>
@@ -315,7 +323,7 @@ export default function ProfilePage() {
   );
 }
 
-function StatCard({ label, value, to }: { label: string; value: number | string; to?: string }) {
+function StatCard({ label, value, to }: { label: string; value: React.ReactNode; to?: string }) {
   if (to) {
     return (
       <Link

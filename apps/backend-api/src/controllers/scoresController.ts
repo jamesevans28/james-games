@@ -8,13 +8,14 @@ import { getFollowingIds } from "../services/followersService.js";
 
 export async function createScore(req: Request, res: Response) {
   try {
-    const { gameId, score } = (req.body || {}) as any;
+    const { gameId, score, durationMs } = (req.body || {}) as any;
     const { gameId: g, score: s } = validateScoreInput(gameId, score);
     // @ts-ignore
     const userCtx = req.user || {};
     const item = await putScoreWithUser({
       gameId: g,
       score: s,
+      durationMs: typeof durationMs === "number" && durationMs > 0 ? durationMs : undefined,
       userId: userCtx.userId,
       screenName: userCtx.screenName,
       avatar: userCtx.avatar,

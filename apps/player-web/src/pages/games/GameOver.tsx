@@ -8,6 +8,8 @@ type Props = {
   score: number | null;
   gameId?: string | null;
   xpMultiplier?: number;
+  /** Duration of the game session in milliseconds */
+  durationMs?: number;
   onClose: () => void;
   onPlayAgain?: () => void;
   onViewLeaderboard?: () => void;
@@ -223,6 +225,7 @@ export default function GameOver({
   score,
   gameId,
   xpMultiplier,
+  durationMs,
   onClose,
   onPlayAgain,
   onViewLeaderboard,
@@ -273,9 +276,9 @@ export default function GameOver({
 
     postedRef.current = sig;
     setScoreError(null);
-    void postHighScore({ gameId, score: s })
+    void postHighScore({ gameId, score: s, durationMs })
       .then((res) => {
-        console.log("GameOver: posted score", { gameId, score: s });
+        console.log("GameOver: posted score", { gameId, score: s, durationMs });
         return res;
       })
       .catch((e) => {
@@ -288,7 +291,7 @@ export default function GameOver({
           setScoreError("Could not save score. Please try again.");
         }
       });
-  }, [open, score, gameId, user, isOnline]);
+  }, [open, score, gameId, user, isOnline, durationMs]);
 
   useEffect(() => {
     if (!open) {

@@ -114,7 +114,7 @@ function emptySummary(gameId: string): RatingSummary {
   return { gameId, avgRating: 0, ratingCount: 0 };
 }
 
-export async function postHighScore(args: { gameId: string; score: number }) {
+export async function postHighScore(args: { gameId: string; score: number; durationMs?: number }) {
   if (!API_BASE) return;
   const res = await fetchWithAuth(`${API_BASE}/scores`, {
     method: "POST",
@@ -316,4 +316,49 @@ export async function fetchFollowNotifications(): Promise<{ notifications: Follo
   if (res.status === 401) return { notifications: [] };
   if (!res.ok) throw new Error(`Failed to load notifications: ${res.status}`);
   return (await res.json()) as { notifications: FollowNotification[] };
+}
+
+// ============================================================================
+// Streak API
+// ============================================================================
+
+export interface StreakCheckinResponse {
+  currentStreak: number;
+  longestStreak: number;
+  lastLoginDate: string | null;
+  extended: boolean;
+  isNewStreak: boolean;
+}
+
+export interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  lastLoginDate: string | null;
+}
+
+/**
+ * Check in for daily streak. Call this once per day when the app loads.
+ * @param todayDate - Today's date in YYYY-MM-DD format (user's local timezone)
+ */
+export async function checkinStreak(todayDate: string): Promise<StreakCheckinResponse | null> {
+  if (!API_BASE) return null;
+  const res = await fetchWithAuth(`${API_BASE}/users/streak/checkin`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ todayDate }),
+  });
+  if (res.status === 401) return null;
+  if (!res.ok) throw new Error(`Failed to checkin streak: ${res.status}`);
+  return (await res.json()) as StreakCheckinResponse;
+}
+
+/**
+ * Get current streak data.
+ */
+export async function fetchStreakData(): Promise<StreakData | null> {
+  if (!API_BASE) return null;
+  const res = await fetchWithAuth(`${API_BASE}/users/streak`);
+  if (res.status === 401) return null;
+  if (!res.ok) throw new Error(`Failed to fetch streak: ${res.status}`);
+  return (await res.json()) as StreakData;
 }
