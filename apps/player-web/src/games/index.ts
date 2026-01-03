@@ -256,7 +256,7 @@ export const games: GameMeta[] = [
     description: "Draw lines to capture territory while avoiding the bouncing enemy ball.",
     objective: "Capture 75% of the screen by drawing enclosed areas without getting hit.",
     controls: "Use the on-screen directional pad to move your sparkly ball.",
-    thumbnail: "/assets/box-cutter/thumbnail.svg",
+    thumbnail: "/assets/box-cutter/boxcutter.jpg",
     xpMultiplier: 0.03,
     createdAt: "2025-12-23T00:00:00.000Z",
     updatedAt: "2025-12-23T00:00:00.000Z",
@@ -264,6 +264,6 @@ export const games: GameMeta[] = [
       const mod = await import("./box-cutter/index");
       return { mount: mod.mount };
     },
-    betaOnly: true,
+    betaOnly: false,
   },
 ];

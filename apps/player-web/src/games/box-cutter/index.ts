@@ -1,8 +1,12 @@
 import Phaser from "phaser";
 import { MainScene } from "./scenes/MainScene";
 
+// Optimized for most common mobile screens (9:16 aspect ratio)
+// Scales up to tablet size, then caps at tablet dimensions
 const GAME_WIDTH = 540;
 const GAME_HEIGHT = 960;
+const MAX_WIDTH = 768; // Tablet width limit
+const MAX_HEIGHT = 1366; // Tablet height limit
 
 export interface GameInstance {
   destroy: () => void;
@@ -16,10 +20,16 @@ export function mount(container: HTMLElement): GameInstance {
     parent: container,
     transparent: true,
     scale: {
-      mode: Phaser.Scale.FIT,
+      mode: Phaser.Scale.RESIZE,
       autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: GAME_WIDTH,
-      height: GAME_HEIGHT,
+      min: {
+        width: 320,
+        height: 568,
+      },
+      max: {
+        width: MAX_WIDTH,
+        height: MAX_HEIGHT,
+      },
     },
     scene: [MainScene],
     backgroundColor: "#000000",

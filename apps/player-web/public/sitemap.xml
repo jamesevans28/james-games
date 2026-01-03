@@ -3,13 +3,13 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://flingo.fun/</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://flingo.fun/games-list</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -98,86 +98,98 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://flingo.fun/games/box-cutter</loc>
+    <lastmod>2025-12-23T00:00:00.000Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://flingo.fun/leaderboard/word-stack</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://flingo.fun/leaderboard/reflex-ring</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://flingo.fun/leaderboard/snapadile</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://flingo.fun/leaderboard/car-crash</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://flingo.fun/leaderboard/fill-the-cup</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://flingo.fun/leaderboard/flash-bash</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://flingo.fun/leaderboard/ho-ho-home-delivery</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://flingo.fun/leaderboard/ready-steady-shoot</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://flingo.fun/leaderboard/paddle-pop</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://flingo.fun/leaderboard/word-rush</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://flingo.fun/leaderboard/serpento</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://flingo.fun/leaderboard/blocker</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://flingo.fun/leaderboard/hoop-city</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://flingo.fun/leaderboard/cosmic-clash</loc>
-    <lastmod>2025-12-31T22:50:40.960Z</lastmod>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://flingo.fun/leaderboard/box-cutter</loc>
+    <lastmod>2026-01-03T11:00:12.194Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>

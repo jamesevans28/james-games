@@ -17,7 +17,7 @@ import {
 // import NameDialog from "../../components/NameDialog";
 // useSession removed — currently not needed on the home page
 
-const FEATURED_GAME_ID = "hoop-city";
+const FEATURED_GAME_ID = "box-cutter";
 
 export default function GameHub() {
   const navigate = useNavigate();

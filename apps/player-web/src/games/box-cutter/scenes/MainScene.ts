@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { ASSETS, preloadAssets, createBackground } from "../assets";
 import { GameState, Direction, DEFAULT_CONFIG } from "../entities/GameState";
 import { createInitialState, advanceLevel } from "../useCases/stateManager";
 import {
@@ -24,8 +25,8 @@ const PLAY_AREA_HEIGHT = GAME_HEIGHT - UI_HEIGHT - DPAD_HEIGHT;
 
 export class MainScene extends Phaser.Scene {
   private state!: GameState;
-  private playerSprite!: Phaser.GameObjects.Arc;
-  private enemySprite!: Phaser.GameObjects.Arc;
+  private playerSprite!: Phaser.GameObjects.Sprite;
+  private enemySprite!: Phaser.GameObjects.Sprite;
   private borderGraphics!: Phaser.GameObjects.Graphics;
   private pathGraphics!: Phaser.GameObjects.Graphics;
   private filledGraphics!: Phaser.GameObjects.Graphics;
@@ -55,19 +56,38 @@ export class MainScene extends Phaser.Scene {
 
   private dpad!: DPadInstance;
 
+  private gameWidth!: number;
+  private gameHeight!: number;
+
   constructor() {
     super({ key: "MainScene" });
   }
 
+  preload() {
+    preloadAssets(this);
+  }
+
   create() {
+    // Get actual game dimensions
+    this.gameWidth = this.scale.width;
+    this.gameHeight = this.scale.height;
+
+    createBackground(this, this.gameWidth, this.gameHeight);
     const bestScore = this.loadBestScore();
+
+    // Calculate responsive dimensions
+    const uiHeight = this.gameHeight * 0.104; // ~10% of screen
+    const dpadHeight = this.gameHeight * 0.208; // ~20% of screen
+    const playAreaHeight = this.gameHeight - uiHeight - dpadHeight;
+    const horizontalPadding = this.gameWidth * 0.093; // ~9% padding
+    const verticalPadding = playAreaHeight * 0.033; // ~3% padding
 
     this.state = createInitialState(
       {
-        x: 50,
-        y: UI_HEIGHT + 20,
-        width: GAME_WIDTH - 100,
-        height: PLAY_AREA_HEIGHT - 80,
+        x: horizontalPadding,
+        y: uiHeight + verticalPadding,
+        width: this.gameWidth - horizontalPadding * 2,
+        height: playAreaHeight - verticalPadding * 2,
       },
       DEFAULT_CONFIG
     );
@@ -99,6 +119,7 @@ export class MainScene extends Phaser.Scene {
     this.setupUI();
     this.setupDPad();
     this.setupParticles();
+    this.addBackgroundPixels();
 
     this.showLevelBanner(this.state.level);
 
@@ -114,85 +135,161 @@ export class MainScene extends Phaser.Scene {
   }
 
   private setupSprites() {
-    this.enemySprite = this.add.circle(
+    this.enemySprite = this.add.sprite(
       this.state.enemyBall.x,
       this.state.enemyBall.y,
-      this.state.enemyBall.radius,
-      0xff0000
+      ASSETS.ENEMY
     );
+    this.enemySprite.setScale(0.8);
 
-    this.playerSprite = this.add.circle(
+    // Add pulsing glow to enemy
+    this.tweens.add({
+      targets: this.enemySprite,
+      scaleX: 0.9,
+      scaleY: 0.9,
+      duration: 400,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
+    this.playerSprite = this.add.sprite(
       this.state.playerBall.x,
       this.state.playerBall.y,
-      this.state.playerBall.radius,
-      0x00ffff
+      ASSETS.PLAYER
     );
+    this.playerSprite.setScale(0.7);
+
+    // Add glow/pulse effect to player
+    this.tweens.add({
+      targets: this.playerSprite,
+      scaleX: 0.75,
+      scaleY: 0.75,
+      duration: 600,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
   }
 
   private setupParticles() {
-    this.particles = this.add.particles(0, 0, "particle", {
-      speed: { min: 20, max: 50 },
-      scale: { start: 0.3, end: 0 },
-      lifespan: 300,
+    this.particles = this.add.particles(0, 0, ASSETS.PARTICLE_CYAN, {
+      speed: { min: 30, max: 70 },
+      scale: { start: 0.8, end: 0 },
+      lifespan: 500,
       blendMode: "ADD",
-      tint: 0x00ffff,
-      frequency: 30,
+      frequency: 15,
     });
     this.particles.startFollow(this.playerSprite);
   }
 
   private setupUI() {
-    this.levelText = this.add.text(20, 10, "Level 1", {
-      fontSize: "18px",
-      color: "#ffffff",
-      fontStyle: "bold",
-    });
+    // Responsive font sizes based on screen dimensions
+    const baseFontSize = Math.min(this.gameWidth, this.gameHeight) * 0.045;
+    const scoreFontSize = baseFontSize * 1.2;
+    const labelFontSize = baseFontSize * 0.8;
+    const gameOverFontSize = baseFontSize * 2.3;
+    const levelCompleteFontSize = baseFontSize * 1.8;
 
-    this.scoreText = this.add.text(20, 20, "Score: 0", {
-      fontSize: "24px",
-      color: "#ffffff",
-      fontStyle: "bold",
-    });
+    const padding = this.gameWidth * 0.037; // ~4% padding
 
-    // Shift score down so the level label sits above it.
-    this.scoreText.setPosition(20, 32);
+    // Golden title style matching the reference image
+    const goldStyle = {
+      fontFamily: "Impact, 'Arial Black', sans-serif",
+      fontSize: `${scoreFontSize}px`,
+      color: "#FFD700",
+      stroke: "#8B4513",
+      strokeThickness: Math.max(4, scoreFontSize * 0.25),
+      shadow: {
+        blur: 8,
+        color: "#FF8800",
+        fill: true,
+        offsetX: 0,
+        offsetY: 0,
+      },
+    };
 
-    this.bestScoreText = this.add.text(20, 62, "Best: 0", {
-      fontSize: "20px",
-      color: "#aaaaaa",
+    const cyanStyle = {
+      fontFamily: "Impact, 'Arial Black', sans-serif",
+      fontSize: `${baseFontSize}px`,
+      color: "#00FFFF",
+      stroke: "#003366",
+      strokeThickness: Math.max(3, baseFontSize * 0.2),
+      shadow: {
+        blur: 6,
+        color: "#0099FF",
+        fill: true,
+      },
+    };
+
+    const labelStyle = {
+      fontFamily: "Arial Black, sans-serif",
+      fontSize: `${labelFontSize}px`,
+      color: "#FFFFFF",
+      stroke: "#000033",
+      strokeThickness: Math.max(2, labelFontSize * 0.19),
+    };
+
+    const gameOverStyle = {
+      fontFamily: "Impact, 'Arial Black', sans-serif",
+      fontSize: `${gameOverFontSize}px`,
+      color: "#FF3333",
+      stroke: "#660000",
+      strokeThickness: Math.max(6, gameOverFontSize * 0.14),
+      align: "center",
+      shadow: {
+        blur: 12,
+        color: "#FF0000",
+        fill: true,
+      },
+    };
+
+    const levelCompleteStyle = {
+      fontFamily: "Impact, 'Arial Black', sans-serif",
+      fontSize: `${levelCompleteFontSize}px`,
+      color: "#00FF00",
+      stroke: "#003300",
+      strokeThickness: Math.max(6, levelCompleteFontSize * 0.18),
+      align: "center",
+      shadow: {
+        blur: 12,
+        color: "#00FF00",
+        fill: true,
+      },
+    };
+
+    this.levelText = this.add.text(padding, padding * 0.5, "Level 1", labelStyle);
+
+    this.scoreText = this.add.text(padding, padding * 1.6, "Score: 0", goldStyle);
+
+    this.bestScoreText = this.add.text(padding, padding * 3.1, "Best: 0", {
+      ...labelStyle,
+      color: "#AAAAAA",
     });
 
     this.coverageText = this.add
-      .text(GAME_WIDTH - 20, 32, "Coverage: 0%", {
-        fontSize: "20px",
-        color: "#ffffff",
-      })
+      .text(this.gameWidth - padding, padding * 1.6, "Coverage: 0%", cyanStyle)
       .setOrigin(1, 0);
 
     this.targetText = this.add
-      .text(GAME_WIDTH - 20, 62, "Target: 75%", {
-        fontSize: "20px",
-        color: "#ffff00",
+      .text(this.gameWidth - padding, padding * 3.1, "Target: 75%", {
+        ...labelStyle,
+        color: "#FFFF00",
       })
       .setOrigin(1, 0);
 
     this.gameOverText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "GAME OVER\nTap to Continue", {
-        fontSize: "48px",
-        color: "#ff0000",
-        align: "center",
-        fontStyle: "bold",
-      })
+      .text(this.gameWidth / 2, this.gameHeight / 2, "GAME OVER\nTap to Continue", gameOverStyle)
       .setOrigin(0.5)
       .setVisible(false);
 
     this.levelCompleteText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "LEVEL COMPLETE!\nTap to Continue", {
-        fontSize: "36px",
-        color: "#00ff00",
-        align: "center",
-        fontStyle: "bold",
-      })
+      .text(
+        this.gameWidth / 2,
+        this.gameHeight / 2,
+        "LEVEL COMPLETE!\nTap to Continue",
+        levelCompleteStyle
+      )
       .setOrigin(0.5)
       .setVisible(false);
   }
@@ -212,10 +309,10 @@ export class MainScene extends Phaser.Scene {
     };
 
     this.dpad = createDPad(this, {
-      centerX: GAME_WIDTH / 2,
-      bottomPadding: 20,
-      buttonSize: 60,
-      spacing: 80,
+      centerX: this.gameWidth / 2,
+      bottomPadding: this.gameHeight * 0.021,
+      buttonSize: Math.min(this.gameWidth, this.gameHeight) * 0.111,
+      spacing: Math.min(this.gameWidth, this.gameHeight) * 0.148,
       alpha: 0.8,
       onDirectionChange: handle,
       enabled: () => !this.state.gameOver && !this.state.levelComplete,
@@ -253,12 +350,37 @@ export class MainScene extends Phaser.Scene {
   private completeLevel() {
     this.state.levelComplete = true;
     this.levelCompleteText.setVisible(true);
+
+    // Pulsing animation for level complete text
+    this.tweens.add({
+      targets: this.levelCompleteText,
+      scale: { from: 0.8, to: 1.2 },
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
+    // Celebration particles
+    this.createCelebrationEffect();
+
     this.saveBestScore();
   }
 
   private endGame() {
     this.state.gameOver = true;
     this.gameOverText.setVisible(true);
+
+    // Shake animation for game over text
+    this.tweens.add({
+      targets: this.gameOverText,
+      y: this.gameOverText.y + 10,
+      duration: 100,
+      yoyo: true,
+      repeat: 3,
+      ease: "Quad.easeInOut",
+    });
+
     this.particles.stop();
     this.saveBestScore();
 
@@ -277,27 +399,56 @@ export class MainScene extends Phaser.Scene {
 
   private showLevelBanner(level: number) {
     this.levelBannerText?.destroy();
+    const bannerFontSize = Math.min(this.gameWidth, this.gameHeight) * 0.133;
     this.levelBannerText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, `Level ${level}`, {
-        fontSize: "56px",
-        color: "#ffffff",
+      .text(this.gameWidth / 2, this.gameHeight / 2, `LEVEL ${level}`, {
+        fontFamily: "Impact, 'Arial Black', sans-serif",
+        fontSize: `${bannerFontSize}px`,
+        color: "#FFD700",
         align: "center",
-        fontStyle: "bold",
+        stroke: "#8B4513",
+        strokeThickness: Math.max(8, bannerFontSize * 0.139),
+        shadow: {
+          blur: 15,
+          color: "#FF8800",
+          fill: true,
+        },
       })
       .setOrigin(0.5)
       .setDepth(50)
-      .setAlpha(1);
+      .setScale(0);
 
+    // Scale up, then fade out
     this.tweens.add({
       targets: this.levelBannerText,
-      alpha: 0,
-      duration: 900,
-      ease: "Quad.easeOut",
+      scale: { from: 0, to: 1.5 },
+      alpha: { from: 1, to: 0 },
+      duration: 1200,
+      ease: "Back.easeOut",
       onComplete: () => {
         this.levelBannerText?.destroy();
         this.levelBannerText = undefined;
       },
     });
+  }
+
+  private createCelebrationEffect() {
+    // Burst of particles from center
+    for (let i = 0; i < 20; i++) {
+      const angle = (i / 20) * Math.PI * 2;
+      const particle = this.add.sprite(this.gameWidth / 2, this.gameHeight / 2, ASSETS.SPARK);
+
+      this.tweens.add({
+        targets: particle,
+        x: this.gameWidth / 2 + Math.cos(angle) * 200,
+        y: this.gameHeight / 2 + Math.sin(angle) * 200,
+        alpha: { from: 1, to: 0 },
+        scale: { from: 1, to: 0 },
+        duration: 1000,
+        ease: "Quad.easeOut",
+        onComplete: () => particle.destroy(),
+      });
+    }
   }
 
   private handleLevelCompleteInput() {
@@ -337,6 +488,29 @@ export class MainScene extends Phaser.Scene {
   private updateSprites() {
     this.playerSprite.setPosition(this.state.playerBall.x, this.state.playerBall.y);
     this.enemySprite.setPosition(this.state.enemyBall.x, this.state.enemyBall.y);
+
+    // Rotate enemy
+    this.enemySprite.rotation += 0.1;
+
+    // Rotate player based on direction
+    if (this.currentDirection) {
+      let angle = 0;
+      switch (this.currentDirection) {
+        case "up":
+          angle = -Math.PI / 2;
+          break;
+        case "down":
+          angle = Math.PI / 2;
+          break;
+        case "left":
+          angle = Math.PI;
+          break;
+        case "right":
+          angle = 0;
+          break;
+      }
+      this.playerSprite.setRotation(angle);
+    }
   }
 
   private updatePlayer(deltaSeconds: number) {
@@ -578,6 +752,9 @@ export class MainScene extends Phaser.Scene {
     this.state.score += pointsForCapture(newlyPct, DEFAULT_CONFIG);
     this.state.coverage = total === 0 ? 0 : (afterFilledCount / total) * 100;
 
+    // Visual feedback for capture
+    this.createCaptureEffect(newlyPct);
+
     // Recompute border from merged filled mask (auto-joins touching shapes)
     this.borderMask = computeBorderMask(this.grid, this.filledMask);
 
@@ -595,6 +772,62 @@ export class MainScene extends Phaser.Scene {
 
     if (this.state.coverage >= this.state.targetCoverage) {
       this.completeLevel();
+    }
+  }
+
+  private createCaptureEffect(capturePercent: number) {
+    // Flash effect
+    const flash = this.add.graphics();
+    flash.fillStyle(0x00ffff, 0.3);
+    flash.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    flash.setDepth(40);
+
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      duration: 300,
+      onComplete: () => flash.destroy(),
+    });
+
+    // Floating score text
+    if (capturePercent > 5) {
+      const points = pointsForCapture(capturePercent, DEFAULT_CONFIG);
+      const bonusText = this.add
+        .text(this.state.playerBall.x, this.state.playerBall.y, `+${points}`, {
+          fontFamily: "Impact, sans-serif",
+          fontSize: "32px",
+          color: "#FFD700",
+          stroke: "#000000",
+          strokeThickness: 4,
+        })
+        .setOrigin(0.5);
+
+      this.tweens.add({
+        targets: bonusText,
+        y: bonusText.y - 60,
+        alpha: { from: 1, to: 0 },
+        duration: 1200,
+        ease: "Quad.easeOut",
+        onComplete: () => bonusText.destroy(),
+      });
+    }
+
+    // Pixel burst from captured area
+    for (let i = 0; i < 15; i++) {
+      const px = this.state.playBounds.x + Math.random() * this.state.playBounds.width;
+      const py = this.state.playBounds.y + Math.random() * this.state.playBounds.height;
+      const pixel = this.add.sprite(px, py, ASSETS.PIXEL);
+
+      this.tweens.add({
+        targets: pixel,
+        y: py - 100 - Math.random() * 50,
+        x: px + (Math.random() - 0.5) * 100,
+        alpha: { from: 1, to: 0 },
+        scale: { from: 1, to: 0 },
+        duration: 800 + Math.random() * 400,
+        ease: "Quad.easeOut",
+        onComplete: () => pixel.destroy(),
+      });
     }
   }
 
@@ -665,52 +898,11 @@ export class MainScene extends Phaser.Scene {
 
   private updateGraphics() {
     if (this.staticGraphicsDirty) {
-      // Borders from the actual filled mask (merged shapes)
       this.borderGraphics.clear();
-      this.borderGraphics.lineStyle(3, 0xffffff);
-
-      // Outer border
-      this.borderGraphics.strokeRect(
-        this.state.playBounds.x,
-        this.state.playBounds.y,
-        this.state.playBounds.width,
-        this.state.playBounds.height
-      );
-
-      // Inner borders: draw edges where a filled cell touches an empty cell.
-      const s = this.grid.cellSize;
-      for (let r = 0; r < this.grid.rows; r++) {
-        for (let c = 0; c < this.grid.cols; c++) {
-          const i = idx(this.grid, c, r);
-          if (this.filledMask[i] !== 1) continue;
-
-          const x = this.grid.originX + c * s;
-          const y = this.grid.originY + r * s;
-
-          // top edge
-          if (r === 0 || this.filledMask[idx(this.grid, c, r - 1)] === 0) {
-            this.borderGraphics.lineBetween(x, y, x + s, y);
-          }
-          // bottom edge
-          if (r === this.grid.rows - 1 || this.filledMask[idx(this.grid, c, r + 1)] === 0) {
-            this.borderGraphics.lineBetween(x, y + s, x + s, y + s);
-          }
-          // left edge
-          if (c === 0 || this.filledMask[idx(this.grid, c - 1, r)] === 0) {
-            this.borderGraphics.lineBetween(x, y, x, y + s);
-          }
-          // right edge
-          if (c === this.grid.cols - 1 || this.filledMask[idx(this.grid, c + 1, r)] === 0) {
-            this.borderGraphics.lineBetween(x + s, y, x + s, y + s);
-          }
-        }
-      }
-
-      // Filled areas exactly as captured (grid mask)
       this.filledGraphics.clear();
-      this.filledGraphics.fillStyle(0x0099ff, 0.45);
 
-      // Run-length draw for performance
+      // Filled areas
+      this.filledGraphics.fillStyle(0x001a33, 0.9);
       for (let r = 0; r < this.grid.rows; r++) {
         let runStart = -1;
         for (let c = 0; c < this.grid.cols; c++) {
@@ -729,22 +921,90 @@ export class MainScene extends Phaser.Scene {
         }
       }
 
+      // Add tech pattern overlay
+      this.filledGraphics.lineStyle(1, 0x0066aa, 0.4);
+      for (let r = 0; r < this.grid.rows; r++) {
+        for (let c = 0; c < this.grid.cols; c++) {
+          const i = idx(this.grid, c, r);
+          if (this.filledMask[i] !== 1) continue;
+
+          const x = this.grid.originX + c * this.grid.cellSize;
+          const y = this.grid.originY + r * this.grid.cellSize;
+          const s = this.grid.cellSize;
+
+          // Diagonal lines
+          if ((c + r) % 3 === 0) {
+            this.filledGraphics.lineBetween(x, y, x + s, y + s);
+          }
+          if ((c - r) % 4 === 0) {
+            this.filledGraphics.lineBetween(x + s, y, x, y + s);
+          }
+        }
+      }
+
+      // Borders helper
+      const drawBorders = (g: Phaser.GameObjects.Graphics) => {
+        g.strokeRect(
+          this.state.playBounds.x,
+          this.state.playBounds.y,
+          this.state.playBounds.width,
+          this.state.playBounds.height
+        );
+
+        const s = this.grid.cellSize;
+        for (let r = 0; r < this.grid.rows; r++) {
+          for (let c = 0; c < this.grid.cols; c++) {
+            const i = idx(this.grid, c, r);
+            if (this.filledMask[i] !== 1) continue;
+
+            const x = this.grid.originX + c * s;
+            const y = this.grid.originY + r * s;
+
+            if (r === 0 || this.filledMask[idx(this.grid, c, r - 1)] === 0) {
+              g.lineBetween(x, y, x + s, y);
+            }
+            if (r === this.grid.rows - 1 || this.filledMask[idx(this.grid, c, r + 1)] === 0) {
+              g.lineBetween(x, y + s, x + s, y + s);
+            }
+            if (c === 0 || this.filledMask[idx(this.grid, c - 1, r)] === 0) {
+              g.lineBetween(x, y, x, y + s);
+            }
+            if (c === this.grid.cols - 1 || this.filledMask[idx(this.grid, c + 1, r)] === 0) {
+              g.lineBetween(x + s, y, x + s, y + s);
+            }
+          }
+        }
+      };
+
+      // Draw glow
+      this.borderGraphics.lineStyle(6, 0x00ffff, 0.3);
+      drawBorders(this.borderGraphics);
+      // Draw core
+      this.borderGraphics.lineStyle(2, 0x00ffff, 1.0);
+      drawBorders(this.borderGraphics);
+
       this.staticGraphicsDirty = false;
     }
 
-    // Draw current wall path (live line)
+    // Path
     this.pathGraphics.clear();
     if (this.pathCells.length > 1) {
-      this.pathGraphics.lineStyle(3, 0x00ffff);
+      const drawPath = (g: Phaser.GameObjects.Graphics) => {
+        const first = cellToWorldCenter(this.grid, this.pathCells[0].c, this.pathCells[0].r);
+        // Round to nearest pixel for crisp rendering
+        g.beginPath();
+        g.moveTo(Math.round(first.x), Math.round(first.y));
+        for (let i = 1; i < this.pathCells.length; i++) {
+          const p = cellToWorldCenter(this.grid, this.pathCells[i].c, this.pathCells[i].r);
+          g.lineTo(Math.round(p.x), Math.round(p.y));
+        }
+        g.strokePath();
+      };
 
-      const first = cellToWorldCenter(this.grid, this.pathCells[0].c, this.pathCells[0].r);
-      this.pathGraphics.beginPath();
-      this.pathGraphics.moveTo(first.x, first.y);
-      for (let i = 1; i < this.pathCells.length; i++) {
-        const p = cellToWorldCenter(this.grid, this.pathCells[i].c, this.pathCells[i].r);
-        this.pathGraphics.lineTo(p.x, p.y);
-      }
-      this.pathGraphics.strokePath();
+      this.pathGraphics.lineStyle(6, 0xff00ff, 0.4);
+      drawPath(this.pathGraphics);
+      this.pathGraphics.lineStyle(2, 0xff00ff, 1.0);
+      drawPath(this.pathGraphics);
     }
   }
 
@@ -765,6 +1025,30 @@ export class MainScene extends Phaser.Scene {
     if (this.state.score > this.state.bestScore) {
       this.state.bestScore = this.state.score;
       localStorage.setItem("box-cutter-best-score", this.state.score.toString());
+    }
+  }
+
+  private addBackgroundPixels() {
+    // Add scattered animated pixels in the background
+    for (let i = 0; i < 30; i++) {
+      const x = Math.random() * this.gameWidth;
+      const y = Math.random() * this.gameHeight;
+      const pixel = this.add.sprite(x, y, ASSETS.PIXEL);
+      pixel.setAlpha(0.3 + Math.random() * 0.4);
+      pixel.setScale(0.5 + Math.random() * 0.5);
+      pixel.setDepth(-1);
+
+      // Slow float animation
+      this.tweens.add({
+        targets: pixel,
+        y: y + 20 * (Math.random() > 0.5 ? 1 : -1),
+        alpha: { from: pixel.alpha, to: 0.1 },
+        duration: 3000 + Math.random() * 2000,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+        delay: Math.random() * 2000,
+      });
     }
   }
 }

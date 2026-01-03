@@ -9,14 +9,14 @@
     "apps/admin-web"
   ],
   "scripts": {
-    "web:dev": "npm run dev --workspace apps/player-web",
+    "dev": "npm run dev --workspace apps/player-web",
     "web:build": "npm run build --workspace apps/player-web",
     "web:build:no-seo": "npm run build:no-seo --workspace apps/player-web",
     "web:asset:snapadile": "npm run generate-snapadile-assets --workspace apps/player-web",
     "web:asset:car-crash": "npm run generate-car-crash-assets --workspace apps/player-web",
     "web:generate-sitemap": "npm run generate-sitemap --workspace apps/player-web",
     "web:generate-seo": "npm run generate-seo --workspace apps/player-web",
-    "backend:dev": "npm run dev --workspace apps/backend-api",
+    "server": "npm run dev --workspace apps/backend-api",
     "backend:build": "npm run build --workspace apps/backend-api",
     "backend:start": "npm run start --workspace apps/backend-api",
     "admin:dev": "npm run dev --workspace apps/admin-web",

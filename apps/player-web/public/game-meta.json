@@ -21,7 +21,7 @@
     "id": "snapadile",
     "title": "Snapadile",
     "description": "Tap the crocs before they reach your raft. More and faster crocs over time.",
-    "thumbnail": "/assets/snapadile/thumbnail.svg",
+    "thumbnail": "/assets/snapadile/snapadile.jpg",
     "url": "https://flingo.fun/games/snapadile",
     "createdAt": "2025-09-16T00:00:00.000Z",
     "updatedAt": "2025-11-25T00:00:00.000Z"
@@ -75,7 +75,7 @@
     "id": "paddle-pop",
     "title": "Paddle Pop",
     "description": "Deflect the marble, collect power-ups, hit bonus discs, avoid falling obstacles.",
-    "thumbnail": "/assets/paddle-pop/thumbnail.svg",
+    "thumbnail": "/assets/paddle-pop/paddlepop.jpg",
     "url": "https://flingo.fun/games/paddle-pop",
     "createdAt": "2025-11-05T00:00:00.000Z",
     "updatedAt": "2025-12-29T00:00:00.000Z"
@@ -111,7 +111,7 @@
     "id": "hoop-city",
     "title": "Hoop City",
     "description": "Tap to keep the ball afloat while threading every vertical hoop as the city scrolls by.",
-    "thumbnail": "/assets/hoop-city/thumbnail.svg",
+    "thumbnail": "/assets/hoop-city/hoopcity.jpg",
     "url": "https://flingo.fun/games/hoop-city",
     "createdAt": "2025-11-28T00:00:00.000Z",
     "updatedAt": "2025-12-02T00:00:00.000Z"
@@ -124,5 +124,14 @@
     "url": "https://flingo.fun/games/cosmic-clash",
     "createdAt": "2025-11-21T00:00:00.000Z",
     "updatedAt": "2025-11-25T00:00:00.000Z"
+  },
+  {
+    "id": "box-cutter",
+    "title": "Box Cutter",
+    "description": "Draw lines to capture territory while avoiding the bouncing enemy ball.",
+    "thumbnail": "/assets/box-cutter/boxcutter.jpg",
+    "url": "https://flingo.fun/games/box-cutter",
+    "createdAt": "2025-12-23T00:00:00.000Z",
+    "updatedAt": "2025-12-23T00:00:00.000Z"
   }
 ]
