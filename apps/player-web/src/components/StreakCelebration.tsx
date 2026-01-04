@@ -2,59 +2,230 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { checkinStreak, type StreakCheckinResponse } from "../lib/api";
 import { useAuth } from "../context/FirebaseAuthProvider";
 
+// SVG Icons for different streak levels
+const StreakIcon = ({ streak }: { streak: number }) => {
+  if (streak >= 365) {
+    // Crown for legendary streaks
+    return (
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="mx-auto">
+        <path
+          d="M40 15L45 30L60 25L50 40L65 45L40 50L15 45L30 40L20 25L35 30L40 15Z"
+          fill="url(#crown-gradient)"
+          stroke="#FFD700"
+          strokeWidth="2"
+        />
+        <rect
+          x="20"
+          y="50"
+          width="40"
+          height="10"
+          rx="2"
+          fill="url(#crown-gradient)"
+          stroke="#FFD700"
+          strokeWidth="2"
+        />
+        <defs>
+          <linearGradient id="crown-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FFD700" />
+            <stop offset="100%" stopColor="#FFA500" />
+          </linearGradient>
+        </defs>
+      </svg>
+    );
+  }
+  if (streak >= 100) {
+    // Trophy
+    return (
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="mx-auto">
+        <path
+          d="M25 20H55V35C55 43.284 48.284 50 40 50C31.716 50 25 43.284 25 35V20Z"
+          fill="url(#trophy-gradient)"
+          stroke="#FFD700"
+          strokeWidth="2"
+        />
+        <path d="M20 20H25V30C20 30 15 25 15 20H20Z" fill="#FFD700" />
+        <path d="M55 20H60C65 20 65 30 60 30H55V20Z" fill="#FFD700" />
+        <rect x="35" y="50" width="10" height="15" fill="#FFD700" />
+        <rect x="25" y="65" width="30" height="5" rx="2" fill="url(#trophy-gradient)" />
+        <defs>
+          <linearGradient id="trophy-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#FFD700" />
+            <stop offset="100%" stopColor="#FFA500" />
+          </linearGradient>
+        </defs>
+      </svg>
+    );
+  }
+  if (streak >= 30) {
+    // Flame
+    return (
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="mx-auto">
+        <path
+          d="M40 10C40 10 50 25 50 35C50 43.284 45.523 50 40 50C34.477 50 30 43.284 30 35C30 25 40 10 40 10Z"
+          fill="url(#flame-gradient)"
+        />
+        <path
+          d="M40 25C40 25 45 32 45 37C45 41.418 42.761 45 40 45C37.239 45 35 41.418 35 37C35 32 40 25 40 25Z"
+          fill="#FFE44D"
+        />
+        <defs>
+          <linearGradient id="flame-gradient" x1="40" y1="10" x2="40" y2="50">
+            <stop offset="0%" stopColor="#FF6B35" />
+            <stop offset="50%" stopColor="#FF8E3C" />
+            <stop offset="100%" stopColor="#FFBB00" />
+          </linearGradient>
+        </defs>
+      </svg>
+    );
+  }
+  if (streak >= 14) {
+    // Star burst
+    return (
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="mx-auto">
+        <path
+          d="M40 15L43 32L55 25L48 38L65 40L48 42L55 55L43 48L40 65L37 48L25 55L32 42L15 40L32 38L25 25L37 32L40 15Z"
+          fill="url(#star-gradient)"
+          stroke="#FFD700"
+          strokeWidth="2"
+        />
+        <circle cx="40" cy="40" r="8" fill="#FFF" />
+        <defs>
+          <linearGradient id="star-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FFE44D" />
+            <stop offset="100%" stopColor="#FFD700" />
+          </linearGradient>
+        </defs>
+      </svg>
+    );
+  }
+  if (streak >= 7) {
+    // Target/Bullseye
+    return (
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="mx-auto">
+        <circle cx="40" cy="40" r="30" fill="none" stroke="#4ECDC4" strokeWidth="3" />
+        <circle cx="40" cy="40" r="20" fill="none" stroke="#45B7AF" strokeWidth="3" />
+        <circle cx="40" cy="40" r="10" fill="#4ECDC4" />
+        <circle cx="40" cy="40" r="4" fill="#FFF" />
+      </svg>
+    );
+  }
+  if (streak >= 5) {
+    // Hand with 5 fingers
+    return (
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="mx-auto">
+        <g transform="translate(15, 15)">
+          <rect x="8" y="25" width="7" height="20" rx="3.5" fill="url(#hand-gradient)" />
+          <rect x="17" y="20" width="7" height="25" rx="3.5" fill="url(#hand-gradient)" />
+          <rect x="26" y="18" width="7" height="27" rx="3.5" fill="url(#hand-gradient)" />
+          <rect x="35" y="22" width="7" height="23" rx="3.5" fill="url(#hand-gradient)" />
+          <rect x="44" y="28" width="7" height="17" rx="3.5" fill="url(#hand-gradient)" />
+          <rect x="8" y="42" width="43" height="15" rx="7" fill="url(#hand-gradient)" />
+        </g>
+        <defs>
+          <linearGradient id="hand-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#FFE66D" />
+            <stop offset="100%" stopColor="#FF6B6B" />
+          </linearGradient>
+        </defs>
+      </svg>
+    );
+  }
+  if (streak >= 3) {
+    // Three ascending bars
+    return (
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="mx-auto">
+        <rect x="15" y="45" width="12" height="20" rx="2" fill="url(#bars-gradient-1)" />
+        <rect x="34" y="35" width="12" height="30" rx="2" fill="url(#bars-gradient-2)" />
+        <rect x="53" y="25" width="12" height="40" rx="2" fill="url(#bars-gradient-3)" />
+        <defs>
+          <linearGradient id="bars-gradient-1" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#667EEA" />
+            <stop offset="100%" stopColor="#764BA2" />
+          </linearGradient>
+          <linearGradient id="bars-gradient-2" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#667EEA" />
+            <stop offset="100%" stopColor="#764BA2" />
+          </linearGradient>
+          <linearGradient id="bars-gradient-3" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#667EEA" />
+            <stop offset="100%" stopColor="#764BA2" />
+          </linearGradient>
+        </defs>
+      </svg>
+    );
+  }
+  // Default: Double check marks
+  return (
+    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="mx-auto">
+      <path
+        d="M20 40L30 50L50 25"
+        stroke="url(#check-gradient)"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M30 40L40 50L60 25"
+        stroke="url(#check-gradient)"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <defs>
+        <linearGradient id="check-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#56CCF2" />
+          <stop offset="100%" stopColor="#2F80ED" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+};
+
 // Celebration messages based on streak length
-const getStreakMessage = (streak: number): { emoji: string; title: string; subtitle: string } => {
+const getStreakMessage = (streak: number): { title: string; subtitle: string } => {
   if (streak >= 365) {
     return {
-      emoji: "👑",
       title: "LEGENDARY!",
       subtitle: `${streak} days! You're absolutely unstoppable!`,
     };
   }
   if (streak >= 100) {
     return {
-      emoji: "🏆",
       title: "INCREDIBLE!",
       subtitle: `${streak} days of pure dedication!`,
     };
   }
   if (streak >= 30) {
     return {
-      emoji: "🔥",
       title: "ON FIRE!",
       subtitle: `${streak} days! You're a true champion!`,
     };
   }
   if (streak >= 14) {
     return {
-      emoji: "⭐",
       title: "AMAZING!",
       subtitle: `${streak} days and counting!`,
     };
   }
   if (streak >= 7) {
     return {
-      emoji: "🎯",
       title: "PERFECT WEEK!",
       subtitle: `${streak} days! Keep the momentum!`,
     };
   }
   if (streak >= 5) {
     return {
-      emoji: "✨",
       title: "HIGH FIVE!",
       subtitle: `${streak} days in a row!`,
     };
   }
   if (streak >= 3) {
     return {
-      emoji: "🚀",
       title: "HAT TRICK!",
       subtitle: `${streak} days! You're building something great!`,
     };
   }
   return {
-    emoji: "🎉",
     title: "STREAK!",
     subtitle: `${streak} days in a row!`,
   };
@@ -69,8 +240,8 @@ function getTodayDate(): string {
   return `${year}-${month}-${day}`;
 }
 
-// Storage key for last checkin date to avoid multiple popups per day
-const LAST_CHECKIN_KEY = "streak:lastCheckin";
+// Storage key for last celebration shown date (not checkin - checkin happens every visit)
+const LAST_CELEBRATION_KEY = "streak:lastCelebration";
 
 export default function StreakCelebration() {
   const { user, initialized, firebaseUser } = useAuth();
@@ -85,20 +256,18 @@ export default function StreakCelebration() {
 
     const today = getTodayDate();
 
-    // Check if we already checked in today (avoid repeat popups)
-    const lastCheckin = localStorage.getItem(LAST_CHECKIN_KEY);
-    if (lastCheckin === today) {
+    // Check if we already showed celebration today (avoid repeat popups on multiple visits)
+    const lastCelebration = localStorage.getItem(LAST_CELEBRATION_KEY);
+    if (lastCelebration === today) {
       return;
     }
 
     try {
       const result = await checkinStreak(today);
       if (result) {
-        // Store that we checked in today
-        localStorage.setItem(LAST_CHECKIN_KEY, today);
-
-        // Only show celebration if streak is 2+ days AND it was extended today
-        if (result.extended && result.currentStreak >= 2) {
+        // Show celebration if streak is 2+ days (every day with an active streak)
+        if (result.currentStreak >= 2) {
+          localStorage.setItem(LAST_CELEBRATION_KEY, today);
           setStreakData(result);
           setShowCelebration(true);
           setIsAnimating(true);
@@ -124,7 +293,7 @@ export default function StreakCelebration() {
 
   if (!showCelebration || !streakData) return null;
 
-  const { emoji, title, subtitle } = getStreakMessage(streakData.currentStreak);
+  const { title, subtitle } = getStreakMessage(streakData.currentStreak);
 
   return (
     <div
@@ -133,12 +302,12 @@ export default function StreakCelebration() {
       }`}
       onClick={handleClose}
     >
-      {/* Backdrop with confetti-like gradient */}
+      {/* Backdrop with gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-900/90 via-indigo-900/90 to-pink-900/90 backdrop-blur-sm" />
 
-      {/* Floating particles */}
+      {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {[...Array(15)].map((_, i) => (
           <div
             key={i}
             className="absolute animate-float"
@@ -149,9 +318,12 @@ export default function StreakCelebration() {
               animationDuration: `${3 + Math.random() * 4}s`,
             }}
           >
-            <span className="text-2xl opacity-60">
-              {["⭐", "✨", "🌟", "💫", "🔥"][Math.floor(Math.random() * 5)]}
-            </span>
+            <div
+              className="w-2 h-2 rounded-full bg-white/30"
+              style={{
+                boxShadow: "0 0 10px rgba(255,255,255,0.5)",
+              }}
+            />
           </div>
         ))}
       </div>
@@ -168,8 +340,10 @@ export default function StreakCelebration() {
 
         {/* Content */}
         <div className="relative text-center">
-          {/* Big emoji with pulse animation */}
-          <div className="text-7xl mb-4 animate-bounce-slow">{emoji}</div>
+          {/* Icon with pulse animation */}
+          <div className="mb-4 animate-bounce-slow">
+            <StreakIcon streak={streakData.currentStreak} />
+          </div>
 
           {/* Streak counter with animated ring */}
           <div className="relative inline-flex items-center justify-center mb-4">
@@ -190,13 +364,13 @@ export default function StreakCelebration() {
           {/* Longest streak info */}
           {streakData.longestStreak > streakData.currentStreak && (
             <p className="text-sm text-flingo-500 mb-4">
-              Your best: {streakData.longestStreak} days 🏅
+              Your best: {streakData.longestStreak} days
             </p>
           )}
           {streakData.longestStreak === streakData.currentStreak &&
             streakData.currentStreak >= 3 && (
               <p className="text-sm text-neon-lime font-bold mb-4 animate-pulse">
-                ⚡ New personal best!
+                New personal best!
               </p>
             )}
 
@@ -205,7 +379,7 @@ export default function StreakCelebration() {
             className="w-full py-3 px-6 bg-gradient-to-r from-neon-lime to-emerald-400 text-surface-dark font-bold rounded-full shadow-lg hover:shadow-neon-lime transition-all active:scale-95"
             onClick={handleClose}
           >
-            Keep Playing! 🎮
+            Keep Playing!
           </button>
         </div>
       </div>
