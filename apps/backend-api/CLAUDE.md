@@ -50,4 +50,6 @@ DynamoDB tables named `games4james-*` (users, scores, gameratings, gameratings-s
 
 ## Deploy
 
-GitHub Actions on push to `main`: `tsc`, zip `dist` + prod `node_modules`, `aws lambda update-function-code`, then the env block. Runtime moves to Node 24 in T2.1/T9.1; bundling with esbuild comes in T9.3.
+Manual for now (GitHub Actions → Deploy Apps → Run workflow): a `checks` job (typecheck + tests), then `tsc`, zip `dist` + prod `node_modules`, `aws lambda update-function-code`, then the env block.
+
+Lambda `gamesjames_scores` (checked 2026-10-08): runtime `nodejs22.x`, handler `dist/lambda.handler`, x86_64, 128 MB, 3 s timeout. Local dev and CI use Node 24 (`.nvmrc`); the compiled output (ES2022) runs on both. T9.1 moves the runtime to `nodejs24.x` and should raise memory/timeout (3 s is tight for Firebase cold starts). Bundling with esbuild comes in T9.3.

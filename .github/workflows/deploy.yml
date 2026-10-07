@@ -34,7 +34,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: "npm"
 
       - name: Install dependencies (workspace)
@@ -56,12 +56,12 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: "npm"
 
       - name: Install dependencies (workspace)
         run: |
-          npm ci || npm install
+          npm ci
 
       - name: Generate sitemap for player-web
         working-directory: apps/player-web
@@ -129,12 +129,12 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: "npm"
 
       - name: Install dependencies (workspace)
         run: |
-          npm ci || npm install
+          npm ci
 
       - name: Install backend dependencies (prod only)
         working-directory: apps/backend-api
@@ -212,12 +212,12 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: "npm"
 
       - name: Install dependencies (workspace)
         run: |
-          npm ci || npm install
+          npm ci
 
       - name: Build admin-web
         working-directory: apps/admin-web

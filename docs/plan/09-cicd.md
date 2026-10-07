@@ -14,6 +14,7 @@ Steps:
 3. `deploy-admin.yml`: same for `apps/admin-web/**`.
 4. `deploy-api.yml`: for `apps/backend-api/**`: build, prod-only install, zip, `update-function-code`, wait, then `update-function-configuration` with runtime `nodejs24.x` (or `nodejs22.x` if 24 isn't offered in the region) and the env block. Secrets via GitHub secrets as today; after Phase 6 the env includes `DATABASE_URL` and `DATA_BACKEND`.
 5. Concurrency groups per workflow so overlapping pushes cancel older runs.
+Also (found in T2.1): the Lambda runs on 128 MB with a 3 s timeout; raise to at least 512 MB / 10 s when moving the runtime to nodejs24.x, and check cold-start times.
 Done when: a docs-only PR runs `ci.yml` only; a change to `apps/player-web` deploys only the web; all three deploys succeed from `main`.
 
 ## T9.2 Branch protection and PR template

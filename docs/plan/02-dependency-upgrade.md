@@ -26,7 +26,7 @@ Known breaking changes are listed per task so the session doesn't have to discov
 | @types/node | 20 | 24+ |
 
 ## T2.1 Node 24 and npm hygiene
-Status: todo
+Status: done (2026-10-08) except the MANUAL local install. .nvmrc = 24, engines node >=24 / npm >=10, workflow uses node-version-file + npm ci. Lockfile regenerated from scratch on Node 24.21 (fresh resolution raised minors within existing ranges, e.g. React 19.3, react-router-dom 7.18, Vite 7.3, Tailwind 4.3, firebase-admin 13.10). Under Node 24: typecheck, 46 tests, all three builds and npm ci all pass. Lambda checked read-only: nodejs22.x, dist/lambda.handler, 128 MB, 3 s (runtime move + memory/timeout noted in T9.1). MANUAL (James): your Mac still runs Node 22.14 from the official installer at /usr/local/bin/node; install Node 24 (nodejs.org LTS installer, or brew install node@24) so local runs match CI. Until then npm prints an EBADENGINE warning but works.
 Depends on: Phase 1 complete
 Goal: every environment uses Node 24 LTS and a clean lockfile.
 Files: `.nvmrc` (new), `package.json` `engines`, `.github/workflows/deploy.yml`, `apps/backend-api/tsconfig.json` (`target`/`lib`)

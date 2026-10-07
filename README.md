@@ -17,7 +17,7 @@ Development is done with Claude Code. Start with [CLAUDE.md](CLAUDE.md) and [doc
 
 ## Requirements
 
-- Node.js 22 or newer (moving to Node 24 in plan task T2.1)
+- Node.js 24 (see `.nvmrc`; `nvm use` picks it up)
 - npm 10 or newer
 - A filled-in `.env.local` per app, copied from that app's `.env.example`
 

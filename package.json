@@ -28,5 +28,9 @@
   "devDependencies": {
     "pureimage": "^0.3.17",
     "word-list": "^4.1.0"
+  },
+  "engines": {
+    "node": ">=24",
+    "npm": ">=10"
   }
 }
