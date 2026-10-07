@@ -20,3 +20,4 @@ Decisions already made. Add new ones with a date. Do not reopen without James as
 | 2026-10-08 | **Linting (ESLint flat config + Prettier) and Vitest tests are required** for the SDK and all pure game logic; CI gates on lint, typecheck and tests. | James's instruction. |
 | 2026-10-08 | **All pipelines auto-deploy from `main`** after gates pass, path-filtered per app; DB migrations run in CI. | James's instruction. |
 | 2026-10-08 | **Analytics:** keep GA4 but with ad signals and IP off, or swap to Cloudflare Web Analytics (free, cookieless). Decide in T7.9. | Kid audience; no tracking. |
+| 2026-10-08 | **Auto-deploy is paused.** `deploy.yml` runs only via workflow_dispatch until Phase 9 (T9.1) ships gated pipelines. | James asked to stop auto-deploys while Phase 1 lands. |

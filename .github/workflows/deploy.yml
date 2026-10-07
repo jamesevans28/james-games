@@ -1,8 +1,10 @@
 name: Deploy Apps
 
+# Auto-deploy on push is paused while Phase 1 lands (2026-10-08).
+# Deploy manually: GitHub → Actions → Deploy Apps → Run workflow (branch main),
+# or: gh workflow run deploy.yml --ref main
+# Plan Phase 9 (T9.1) replaces this with gated, path-filtered pipelines.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:

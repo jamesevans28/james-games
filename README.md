@@ -41,7 +41,7 @@ Run `npm install` once at the repository root.
 
 ## Deployment
 
-`.github/workflows/deploy.yml` runs on every push to `main`. It builds and syncs player web and admin to S3 behind CloudFront, and updates the Lambda's code and environment. It authenticates to AWS with GitHub OIDC.
+`.github/workflows/deploy.yml` is manual-only for now (auto-deploy on push is paused). Run it from GitHub Actions → Deploy Apps → Run workflow, or `gh workflow run deploy.yml --ref main`. It builds and syncs player web and admin to S3 behind CloudFront, and updates the Lambda's code and environment. It authenticates to AWS with GitHub OIDC.
 
 GitHub repository settings it reads:
 
