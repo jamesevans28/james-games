@@ -9,7 +9,7 @@ Goal: `CLAUDE.md` at the root points every session at `docs/plan/` and states th
 Done when: `CLAUDE.md`, `docs/plan/README.md`, `docs/plan/DECISIONS.md` and the phase files exist and are committed.
 
 ## T0.2 Replace `.github/copilot-instructions.md` with a pointer
-Status: todo
+Status: done (2026-10-08)
 Depends on: T0.1
 Goal: one set of instructions. The Copilot file currently duplicates (and partly contradicts) conventions, and embeds a copy of a generic design skill.
 Files: `.github/copilot-instructions.md`, `docs/claude-frontend-design.md`
