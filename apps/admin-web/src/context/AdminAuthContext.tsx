@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { adminApi, normalizeAccount, AdminAccount } from "../lib/api";
+import { adminApi, normalizeAccount, type AdminAccount } from "../lib/api";
 import {
   auth,
   signInWithGoogle,

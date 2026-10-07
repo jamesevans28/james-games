@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Gamepad2, Plus } from "lucide-react";
-import { adminApi, GameConfig, PaginatedResponse } from "../lib/api";
+import { adminApi, type GameConfig, type PaginatedResponse } from "../lib/api";
 import { GameDrawer } from "../components/games/GameDrawer";
 import { CreateGameModal } from "../components/games/CreateGameModal";
 

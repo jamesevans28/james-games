@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { adminApi, GameConfig, GameStats } from "../../lib/api";
+import { adminApi, type GameConfig, type GameStats } from "../../lib/api";
 
 const defaultGame: GameConfig = {
   gameId: "",

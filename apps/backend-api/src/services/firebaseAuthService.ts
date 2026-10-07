@@ -2,8 +2,8 @@
 // Handles token verification, custom token creation for username+PIN, and user management
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
-import { initializeApp, cert, getApps, App } from "firebase-admin/app";
-import { getAuth, Auth, DecodedIdToken } from "firebase-admin/auth";
+import { initializeApp, cert, getApps, type App } from "firebase-admin/app";
+import { getAuth, Auth, type DecodedIdToken } from "firebase-admin/auth";
 import bcrypt from "bcryptjs";
 
 // Initialize Firebase Admin SDK
@@ -13,8 +13,9 @@ let firebaseAuth: Auth;
 function getFirebaseApp(): App {
   if (firebaseApp) return firebaseApp;
 
-  if (getApps().length > 0) {
-    firebaseApp = getApps()[0];
+  const existing = getApps()[0];
+  if (existing) {
+    firebaseApp = existing;
     return firebaseApp;
   }
 

@@ -39,7 +39,7 @@ Steps:
 Done when: `node -v` is 24.x locally and in CI; `npm ci` is clean; all three apps build.
 
 ## T2.2 TypeScript latest
-Status: todo
+Status: done (2026-10-08). TypeScript 6.0.3 in all workspaces, not 7.0.2: typescript-eslint (latest 8.71) supports only TS <6.1 and Phase 4 needs it; recorded in DECISIONS.md with a re-check date. Backend moved from the deprecated moduleResolution node10 to NodeNext (no code changes). verbatimModuleSyntax on in all three apps (44 type-only imports fixed in 27 files). noUncheckedIndexedAccess on for backend-api and admin-web (two real edge cases guarded); deferred for player-web to T5.13 because 93 of its 102 errors are in game code Phase 5 rewrites. Verified on Node 24: typecheck, 46 tests, all builds; compiled backend serves /games/config; dist/lambda.js loads on Node 22 (the Lambda runtime).
 Depends on: T2.1
 Goal: latest TypeScript in all workspaces.
 Files: root and workspace `package.json`, all `tsconfig*.json`

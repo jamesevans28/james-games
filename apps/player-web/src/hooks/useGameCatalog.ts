@@ -20,7 +20,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { games as bundledGames, GameMeta } from "../games";
+import { games as bundledGames, type GameMeta } from "../games";
 import { API_BASE_URL } from "../config/env";
 
 const API_BASE = API_BASE_URL;

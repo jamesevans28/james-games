@@ -21,9 +21,9 @@
  */
 
 import { useMemo, useCallback, useState, useEffect, useRef } from "react";
-import { RatingSummary } from "../lib/api";
+import { type RatingSummary } from "../lib/api";
 import { useAuth } from "../context/FirebaseAuthProvider";
-import { GameCatalogEntry } from "./useGameCatalog";
+import { type GameCatalogEntry } from "./useGameCatalog";
 import { getIdToken } from "../lib/firebase";
 import { getLastPlayedGames } from "../utils/playHistory";
 import { API_BASE_URL } from "../config/env";

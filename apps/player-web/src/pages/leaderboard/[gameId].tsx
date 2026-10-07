@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useCatalog } from "../../context/GameCatalogProvider";
-import { getTopScores, ScoreEntry } from "../../lib/api";
+import { getTopScores, type ScoreEntry } from "../../lib/api";
 import { getUserName } from "../../utils/user";
 import Seo from "../../components/Seo";
 import { ProfileAvatar } from "../../components/profile";

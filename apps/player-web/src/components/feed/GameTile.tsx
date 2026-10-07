@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { GameMeta } from "../../games";
-import { RatingSummary } from "../../lib/api";
+import { type GameMeta } from "../../games";
+import { type RatingSummary } from "../../lib/api";
 import { getLastPlayedGames } from "../../utils/playHistory";
 import { getBest } from "../../utils/bestScore";
 

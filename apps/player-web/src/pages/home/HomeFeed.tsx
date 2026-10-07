@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import Seo from "../../components/Seo";
 import GameTile from "../../components/feed/GameTile";
 import { games } from "../../games";
-import { fetchRatingSummaries, RatingSummary } from "../../lib/api";
+import { fetchRatingSummaries, type RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, primeRatingCache } from "../../utils/ratingCache";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { useAuth } from "../../context/FirebaseAuthProvider";
-import { useFeedAlgorithm, FeedGame } from "../../hooks/useFeedAlgorithmV2";
+import { useFeedAlgorithm, type FeedGame } from "../../hooks/useFeedAlgorithmV2";
 import {
   buildWebsiteJsonLd,
   buildGameCollectionJsonLd,

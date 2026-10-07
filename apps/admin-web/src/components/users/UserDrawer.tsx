@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X, Mail, Key, AtSign } from "lucide-react";
-import { adminApi, AdminUserDetail } from "../../lib/api";
+import { adminApi, type AdminUserDetail } from "../../lib/api";
 
 export function UserDrawer({ userId, onClose }: { userId: string | null; onClose: () => void }) {
   const queryClient = useQueryClient();

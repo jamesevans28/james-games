@@ -11,7 +11,7 @@ import {
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
 import { getUser } from "./dynamoService.js";
-import { buildSummary, ExperienceSummary } from "./experienceService.js";
+import { buildSummary, type ExperienceSummary } from "./experienceService.js";
 import { log } from "../lib/log.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);

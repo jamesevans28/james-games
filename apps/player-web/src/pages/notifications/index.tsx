@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchFollowNotifications, FollowNotification } from "../../lib/api";
+import { fetchFollowNotifications, type FollowNotification } from "../../lib/api";
 import { ProfileAvatar } from "../../components/profile";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { markNotificationsAsRead } from "../../hooks/useNotificationsIndicator";

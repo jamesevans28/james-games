@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { ASSETS, preloadAssets, createBackground } from "../assets";
-import { GameState, Direction, DEFAULT_CONFIG } from "../entities/GameState";
+import { type GameState, type Direction, DEFAULT_CONFIG } from "../entities/GameState";
 import { createInitialState, advanceLevel } from "../useCases/stateManager";
 import {
   createGrid,

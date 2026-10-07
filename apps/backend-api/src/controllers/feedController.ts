@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { DynamoDBDocumentClient, ScanCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
-import { listGameConfigs, GameConfigRecord } from "../services/gamesConfigService.js";
+import { listGameConfigs, type GameConfigRecord } from "../services/gamesConfigService.js";
 import { log } from "../lib/log.js";
 import { getUser } from "../services/dynamoService.js";
 

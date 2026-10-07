@@ -1,10 +1,10 @@
 import {
-  GameState,
-  GameConfig,
+  type GameState,
+  type GameConfig,
   DEFAULT_CONFIG,
-  Bounds,
-  EnemyBall,
-  PlayerBall,
+  type Bounds,
+  type EnemyBall,
+  type PlayerBall,
 } from "../entities/GameState";
 
 export function createInitialState(

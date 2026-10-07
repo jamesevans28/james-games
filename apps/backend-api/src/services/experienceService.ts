@@ -4,7 +4,7 @@ import { config } from "../config/index.js";
 import {
   DEFAULT_EXPERIENCE_LEVELS,
   EXPERIENCE_MAX_LEVEL,
-  ExperienceLevelRow,
+  type ExperienceLevelRow,
 } from "../data/experienceLevels.js";
 import { getUser } from "./dynamoService.js";
 import { log } from "../lib/log.js";
@@ -76,7 +76,9 @@ function ensureRequirement(levels: ExperienceLevelRow[], level: number): Experie
   );
   const found = levels.find((row) => row.level === clamped);
   if (found) return found;
-  return levels[levels.length - 1];
+  const last = levels[levels.length - 1];
+  if (!last) throw new Error("experience_levels_empty");
+  return last;
 }
 
 export async function getExperienceSummary(userId: string): Promise<ExperienceSummary | null> {

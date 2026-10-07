@@ -4,8 +4,8 @@ import {
   fetchFollowersSummary,
   followUserApi,
   unfollowUserApi,
-  FollowersSummary,
-  PresenceStatus,
+  type FollowersSummary,
+  type PresenceStatus,
 } from "../../lib/api";
 import { games } from "../../games";
 import { ProfileAvatar } from "../../components/profile";

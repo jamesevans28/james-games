@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Gamepad2, LineChart, Users } from "lucide-react";
-import { adminApi, DashboardMetrics } from "../lib/api";
+import { adminApi, type DashboardMetrics } from "../lib/api";
 
 const numberFormatter = new Intl.NumberFormat("en-US");
 

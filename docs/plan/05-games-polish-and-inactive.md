@@ -94,4 +94,5 @@ Status: todo
 Depends on: T5.12
 Goal: no game uses `utils/gameEvents.ts`; the host is the only channel.
 Steps: delete `utils/gameEvents.ts` and the legacy dispatch in the host; remove the ESLint disables added in T4.1; `GameLanding.tsx` listens to the catalog/query invalidation instead of a window event.
-Done when: `git grep gameEvents apps` is empty; all 11 active games pass the smoke test; `npm run lint` is clean with no file-level disables in `src/games`.
+Also (deferred from T2.2): enable `"noUncheckedIndexedAccess": true` in apps/player-web/tsconfig.json and fix the remaining errors (102 at T2.2 time, 93 of them in game code that Phase 5 rewrites).
+Done when: player-web typechecks with noUncheckedIndexedAccess on; `git grep gameEvents apps` is empty; all 11 active games pass the smoke test; `npm run lint` is clean with no file-level disables in `src/games`.

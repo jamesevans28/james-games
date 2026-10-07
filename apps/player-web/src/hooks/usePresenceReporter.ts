@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { updatePresenceStatus, PresenceStatus } from "../lib/api";
+import { updatePresenceStatus, type PresenceStatus } from "../lib/api";
 import { useAuth } from "../context/FirebaseAuthProvider";
 
 const HEARTBEAT_MS = 30 * 1000;

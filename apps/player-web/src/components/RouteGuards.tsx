@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { ReactElement } from "react";
+import { type ReactElement } from "react";
 import { useAuth } from "../context/FirebaseAuthProvider";
 
 // Guard for routes that require any authentication (including anonymous).

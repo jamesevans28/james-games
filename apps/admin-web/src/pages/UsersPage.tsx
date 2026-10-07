@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Users, Database } from "lucide-react";
-import { adminApi, AdminUserSummary, PaginatedResponse } from "../lib/api";
+import { adminApi, type AdminUserSummary, type PaginatedResponse } from "../lib/api";
 import { useDebounce } from "../hooks/useDebounce";
 import { UserDrawer } from "../components/users/UserDrawer";
 

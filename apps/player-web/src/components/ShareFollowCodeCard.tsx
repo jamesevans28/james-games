@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { buildProfileLink, shareProfileLink } from "../utils/shareProfileLink";
 
 interface ShareFollowCodeCardProps {

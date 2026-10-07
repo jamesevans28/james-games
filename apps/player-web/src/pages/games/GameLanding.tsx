@@ -2,15 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { trackShare } from "../../utils/analytics";
-import { GameMeta } from "../../games";
+import { type GameMeta } from "../../games";
 import {
   getTopScores,
   fetchRatingSummary,
   submitRating,
-  RatingSummary,
+  type RatingSummary,
   fetchFollowingActivity,
-  FollowingActivityEntry,
-  ScoreEntry,
+  type FollowingActivityEntry,
+  type ScoreEntry,
 } from "../../lib/api";
 import { getUserName } from "../../utils/user";
 import { onGameOver } from "../../utils/gameEvents";

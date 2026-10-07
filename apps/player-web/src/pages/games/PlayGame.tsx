@@ -10,7 +10,7 @@ import GameOver from "./GameOver";
 import { onGameOver, dispatchGameStart } from "../../utils/gameEvents";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import RatingPromptModal from "../../components/RatingPromptModal";
-import { fetchRatingSummary, submitRating, RatingSummary } from "../../lib/api";
+import { fetchRatingSummary, submitRating, type RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { recordGamePlayed } from "../../utils/playHistory";
