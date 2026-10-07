@@ -31,7 +31,7 @@ Steps:
 Done when: all three files exist, each under 80 lines, and nothing in them contradicts the root `CLAUDE.md`.
 
 ## T0.4 Fix root scripts and add typecheck/lint/test placeholders
-Status: todo
+Status: done (2026-10-08)
 Depends on: none
 Goal: `npm run <x>` at the root works for every app, and the README's command table is correct.
 Files: `package.json` (root), `README.md`

@@ -1,87 +1,55 @@
-# James Games Monolith
+# Games4James
 
-James Games is now structured as a single npm workspace that houses the player-facing web hub, the Express/Lambda backend, and a placeholder admin console. Shared documentation, scripts, and infrastructure live at the repository root while each app has its own build tooling under `apps/`.
+Little games made by James, Tilly and Harvey. A mobile-first web app at https://games4james.com.
+
+This monorepo holds three npm workspaces:
 
 ```
 apps/
-  player-web/   <-- React + Phaser experience customers use today
-  backend-api/  <-- Express server bundled for AWS Lambda
-  admin-web/    <-- React placeholder for the future operations console
-docs/
-scripts/
+  player-web/   React + Vite + Phaser PWA (the product)
+  backend-api/  Express API on AWS Lambda (https://api.games4james.com)
+  admin-web/    Moderation and game-config console
+docs/plan/      The implementation plan: what to build next, phase by phase
+scripts/        Repo-level build and asset scripts
 ```
+
+Development is done with Claude Code. Start with [CLAUDE.md](CLAUDE.md) and [docs/plan/README.md](docs/plan/README.md). Each app also has its own `CLAUDE.md`.
 
 ## Requirements
 
-- Node.js 20+
-- npm 10+ (npm workspaces)
-- AWS credentials for backend/dev commands where required
+- Node.js 22 or newer (moving to Node 24 in plan task T2.1)
+- npm 10 or newer
+- A filled-in `.env.local` per app, copied from that app's `.env.example`
 
-Run `npm install` once at the repo root to install dependencies for every workspace.
+Run `npm install` once at the repository root.
 
-## App Commands
+## Commands
 
-| Area        | Dev Server                                        | Production Build                                           |
-| ----------- | ------------------------------------------------- | ---------------------------------------------------------- |
-| Player web  | `npm run web:dev`                                 | `npm run web:build` (outputs to `apps/player-web/dist`)    |
-| Backend API | `npm run backend:dev` (local Express/Lambda shim) | `npm run backend:build` (emits to `apps/backend-api/dist`) |
-| Admin web   | `npm run admin:dev`                               | `npm run admin:build`                                      |
+| Command | What it does |
+|---|---|
+| `npm run dev` | Player web dev server on http://localhost:3000 |
+| `npm run server` | Backend API on http://localhost:8787 |
+| `npm run admin:dev` | Admin console on http://localhost:3100 |
+| `npm run web:build` | Regenerate SEO files and build player web to `apps/player-web/dist` |
+| `npm run admin:build` | Build admin to `apps/admin-web/dist` |
+| `npm run backend:build` | Compile the API to `apps/backend-api/dist` |
+| `npm run build` | All three builds |
+| `npm run typecheck` | `tsc --noEmit` in every workspace |
+| `npm run lint` | ESLint in every workspace (configured in plan Phase 4) |
+| `npm test` | Vitest in every workspace (configured in plan Phase 4) |
+| `npm run web:generate-seo` | Regenerate sitemap and static game pages |
 
-Additional helpers:
+## Deployment
 
-- `npm run web:asset:snapadile`
-- `npm run web:asset:car-crash`
-- `npm run web:generate-sitemap`
+`.github/workflows/deploy.yml` runs on every push to `main`. It builds and syncs player web and admin to S3 behind CloudFront, and updates the Lambda's code and environment. It authenticates to AWS with GitHub OIDC.
 
-These scripts rely on the shared `scripts/` folder and write into `apps/player-web/public/assets`.
+GitHub repository settings it reads:
 
-## Player Web (apps/player-web)
+- Secrets: `AWS_ROLE_TO_ASSUME`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`
+- Variables: `AWS_REGION`, `WEB_S3_BUCKET`, `WEB_CLOUDFRONT_DISTRIBUTION_ID`, `ADMIN_S3_BUCKET`, `ADMIN_CLOUDFRONT_DISTRIBUTION_ID`, `LAMBDA_FUNCTION_NAME`, `VITE_API_BASE_URL`, `CORS_ALLOWED_ORIGINS`, and the six `VITE_FIREBASE_*` values
 
-- React + Vite frontend that mounts Phaser mini-games located in `apps/player-web/src/games/*`.
-- Assets are served from `apps/player-web/public/assets/[gameId]/`.
-- Tailwind/PostCSS config is scoped to the directory so multiple apps can evolve independently.
-- Use `npm run web:dev` while working on games; Vite runs on port `3000` by default.
+Plan Phase 9 splits this into gated, path-filtered pipelines.
 
-## Backend API (apps/backend-api)
+## Links
 
-- Express app compiled to Lambda-compatible handlers via `npm run backend:build`.
-- Development server (`backend:dev`) spins up the lambda adapter defined in `src/dev-server.ts`.
-- Experience/leveling data lives under `apps/backend-api/src/data/experienceLevels.ts`. Override defaults by setting `TABLE_EXPERIENCE_LEVELS` in your `.env.local` inside this package.
-
-New/important routes:
-
-- `POST /experience/runs` – record one session and award XP
-- `GET /experience/summary` – return the caller’s progress snapshot
-
-User rows store `xpLevel`, `xpProgress`, `xpTotal`, and `xpUpdatedAt`. Existing accounts are upgraded lazily the first time XP is recorded.
-
-## Admin Web (apps/admin-web)
-
-React Vite shell that currently displays a placeholder screen. Use it as the foundation for moderation dashboards, release controls, etc. The app reserves port `3100` in dev mode.
-
-## Deploying the Player App
-
-A GitHub Actions workflow (`.github/workflows/deploy.yml`) builds `apps/player-web` with Vite and syncs the resulting `dist/` folder to S3 using GitHub OIDC. Configure the following secrets/variables:
-
-- `AWS_ROLE_TO_ASSUME`
-- `AWS_REGION`
-- `S3_BUCKET`
-- `CLOUDFRONT_DISTRIBUTION_ID` (optional)
-
-The workflow installs dependencies, runs `npm run web:build`, and `aws s3 sync`s the output. `index.html` is re-uploaded with `Cache-Control: no-store` before optionally invalidating CloudFront.
-
-## Development Tips
-
-- All shared docs and scripts stay at the repository root. App-specific configs (Vite, Tailwind, tsconfig, etc.) sit next to their respective source code under `apps/*`.
-- Phaser games dispatch UI events through `apps/player-web/src/utils/gameEvents.ts`. Prefer central utilities over per-game globals.
-- When creating a new game, update `apps/player-web/src/games/index.ts` and remember to bump the `updatedAt` field for the entry.
-
-## Experience & Leveling Surfacing
-
-- The frontend shows XP progress inside score dialogs, profile, followers, and leaderboards.
-- Ensure backend routes above are deployed before rolling out new XP-driven UI to production.
-
-## Support & Community
-
-- Phaser documentation: [https://newdocs.phaser.io](https://newdocs.phaser.io)
-- Questions? Open an issue in this repo or contact the James Games team.
+- Phaser documentation: https://newdocs.phaser.io

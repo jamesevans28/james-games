@@ -10,7 +10,8 @@
     "generate-snapadile-assets": "cd ../.. && node scripts/generate-snapadile-assets.mjs",
     "generate-car-crash-assets": "cd ../.. && node scripts/generate-car-crash-assets.mjs",
     "generate-sitemap": "cd ../.. && node scripts/generate-sitemap.mjs",
-    "generate-seo": "cd ../.. && SITE_ORIGIN=https://flingo.fun node scripts/generate-sitemap.mjs"
+    "generate-seo": "cd ../.. && SITE_ORIGIN=https://flingo.fun node scripts/generate-sitemap.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "firebase": "^12.7.0",
