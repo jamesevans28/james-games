@@ -28,7 +28,7 @@ Steps:
 Done when: `curl https://localhost:8787/users/<id>` (and the equivalent on prod after deploy) returns only the whitelisted keys; a unit test asserts `toPublicProfile` strips `email`.
 
 ## T1.3 Stop returning the verification link (P0)
-Status: todo
+Status: done (2026-10-08). The frontend already sends verification through the Firebase client SDK (sendEmailVerification, which Firebase emails itself) and never called this endpoint, so the endpoint and generateEmailVerificationLink were removed rather than kept returning {ok:true}. Settings UI unchanged because verification still works.
 Depends on: none
 Goal: `/auth/firebase/send-verification` sends the link by email only.
 Files: `apps/backend-api/src/controllers/firebaseAuthController.ts` (~486-490)

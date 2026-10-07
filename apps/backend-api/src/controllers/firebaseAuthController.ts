@@ -11,7 +11,6 @@ import {
   verifyIdToken,
   updateFirebaseUserEmail,
   checkEmailVerified,
-  generateEmailVerificationLink,
 } from "../services/firebaseAuthService.js";
 import { putUser, getUser } from "../services/dynamoService.js";
 import { createUniqueScreenName, generatePlayfulName } from "../services/userService.js";
@@ -417,40 +416,6 @@ export async function addEmail(req: Request, res: Response) {
       return res.status(400).json({ error: "Invalid email address format" });
     }
     return res.status(500).json({ error: e?.message || "Failed to add email" });
-  }
-}
-
-/**
- * Get email verification link.
- * POST /auth/firebase/send-verification
- * Requires: authenticated user with an email address
- */
-export async function sendVerificationEmail(req: Request, res: Response) {
-  // @ts-ignore
-  const user = req.user;
-  if (!user?.userId) {
-    return res.status(401).json({ error: "unauthorized" });
-  }
-
-  try {
-    const profile = await getUser(user.userId);
-    if (!profile?.email) {
-      return res.status(400).json({ error: "No email address on account" });
-    }
-
-    if (profile.emailVerified) {
-      return res.status(400).json({ error: "Email already verified" });
-    }
-
-    // Generate verification link
-    const verificationLink = await generateEmailVerificationLink(profile.email);
-
-    // Return the link - in production you'd send this via email service
-    // For now, the frontend will use Firebase's client-side sendEmailVerification
-    return res.json({ ok: true, verificationLink });
-  } catch (e: any) {
-    console.error("sendVerificationEmail error:", e);
-    return res.status(500).json({ error: e?.message || "Failed to generate verification link" });
   }
 }
 

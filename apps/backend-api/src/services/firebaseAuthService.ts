@@ -245,11 +245,3 @@ export async function checkEmailVerified(uid: string): Promise<boolean> {
   const userRecord = await auth.getUser(uid);
   return userRecord.emailVerified ?? false;
 }
-
-/**
- * Generate an email verification link that can be sent to the user.
- */
-export async function generateEmailVerificationLink(email: string): Promise<string> {
-  const auth = getFirebaseAuth();
-  return await auth.generateEmailVerificationLink(email);
-}
