@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { listUsers, getAdminUser, updateAdminUser } from "../services/adminUserService.js";
+import { sendServerError } from "../lib/http.js";
 
 export async function index(req: Request, res: Response) {
   try {
@@ -9,7 +10,7 @@ export async function index(req: Request, res: Response) {
     const result = await listUsers({ limit, cursor, search });
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed_to_list_users" });
+    sendServerError(res, "admin_users_list_failed", err);
   }
 }
 
@@ -21,7 +22,7 @@ export async function show(req: Request, res: Response) {
     if (!user.userId) return res.status(404).json({ error: "user_not_found" });
     res.json(user);
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed_to_fetch_user" });
+    sendServerError(res, "admin_user_get_failed", err);
   }
 }
 

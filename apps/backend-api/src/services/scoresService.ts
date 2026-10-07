@@ -2,9 +2,10 @@ import { DynamoDBDocumentClient, PutCommand, QueryCommand } from "@aws-sdk/lib-d
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
 import { getUser } from "./dynamoService.js";
-import { recordUserGameSession } from "./userGameStatsService.js";
+import { getStatsForUsers, recordUserGameSession } from "./userGameStatsService.js";
 import { randomUUID } from "crypto";
 import { log } from "../lib/log.js";
+import { bestPerUser, compareScores } from "./leaderboardRules.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
@@ -87,6 +88,10 @@ export async function putScoreWithUser(args: {
 /**
  * Fetch top scores and hydrate with CURRENT user profile (screenName/avatar).
  * Fallback: snapshot values or legacyName when user no longer exists.
+ *
+ * With includeUserIds (the "following" board) it returns one best row per
+ * allowed user, combining the global top list with each user's stats row, so a
+ * friend ranked outside the global top 100 still appears.
  */
 export async function getTopScoresHydrated(
   gameId: string,
@@ -105,29 +110,40 @@ export async function getTopScoresHydrated(
     })
   );
   const items = (result.Items || []) as RawScoreItem[];
-  // Re-sort to guarantee ordering (score desc, createdAt asc for tie-break)
-  items.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    return a.createdAt.localeCompare(b.createdAt);
-  });
-  let filtered = items;
+  items.sort(compareScores);
+
+  let sliced: RawScoreItem[];
   if (opts?.includeUserIds && opts.includeUserIds.length > 0) {
     const allowed = new Set(opts.includeUserIds);
-    filtered = items.filter((row) => row.userId && allowed.has(row.userId));
+    const stats = await getStatsForUsers(gameId, opts.includeUserIds);
+    const best = bestPerUser(items, stats, allowed).slice(0, limit);
+    // Keep snapshot fields when the best came from a score row.
+    sliced = best.map(
+      (b) =>
+        items.find((r) => r.userId === b.userId && r.score === b.score) ?? {
+          id: `stats:${b.userId}`,
+          gameId,
+          score: b.score,
+          createdAt: b.createdAt,
+          userId: b.userId,
+        }
+    );
+  } else {
+    sliced = items.slice(0, limit);
   }
-  const sliced = filtered.slice(0, limit);
   // Collect distinct userIds for profile hydration
   const userIds = Array.from(new Set(sliced.map((r) => r.userId).filter(Boolean))) as string[];
   const userProfiles: Record<string, any> = {};
-  // Fetch each user profile (sequential; could batch/parallel for optimization)
-  for (const uid of userIds) {
-    try {
-      const profile = await getUser(uid);
-      if (profile) userProfiles[uid] = profile;
-    } catch {
-      // ignore individual failures
-    }
-  }
+  await Promise.all(
+    userIds.map(async (uid) => {
+      try {
+        const profile = await getUser(uid);
+        if (profile) userProfiles[uid] = profile;
+      } catch {
+        // ignore individual failures
+      }
+    })
+  );
   return sliced.map((row) => {
     const profile = row.userId ? userProfiles[row.userId] : null;
     const screenName =

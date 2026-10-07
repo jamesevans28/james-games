@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { getExperienceSummary } from "../services/experienceService.js";
+import { sendServerError } from "../lib/http.js";
 
 /**
  * POST /experience/runs is retired: clients used to send their own xpMultiplier here.
@@ -16,6 +17,6 @@ export async function getExperienceSummaryHandler(req: Request, res: Response) {
     const summary = await getExperienceSummary(userId);
     res.json({ summary });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed" });
+    sendServerError(res, "experience_summary_failed", err);
   }
 }

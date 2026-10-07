@@ -6,6 +6,7 @@ import {
   upsertRating,
   validateRatingInput,
 } from "../services/ratingsService.js";
+import { sendServerError } from "../lib/http.js";
 
 export async function listRatingSummaries(req: Request, res: Response) {
   try {
@@ -18,7 +19,7 @@ export async function listRatingSummaries(req: Request, res: Response) {
     const summaries = await getRatingSummaries(ids);
     res.json({ summaries });
   } catch (e: any) {
-    res.status(500).json({ error: e?.message || "Server error" });
+    sendServerError(res, "ratings_request_failed", e);
   }
 }
 
@@ -35,7 +36,7 @@ export async function getRatingSummaryController(req: Request, res: Response) {
     }
     res.json(summary);
   } catch (e: any) {
-    res.status(500).json({ error: e?.message || "Server error" });
+    sendServerError(res, "ratings_request_failed", e);
   }
 }
 
@@ -54,6 +55,6 @@ export async function submitRating(req: Request, res: Response) {
     if (e?.message?.includes("required") || e?.message?.includes("between")) {
       return res.status(400).json({ error: e.message });
     }
-    res.status(500).json({ error: e?.message || "Server error" });
+    sendServerError(res, "ratings_request_failed", e);
   }
 }

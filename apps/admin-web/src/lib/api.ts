@@ -29,7 +29,6 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
-    credentials: "include",
     headers,
     ...options,
   });

@@ -124,7 +124,7 @@ Steps:
 Done when: feed shows "Your best" after a game; two equal consecutive scores both post; the catalog provider fetches `/games/config` without error in the Browser pane console.
 
 ## T1.11 Fix backend bugs
-Status: todo
+Status: done (2026-10-08). Score snapshots now come from the user row (screenName/avatar). The personalised feed reads betaTester from the user row in that handler (in parallel with its other lookups) rather than adding a DB read to attachUser on every request. The following leaderboard returns one best row per friend by merging the global top list with BatchGet lookups of each friend's userGameStats.bestScore (leaderboardRules.bestPerUser, tested), so friends outside the top 100 appear. Disallowed origins get 403 origin_not_allowed; CORS credentials are off (admin-web no longer sends cookies). lib/http.ts adds errorHandler (final middleware) and sendServerError; all 31 catch blocks that echoed raw e.message in 500s now return server_error and log safely. Verified live: foreign origin 403, allowed origin 200 without credentials, malformed JSON 400 invalid_json. Following board and snapshots verified by unit tests only (they need a signed-in request against production tables). Tests: backend 37, player-web 9.
 Depends on: T1.9
 Goal: known backend defects are fixed on DynamoDB so the Phase 6 migration starts from correct behaviour.
 Files: `scoresController.ts` (~20-21), `feedController.ts` (~371), `scoresService.ts` (~90-149), `index.ts` (~18-30)

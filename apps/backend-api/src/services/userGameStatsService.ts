@@ -1,6 +1,11 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
-import { DynamoDBDocumentClient, UpdateCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  BatchGetCommand,
+  DynamoDBDocumentClient,
+  UpdateCommand,
+  QueryCommand,
+} from "@aws-sdk/lib-dynamodb";
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
 
@@ -82,4 +87,22 @@ export async function getStatsForGame(gameId: string, limit = 50): Promise<UserG
     })
   );
   return (res.Items || []) as UserGameStat[];
+}
+
+/** Stats rows for one game and a set of users (direct key lookups, 100 per batch). */
+export async function getStatsForUsers(gameId: string, userIds: string[]): Promise<UserGameStat[]> {
+  const table = config.tables.userGameStats;
+  if (!table || userIds.length === 0) return [];
+  const unique = Array.from(new Set(userIds));
+  const out: UserGameStat[] = [];
+  for (let i = 0; i < unique.length; i += 100) {
+    let keys: Record<string, unknown>[] | undefined = unique.slice(i, i + 100).map((userId) => ({ userId, gameId }));
+    // Retry unprocessed keys a few times (DynamoDB may throttle part of a batch).
+    for (let attempt = 0; keys && keys.length && attempt < 3; attempt++) {
+      const res = await ddb.send(new BatchGetCommand({ RequestItems: { [table]: { Keys: keys } } }));
+      out.push(...((res.Responses?.[table] || []) as UserGameStat[]));
+      keys = res.UnprocessedKeys?.[table]?.Keys as Record<string, unknown>[] | undefined;
+    }
+  }
+  return out;
 }

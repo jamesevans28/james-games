@@ -10,6 +10,7 @@ import {
   getFollowingIds,
   listFollowers,
 } from "../services/followersService.js";
+import { sendServerError } from "../lib/http.js";
 
 export async function getFollowersSummary(req: Request, res: Response) {
   const userId = req.user?.userId as string | undefined;
@@ -42,7 +43,7 @@ export async function getFollowersSummary(req: Request, res: Response) {
     }));
     res.json({ following, followers, followingCount, followersCount });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed" });
+    sendServerError(res, "followers_request_failed", err);
   }
 }
 
@@ -53,7 +54,7 @@ export async function getFollowingList(req: Request, res: Response) {
     const rows = await listFollowingWithPresence(userId);
     res.json({ following: rows });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed" });
+    sendServerError(res, "followers_request_failed", err);
   }
 }
 
@@ -64,7 +65,7 @@ export async function getFollowersList(req: Request, res: Response) {
     const rows = await listFollowersWithPresence(userId);
     res.json({ followers: rows });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed" });
+    sendServerError(res, "followers_request_failed", err);
   }
 }
 
@@ -85,7 +86,7 @@ export async function followUserHandler(req: Request, res: Response) {
     if (err?.message === "cannot_follow_self") {
       return res.status(400).json({ error: "cannot_follow_self" });
     }
-    res.status(500).json({ error: err?.message || "failed" });
+    sendServerError(res, "followers_request_failed", err);
   }
 }
 
@@ -97,7 +98,7 @@ export async function unfollowUserHandler(req: Request, res: Response) {
     await unfollowUser(userId, targetUserId);
     res.json({ ok: true });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed" });
+    sendServerError(res, "followers_request_failed", err);
   }
 }
 
@@ -118,7 +119,7 @@ export async function updatePresenceHandler(req: Request, res: Response) {
     });
     res.json({ ok: true });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed" });
+    sendServerError(res, "followers_request_failed", err);
   }
 }
 
@@ -138,7 +139,7 @@ export async function getFollowingActivity(req: Request, res: Response) {
       : rows;
     res.json({ activity: filtered });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed" });
+    sendServerError(res, "followers_request_failed", err);
   }
 }
 
@@ -149,7 +150,7 @@ export async function getFollowingIdsHandler(req: Request, res: Response) {
     const ids = await getFollowingIds(userId);
     res.json({ userIds: ids });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed" });
+    sendServerError(res, "followers_request_failed", err);
   }
 }
 
@@ -169,6 +170,6 @@ export async function getFollowNotifications(req: Request, res: Response) {
       .slice(0, 100);
     res.json({ notifications });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed" });
+    sendServerError(res, "followers_request_failed", err);
   }
 }

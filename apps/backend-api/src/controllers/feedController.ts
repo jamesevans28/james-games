@@ -4,6 +4,7 @@ import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
 import { listGameConfigs, GameConfigRecord } from "../services/gamesConfigService.js";
 import { log } from "../lib/log.js";
+import { getUser } from "../services/dynamoService.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
@@ -365,21 +366,20 @@ export async function getFeed(req: Request, res: Response) {
  *   - clientRecentGames: comma-separated fallback from localStorage
  */
 export async function getPersonalizedFeed(req: Request, res: Response) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const user = (req as any).user;
-  const userId = user?.uid || user?.userId;
-  const isBetaTester = Boolean(user?.betaTester);
+  const userId = req.user?.userId;
 
   try {
     const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
     const clientRecentParam = String(req.query.clientRecentGames || "");
 
-    // Get all data from DB
-    const [gameConfigs, ratings, dbRecentGames] = await Promise.all([
+    // Get all data from DB. betaTester lives on the user row, not in the auth token.
+    const [gameConfigs, ratings, dbRecentGames, profile] = await Promise.all([
       getCachedGameConfigs(),
       getRatingData(),
       userId ? getUserRecentGames(userId) : Promise.resolve([]),
+      userId ? getUser(userId).catch(() => null) : Promise.resolve(null),
     ]);
+    const isBetaTester = Boolean(profile?.betaTester);
 
     // Filter games based on beta access
     const visibleConfigs = isBetaTester ? gameConfigs : gameConfigs.filter((g) => !g.betaOnly);

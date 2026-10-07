@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { getGameStats } from "../services/gameStatsService.js";
+import { sendServerError } from "../lib/http.js";
 
 export async function show(req: Request, res: Response) {
   const { gameId } = req.params;
@@ -8,6 +9,6 @@ export async function show(req: Request, res: Response) {
     const stats = await getGameStats(gameId);
     res.json(stats);
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed_to_get_game_stats" });
+    sendServerError(res, "admin_game_stats_failed", err);
   }
 }

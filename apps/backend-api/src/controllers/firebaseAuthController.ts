@@ -24,6 +24,7 @@ import {
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
 import { log } from "../lib/log.js";
+import { sendServerError } from "../lib/http.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
@@ -124,7 +125,7 @@ export async function registerWithUsername(req: Request, res: Response) {
     });
   } catch (e: any) {
     log.error("register_username_failed", undefined, e);
-    return res.status(500).json({ error: e?.message || "Registration failed" });
+    return sendServerError(res, "auth_registration_failed", e);
   }
 }
 
@@ -195,7 +196,7 @@ export async function loginWithUsername(req: Request, res: Response) {
     });
   } catch (e: any) {
     log.error("login_username_failed", undefined, e);
-    return res.status(500).json({ error: e?.message || "Login failed" });
+    return sendServerError(res, "auth_login_failed", e);
   }
 }
 
@@ -251,7 +252,7 @@ export async function registerAnonymous(req: Request, res: Response) {
     });
   } catch (e: any) {
     log.error("register_anonymous_failed", undefined, e);
-    return res.status(500).json({ error: e?.message || "Registration failed" });
+    return sendServerError(res, "auth_registration_failed", e);
   }
 }
 
@@ -302,7 +303,7 @@ export async function linkProvider(req: Request, res: Response) {
     });
   } catch (e: any) {
     log.error("link_provider_failed", undefined, e);
-    return res.status(500).json({ error: e?.message || "Linking failed" });
+    return sendServerError(res, "auth_link_provider_failed", e);
   }
 }
 
@@ -360,7 +361,7 @@ export async function changePin(req: Request, res: Response) {
     return res.json({ ok: true });
   } catch (e: any) {
     log.error("change_pin_failed", undefined, e);
-    return res.status(500).json({ error: e?.message || "Failed to change PIN" });
+    return sendServerError(res, "auth_change_pin_failed", e);
   }
 }
 
@@ -414,7 +415,7 @@ export async function addEmail(req: Request, res: Response) {
     if (e.code === "auth/invalid-email") {
       return res.status(400).json({ error: "Invalid email address format" });
     }
-    return res.status(500).json({ error: e?.message || "Failed to add email" });
+    return sendServerError(res, "auth_add_email_failed", e);
   }
 }
 
@@ -450,7 +451,7 @@ export async function checkEmailVerifiedStatus(req: Request, res: Response) {
     return res.json({ ok: true, emailVerified: isVerified });
   } catch (e: any) {
     log.error("check_email_verified_failed", undefined, e);
-    return res.status(500).json({ error: e?.message || "Failed to check verification status" });
+    return sendServerError(res, "auth_check_email_verified_failed", e);
   }
 }
 
@@ -483,7 +484,7 @@ export async function getCurrentUser(req: Request, res: Response) {
     });
   } catch (e: any) {
     log.error("get_current_user_failed", undefined, e);
-    return res.status(500).json({ error: e?.message || "Failed to get user" });
+    return sendServerError(res, "auth_get_current_user_failed", e);
   }
 }
 

@@ -5,6 +5,7 @@ import {
   createGameConfig,
   updateGameConfig,
 } from "../services/gamesConfigService.js";
+import { sendServerError } from "../lib/http.js";
 
 export async function list(req: Request, res: Response) {
   try {
@@ -13,7 +14,7 @@ export async function list(req: Request, res: Response) {
     const result = await listGameConfigs({ limit, cursor });
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed_to_list_games" });
+    sendServerError(res, "game_config_list_failed", err);
   }
 }
 
@@ -25,7 +26,7 @@ export async function show(req: Request, res: Response) {
     if (!game) return res.status(404).json({ error: "game_not_found" });
     res.json(game);
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed_to_get_game" });
+    sendServerError(res, "game_config_get_failed", err);
   }
 }
 

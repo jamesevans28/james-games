@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { putScoreWithUser, getTopScoresHydrated } from "../services/scoresService.js";
 import { getFollowingIds } from "../services/followersService.js";
 import { getGameConfig } from "../services/gamesConfigService.js";
+import { getUser } from "../services/dynamoService.js";
 import { applyExperienceToUser } from "../services/experienceService.js";
 import {
   ScoreRejected,
@@ -11,6 +12,7 @@ import {
   xpForScore,
 } from "../services/scoringRules.js";
 import { log } from "../lib/log.js";
+import { sendServerError } from "../lib/http.js";
 
 /**
  * POST /scores — the only way a run earns anything. The server validates the score
@@ -25,11 +27,15 @@ export async function createScore(req: Request, res: Response) {
     const valid = validateScoreSubmission(body, limitsFor(gameConfig));
 
     const userId = req.user?.userId;
+    // Name/avatar snapshots come from the user row (req.user only carries auth claims).
+    const profile = userId ? await getUser(userId).catch(() => null) : null;
     const item = await putScoreWithUser({
       gameId: valid.gameId,
       score: valid.score,
       durationMs: valid.durationMs,
       userId,
+      screenName: typeof profile?.screenName === "string" ? profile.screenName : undefined,
+      avatar: typeof profile?.avatar === "number" ? profile.avatar : undefined,
     });
 
     let awardedXp = 0;
@@ -82,6 +88,6 @@ export async function listScores(req: Request, res: Response) {
     const rows = await getTopScoresHydrated(gameId, limit, { includeUserIds });
     res.json(rows);
   } catch (e: any) {
-    res.status(500).json({ error: e?.message || "Server error" });
+    sendServerError(res, "scores_list_failed", e);
   }
 }

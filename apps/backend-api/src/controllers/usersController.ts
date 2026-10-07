@@ -10,6 +10,7 @@ import {
 } from "../services/followersService.js";
 import { getRecentGamesForUser } from "../services/userGameStatsService.js";
 import { toPublicProfile } from "../services/publicProfile.js";
+import { sendServerError } from "../lib/http.js";
 
 export async function me(req: Request, res: Response) {
   if (!req.user?.userId) return res.json({ user: null });
@@ -40,7 +41,7 @@ export async function me(req: Request, res: Response) {
       },
     });
   } catch (e: any) {
-    res.status(500).json({ error: e?.message || "failed" });
+    sendServerError(res, "users_request_failed", e);
   }
 }
 
@@ -130,6 +131,6 @@ export async function getPublicProfile(req: Request, res: Response) {
       isFollowing: viewerFollows,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err?.message || "failed" });
+    sendServerError(res, "users_request_failed", err);
   }
 }
