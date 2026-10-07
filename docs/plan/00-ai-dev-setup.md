@@ -54,7 +54,7 @@ Steps:
 Done when: `grep -ril cognito docs --exclude-dir=archive --exclude-dir=plan` returns nothing.
 
 ## T0.6 Claude Code settings and launch configs
-Status: todo
+Status: done (2026-10-08)
 Depends on: none
 Goal: sessions don't get blocked by permission prompts for routine commands, and the Browser pane can start every app.
 Files: `.claude/settings.json`, `.claude/launch.json`
