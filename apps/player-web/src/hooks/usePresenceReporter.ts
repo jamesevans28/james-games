@@ -28,7 +28,6 @@ export function usePresenceReporter(args: {
         });
       } catch (err: any) {
         if (import.meta.env.DEV) {
-          console.debug("presence heartbeat failed", err);
         }
       } finally {
         if (!cancelled) {

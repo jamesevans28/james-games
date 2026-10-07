@@ -110,7 +110,6 @@ export default function GameLanding({ meta, onPlay }: Props) {
         if (!cancelled) setActivity(res.activity || []);
       } catch (err) {
         if (import.meta.env.DEV) {
-          console.debug("activity fetch failed", err);
         }
       } finally {
         if (!cancelled) setActivityLoading(false);
@@ -313,7 +312,6 @@ function LeaderboardSection({
   // Debugging: log leaderboard inputs so we can trace why nothing renders
   // (some runtime environments may return unexpected shapes)
   // eslint-disable-next-line no-console
-  console.debug("LeaderboardSection", { top, loading, error, userName, user });
 
   if (loading) return <div className="mt-4 text-flingo-600">Loading…</div>;
   if (error) return <div className="mt-4 text-neon-pink">{error}</div>;

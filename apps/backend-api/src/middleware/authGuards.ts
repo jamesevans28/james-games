@@ -2,6 +2,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { verifyIdToken as verifyFirebaseToken } from "../services/firebaseAuthService.js";
 import { getUser } from "../services/dynamoService.js";
+import { log } from "../lib/log.js";
 
 // Extended user info attached to request
 export interface AuthUser {
@@ -49,7 +50,7 @@ export async function attachUser(req: Request, res: Response, next: NextFunction
   } catch (err) {
     // Token verification failed - user remains undefined
     // Firebase tokens are short-lived; client should refresh automatically
-    console.error("Firebase token verification failed:", err);
+    log.warn("token_verification_failed", undefined, err);
   }
 
   next();

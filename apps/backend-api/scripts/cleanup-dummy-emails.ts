@@ -61,7 +61,7 @@ async function cleanupDummyEmails() {
 
       // Check if this is a dummy email
       if (user.email?.endsWith("@dummy.local")) {
-        console.log(`👤 ${user.uid}: ${user.email} → removing email`);
+        console.log(`👤 user ${total} → removing dummy email`);
 
         if (!DRY_RUN) {
           try {
@@ -72,7 +72,7 @@ async function cleanupDummyEmails() {
             console.log(`   ✅ Email removed`);
             cleaned++;
           } catch (e: any) {
-            console.log(`   ❌ Failed: ${e.message}`);
+            console.log(`   ❌ Failed: ${e?.code ?? e?.name ?? "error"}`);
           }
         } else {
           console.log(`   🔍 [DRY RUN] Would remove email`);
@@ -97,4 +97,4 @@ async function cleanupDummyEmails() {
   }
 }
 
-cleanupDummyEmails().catch(console.error);
+cleanupDummyEmails().catch((e) => console.error("Failed:", e?.code ?? e?.name ?? "error"));

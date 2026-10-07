@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import streakService from "../services/streakService.js";
+import { log } from "../lib/log.js";
 
 /**
  * Record a daily login and return updated streak info.
@@ -25,7 +26,7 @@ export async function recordStreakCheckin(req: Request, res: Response) {
       isNewStreak: result.isNewStreak,
     });
   } catch (e: any) {
-    console.error("streakController.recordStreakCheckin failed", e?.name);
+    log.error("streak_checkin_failed", undefined, e);
     res.status(500).json({ error: "server_error" });
   }
 }
@@ -49,7 +50,7 @@ export async function getStreak(req: Request, res: Response) {
       lastLoginDate: streak.lastLoginDate,
     });
   } catch (e: any) {
-    console.error("streakController.getStreak error:", e);
+    log.error("streak_get_failed", undefined, e);
     res.status(500).json({ error: e?.message || "Failed to get streak" });
   }
 }

@@ -3,6 +3,7 @@ import { DynamoDBDocumentClient, ScanCommand, QueryCommand } from "@aws-sdk/lib-
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
 import { listGameConfigs, GameConfigRecord } from "../services/gamesConfigService.js";
+import { log } from "../lib/log.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const process: any;
@@ -106,7 +107,7 @@ async function getRatingData(): Promise<
       }
     });
   } catch (err) {
-    console.error("Failed to get rating data:", err);
+    log.error("feed_rating_data_failed", undefined, err);
   }
 
   return stats;
@@ -136,7 +137,7 @@ async function getUserRecentGames(userId: string): Promise<string[]> {
       .map((item) => item.gameId!);
   } catch (err) {
     // Index may not exist yet - gracefully degrade
-    console.error("Failed to get user recent games:", err);
+    log.error("feed_recent_games_failed", undefined, err);
     return [];
   }
 }
@@ -349,7 +350,7 @@ export async function getFeed(req: Request, res: Response) {
       total: ordered.length,
     });
   } catch (err) {
-    console.error("Feed error:", err);
+    log.error("feed_failed", undefined, err);
     res.status(500).json({ error: "Failed to load feed data" });
   }
 }
@@ -413,7 +414,7 @@ export async function getPersonalizedFeed(req: Request, res: Response) {
       userRecentGames,
     });
   } catch (err) {
-    console.error("Personalized feed error:", err);
+    log.error("personalized_feed_failed", undefined, err);
     res.status(500).json({ error: "Failed to load personalized feed data" });
   }
 }

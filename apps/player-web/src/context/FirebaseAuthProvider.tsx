@@ -24,6 +24,7 @@ import {
   type User as FirebaseUser,
 } from "../lib/firebase";
 import { setAuthTokenGetter, type ExperienceSummary } from "../lib/api";
+import { errorCode } from "../utils/errorCode";
 
 // Account types supported by the app
 export type AccountType = "anonymous" | "username_pin" | "linked";
@@ -150,7 +151,7 @@ function persistSession(user: AuthUser | null) {
     const payload: CachedSession = { user, timestamp: Date.now() };
     window.localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(payload));
   } catch (err) {
-    console.warn("FirebaseAuthProvider: unable to persist session", err);
+    console.warn("FirebaseAuthProvider: unable to persist session", errorCode(err));
   }
 }
 
@@ -228,7 +229,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         return authUser;
       } catch (err) {
-        console.error("FirebaseAuthProvider: fetchProfile error", err);
+        console.error("FirebaseAuthProvider: fetchProfile error", errorCode(err));
         return null;
       }
     },
@@ -260,7 +261,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         return authUser;
       } catch (err) {
-        console.error("FirebaseAuthProvider: registerAnonymousUser error", err);
+        console.error("FirebaseAuthProvider: registerAnonymousUser error", errorCode(err));
         return null;
       }
     },
@@ -272,7 +273,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (initRef.current) return;
     initRef.current = true;
 
-    console.log("FirebaseAuthProvider: initializing...");
 
     // Initialize Firebase
     initializeFirebase();
@@ -280,16 +280,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Restore cached session immediately while Firebase initializes (for UI only)
     const cached = readCachedSession();
     if (cached) {
-      console.log("FirebaseAuthProvider: restored cached session for UI", cached.userId);
       setUser(cached);
     }
 
     // Wait for Firebase Auth to be ready, then process
     (async () => {
       try {
-        console.log("FirebaseAuthProvider: waiting for Firebase auth to be ready...");
         const currentUser = await waitForAuthReady();
-        console.log("FirebaseAuthProvider: Firebase auth ready, user:", currentUser?.uid);
 
         // Firebase is now ready - mark it immediately so hooks can proceed
         setFirebaseReady(true);
@@ -299,7 +296,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setFirebaseUser(currentUser);
           let profile = await fetchProfile(currentUser);
           if (!profile && currentUser.isAnonymous) {
-            console.log("FirebaseAuthProvider: registering anonymous user in backend");
             profile = await registerAnonymousUser(currentUser);
           }
           if (profile) {
@@ -320,7 +316,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         } else {
           // No user - sign in anonymously
-          console.log("FirebaseAuthProvider: no user, signing in anonymously...");
           try {
             const result = await signInAsAnonymous();
             const fbUser = result.user;
@@ -328,7 +323,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             let profile = await fetchProfile(fbUser);
             if (!profile) {
-              console.log("FirebaseAuthProvider: registering new anonymous user");
               profile = await registerAnonymousUser(fbUser);
             }
             if (profile) {
@@ -348,12 +342,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               persistSession(minimalUser);
             }
           } catch (err) {
-            console.error("FirebaseAuthProvider: anonymous sign-in failed", err);
+            console.error("FirebaseAuthProvider: anonymous sign-in failed", errorCode(err));
             // Still ready, just no user
           }
         }
       } catch (err) {
-        console.error("FirebaseAuthProvider: initialization error", err);
+        console.error("FirebaseAuthProvider: initialization error", errorCode(err));
         // Still mark as ready so app doesn't hang
         setFirebaseReady(true);
       } finally {
@@ -363,11 +357,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Subscribe to future auth state changes
     const unsubscribe = onAuthChange(async (fbUser) => {
-      console.log("FirebaseAuthProvider: auth state changed", fbUser?.uid, fbUser?.isAnonymous);
       setFirebaseUser(fbUser);
 
       if (!fbUser) {
-        console.log("FirebaseAuthProvider: user signed out");
         setUser(null);
         persistSession(null);
         return;
@@ -378,12 +370,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         let profile = await fetchProfile(fbUser);
 
         if (!profile && fbUser.isAnonymous) {
-          console.log("FirebaseAuthProvider: registering anonymous user in backend");
           profile = await registerAnonymousUser(fbUser);
         }
 
         if (profile) {
-          console.log("FirebaseAuthProvider: setting user from profile", profile.userId);
           setUser(profile);
           persistSession(profile);
         } else {
@@ -400,7 +390,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           persistSession(minimalUser);
         }
       } catch (err) {
-        console.error("FirebaseAuthProvider: auth state change error", err);
+        console.error("FirebaseAuthProvider: auth state change error", errorCode(err));
         const minimalUser: AuthUser = {
           userId: fbUser.uid,
           email: fbUser.email,
@@ -711,7 +701,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             persistSession(profile);
           }
         } catch (err) {
-          console.error("ensureSession: failed to fetch profile", err);
+          console.error("ensureSession: failed to fetch profile", errorCode(err));
         }
         return;
       }
@@ -721,7 +711,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           await signInAsAnonymous();
         } catch (err) {
-          console.error("ensureSession: anonymous sign-in failed", err);
+          console.error("ensureSession: anonymous sign-in failed", errorCode(err));
         }
       }
     },

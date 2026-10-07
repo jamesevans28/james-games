@@ -7,6 +7,7 @@ import {
   ExperienceLevelRow,
 } from "../data/experienceLevels.js";
 import { getUser } from "./dynamoService.js";
+import { log } from "../lib/log.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
@@ -61,7 +62,7 @@ async function loadExperienceLevels(): Promise<ExperienceLevelRow[]> {
       return cachedLevels;
     }
   } catch (err) {
-    console.warn("experienceService: failed to load levels from table, falling back", err);
+    log.warn("experience_levels_load_failed", undefined, err);
   }
   cachedLevels = DEFAULT_EXPERIENCE_LEVELS;
   lastLoadedAt = now;

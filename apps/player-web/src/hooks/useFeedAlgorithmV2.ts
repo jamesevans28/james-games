@@ -339,7 +339,6 @@ export function useFeedAlgorithm({ games, ratings, isBetaTester }: FeedAlgorithm
     if (typeof window !== "undefined") {
       timeoutRef.current = window.setTimeout(() => {
         if (!cancelled && backendResponse === null) {
-          console.log("Feed: Backend took >1.5s, showing client-sorted feed");
           setIsLoading(false);
         }
       }, 1500);

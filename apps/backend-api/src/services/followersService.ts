@@ -13,6 +13,7 @@ import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
 import { getUser } from "./dynamoService.js";
 import { buildSummary, ExperienceSummary } from "./experienceService.js";
+import { log } from "../lib/log.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 const FOLLOWED_BY_INDEX = config.tables.followsByTargetIndex || "FollowedBy";
@@ -238,7 +239,7 @@ async function buildProfileMap(userIds: string[]) {
         const profile = await getUser(id);
         return profile ? ([id, profile] as const) : null;
       } catch (err) {
-        console.warn("followersService: failed to fetch profile", id, err);
+        log.warn("follow_profile_fetch_failed", undefined, err);
         return null;
       }
     })

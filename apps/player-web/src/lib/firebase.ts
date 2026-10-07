@@ -33,14 +33,8 @@ let auth: Auth | null = null;
 
 export function initializeFirebase(): { app: FirebaseApp; auth: Auth } {
   if (!app) {
-    console.log("Firebase: initializing with config", {
-      apiKey: firebaseConfig.apiKey ? "***set***" : "MISSING",
-      authDomain: firebaseConfig.authDomain,
-      projectId: firebaseConfig.projectId,
-    });
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
-    console.log("Firebase: initialized successfully");
   }
   return { app, auth: auth! };
 }
@@ -112,16 +106,9 @@ export async function getIdToken(forceRefresh = false): Promise<string | null> {
 // Subscribe to auth state changes
 export function onAuthChange(callback: (user: User | null) => void): () => void {
   const auth = getFirebaseAuth();
-  console.log(
-    "Firebase: subscribing to auth state changes, auth object:",
-    !!auth,
-    "currentUser:",
-    auth?.currentUser?.uid
-  );
 
   // Firebase's onAuthStateChanged should fire immediately with current state
   const unsubscribe = onAuthStateChanged(auth, (user) => {
-    console.log("Firebase: onAuthStateChanged fired, user:", user?.uid);
     callback(user);
   });
 

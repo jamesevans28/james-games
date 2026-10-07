@@ -4,6 +4,7 @@ import { config } from "../config/index.js";
 import { getUser } from "./dynamoService.js";
 import { recordUserGameSession } from "./userGameStatsService.js";
 import { randomUUID } from "crypto";
+import { log } from "../lib/log.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
@@ -77,7 +78,7 @@ export async function putScoreWithUser(args: {
   );
   if (args.userId) {
     recordUserGameSession(args.userId, args.gameId, args.score).catch((err) => {
-      console.warn("recordUserGameSession failed", err);
+      log.warn("user_game_session_record_failed", undefined, err);
     });
   }
   return item;

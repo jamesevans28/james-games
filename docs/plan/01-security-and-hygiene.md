@@ -62,7 +62,7 @@ Steps:
 Done when: build, inspect `dist/sw.js`, confirm no `NetworkFirst` entry matches an authenticated route; offline play works in the Browser pane with the network disabled.
 
 ## T1.6 Strip PII from logs
-Status: todo
+Status: done (2026-10-08). Backend: src/lib/log.ts (JSON lines, identifying keys dropped, errors reduced to name/code/scrubbed message) replaces all 30 console calls; the only console.info left is inside the logger. findUserByUsername now throws on database errors instead of returning null, so a failed lookup can never make a taken username look free. Frontend: 19 debug logs removed (several printed uids, one the whole user object); auth-provider errors log only errorCode(err). Scripts cleanup-dummy-emails and view-custom-claims print counts only; the Cognito-era scripts that log identities are deleted in T1.9.
 Depends on: none
 Goal: no email, username, userId or raw auth-library error object is logged anywhere (org rule).
 Files: backend `firebaseAuthController.ts` (~76-77, 578-579, 592, 770), `middleware/authGuards.ts` (~52), `services/followersService.ts` (~241), `scripts/*.ts`; frontend `context/FirebaseAuthProvider.tsx` (~254-390, 22 logs), `lib/firebase.ts` (~124), `pages/games/GameLanding.tsx` (~316)

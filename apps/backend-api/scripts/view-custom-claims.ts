@@ -40,6 +40,7 @@ async function viewCustomClaims() {
   let pageToken: string | undefined;
   let userCount = 0;
   let usersWithClaims = 0;
+  const claimKeyCounts = new Map<string, number>();
 
   do {
     const listResult = await admin.auth().listUsers(1000, pageToken);
@@ -50,15 +51,12 @@ async function viewCustomClaims() {
 
       if (Object.keys(claims).length > 0) {
         usersWithClaims++;
-        console.log("─".repeat(60));
-        console.log(`👤 User: ${user.uid}`);
-        console.log(`   Email: ${user.email || "(none)"}`);
-        console.log(`   Display Name: ${user.displayName || "(none)"}`);
-        console.log(`   Provider: ${user.providerData[0]?.providerId || "custom"}`);
-        console.log(`   Created: ${user.metadata.creationTime}`);
-        console.log(`\n   Custom Claims:`);
-        console.log(`   ${JSON.stringify(claims, null, 2)}`);
-        console.log("");
+        // Counts only: claims can contain usernames, so values are never printed.
+        const provider = user.providerData[0]?.providerId || "custom";
+        for (const key of Object.keys(claims)) {
+          const k = `${provider} · ${key}`;
+          claimKeyCounts.set(k, (claimKeyCounts.get(k) ?? 0) + 1);
+        }
       }
     }
 
@@ -70,6 +68,8 @@ async function viewCustomClaims() {
   console.log(`   Total users: ${userCount}`);
   console.log(`   Users with custom claims: ${usersWithClaims}`);
   console.log(`   Users without claims: ${userCount - usersWithClaims}`);
+  console.log(`   Claim keys by provider:`);
+  for (const [k, n] of [...claimKeyCounts].sort()) console.log(`     ${k}: ${n}`);
 }
 
-viewCustomClaims().catch(console.error);
+viewCustomClaims().catch((e) => console.error("Failed:", e?.code ?? e?.name ?? "error"));

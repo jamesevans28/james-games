@@ -23,6 +23,7 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
+import { log } from "../lib/log.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
@@ -122,7 +123,7 @@ export async function registerWithUsername(req: Request, res: Response) {
       accountType: "username_pin",
     });
   } catch (e: any) {
-    console.error("registerWithUsername error:", e);
+    log.error("register_username_failed", undefined, e);
     return res.status(500).json({ error: e?.message || "Registration failed" });
   }
 }
@@ -193,7 +194,7 @@ export async function loginWithUsername(req: Request, res: Response) {
       accountType: user.accountType || "username_pin",
     });
   } catch (e: any) {
-    console.error("loginWithUsername error:", e);
+    log.error("login_username_failed", undefined, e);
     return res.status(500).json({ error: e?.message || "Login failed" });
   }
 }
@@ -249,7 +250,7 @@ export async function registerAnonymous(req: Request, res: Response) {
       isNew: true,
     });
   } catch (e: any) {
-    console.error("registerAnonymous error:", e);
+    log.error("register_anonymous_failed", undefined, e);
     return res.status(500).json({ error: e?.message || "Registration failed" });
   }
 }
@@ -300,7 +301,7 @@ export async function linkProvider(req: Request, res: Response) {
       accountType: "linked",
     });
   } catch (e: any) {
-    console.error("linkProvider error:", e);
+    log.error("link_provider_failed", undefined, e);
     return res.status(500).json({ error: e?.message || "Linking failed" });
   }
 }
@@ -359,7 +360,7 @@ export async function changePin(req: Request, res: Response) {
 
     return res.json({ ok: true });
   } catch (e: any) {
-    console.error("changePin error:", e);
+    log.error("change_pin_failed", undefined, e);
     return res.status(500).json({ error: e?.message || "Failed to change PIN" });
   }
 }
@@ -405,7 +406,7 @@ export async function addEmail(req: Request, res: Response) {
 
     return res.json({ ok: true, email, emailVerified: false });
   } catch (e: any) {
-    console.error("addEmail error:", e);
+    log.error("add_email_failed", undefined, e);
     // Handle specific Firebase errors
     if (e.code === "auth/email-already-exists") {
       return res
@@ -451,7 +452,7 @@ export async function checkEmailVerifiedStatus(req: Request, res: Response) {
 
     return res.json({ ok: true, emailVerified: isVerified });
   } catch (e: any) {
-    console.error("checkEmailVerifiedStatus error:", e);
+    log.error("check_email_verified_failed", undefined, e);
     return res.status(500).json({ error: e?.message || "Failed to check verification status" });
   }
 }
@@ -485,7 +486,7 @@ export async function getCurrentUser(req: Request, res: Response) {
       createdAt: profile.createdAt,
     });
   } catch (e: any) {
-    console.error("getCurrentUser error:", e);
+    log.error("get_current_user_failed", undefined, e);
     return res.status(500).json({ error: e?.message || "Failed to get user" });
   }
 }
@@ -495,14 +496,11 @@ export async function getCurrentUser(req: Request, res: Response) {
 async function findUserByUsername(username: string) {
   // Query the GSI on username
   if (!config.tables.users) {
-    console.error("findUserByUsername: TABLE_USERS not configured");
-    return null;
+    log.error("find_user_by_username_unconfigured");
+    throw new Error("users_table_not_configured");
   }
 
   try {
-    console.log(
-      `findUserByUsername: looking up username "${username}" in table ${config.tables.users}`
-    );
     const result = await ddb.send(
       new QueryCommand({
         TableName: config.tables.users,
@@ -512,20 +510,12 @@ async function findUserByUsername(username: string) {
         Limit: 1,
       })
     );
-    console.log(`findUserByUsername: found ${result.Items?.length || 0} results`);
-    if (result.Items?.[0]) {
-      console.log(`findUserByUsername: found user ${result.Items[0].userId}`);
-    }
     return result.Items?.[0] as any | undefined;
   } catch (e: any) {
-    // Index might not exist yet or other error
-    console.error("findUserByUsername error:", e.name, e.message);
-    if (e.message?.includes("index") || e.message?.includes("GSI")) {
-      console.error(
-        "HINT: The username-index GSI may not exist. Run: npx tsx scripts/add-username-gsi.ts"
-      );
-    }
-    return null;
+    // Fail closed: if the lookup errors we must not treat the username as free.
+    // (If the username-index GSI is missing, run: npx tsx scripts/add-username-gsi.ts)
+    log.error("find_user_by_username_failed", undefined, e);
+    throw e;
   }
 }
 
@@ -692,10 +682,10 @@ export async function adminResetUserPin(req: Request, res: Response) {
       })
     );
 
-    console.log(`Admin ${requester.userId} reset PIN for user: ${userId}`);
+    log.info("admin_pin_reset");
     res.json({ success: true, message: "PIN reset successfully" });
   } catch (error) {
-    console.error("Error resetting PIN:", error);
+    log.error("admin_pin_reset_failed", undefined, error);
     res.status(500).json({ error: "Failed to reset PIN" });
   }
 }

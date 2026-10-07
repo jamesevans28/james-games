@@ -10,6 +10,7 @@ import {
   validateScoreSubmission,
   xpForScore,
 } from "../services/scoringRules.js";
+import { log } from "../lib/log.js";
 
 /**
  * POST /scores — the only way a run earns anything. The server validates the score
@@ -44,7 +45,7 @@ export async function createScore(req: Request, res: Response) {
         summary = result.summary;
       } catch (err: any) {
         // The score is saved; an XP failure must not lose it.
-        console.warn("createScore: xp award failed", err?.message);
+        log.warn("xp_award_failed", { gameId: valid.gameId }, err);
       }
     }
 
@@ -58,10 +59,10 @@ export async function createScore(req: Request, res: Response) {
     });
   } catch (e: any) {
     if (e instanceof ScoreRejected) {
-      console.warn("createScore: rejected", e.code);
+      log.warn("score_rejected", { code: e.code });
       return res.status(400).json({ error: e.code });
     }
-    console.error("createScore: failed", e?.name);
+    log.error("score_create_failed", undefined, e);
     res.status(500).json({ error: "server_error" });
   }
 }
