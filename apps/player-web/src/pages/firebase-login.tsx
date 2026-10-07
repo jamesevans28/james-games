@@ -209,23 +209,12 @@ export default function FirebaseLoginPage() {
           </div>
         </div>
 
-        {/* Migration Notice Banner */}
-        <div className="mb-5 text-sm p-4 bg-neon-blue/10 border border-neon-blue/30 rounded-2xl">
-          <div className="font-bold mb-2 text-flingo-900">📢 Account System Update</div>
-          <p className="text-flingo-800 mb-2">
-            We've upgraded our login system! If you had an account before:
+        {/* PIN recovery is an admin action; see docs/plan T1.1 and T7.8 (parent page). */}
+        {mode === "login" && (
+          <p className="mb-5 text-xs text-flingo-700">
+            Forgot your PIN? Ask a grown-up to get in touch with James to reset it.
           </p>
-          <ul className="list-disc list-inside space-y-1 text-flingo-700 text-xs">
-            <li>
-              <strong>Existing users:</strong> Use "Create Account" with your{" "}
-              <strong>same username</strong> and set a new PIN. Your scores and progress will be
-              restored!
-            </li>
-            <li>
-              <strong>New users:</strong> Just create a new account below.
-            </li>
-          </ul>
-        </div>
+        )}
 
         {/* Info for new users */}
         {mode === "register" && (

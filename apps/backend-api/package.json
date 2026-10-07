@@ -9,7 +9,8 @@
     "dev": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/dev-server.ts",
     "start": "node dist/local-server.js",
     "seed:game-configs": "node ./scripts/seed-game-configs-standalone.mjs",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "tsx --test \"src/**/*.test.ts\""
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.958.0",

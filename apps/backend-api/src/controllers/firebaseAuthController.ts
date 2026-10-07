@@ -15,6 +15,7 @@ import {
 } from "../services/firebaseAuthService.js";
 import { putUser, getUser } from "../services/dynamoService.js";
 import { createUniqueScreenName, generatePlayfulName } from "../services/userService.js";
+import { isUsernameTakenByOther } from "../services/usernamePolicy.js";
 import {
   DynamoDBDocumentClient,
   QueryCommand,
@@ -68,51 +69,11 @@ export async function registerWithUsername(req: Request, res: Response) {
     const decodedToken = await verifyIdToken(firebaseToken);
     const uid = decodedToken.uid;
 
-    // Check if username already exists
+    // A username owned by another account can never be claimed here, whatever its
+    // accountType. Recovering an old account is an admin action (POST /auth/firebase/admin/reset-pin).
     const existingUser = await findUserByUsername(username.toLowerCase());
-
-    // Special case: migrated user reclaiming their account
-    if (existingUser && existingUser.accountType === "migrated") {
-      console.log(
-        `Migrated user ${existingUser.userId} reclaiming account with username ${username}`
-      );
-
-      // Hash the new PIN
-      const pinHash = await hashPin(pin);
-
-      // Update the migrated user's record with new PIN
-      await updateUserToUsernamePin(existingUser.userId, {
-        username: username.toLowerCase(),
-        pinHash,
-        screenName: existingUser.screenName, // Keep their old screen name
-        accountType: "username_pin",
-      });
-
-      // Set custom claims on the Firebase user
-      await setUserClaims(existingUser.userId, {
-        accountType: "username_pin",
-        username: username.toLowerCase(),
-      });
-
-      // Return a custom token for the ORIGINAL userId (preserves their data)
-      const customToken = await createCustomToken(existingUser.userId, {
-        accountType: "username_pin",
-        username: username.toLowerCase(),
-      });
-
-      return res.json({
-        ok: true,
-        customToken,
-        screenName: existingUser.screenName,
-        accountType: "username_pin",
-        migrated: true, // Flag to indicate this was a migration
-        userId: existingUser.userId,
-      });
-    }
-
-    // Normal case: username already taken by a non-migrated user
-    if (existingUser && existingUser.userId !== uid) {
-      return res.status(409).json({ error: "Username is already taken" });
+    if (isUsernameTakenByOther(existingUser, uid)) {
+      return res.status(409).json({ error: "Username is already taken", code: "username_taken" });
     }
 
     // Hash the PIN
@@ -202,12 +163,11 @@ export async function loginWithUsername(req: Request, res: Response) {
       return res.status(401).json({ error: "Invalid username or PIN" });
     }
 
-    // Check if user has a PIN hash (migrated users might not)
+    // Accounts without a PIN (old migrated rows) get the same answer as a wrong PIN,
+    // so the response never confirms that a username exists.
     if (!user.pinHash) {
       recordLoginAttempt(rateLimitKey, false);
-      return res.status(401).json({
-        error: "Account not set up. Please register with this username to set a PIN.",
-      });
+      return res.status(401).json({ error: "Invalid username or PIN" });
     }
 
     // Verify PIN

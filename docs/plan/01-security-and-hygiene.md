@@ -5,7 +5,7 @@ Close the holes found in the review, fix the known bugs, delete dead code, and m
 Severity key: P0 = fix before any relaunch.
 
 ## T1.1 Remove the migrated-account takeover path (P0)
-Status: todo
+Status: done (2026-10-08). Verified by unit tests (usernamePolicy.test.ts) and code read; a live 409 call against prod Firebase was not made. Root `npm test` now runs backend tests via node:test until Vitest lands in T4.2.
 Depends on: none
 Goal: nobody can reset another user's PIN by registering their username.
 Files: `apps/backend-api/src/controllers/firebaseAuthController.ts` (~lines 75-111, `register-username`)
