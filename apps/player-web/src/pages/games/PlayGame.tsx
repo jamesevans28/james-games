@@ -117,12 +117,8 @@ export default function PlayGame() {
       }
       if (!containerRef.current) return;
 
-      // Check if online before attempting to load (games are loaded on demand)
-      if (!navigator.onLine) {
-        setError("You're offline. Connect to the internet to load this game.");
-        return;
-      }
-
+      // No online check here: games are precached by the service worker and can play
+      // offline. If the chunk isn't cached, the catch below shows the offline message.
       const mod = await meta.load();
       // Destroy any previous instance first
       if (destroyRef.current) {

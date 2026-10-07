@@ -19,28 +19,32 @@ export default defineConfig({
         globPatterns: [],
         globIgnores: ["**/assets/shared/logo_square.png"],
         runtimeCaching: [
+          // API caching. Workbox serialises these functions into sw.js, so they must not
+          // reference anything outside their own body. Only responses that are identical
+          // for every viewer may be cached; anything that can vary by the signed-in user
+          // (profile, followers, streaks, XP, personalised feed, a user's own rating,
+          // "following" leaderboards) must never be. See docs/plan T1.5.
           {
-            // Same-origin API (if proxied or served under /api)
-            urlPattern: ({ url }) =>
-              url.origin === self.location.origin && url.pathname.startsWith("/api/"),
+            urlPattern: ({ url, request }) =>
+              request.method === "GET" &&
+              (url.origin === "https://api.games4james.com" || url.origin === "http://localhost:8787") &&
+              (/^\/games\/config(\/[a-z0-9-]+)?$/.test(url.pathname) ||
+                url.pathname === "/ratings" ||
+                url.pathname === "/ratings/" ||
+                (/^\/scores\/[a-z0-9-]+$/.test(url.pathname) && !url.searchParams.has("scope"))),
             handler: "NetworkFirst",
             options: {
-              cacheName: "api-cache",
+              cacheName: "api-public",
               networkTimeoutSeconds: 3,
-              cacheableResponse: { statuses: [0, 200] },
+              cacheableResponse: { statuses: [200] },
               expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 },
             },
           },
           {
-            // External API domain (optional)
-            urlPattern: /^https:\/\/api\.flingo\.fun\/.*/,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "api-external-cache",
-              networkTimeoutSeconds: 3,
-              cacheableResponse: { statuses: [0, 200] },
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 },
-            },
+            // Everything else on the API, including every authenticated route: never cached.
+            urlPattern: ({ url }) =>
+              url.origin === "https://api.games4james.com" || url.origin === "http://localhost:8787",
+            handler: "NetworkOnly",
           },
           {
             // Cache images aggressively

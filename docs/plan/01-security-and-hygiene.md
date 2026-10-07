@@ -50,7 +50,7 @@ Steps:
 Done when: a Vitest unit test covers `validateScore`, `xpForScore`, and `nextStreak`; posting `score: 1e12` returns 400; posting a run with a client multiplier has no effect.
 
 ## T1.5 Service worker: never cache authenticated responses (P0)
-Status: todo
+Status: done (2026-10-08). Only GET /games/config(/:id), GET /ratings and GET /scores/:gameId without ?scope are cached (NetworkFirst, 1 h offline fallback); every other api.games4james.com or localhost:8787 request is NetworkOnly. GET /ratings/:gameId stays uncached because it includes the signed-in user's own rating. Verified by evaluating the built sw.js rule against 16 URL cases. Not verified: offline play end-to-end (needs the prod build served with the network off).
 Depends on: none
 Goal: one child can never see another's profile, followers or feed from the cache on a shared device.
 Files: `apps/player-web/vite/config.prod.mjs` (runtimeCaching ~40-70), `apps/player-web/vite/config.dev.mjs`
