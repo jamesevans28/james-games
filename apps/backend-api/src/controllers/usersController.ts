@@ -9,6 +9,7 @@ import {
   isFollowing,
 } from "../services/followersService.js";
 import { getRecentGamesForUser } from "../services/userGameStatsService.js";
+import { toPublicProfile } from "../services/publicProfile.js";
 
 export async function me(req: Request, res: Response) {
   // @ts-ignore
@@ -115,11 +116,8 @@ export async function getPublicProfile(req: Request, res: Response) {
       viewerFollows = await isFollowing(viewerId, targetUserId);
     }
     res.json({
-      profile: {
-        ...profile,
-        // Include streak in public profile
-        currentStreak: profile.currentStreak,
-      },
+      // Whitelisted fields only: never email, admin, preferences or last login.
+      profile: toPublicProfile(profile),
       followingCount,
       followersCount,
       following: followingEdges.slice(0, 25).map((edge) => ({

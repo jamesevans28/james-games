@@ -17,7 +17,7 @@ Steps:
 Done when: a request to `/auth/firebase/register-username` with an existing username returns 409 and no token; `grep -n "migrated" apps/backend-api/src` shows no reclaim logic.
 
 ## T1.2 Public profile whitelist (P0)
-Status: todo
+Status: done (2026-10-08). Whitelist is userId, screenName, avatar, createdAt, experience (level summary), currentStreak, longestStreak; experience and streaks kept because the profile page shows them. Audit: leaderboards, ratings and follower lists already return only safe fields; follower routes require auth. Verified locally: /users/:id profile keys are exactly the whitelist.
 Depends on: none
 Goal: `GET /users/:userId` never returns email, admin flag, preferences, lastLoginDate or any internal field.
 Files: `apps/backend-api/src/controllers/usersController.ts` (~95-122), `apps/backend-api/src/services/userService.ts` (~121-140)
