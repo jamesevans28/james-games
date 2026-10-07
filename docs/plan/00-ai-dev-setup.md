@@ -20,7 +20,7 @@ Steps:
 Done when: `grep -ri "cookie-based\|credentials: \"include\"" .github docs` returns nothing; the Copilot file is under 30 lines.
 
 ## T0.3 Per-app CLAUDE.md files
-Status: todo
+Status: done (2026-10-08)
 Depends on: T0.1
 Goal: each app has a short `CLAUDE.md` with its own commands, structure and gotchas, so sessions scoped to one app have what they need.
 Files: `apps/player-web/CLAUDE.md`, `apps/backend-api/CLAUDE.md`, `apps/admin-web/CLAUDE.md`
