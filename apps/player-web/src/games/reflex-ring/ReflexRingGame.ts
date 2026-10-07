@@ -2,6 +2,7 @@
 import Phaser from "phaser";
 import { trackGameStart } from "../../utils/analytics";
 import { dispatchGameOver } from "../../utils/gameEvents";
+import { getBest, setBest } from "../../utils/bestScore";
 
 const MIN_TARGET_SEPARATION_DEG = 40;
 const MAX_TARGET_SEPARATION_DEG = 250;
@@ -299,7 +300,7 @@ export default class ReflexRingGame extends Phaser.Scene {
     this.wedgeGraphics?.destroy();
     this.wedgeGraphics = this.add.graphics().setDepth(2);
 
-    this.best = Number(localStorage.getItem("reflex-ring-best") || 0);
+    this.best = getBest("reflex-ring");
     this.scoreText?.destroy();
     this.scoreText = this.add
       .text(this.centerX, 24, this.makeScoreText(), {
@@ -589,7 +590,7 @@ export default class ReflexRingGame extends Phaser.Scene {
 
     if (this.score > this.best) {
       this.best = this.score;
-      localStorage.setItem("reflex-ring-best", String(this.best));
+      setBest("reflex-ring", this.best);
     }
 
     const overlay = this.add.rectangle(

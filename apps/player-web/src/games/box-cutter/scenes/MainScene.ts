@@ -16,6 +16,7 @@ import { computeBorderMask } from "../useCases/borderMask";
 import { pointsForCapture } from "../useCases/score";
 import { createDPad, type DPadDirection, type DPadInstance } from "../../../game/ui/dpad";
 import { dispatchGameOver } from "../../../utils/gameEvents";
+import { getBest, setBest } from "../../../utils/bestScore";
 
 const GAME_WIDTH = 540;
 const GAME_HEIGHT = 960;
@@ -1014,14 +1015,13 @@ export class MainScene extends Phaser.Scene {
   }
 
   private loadBestScore(): number {
-    const saved = localStorage.getItem("box-cutter-best-score");
-    return saved ? parseInt(saved, 10) : 0;
+    return getBest("box-cutter");
   }
 
   private saveBestScore() {
     if (this.state.score > this.state.bestScore) {
       this.state.bestScore = this.state.score;
-      localStorage.setItem("box-cutter-best-score", this.state.score.toString());
+      setBest("box-cutter", this.state.score);
     }
   }
 

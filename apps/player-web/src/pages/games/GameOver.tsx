@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { postHighScore, type ExperienceSummary } from "../../lib/api";
 import { useAuth } from "../../context/FirebaseAuthProvider";
+import { cheerFor } from "../../utils/cheer";
 
 type Props = {
   open: boolean;
   score: number | null;
   gameId?: string | null;
+  /** The best score on this device before this run, for "New best!". */
+  previousBest?: number;
   /** Duration of the game session in milliseconds */
   durationMs?: number;
   onClose: () => void;
@@ -222,6 +225,7 @@ export default function GameOver({
   open,
   score,
   gameId,
+  previousBest = 0,
   durationMs,
   onClose,
   onPlayAgain,
@@ -241,6 +245,8 @@ export default function GameOver({
   // its own game config. The response carries awardedXp and the new XP summary.
   useEffect(() => {
     if (!open) {
+      // Each open is a new run: forget the last post so an equal score still saves.
+      postedRef.current = null;
       setScoreError(null);
       return;
     }
@@ -313,29 +319,7 @@ export default function GameOver({
 
   if (!open) return null;
 
-  const phrases = [
-    "Great job!",
-    "Awesome!",
-    "Fantastic!",
-    "Well done!",
-    "Impressive!",
-    "Outstanding!",
-    "Superb!",
-    "Excellent!",
-    "Brilliant!",
-    "Amazing!",
-    "Incredible!",
-    "Spectacular!",
-    "Marvelous!",
-    "Terrific!",
-    "Splendid!",
-    "Wonderful!",
-    "Fabulous!",
-    "Stunning!",
-    "Phenomenal!",
-    "Epic!",
-  ];
-  const phrase = phrases[(score ?? 0) % phrases.length];
+  const cheer = cheerFor(score, previousBest);
 
   return (
     <>
@@ -343,11 +327,17 @@ export default function GameOver({
         <div className="absolute inset-0 bg-surface-dark/80 backdrop-blur-sm" onClick={onClose} />
         <div className="relative w-full sm:w-auto sm:min-w-[320px] max-w-md mx-3 mb-6 sm:mb-0 rounded-3xl overflow-hidden border border-flingo-200/30 bg-surface-card shadow-card-hover">
           <div className="px-5 py-4 border-b border-flingo-200/30">
-            <div className="text-lg font-extrabold text-neon-lime text-glow-lime">{phrase}</div>
+            <div className="text-lg font-extrabold text-neon-lime text-glow-lime">
+              {cheer.isNewBest ? "🏆 " : ""}
+              {cheer.headline}
+            </div>
             <div className="text-flingo-600 text-sm font-medium">Your score</div>
           </div>
           <div className="px-5 py-6">
             <div className="text-5xl font-extrabold text-center text-flingo-900">{score ?? 0}</div>
+            {!cheer.isNewBest && previousBest > 0 && (
+              <p className="text-sm text-flingo-600 mt-1 text-center">Your best: {previousBest}</p>
+            )}
             {scoreError && (
               <p className="text-xs text-neon-orange mt-2 text-center flex items-center justify-center gap-1">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

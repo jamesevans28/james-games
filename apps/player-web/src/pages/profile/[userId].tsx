@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { games } from "../../games";
+import { useCatalog } from "../../context/GameCatalogProvider";
 import {
   fetchUserProfile,
   followUserApi,
@@ -41,6 +41,7 @@ interface ProfileResponse {
 export default function ProfilePage() {
   const { userId } = useParams();
   const { user } = useAuth();
+  const { getGame } = useCatalog();
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,14 +121,14 @@ export default function ProfilePage() {
   const recentGames = useMemo(() => {
     if (!data?.recentGames) return [];
     return data.recentGames.map((entry) => {
-      const meta = games.find((g) => g.id === entry.gameId);
+      const meta = getGame(entry.gameId);
       return {
         ...entry,
         title: meta?.title ?? entry.gameId,
-        thumbnail: meta?.thumbnail ?? "/assets/logo.png",
+        thumbnail: meta?.thumbnail ?? "/assets/shared/logo_square.png",
       };
     });
-  }, [data?.recentGames]);
+  }, [data?.recentGames, getGame]);
 
   if (loading) {
     return <div className="p-4 text-flingo-700 font-medium">Loading profile…</div>;

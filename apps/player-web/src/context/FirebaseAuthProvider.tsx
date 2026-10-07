@@ -25,6 +25,7 @@ import {
 } from "../lib/firebase";
 import { setAuthTokenGetter, type ExperienceSummary } from "../lib/api";
 import { errorCode } from "../utils/errorCode";
+import { API_BASE_URL } from "../config/env";
 
 // Account types supported by the app
 export type AccountType = "anonymous" | "username_pin" | "linked";
@@ -183,7 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // firebaseReady: true when Firebase SDK has resolved its initial auth state
   const [firebaseReady, setFirebaseReady] = useState(false);
   // For API calls that need auth, use firebaseReady instead
-  const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
+  const apiBase = API_BASE_URL;
   const initRef = useRef(false);
 
   // Wire up the token getter for API calls

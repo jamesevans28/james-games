@@ -110,7 +110,7 @@ Steps:
 Done when: `npm run typecheck` and `npm run web:build` pass; `git grep -il cognito -- ':!docs/archive' ':!docs/plan'` is empty; app runs and all public games still load.
 
 ## T1.10 Fix the small frontend bugs
-Status: todo
+Status: done (2026-10-08). utils/bestScore.ts (key g4j:best:<id>, migrates the highest legacy key) is used by all 13 games that keep a best and by GameTile; GameOver resets its posted flag on close, shows "New best!" / "You matched your best!" / "Nice run!" / "Have another go!" (utils/cheer.ts) and the previous best, captured in PlayGame while the dialog is closed. useGameCatalog reads VITE_API_BASE_URL with a proper base URL; GameCatalogProvider wraps the app and serves the leaderboard and profile pages. Deviations: the catalog merges only betaOnly + campaign/featured/promo metadata, not display fields, because the server rows are stale (e.g. old SVG thumbnails); PlayGame keeps the bundled lookup because its mount effect depends on meta and a changing object would remount a running game. Localhost fallbacks replaced by src/config/env.ts plus a build-time guard (production build fails without VITE_API_BASE_URL) rather than a runtime throw. Verified in the Browser pane: legacy best migrated and shown on the tile; game-over shows the new copy and previous best; catalog URL returns 15 configs from the live API. Player-web now has node:test tests (9).
 Depends on: T1.9
 Goal: the known UI bugs from the review are gone.
 Files: `components/feed/GameTile.tsx` (~17), `pages/games/GameOver.tsx` (~252-277, 376-480), `hooks/useGameCatalog.ts` (~23), `lib/api.ts` (~3), `context/FirebaseAuthProvider.tsx` (~187), `index.html` (~68, 87-93), `pages/games/GameLanding.tsx` (~216)

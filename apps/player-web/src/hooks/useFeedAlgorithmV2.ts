@@ -26,8 +26,9 @@ import { useAuth } from "../context/FirebaseAuthProvider";
 import { GameCatalogEntry } from "./useGameCatalog";
 import { getIdToken } from "../lib/firebase";
 import { getLastPlayedGames } from "../utils/playHistory";
+import { API_BASE_URL } from "../config/env";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
+const API_BASE = API_BASE_URL;
 
 // Feed scoring reasons
 export type FeedReason =

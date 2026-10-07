@@ -1,6 +1,5 @@
-// NOTE: Vite only auto-loads .env files from the app root (apps/player-web).
-// In this repo we also have a root-level .env.local, so we keep a safe dev default.
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
+import { API_BASE_URL } from "../config/env";
+const API_BASE = API_BASE_URL;
 
 // Firebase token getter - set by FirebaseAuthProvider
 let getAuthToken: (() => Promise<string | null>) | null = null;

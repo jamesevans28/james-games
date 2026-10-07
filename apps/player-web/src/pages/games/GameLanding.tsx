@@ -212,7 +212,7 @@ export default function GameLanding({ meta, onPlay }: Props) {
         {/* Hero image */}
         <div
           className="aspect-square w-full max-w-md mx-auto bg-cover bg-center rounded-2xl border border-flingo-200/30 shadow-card overflow-hidden"
-          style={{ backgroundImage: `url(${meta.thumbnail || "/assets/logo.png"})` }}
+          style={{ backgroundImage: `url(${meta.thumbnail || "/assets/shared/logo_square.png"})` }}
           title={meta.title}
         />
 

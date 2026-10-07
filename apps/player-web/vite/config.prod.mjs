@@ -1,7 +1,14 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
+
+// Fail the build, not the users: a production bundle without an API origin would
+// silently call localhost or nothing at all. (CI sets it from repo variables.)
+const prodEnv = loadEnv("production", process.cwd(), "VITE_");
+if (!prodEnv.VITE_API_BASE_URL) {
+  throw new Error("VITE_API_BASE_URL must be set for production builds (see apps/player-web/.env.example).");
+}
 
 export default defineConfig({
   base: "./",

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
+import { getBest, setBest } from "../../utils/bestScore";
 
 // Config constants
 const PLAY_WIDTH = 540;
@@ -153,7 +154,7 @@ export default class PaddlePopScene extends Phaser.Scene {
   }
 
   private createUI() {
-    this.bestScore = Number(localStorage.getItem("paddle-pop-best") || 0) || 0;
+    this.bestScore = getBest("paddle-pop");
     this.scoreText = this.add
       .text(270, 930, "Score: 0", {
         fontFamily: "Fredoka, sans-serif",
@@ -333,7 +334,7 @@ export default class PaddlePopScene extends Phaser.Scene {
     this.score += delta;
     if (this.score > this.bestScore) {
       this.bestScore = this.score;
-      localStorage.setItem("paddle-pop-best", String(this.bestScore));
+      setBest("paddle-pop", this.bestScore);
     }
     this.scoreText.setText(`Score: ${this.score}`);
     this.bestText.setText(`High: ${this.bestScore}`);

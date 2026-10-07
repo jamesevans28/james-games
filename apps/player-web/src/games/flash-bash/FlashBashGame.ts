@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
+import { getBest, setBest } from "../../utils/bestScore";
 
 const GAME_ID = "flash-bash";
 
@@ -58,7 +59,7 @@ export default class FlashBashGame extends Phaser.Scene {
     });
 
     // Score & high score at top (push below page header bar)
-    this.highScore = Number(localStorage.getItem(`${GAME_ID}-best`) || 0);
+    this.highScore = getBest(GAME_ID);
     // Create a dedicated UI layer to guarantee top-most rendering
     this.uiLayer = this.add.layer();
     this.uiLayer.setDepth(2000);
@@ -460,7 +461,7 @@ export default class FlashBashGame extends Phaser.Scene {
     if (this.scoreText) this.scoreText.setText(`Score: ${this.score}`);
     if (this.score > this.highScore) {
       this.highScore = this.score;
-      localStorage.setItem(`${GAME_ID}-best`, String(this.highScore));
+      setBest(GAME_ID, this.highScore);
       if (this.highScoreText) this.highScoreText.setText(`Best: ${this.highScore}`);
     }
     if (index === this.sequence[this.playerIndex]) {
@@ -475,7 +476,7 @@ export default class FlashBashGame extends Phaser.Scene {
           if (this.scoreText) this.scoreText.setText(`Score: ${this.score}`);
           if (this.score > this.highScore) {
             this.highScore = this.score;
-            localStorage.setItem(`${GAME_ID}-best`, String(this.highScore));
+            setBest(GAME_ID, this.highScore);
             if (this.highScoreText) this.highScoreText.setText(`Best: ${this.highScore}`);
           }
           this.time.delayedCall(500, () => this.startNewSequence());

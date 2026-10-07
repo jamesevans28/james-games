@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { GameMeta } from "../../games";
 import { RatingSummary } from "../../lib/api";
 import { getLastPlayedGames } from "../../utils/playHistory";
+import { getBest } from "../../utils/bestScore";
 
 type GameTileProps = {
   game: GameMeta;
@@ -11,18 +12,6 @@ type GameTileProps = {
   onShare?: (game: GameMeta) => void;
 };
 
-// Get best score for a game from localStorage
-function getBestScore(gameId: string): number | null {
-  try {
-    const key = `best_score_${gameId}`;
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const parsed = Number(raw);
-    return Number.isFinite(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
-}
 
 export default function GameTile({ game, rating, badge, onShare }: GameTileProps) {
   const navigate = useNavigate();
@@ -31,7 +20,7 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
   // Generate an engaging prompt based on game state and data
   const engagingPrompt = useMemo(() => {
     const lastPlayed = getLastPlayedGames();
-    const bestScore = getBestScore(game.id);
+    const bestScore = getBest(game.id);
     const playedBefore = lastPlayed.includes(game.id);
     const isRecentlyPlayed = lastPlayed.indexOf(game.id) === 0;
     const ratingCount = rating?.ratingCount ?? 0;

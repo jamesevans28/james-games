@@ -10,17 +10,20 @@
  * - id, load() function (required for code-splitting)
  * - Basic fallback title/description
  *
- * The backend gameConfigs table contains (source of truth for display):
- * - title, description, objective, controls
- * - xpMultiplier, betaOnly, dates
- * - thumbnail
+ * The backend gameConfigs table supplies admin-managed extras only:
+ * - betaOnly
  * - metadata: { campaigns, featured, promoText, etc. }
+ *
+ * Display fields (title, copy, thumbnail, dates) stay bundled: the server rows are
+ * stale (e.g. old SVG thumbnails) and Phase 4 manifests become their source of truth.
+ * XP multipliers are server-side only (T1.4), so they are not merged either.
  */
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { games as bundledGames, GameMeta } from "../games";
+import { API_BASE_URL } from "../config/env";
 
-const API_BASE = import.meta.env.VITE_API_URL || "";
+const API_BASE = API_BASE_URL;
 const CACHE_KEY = "flingo_game_catalog_cache";
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -106,16 +109,17 @@ function saveCache(configs: Record<string, BackendGameConfig>): void {
  * Fetch all game configs from backend
  */
 async function fetchGameConfigs(): Promise<BackendGameConfig[]> {
+  if (!API_BASE) return [];
   const allConfigs: BackendGameConfig[] = [];
   let cursor: string | undefined;
 
   // Paginate through all games (handles 100s of games)
   do {
-    const url = new URL(`${API_BASE}/games/config`);
+    const url = new URL("/games/config", API_BASE);
     url.searchParams.set("limit", "100");
     if (cursor) url.searchParams.set("cursor", cursor);
 
-    const response = await fetch(url.toString(), { credentials: "include" });
+    const response = await fetch(url.toString());
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
@@ -160,16 +164,8 @@ function mergeGameData(bundled: GameMeta, backend?: BackendGameConfig | null): G
   return {
     // Keep the load() function from bundled (required)
     ...bundled,
-    // Override display data from backend
-    title: backend.title || bundled.title,
-    description: backend.description || bundled.description,
-    objective: backend.objective || bundled.objective,
-    controls: backend.controls || bundled.controls,
-    thumbnail: backend.thumbnail || bundled.thumbnail,
-    xpMultiplier: backend.xpMultiplier ?? bundled.xpMultiplier,
+    // Admin-managed extras only; display fields stay bundled (see header comment).
     betaOnly: backend.betaOnly ?? bundled.betaOnly,
-    createdAt: backend.createdAt || bundled.createdAt,
-    updatedAt: backend.updatedAt || bundled.updatedAt,
     // Campaign/promo data
     metadata: backend.metadata,
     featured: backend.metadata?.featured === true,
@@ -222,7 +218,6 @@ export function useGameCatalog(): GameCatalogState {
       setIsHydrated(true);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Failed to fetch game configs"));
-      console.warn("Failed to hydrate game catalog:", err);
     } finally {
       setIsHydrating(false);
     }

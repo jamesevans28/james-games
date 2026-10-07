@@ -18,6 +18,7 @@ import SplashScreen from "./components/SplashScreen";
 import AccountUpgradeBanner from "./components/AccountUpgradeBanner";
 import StreakCelebration from "./components/StreakCelebration";
 import { AuthProvider } from "./context/FirebaseAuthProvider";
+import { GameCatalogProvider } from "./context/GameCatalogProvider";
 import PageTransition from "./components/PageTransition";
 
 function AppRoutes() {
@@ -75,6 +76,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
+      <GameCatalogProvider>
       <BrowserRouter>
         <SplashScreen />
         <SWUpdatePrompt />
@@ -84,6 +86,7 @@ export default function App() {
         <StreakCelebration />
         <AppRoutes />
       </BrowserRouter>
+      </GameCatalogProvider>
     </AuthProvider>
   );
 }

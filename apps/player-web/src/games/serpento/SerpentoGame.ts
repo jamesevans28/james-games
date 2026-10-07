@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { trackGameStart } from "../../utils/analytics";
 import { dispatchGameOver } from "../../utils/gameEvents";
+import { getBest, setBest } from "../../utils/bestScore";
 
 const GAME_ID = "serpento";
 const GRID_SIZE = 30; // Size of each grid cell in pixels
@@ -62,7 +63,7 @@ export default class SerpentoGame extends Phaser.Scene {
     this.nextDirection = "RIGHT";
 
     // Load best score
-    this.best = Number(localStorage.getItem(`${GAME_ID}-best`) || 0) || 0;
+    this.best = getBest(GAME_ID);
 
     // Create background
     this.createBackground(width, height);
@@ -350,7 +351,7 @@ export default class SerpentoGame extends Phaser.Scene {
     // Update best score
     if (this.score > this.best) {
       this.best = this.score;
-      localStorage.setItem(`${GAME_ID}-best`, String(this.best));
+      setBest(GAME_ID, this.best);
       this.bestText.setText(`Best: ${this.best}`);
     }
 

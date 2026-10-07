@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { trackGameStart } from "../../utils/analytics";
+import { getBest, setBest } from "../../utils/bestScore";
 
 const GAME_WIDTH = 540;
 const GAME_HEIGHT = 960;
@@ -18,7 +19,6 @@ const HOOP_SPEED = 140; // how fast hoops move left to mimic traveling right
 const INITIAL_HOOP_LEAD = 520; // how far ahead the very first hoop spawns
 
 const BACKGROUND_SCROLL = 55;
-const BEST_KEY = `${GAME_ID}-best-score`;
 
 interface HoopEntity {
   container: Phaser.GameObjects.Container;
@@ -520,19 +520,10 @@ export default class HoopCityScene extends Phaser.Scene {
   }
 
   private loadBestScore() {
-    try {
-      const stored = window.localStorage?.getItem(BEST_KEY);
-      return stored ? Number(stored) || 0 : 0;
-    } catch {
-      return 0;
-    }
+    return getBest(GAME_ID);
   }
 
   private saveBestScore() {
-    try {
-      window.localStorage?.setItem(BEST_KEY, String(this.best));
-    } catch {
-      // ignore storage failures
-    }
+    setBest(GAME_ID, this.best);
   }
 }

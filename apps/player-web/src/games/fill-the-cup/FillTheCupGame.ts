@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
+import { getBest, setBest } from "../../utils/bestScore";
 
 const GAME_ID = "fill-the-cup" as const;
 
@@ -72,7 +73,7 @@ export default class FillTheCupGame extends Phaser.Scene {
     this.tapY = Math.floor(height * TAP_Y_FRACTION);
 
     // Score + lives UI
-    this.best = Number(localStorage.getItem(`${GAME_ID}-best`) || 0);
+    this.best = getBest(GAME_ID);
     this.scoreText = this.add
       .text(this.centerX, 16, this.makeScoreText(), {
         fontFamily: "Fredoka, Arial Black, Arial, sans-serif",
@@ -423,7 +424,7 @@ export default class FillTheCupGame extends Phaser.Scene {
     // update best
     if (this.score > this.best) {
       this.best = this.score;
-      localStorage.setItem(`${GAME_ID}-best`, String(this.best));
+      setBest(GAME_ID, this.best);
     }
 
     // Score submission handled centrally by ScoreDialog after game over event

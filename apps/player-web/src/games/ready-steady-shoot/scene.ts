@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
+import { getBest, setBest } from "../../utils/bestScore";
 
 // Utility types
 type ShotState = "angle" | "power" | "lift" | "flying" | "idle" | "over";
@@ -158,7 +159,7 @@ export default class ReadySteadyShootGame extends Phaser.Scene {
     this.layoutUI();
 
     // Text HUD
-    this.best = Number(localStorage.getItem("ready-steady-shoot-best") || 0) || 0;
+    this.best = getBest("ready-steady-shoot");
     this.scoreText = this.add.text(20, 20, "Score: 0", {
       fontFamily: "Fredoka, sans-serif",
       fontSize: "18px",
@@ -541,7 +542,7 @@ export default class ReadySteadyShootGame extends Phaser.Scene {
     this.scoreText.setText(`Score: ${this.score}`);
     if (this.score > this.best) {
       this.best = this.score;
-      localStorage.setItem("ready-steady-shoot-best", String(this.best));
+      setBest("ready-steady-shoot", this.best);
       this.bestText.setText(`Best: ${this.best}`);
     }
     // Reset for next shot

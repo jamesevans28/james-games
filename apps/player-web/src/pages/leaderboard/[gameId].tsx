@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { games } from "../../games";
+import { useCatalog } from "../../context/GameCatalogProvider";
 import { getTopScores, ScoreEntry } from "../../lib/api";
 import { getUserName } from "../../utils/user";
 import Seo from "../../components/Seo";
@@ -13,7 +13,8 @@ import { SITE_URL } from "../../utils/seoKeywords";
 export default function LeaderboardPage() {
   const { gameId } = useParams();
   const navigate = useNavigate();
-  const meta = useMemo(() => games.find((g) => g.id === gameId), [gameId]);
+  const { getGame } = useCatalog();
+  const meta = useMemo(() => (gameId ? getGame(gameId) : undefined), [gameId, getGame]);
   const [rows, setRows] = useState<ScoreEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

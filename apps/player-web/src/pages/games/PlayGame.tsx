@@ -14,6 +14,7 @@ import { fetchRatingSummary, submitRating, RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { recordGamePlayed } from "../../utils/playHistory";
+import { getBest } from "../../utils/bestScore";
 import {
   buildGameJsonLd,
   buildGameKeywords,
@@ -36,6 +37,8 @@ function incrementPlayCounter(gameId: string) {
 export default function PlayGame() {
   const { gameId } = useParams();
   const navigate = useNavigate();
+  // Deliberately the bundled registry, not the live catalog: the mount effect depends
+  // on `meta`, so a new object when catalog data arrives would remount a running game.
   const meta = useMemo(() => games.find((g) => g.id === gameId), [gameId]);
   const { user, ensureSession } = useAuth();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -46,6 +49,9 @@ export default function PlayGame() {
   const [mounting, setMounting] = useState(false);
   const [showScore, setShowScore] = useState(false);
   const [lastScore, setLastScore] = useState<number | null>(null);
+  // Best on this device before the current run. Games save a new best before they
+  // report game over, so it is captured while the score dialog is closed.
+  const [previousBest, setPreviousBest] = useState(0);
   const [lastDurationMs, setLastDurationMs] = useState<number | undefined>(undefined);
   const [pendingRatingTrigger, setPendingRatingTrigger] = useState(false);
   const [ratingPromptOpen, setRatingPromptOpen] = useState(false);
@@ -59,6 +65,10 @@ export default function PlayGame() {
     "none"
   );
   const [userRating, setUserRating] = useState<number | null>(null);
+  useEffect(() => {
+    if (!showScore && meta) setPreviousBest(getBest(meta.id));
+  }, [showScore, meta]);
+
   const presenceStatus = showScore
     ? "in_score_dialog"
     : playing
@@ -440,6 +450,7 @@ export default function PlayGame() {
         open={showScore}
         score={lastScore}
         gameId={meta?.id}
+        previousBest={previousBest}
         durationMs={lastDurationMs}
         onClose={handleCloseScore}
         onPlayAgain={handlePlayAgain}

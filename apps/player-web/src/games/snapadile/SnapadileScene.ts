@@ -1,5 +1,6 @@
 import { dispatchGameOver } from "../../utils/gameEvents";
 import Phaser from "phaser";
+import { getBest, setBest } from "../../utils/bestScore";
 
 interface Croc extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
   sourceId: string;
@@ -57,7 +58,7 @@ export default class SnapadileScene extends Phaser.Scene {
     this.raftRadius = Math.max(raft.width, raft.height) * raftScale * 0.52; // slightly beyond raft edge
 
     // UI
-    this.best = Number(localStorage.getItem("snapadile-best") || 0);
+    this.best = getBest("snapadile");
     this.scoreText = this.add
       .text(16, 12, this.makeScoreText(), {
         fontFamily: "sans-serif",
@@ -311,7 +312,7 @@ export default class SnapadileScene extends Phaser.Scene {
     // Update best score (local)
     if (this.score > this.best) {
       this.best = this.score;
-      localStorage.setItem("snapadile-best", String(this.best));
+      setBest("snapadile", this.best);
     }
 
     // Score submission is handled by ScoreDialog after game over

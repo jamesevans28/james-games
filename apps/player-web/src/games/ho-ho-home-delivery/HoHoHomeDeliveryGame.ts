@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
+import { getBest, setBest } from "../../utils/bestScore";
 
 const GAME_ID = "ho-ho-home-delivery";
 
@@ -46,7 +47,7 @@ export default class HoHoHomeDeliveryGame extends Phaser.Scene {
     (ground as any).setStrokeStyle?.(2, 0x000000);
 
     // UI
-    this.highScore = Number(localStorage.getItem(`${GAME_ID}-best`) || 0);
+    this.highScore = getBest(GAME_ID);
     this.scoreText = this.add
       .text(16, 16, `Score: ${this.score}`, { fontSize: "24px", color: "#ffffff" })
       .setStroke("#000000", 3)
@@ -417,7 +418,7 @@ export default class HoHoHomeDeliveryGame extends Phaser.Scene {
     this.scoreText.setText(`Score: ${this.score}`);
     if (this.score > this.highScore) {
       this.highScore = this.score;
-      localStorage.setItem(`${GAME_ID}-best`, String(this.highScore));
+      setBest(GAME_ID, this.highScore);
     }
   }
 

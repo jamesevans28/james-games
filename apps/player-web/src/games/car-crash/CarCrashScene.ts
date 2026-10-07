@@ -1,8 +1,8 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
+import { getBest, setBest } from "../../utils/bestScore";
 
 const GAME_ID = "car-crash";
-const STORAGE_BEST_KEY = `${GAME_ID}-best`;
 
 // Logical portrait game size used for config; scene scales to fit like other games
 // const LOGICAL_WIDTH = 540;
@@ -147,7 +147,7 @@ export default class CarCrashScene extends Phaser.Scene {
     // We’ll handle collisions logically by grid row/lane match after each tick
 
     // Score UI
-    this.best = Number(localStorage.getItem(STORAGE_BEST_KEY) || 0);
+    this.best = getBest(GAME_ID);
     this.scoreText = this.add
       .text(16, 12, this.makeScoreText(), {
         fontFamily: "Fredoka, Arial Black, Arial, sans-serif",
@@ -399,7 +399,7 @@ export default class CarCrashScene extends Phaser.Scene {
     // Best (local)
     if (this.score > this.best) {
       this.best = this.score;
-      localStorage.setItem(STORAGE_BEST_KEY, String(this.best));
+      setBest(GAME_ID, this.best);
     }
 
     // Score posting now centralized in ScoreDialog (triggered via dispatchGameOver)

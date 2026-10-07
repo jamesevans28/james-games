@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
+import { getBest, setBest } from "../../utils/bestScore";
 
 const GAME_WIDTH = 540;
 const GAME_HEIGHT = 960;
@@ -10,7 +11,6 @@ const GRID_START_X = (GAME_WIDTH - GRID_PIXEL) / 2;
 const GRID_START_Y = 150;
 const SLOT_Y = GAME_HEIGHT - 220;
 const ROTATE_BUTTON_Y = SLOT_Y + 150;
-const BEST_KEY = "blocker-best";
 
 const RAW_SHAPES = [
   {
@@ -724,11 +724,7 @@ export default class BlockerGame extends Phaser.Scene {
     if (newScore > this.bestScore) {
       this.bestScore = newScore;
       this.bestText.setText(`Best: ${this.bestScore}`);
-      try {
-        window.localStorage?.setItem(BEST_KEY, String(this.bestScore));
-      } catch (error) {
-        // ignore storage issues
-      }
+      setBest("blocker", this.bestScore);
     }
   }
 
@@ -1037,11 +1033,6 @@ export default class BlockerGame extends Phaser.Scene {
   }
 
   private loadBestScore() {
-    try {
-      const stored = window.localStorage?.getItem(BEST_KEY);
-      return stored ? Number(stored) || 0 : 0;
-    } catch (error) {
-      return 0;
-    }
+    return getBest("blocker");
   }
 }
