@@ -16,7 +16,6 @@
     "web:build:no-seo": "npm run build:no-seo --workspace apps/player-web",
     "admin:build": "npm run build --workspace apps/admin-web",
     "backend:build": "npm run build --workspace apps/backend-api",
-    "backend:start": "npm run start --workspace apps/backend-api",
     "build": "npm run web:build && npm run admin:build && npm run backend:build",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
@@ -27,6 +26,7 @@
     "web:generate-seo": "npm run generate-seo --workspace apps/player-web"
   },
   "devDependencies": {
+    "pureimage": "^0.3.17",
     "word-list": "^4.1.0"
   }
 }

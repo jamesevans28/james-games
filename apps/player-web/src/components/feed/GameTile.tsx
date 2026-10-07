@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { GameMeta } from "../../games";
 import { RatingSummary } from "../../lib/api";
-import { getLastPlayedGames } from "../../hooks/useFeedAlgorithm";
+import { getLastPlayedGames } from "../../utils/playHistory";
 
 type GameTileProps = {
   game: GameMeta;

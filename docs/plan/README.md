@@ -27,7 +27,7 @@
 | Phase | File | Purpose | Status |
 |---|---|---|---|
 | 0 | [00-ai-dev-setup.md](00-ai-dev-setup.md) | Claude/AI development setup: instructions, scripts, docs cleanup | done (2026-10-08) |
-| 1 | [01-security-and-hygiene.md](01-security-and-hygiene.md) | Close the P0 security holes, fix known bugs, delete dead code, typecheck gate | in-progress (T1.1–T1.8 done) |
+| 1 | [01-security-and-hygiene.md](01-security-and-hygiene.md) | Close the P0 security holes, fix known bugs, delete dead code, typecheck gate | in-progress (T1.1–T1.9 done) |
 | 2 | [02-dependency-upgrade.md](02-dependency-upgrade.md) | Node 24, latest of everything, Phaser 4, Express 5, Vite 8, Tailwind 4.3 | todo |
 | 3 | [03-rebrand-and-seo.md](03-rebrand-and-seo.md) | Games4James brand, domain, Firebase auth domain, icons, SEO, prerender | todo |
 | 4 | [04-game-sdk-lint-tests.md](04-game-sdk-lint-tests.md) | Game SDK, manifests, base scene, HUD/input/audio kits, ESLint, Vitest | todo |

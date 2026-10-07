@@ -25,14 +25,13 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 |---|---|
 | `/me` | GET current user |
 | `/auth/firebase` | register-anonymous, register-username, login-username, me, link-provider, change-pin, add-email, check-email-verified, admin/reset-pin |
-| `/users` | GET me, POST screen-name, POST preferences, PATCH settings, GET streak, POST streak/checkin, GET :userId |
+| `/users` | POST screen-name, POST preferences, PATCH settings, GET streak, POST streak/checkin, GET :userId |
 | `/scores` | GET :gameId (leaderboard), POST / (submit, auth) |
 | `/experience` | GET summary (POST runs returns 410; XP comes from POST /scores) |
 | `/ratings` | GET /, GET :gameId, POST :gameId |
 | `/followers` | summary, following, followers, activity, ids, notifications, POST status, POST/DELETE :targetUserId |
 | `/games` | GET config, GET config/:gameId, GET feed, GET feed/personalized |
 | `/admin` | users list/get/update, games list/create/get/stats/update, metrics/dashboard |
-| `/rewards`, `/shop` | ping placeholders, removed in T1.9 |
 
 ## Data layer
 
@@ -47,7 +46,7 @@ DynamoDB tables named `games4james-*` (users, scores, gameratings, gameratings-s
 
 ## Environment variables (names only)
 
-`APP_BASE_URL`, `AWS_REGION`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `CORS_ALLOWED_ORIGINS`, and the table names `TABLE_USERS`, `SCORES_TABLE`, `TABLE_RATINGS`, `TABLE_RATING_SUMMARY`, `TABLE_FOLLOWS`, `TABLE_PRESENCE`, `TABLE_USER_GAME_STATS`, `TABLE_EXPERIENCE_LEVELS`, `TABLE_GAME_CONFIG`, `TABLE_USERNAMES`. The `COGNITO_*` entries in `.env.example` are dead and removed in T1.9. Production values are set by the deploy workflow.
+`APP_BASE_URL`, `AWS_REGION`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `CORS_ALLOWED_ORIGINS`, and the table names `TABLE_USERS`, `SCORES_TABLE`, `TABLE_RATINGS`, `TABLE_RATING_SUMMARY`, `TABLE_FOLLOWS`, `TABLE_PRESENCE`, `TABLE_USER_GAME_STATS`, `TABLE_EXPERIENCE_LEVELS`, `TABLE_GAME_CONFIG`, `TABLE_USERNAMES`. Production values are set by the deploy workflow.
 
 ## Deploy
 

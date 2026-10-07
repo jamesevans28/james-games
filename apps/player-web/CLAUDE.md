@@ -19,11 +19,11 @@ Check UI in the Browser pane with the `player-web` launch config at a 375×812 v
 | `pages/` | Route screens: `home/HomeFeed`, `games-list`, `games/` (PlayGame, GameLanding, GameOver, GameHeader), `leaderboard`, `profile`, `settings`, `followers`, `notifications`, `firebase-login` |
 | `components/` | Shared UI: layout (Header, RootLayout), SideDrawer, overlays (Splash, Install, SW update, Streak), `feed/GameTile` |
 | `context/` | `FirebaseAuthProvider.tsx`: auth state, profile, all auth flows |
-| `hooks/` | Feed ordering, catalog, presence, online status |
+| `hooks/` | Feed ordering (`useFeedAlgorithmV2`), catalog, presence, online status |
 | `lib/` | `api.ts` (backend client, bearer token), `firebase.ts` (SDK init) |
 | `games/` | One folder per game plus `index.ts`, the registry |
 | `game/` | Phaser-agnostic shared helpers: `ui/dpad.ts`, `ui/onScreenKeyboard.ts`, `words/` dictionary |
-| `utils/` | Analytics, `gameEvents.ts` (game → React events), share links, SEO keywords |
+| `utils/` | Analytics, `gameEvents.ts` (game → React events), `playHistory.ts`, `errorCode.ts`, share links, SEO keywords |
 | `platform/` | Arrives in Phase 4: the Game SDK (host, mount, base scene, HUD/input/audio kits) |
 | `config/` | Arrives in Phase 1/3: `env.ts`, `brand.ts` |
 
@@ -55,5 +55,4 @@ CI sets the same names from GitHub repo variables plus `VITE_BUILD_NUMBER`.
 - Brand strings still say flingo in many files. Phase 3 moves them into `src/config/brand.ts`; until then don't add new ones.
 - The Phaser version is 3.90 until Phase 2 (T2.7) moves to Phaser 4.
 - `vite/config.prod.mjs` holds the PWA manifest and service-worker caching rules. Never cache an authenticated endpoint (see T1.5).
-- Files ending in `.old`, `PhaserGame.tsx`, `game/main.ts` and `game/EventBus.ts` are dead and are removed in T1.9.
 - Best scores live in localStorage under inconsistent keys until T1.10.

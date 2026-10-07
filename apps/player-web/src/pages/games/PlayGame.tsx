@@ -13,7 +13,7 @@ import RatingPromptModal from "../../components/RatingPromptModal";
 import { fetchRatingSummary, submitRating, RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
-import { recordGamePlayed } from "../../hooks/useFeedAlgorithm";
+import { recordGamePlayed } from "../../utils/playHistory";
 import {
   buildGameJsonLd,
   buildGameKeywords,

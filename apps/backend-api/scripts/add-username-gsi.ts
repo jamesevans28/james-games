@@ -2,7 +2,7 @@
  * Script to add username-index GSI to the users table
  * This GSI is required for username+PIN login to work
  *
- * Run with: npx ts-node scripts/add-username-gsi.ts
+ * Run with: npx tsx scripts/add-username-gsi.ts
  * Or: npx tsx scripts/add-username-gsi.ts
  */
 

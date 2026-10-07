@@ -1,9 +1,9 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 
-const { AWS_REGION, COGNITO_REGION, TABLE_GAME_CONFIG } = process.env;
+const { AWS_REGION, TABLE_GAME_CONFIG } = process.env;
 
-const region = COGNITO_REGION || AWS_REGION || "ap-southeast-2";
+const region = AWS_REGION || "ap-southeast-2";
 const tableName = TABLE_GAME_CONFIG || "games4james-game-config";
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region }));

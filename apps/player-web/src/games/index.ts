@@ -104,7 +104,7 @@ export const games: GameMeta[] = [
     createdAt: "2025-11-04T00:00:00.000Z",
     updatedAt: "2025-11-25T00:00:00.000Z",
     load: async () => {
-      const mod = await import("./flash-bash/index.ts");
+      const mod = await import("./flash-bash/index");
       return { mount: mod.mount };
     },
   },

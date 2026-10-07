@@ -149,17 +149,3 @@ export async function getTopScoresHydrated(
   });
 }
 
-/**
- * Helper to adapt legacy score rows (if scanning old table). Provided here
- * for future migration scripts.
- */
-export function adaptLegacyRow(legacy: any): RawScoreItem {
-  return {
-    id: randomUUID(),
-    gameId: legacy.gameId,
-    score: Number(legacy.score || 0),
-    createdAt: legacy.createdAt || new Date().toISOString(),
-    legacyName: legacy.name ? String(legacy.name) : undefined,
-    version: 1,
-  };
-}

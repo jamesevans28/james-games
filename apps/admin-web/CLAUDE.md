@@ -25,7 +25,4 @@ It needs the backend running (`npm run server`) and an account whose user row ha
 
 ## Known issues (fixed in the plan)
 
-- `firebase` is not listed in this app's `package.json`; it only builds because npm workspaces hoist it from player-web (T1.9).
-- `lib/api.ts` has dead `signIn`, `signOut`, `refresh` methods and `cognitoUsername` types (T1.9).
-- The password field in `UserDrawer.tsx` sends a value the backend ignores (T1.9).
 - The dashboard scans whole tables; Phase 6 (T6.8) replaces this with SQL aggregates and adds moderation actions.

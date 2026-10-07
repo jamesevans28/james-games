@@ -1,6 +1,5 @@
 import { Router } from "express";
 import {
-  me,
   changeScreenName,
   updatePreferences,
   updateSettings,
@@ -12,7 +11,6 @@ import { requireAuth } from "../middleware/authGuards.js";
 const router = Router();
 
 // Logged-in protected
-router.get("/me", requireAuth, me);
 // Note: Email update/verification is now handled through Firebase Auth linked providers.
 router.post("/screen-name", requireAuth, changeScreenName);
 router.post("/preferences", requireAuth, updatePreferences);

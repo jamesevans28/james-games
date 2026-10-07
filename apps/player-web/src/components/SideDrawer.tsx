@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { ProfileAvatar } from "./profile";
-import { useSession } from "../hooks/useSession";
 import { useAuth } from "../context/FirebaseAuthProvider";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -21,7 +20,7 @@ export default function SideDrawer({
   onNotificationsOpen,
 }: Props) {
   const buildLabel = import.meta.env.DEV ? "local" : import.meta.env.VITE_BUILD_NUMBER || "unknown";
-  const { user } = useSession();
+  const { user } = useAuth();
   const profilePath = user?.userId ? `/profile/${user.userId}` : "/profile";
   const linkClass =
     "w-full text-left inline-flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold text-flingo-900 bg-flingo-100 border border-flingo-200/50 hover:border-neon-lime/30 hover:bg-flingo-200 focus:outline-none focus:ring-2 focus:ring-neon-lime/50 transition-all";

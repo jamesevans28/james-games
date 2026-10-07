@@ -13,55 +13,6 @@ import { config } from "../config/index.js";
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
 // Scores
-export async function putScore(args: {
-  gameId: string;
-  name: string;
-  score: number;
-  emailProvided: boolean;
-}) {
-  const now = new Date().toISOString();
-  const item = {
-    gameId: args.gameId,
-    score: args.score,
-    name: args.name,
-    emailProvided: args.emailProvided,
-    createdAt: now,
-  };
-  await ddb.send(new PutCommand({ TableName: config.tables.scores, Item: item }));
-  return item;
-}
-
-export async function getTopScores(gameId: string, limit = 10) {
-  const fetchLimit = Math.max(limit * 5, 100);
-  const result = await ddb.send(
-    new QueryCommand({
-      TableName: config.tables.scores,
-      IndexName: config.tables.scoreGsi,
-      KeyConditionExpression: "gameId = :g",
-      ExpressionAttributeValues: { ":g": gameId },
-      ScanIndexForward: false,
-      Limit: fetchLimit,
-    })
-  );
-  const items = (result.Items || []) as Array<any>;
-  items.sort((a, b) => {
-    const sa = Number(a.score ?? 0);
-    const sb = Number(b.score ?? 0);
-    if (sb !== sa) return sb - sa;
-    const ca = a.createdAt || "";
-    const cb = b.createdAt || "";
-    if (ca < cb) return -1;
-    if (ca > cb) return 1;
-    return 0;
-  });
-  return items.slice(0, limit).map((i: any) => ({
-    name: i.name,
-    score: i.score,
-    createdAt: i.createdAt,
-    emailProvided: i.emailProvided,
-  }));
-}
-
 // Users
 export async function putUser(args: {
   userId: string;

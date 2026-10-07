@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ProfileAvatar } from "../../components/profile";
-import { useSession } from "../../hooks/useSession";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { updatePreferences } from "../../lib/api";
 
@@ -10,7 +9,7 @@ const TOTAL = 89;
 const EXCLUDED_AVATARS = [26];
 
 export default function AvatarSelectPage() {
-  const { user } = useSession();
+  const { user } = useAuth();
   const { refreshProfile } = useAuth();
   const [selected, setSelected] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);

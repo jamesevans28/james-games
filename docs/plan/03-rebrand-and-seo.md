@@ -59,6 +59,7 @@ Done when: a read-through of every screen in the Browser pane finds no "flingo",
 
 ## T3.4 SEO origin, static pages, sitemap, structured data
 Status: todo
+Note (from T1.9): stop generating public/games-index.html in scripts/generate-sitemap.mjs and delete it (deleting the file alone just regenerates it).
 Depends on: T3.1
 Goal: every URL the site advertises is games4james.com, and each game has its own link preview.
 Files: `apps/player-web/package.json` (`generate-seo`), `scripts/generate-sitemap.mjs`, `apps/player-web/public/{sitemap.xml,robots.txt,game-meta.json,static-games/*}`, `apps/player-web/index.html`, `src/components/Seo.tsx`

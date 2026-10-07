@@ -46,6 +46,7 @@ Done when: `npm run db:migrate` applies cleanly to the Supabase project; `npm ru
 
 ## T6.3 Repository layer and services on Postgres
 Status: todo
+Note (from T1.9): also merge the two current-user endpoints, GET /me and GET /auth/firebase/me, into one response shape and update both frontends.
 Depends on: T6.2
 Goal: every service reads and writes Postgres; DynamoDB code is behind a feature flag until cut-over.
 Files: `apps/backend-api/src/repos/*.ts` (new), `services/*.ts`, `config/index.ts`

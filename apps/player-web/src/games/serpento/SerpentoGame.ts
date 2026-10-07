@@ -43,7 +43,6 @@ export default class SerpentoGame extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.svg("snake-head", "/assets/serpento/snake-head.svg");
     this.load.svg("food", "/assets/serpento/food.svg");
   }
 

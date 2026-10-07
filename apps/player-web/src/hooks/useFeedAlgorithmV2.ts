@@ -25,9 +25,8 @@ import { RatingSummary } from "../lib/api";
 import { useAuth } from "../context/FirebaseAuthProvider";
 import { GameCatalogEntry } from "./useGameCatalog";
 import { getIdToken } from "../lib/firebase";
+import { getLastPlayedGames } from "../utils/playHistory";
 
-const LAST_PLAYED_KEY = "flingo_last_played_games";
-const MAX_LAST_PLAYED = 10;
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
 
 // Feed scoring reasons
@@ -47,34 +46,6 @@ export type FeedGame = GameCatalogEntry & {
   /** Index in feed for stable keys during infinite scroll */
   feedIndex: number;
 };
-
-/**
- * Get list of recently played game IDs from localStorage
- */
-export function getLastPlayedGames(): string[] {
-  try {
-    const stored = localStorage.getItem(LAST_PLAYED_KEY);
-    if (!stored) return [];
-    const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((id): id is string => typeof id === "string");
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Record a game as recently played
- */
-export function recordGamePlayed(gameId: string): void {
-  try {
-    const current = getLastPlayedGames().filter((id) => id !== gameId);
-    const updated = [gameId, ...current].slice(0, MAX_LAST_PLAYED);
-    localStorage.setItem(LAST_PLAYED_KEY, JSON.stringify(updated));
-  } catch {
-    // localStorage not available
-  }
-}
 
 // Backend feed response
 interface FeedApiResponse {

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useSession } from "../../hooks/useSession";
+import { useAuth } from "../../context/FirebaseAuthProvider";
 import SideDrawer from "../SideDrawer";
 import { ProfileAvatar } from "../profile";
 import { useNotificationsIndicator } from "../../hooks/useNotificationsIndicator";
 
 export default function Header() {
-  const { user } = useSession();
+  const { user } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
   // Anonymous users should still see login/signup options

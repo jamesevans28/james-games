@@ -68,7 +68,6 @@ export type AdminUserDetail = AdminUserSummary & {
   emailVerified?: boolean;
   status?: string;
   enabled?: boolean;
-  cognitoUsername?: string;
 };
 
 export type PaginatedResponse<T> = {
@@ -129,20 +128,6 @@ export type GameStats = {
 };
 
 export const adminApi = {
-  signIn: (payload: { username: string; password: string }) =>
-    request<{ ok: boolean }>("/auth/local-signin", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-  signOut: async () => {
-    await fetch(`${API_BASE}/auth/logout`, {
-      method: "GET",
-      credentials: "include",
-      redirect: "manual",
-    });
-  },
-  refresh: () =>
-    request<{ ok: boolean }>("/auth/refresh", { method: "POST" }).catch(() => ({ ok: false })),
   fetchMe: () => request<{ user?: AdminAccount } | AdminAccount>("/me", { method: "GET" }),
   listUsers: (params: { cursor?: string; search?: string; limit?: number }) => {
     const url = new URL(`${API_BASE}/admin/users`);
@@ -158,7 +143,6 @@ export const adminApi = {
     userId: string,
     payload: {
       email?: string;
-      password?: string;
       betaTester?: boolean;
       admin?: boolean;
       username?: string;

@@ -5,8 +5,7 @@ import express from "express";
 import cors from "cors";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 import routes from "./routes/index.js";
-import { updateSettings } from "./controllers/usersController.js";
-import { attachUser, requireAuth } from "./middleware/authGuards.js";
+import { attachUser } from "./middleware/authGuards.js";
 import { config } from "./config/index.js";
 
 export const app = express();

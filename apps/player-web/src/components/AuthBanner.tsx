@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useSession } from "../hooks/useSession";
+import { useAuth } from "../context/FirebaseAuthProvider";
 
 export default function AuthBanner() {
-  const { user, loading } = useSession();
+  const { user, loading } = useAuth();
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
