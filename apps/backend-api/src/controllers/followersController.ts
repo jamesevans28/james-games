@@ -12,7 +12,6 @@ import {
 } from "../services/followersService.js";
 
 export async function getFollowersSummary(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   try {
@@ -48,7 +47,6 @@ export async function getFollowersSummary(req: Request, res: Response) {
 }
 
 export async function getFollowingList(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   try {
@@ -60,7 +58,6 @@ export async function getFollowingList(req: Request, res: Response) {
 }
 
 export async function getFollowersList(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   try {
@@ -72,7 +69,6 @@ export async function getFollowersList(req: Request, res: Response) {
 }
 
 export async function followUserHandler(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   const targetUserId = String((req.params as any).targetUserId);
@@ -94,7 +90,6 @@ export async function followUserHandler(req: Request, res: Response) {
 }
 
 export async function unfollowUserHandler(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   const targetUserId = String((req.params as any).targetUserId);
@@ -107,7 +102,6 @@ export async function unfollowUserHandler(req: Request, res: Response) {
 }
 
 export async function updatePresenceHandler(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   const { status, gameId, gameTitle } = (req.body || {}) as {
@@ -129,7 +123,6 @@ export async function updatePresenceHandler(req: Request, res: Response) {
 }
 
 export async function getFollowingActivity(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   const gameId = (req.query as any)?.gameId ? String((req.query as any).gameId) : undefined;
@@ -150,7 +143,6 @@ export async function getFollowingActivity(req: Request, res: Response) {
 }
 
 export async function getFollowingIdsHandler(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   try {
@@ -162,7 +154,6 @@ export async function getFollowingIdsHandler(req: Request, res: Response) {
 }
 
 export async function getFollowNotifications(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   try {

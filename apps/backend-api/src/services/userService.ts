@@ -180,11 +180,11 @@ export async function changeScreenName(userId: string, desired: string) {
       msg.includes("could not reserve unique screen name") ||
       msg.includes("ConditionalCheckFailed")
     ) {
-      const err = new Error("could not assign requested screen name; it may be taken");
-      // attach a code to allow callers to map to 409 if desired
-      // @ts-ignore
-      err.code = "CONFLICT";
-      throw err;
+      // code lets callers map this to 409
+      throw Object.assign(
+        new Error("could not assign requested screen name; it may be taken"),
+        { code: "CONFLICT" }
+      );
     }
     throw e;
   }

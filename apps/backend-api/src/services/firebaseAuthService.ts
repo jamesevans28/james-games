@@ -1,7 +1,6 @@
 // Firebase Authentication Service
 // Handles token verification, custom token creation for username+PIN, and user management
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const process: any;
 
 import { initializeApp, cert, getApps, App } from "firebase-admin/app";
 import { getAuth, Auth, DecodedIdToken } from "firebase-admin/auth";

@@ -6,7 +6,6 @@ import { listGameConfigs, GameConfigRecord } from "../services/gamesConfigServic
 import { log } from "../lib/log.js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const process: any;
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 

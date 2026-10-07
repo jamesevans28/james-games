@@ -12,7 +12,6 @@ export function ExperienceBar({
   level,
   progress,
   required,
-  label,
   incomingXp,
 }: ExperienceBarProps) {
   const safeRequired = Math.max(1, required || 1);

@@ -182,9 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   // firebaseReady: true when Firebase SDK has resolved its initial auth state
   const [firebaseReady, setFirebaseReady] = useState(false);
-  // initialized: true when we have determined auth state (either from Firebase or cache fallback)
   // For API calls that need auth, use firebaseReady instead
-  const [initialized, setInitialized] = useState(false);
   const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
   const initRef = useRef(false);
 
@@ -351,7 +349,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Still mark as ready so app doesn't hang
         setFirebaseReady(true);
       } finally {
-        setInitialized(true);
       }
     })();
 

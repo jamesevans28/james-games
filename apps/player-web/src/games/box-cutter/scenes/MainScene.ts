@@ -19,9 +19,6 @@ import { dispatchGameOver } from "../../../utils/gameEvents";
 
 const GAME_WIDTH = 540;
 const GAME_HEIGHT = 960;
-const UI_HEIGHT = 100;
-const DPAD_HEIGHT = 200;
-const PLAY_AREA_HEIGHT = GAME_HEIGHT - UI_HEIGHT - DPAD_HEIGHT;
 
 export class MainScene extends Phaser.Scene {
   private state!: GameState;

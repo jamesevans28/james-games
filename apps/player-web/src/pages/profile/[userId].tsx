@@ -13,7 +13,6 @@ import { useAuth } from "../../context/FirebaseAuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { ExperienceBar } from "../../components/ExperienceBar";
 import Seo from "../../components/Seo";
-import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { SITE_URL } from "../../utils/seoKeywords";
 
 interface ProfileResponse {
@@ -42,7 +41,6 @@ interface ProfileResponse {
 export default function ProfilePage() {
   const { userId } = useParams();
   const { user } = useAuth();
-  const { isOnline } = useOnlineStatus();
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

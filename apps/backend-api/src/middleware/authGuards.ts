@@ -16,7 +16,6 @@ export interface AuthUser {
 }
 
 export async function attachUser(req: Request, res: Response, next: NextFunction) {
-  // @ts-ignore
   req.user = undefined;
 
   // Get token from Authorization header
@@ -45,7 +44,6 @@ export async function attachUser(req: Request, res: Response, next: NextFunction
         : [],
     };
 
-    // @ts-ignore
     req.user = user;
   } catch (err) {
     // Token verification failed - user remains undefined
@@ -57,7 +55,6 @@ export async function attachUser(req: Request, res: Response, next: NextFunction
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  // @ts-ignore
   if (!req.user?.userId) {
     return res.status(401).json({ error: "unauthorized" });
   }
@@ -66,7 +63,6 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 
 // Require a non-anonymous account (username+PIN or linked)
 export function requireRegisteredAccount(req: Request, res: Response, next: NextFunction) {
-  // @ts-ignore
   const user = req.user as AuthUser | undefined;
   if (!user?.userId) {
     return res.status(401).json({ error: "unauthorized" });
@@ -82,7 +78,6 @@ export function requireRegisteredAccount(req: Request, res: Response, next: Next
 
 // Require a linked account with verified email
 export async function requireVerifiedEmail(req: Request, res: Response, next: NextFunction) {
-  // @ts-ignore
   const user = req.user as AuthUser | undefined;
   if (!user?.userId) {
     return res.status(401).json({ error: "unauthorized" });
@@ -97,7 +92,6 @@ export async function requireVerifiedEmail(req: Request, res: Response, next: Ne
 }
 
 export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  // @ts-ignore
   const user = req.user as AuthUser | undefined;
   if (!user?.userId) {
     return res.status(401).json({ error: "unauthorized" });
@@ -106,7 +100,6 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
     const profile = await getUser(user.userId);
     if (profile?.admin) {
       // Surface the profile for downstream handlers to avoid duplicate lookups
-      // @ts-ignore
       req.authProfile = profile;
       return next();
     }

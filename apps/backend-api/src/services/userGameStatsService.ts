@@ -1,5 +1,4 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const process: any;
 
 import { DynamoDBDocumentClient, UpdateCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoClient } from "../config/aws.js";

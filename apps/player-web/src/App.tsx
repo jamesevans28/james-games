@@ -10,7 +10,7 @@ import AvatarSelect from "./pages/settings/AvatarSelect";
 import FollowersPage from "./pages/followers";
 import ProfilePage from "./pages/profile/[userId]";
 import NotificationsPage from "./pages/notifications";
-import { RequireAuth, RequireRegistered } from "./components/RouteGuards";
+import { RequireRegistered } from "./components/RouteGuards";
 import SWUpdatePrompt from "./components/SWUpdatePrompt";
 import InstallPWA from "./components/InstallPWA";
 import IOSInstallHint from "./components/IOSInstallHint";

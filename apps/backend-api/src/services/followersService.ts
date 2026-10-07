@@ -1,5 +1,4 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const process: any;
 
 import {
   DynamoDBDocumentClient,
@@ -78,10 +77,7 @@ export async function followUser(userId: string, targetUserId: string) {
     );
   } catch (err: any) {
     if (err?.name === "ConditionalCheckFailedException") {
-      const e = new Error("already_following");
-      // @ts-ignore code for controller mapping
-      e.code = "CONFLICT";
-      throw e;
+      throw Object.assign(new Error("already_following"), { code: "CONFLICT" });
     }
     throw err;
   }

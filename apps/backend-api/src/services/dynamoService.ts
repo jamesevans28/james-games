@@ -1,6 +1,5 @@
 // DynamoDB data access layer (scores & users)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const process: any;
 import {
   DynamoDBDocumentClient,
   PutCommand,

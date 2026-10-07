@@ -313,7 +313,6 @@ export async function linkProvider(req: Request, res: Response) {
  * Requires: authenticated user with username+PIN account
  */
 export async function changePin(req: Request, res: Response) {
-  // @ts-ignore
   const user = req.user;
   if (!user?.userId) {
     return res.status(401).json({ error: "unauthorized" });
@@ -372,7 +371,6 @@ export async function changePin(req: Request, res: Response) {
  * Requires: authenticated user
  */
 export async function addEmail(req: Request, res: Response) {
-  // @ts-ignore
   const user = req.user;
   if (!user?.userId) {
     return res.status(401).json({ error: "unauthorized" });
@@ -426,7 +424,6 @@ export async function addEmail(req: Request, res: Response) {
  * Requires: authenticated user
  */
 export async function checkEmailVerifiedStatus(req: Request, res: Response) {
-  // @ts-ignore
   const user = req.user;
   if (!user?.userId) {
     return res.status(401).json({ error: "unauthorized" });
@@ -462,7 +459,6 @@ export async function checkEmailVerifiedStatus(req: Request, res: Response) {
  * GET /auth/firebase/me
  */
 export async function getCurrentUser(req: Request, res: Response) {
-  // @ts-ignore
   const user = req.user;
   if (!user?.userId) {
     return res.status(401).json({ error: "unauthorized" });
@@ -644,7 +640,6 @@ async function updateUserProviders(
 export async function adminResetUserPin(req: Request, res: Response) {
   try {
     // Check if requester is admin
-    // @ts-ignore
     const requester = req.user;
     if (!requester?.userId) {
       return res.status(401).json({ error: "Unauthorized" });

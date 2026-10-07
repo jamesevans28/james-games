@@ -26,7 +26,6 @@ export async function getRatingSummaryController(req: Request, res: Response) {
   try {
     const gameId = String((req.params as any).gameId);
     const summary = await getRatingSummary(gameId);
-    // @ts-ignore
     const userId = req.user?.userId as string | undefined;
     if (userId) {
       const userRating = await getUserRating(gameId, userId);
@@ -47,7 +46,6 @@ export async function submitRating(req: Request, res: Response) {
       (req.params as any).gameId,
       rating
     );
-    // @ts-ignore
     const userId = req.user?.userId as string | undefined;
     if (!userId) return res.status(401).json({ error: "unauthorized" });
     const result = await upsertRating({ gameId, userId, rating: ratingValue });

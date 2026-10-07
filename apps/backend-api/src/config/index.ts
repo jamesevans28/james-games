@@ -1,7 +1,6 @@
 // Centralized app configuration
 // Minimal declarations for env without Node types wired in this workspace
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const process: any;
 
 export const config = {
   env: process.env.NODE_ENV || "development",

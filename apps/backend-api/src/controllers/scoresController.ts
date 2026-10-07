@@ -24,23 +24,20 @@ export async function createScore(req: Request, res: Response) {
       typeof body.gameId === "string" ? await getGameConfig(body.gameId).catch(() => null) : null;
     const valid = validateScoreSubmission(body, limitsFor(gameConfig));
 
-    // @ts-ignore req.user is set by requireAuth (typed properly in T1.8)
-    const userCtx = req.user || {};
+    const userId = req.user?.userId;
     const item = await putScoreWithUser({
       gameId: valid.gameId,
       score: valid.score,
       durationMs: valid.durationMs,
-      userId: userCtx.userId,
-      screenName: userCtx.screenName,
-      avatar: userCtx.avatar,
+      userId,
     });
 
     let awardedXp = 0;
     let summary = null;
-    if (userCtx.userId && valid.score > 0) {
+    if (userId && valid.score > 0) {
       try {
         const xp = xpForScore(valid.score, multiplierFor(gameConfig));
-        const result = await applyExperienceToUser(userCtx.userId, xp);
+        const result = await applyExperienceToUser(userId, xp);
         awardedXp = result.awarded;
         summary = result.summary;
       } catch (err: any) {
@@ -75,7 +72,6 @@ export async function listScores(req: Request, res: Response) {
     const scope = String((req.query as any)?.scope || "");
     let includeUserIds: string[] | undefined;
     if (scope === "following") {
-      // @ts-ignore
       const userId = req.user?.userId as string | undefined;
       if (!userId) return res.status(401).json({ error: "unauthorized" });
       const followingIds = await getFollowingIds(userId);

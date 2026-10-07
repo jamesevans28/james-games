@@ -84,7 +84,7 @@ Steps:
 Done when: registering the same username twice in prod returns 409.
 
 ## T1.8 Make type errors fail the build; fix the known ones
-Status: todo
+Status: done (2026-10-08). All workspaces typecheck with 0 errors. Removing the 40 @ts-ignore lines exposed 9 hidden errors, all fixed: scoresController read screenName/avatar that req.user never has (snapshots were always empty; T1.11 restores them from the user row), cookie-parser had no types and no use (removed from index.ts; the package goes in T1.9), requireAdmin's req.authProfile is now typed, and two Error.code assignments use Object.assign. tsconfig.node.json now checks vite/*.mjs. deploy.yml has a `checks` job (npm ci, typecheck, tests) that every deploy job needs.
 Depends on: T0.4
 Goal: `npm run typecheck` is clean and runs in CI before any deploy.
 Files: `apps/player-web/src/games/block-breaker/BlockBreakerScene.ts` (~39-40), the 8 unused-symbol errors, `apps/player-web/tsconfig.node.json` (references a non-existent `vite.config.ts`), backend `declare const process: any` (8 files), `@ts-ignore` on `req.user` (~40 sites)

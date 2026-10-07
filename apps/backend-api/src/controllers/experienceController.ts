@@ -10,7 +10,6 @@ export async function recordGameExperience(_req: Request, res: Response) {
 }
 
 export async function getExperienceSummaryHandler(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   try {

@@ -2,6 +2,9 @@ import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { trackGameStart } from "../../utils/analytics";
 
+/** What Phaser passes to an arcade collider callback (this game only collides game objects). */
+type ArcadeCollidable = Parameters<Phaser.Types.Physics.Arcade.ArcadePhysicsCallback>[0];
+
 const GAME_ID = "block-breaker";
 const GAME_NAME = "Block Breaker";
 
@@ -104,22 +107,16 @@ export default class BlockBreakerScene extends Phaser.Scene {
     });
   }
 
-  private hitPaddle(
-    ball: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-    paddle: Phaser.Types.Physics.Arcade.GameObjectWithBody
-  ) {
-    const ballBody = ball.body as Phaser.Physics.Arcade.Body;
-    const paddleBody = paddle.body as Phaser.Physics.Arcade.Body;
+  private hitPaddle(ball: ArcadeCollidable, paddle: ArcadeCollidable) {
+    const ballBody = (ball as Phaser.Types.Physics.Arcade.GameObjectWithBody).body as Phaser.Physics.Arcade.Body;
+    const paddleBody = (paddle as Phaser.Types.Physics.Arcade.GameObjectWithBody).body as Phaser.Physics.Arcade.Body;
     const diff = ballBody.x - paddleBody.x;
     const newVelX = diff * 10;
     ballBody.setVelocityX(newVelX);
   }
 
-  private hitBrick(
-    ball: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-    brick: Phaser.Types.Physics.Arcade.GameObjectWithBody
-  ) {
-    brick.destroy();
+  private hitBrick(_ball: ArcadeCollidable, brick: ArcadeCollidable) {
+    (brick as Phaser.Types.Physics.Arcade.GameObjectWithBody).destroy();
     this.score += 10;
     this.scoreText.setText(`Score: ${this.score}`);
 

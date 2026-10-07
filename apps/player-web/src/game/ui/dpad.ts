@@ -42,10 +42,8 @@ export function createDPad(scene: Phaser.Scene, options: CreateDPadOptions): DPa
   // Ensure the DOWN button bottom edge stays above the screen bottom.
   const centerY = screenHeight - bottomPadding - buttonSize / 2 - spacing;
 
-  let activeDirection: DPadDirection | null = null;
 
   const emit = (dir: DPadDirection | null) => {
-    activeDirection = dir;
     onDirectionChange(dir);
   };
 

@@ -9,7 +9,6 @@ import { log } from "../lib/log.js";
  * The server decides the date; any client-sent todayDate is ignored.
  */
 export async function recordStreakCheckin(req: Request, res: Response) {
-  // @ts-ignore req.user is set by requireAuth (typed properly in T1.8)
   const userId = req.user?.userId as string | undefined;
   if (!userId) {
     return res.status(401).json({ error: "unauthorized" });
@@ -36,7 +35,6 @@ export async function recordStreakCheckin(req: Request, res: Response) {
  * GET /users/streak
  */
 export async function getStreak(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) {
     return res.status(401).json({ error: "unauthorized" });

@@ -12,7 +12,6 @@ import { getRecentGamesForUser } from "../services/userGameStatsService.js";
 import { toPublicProfile } from "../services/publicProfile.js";
 
 export async function me(req: Request, res: Response) {
-  // @ts-ignore
   if (!req.user?.userId) return res.json({ user: null });
   try {
     const userId = (req as any).user.userId as string;
@@ -20,11 +19,9 @@ export async function me(req: Request, res: Response) {
     res.json({
       user: {
         userId,
-        // @ts-ignore
         email: (profile?.email ?? (req as any).user?.email) || null,
         emailProvided:
           profile?.emailProvided ??
-          // @ts-ignore
           (req as any).user?.emailProvided ??
           false,
         screenName: profile.screenName,
@@ -51,7 +48,6 @@ export async function me(req: Request, res: Response) {
 // Users can link their account to Google/Apple which provides verified email.
 
 export async function changeScreenName(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string;
   const { screenName } = (req.body || {}) as { screenName?: string };
   if (!screenName || screenName.trim().length < 2)
@@ -65,7 +61,6 @@ export async function changeScreenName(req: Request, res: Response) {
 }
 
 export async function updatePreferences(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string;
   try {
     await userService.updatePreferencesForUser(userId, req.body || {});
@@ -78,7 +73,6 @@ export async function updatePreferences(req: Request, res: Response) {
 // Unified user settings update endpoint (currently only supports screenName).
 // PATCH /users/settings { screenName: string }
 export async function updateSettings(req: Request, res: Response) {
-  // @ts-ignore
   const userId = req.user?.userId as string | undefined;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   const { screenName } = (req.body || {}) as { screenName?: string };
@@ -109,7 +103,6 @@ export async function getPublicProfile(req: Request, res: Response) {
         listFollowers(targetUserId),
         getRecentGamesForUser(targetUserId, 10),
       ]);
-    // @ts-ignore
     const viewerId = req.user?.userId as string | undefined;
     let viewerFollows = false;
     if (viewerId && viewerId !== targetUserId) {
