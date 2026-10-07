@@ -196,7 +196,10 @@ function randomFourDigits() {
 }
 
 async function reserveScreenName(screenName: string, userId: string) {
-  if (!config.tables.usernames) return true;
+  // Fail closed: without the reservations table we cannot prove a name is free, so
+  // name assignment fails (500) instead of silently allowing duplicates. The rest of
+  // the API keeps working. Production sets TABLE_USERNAMES in deploy.yml (T1.7).
+  if (!config.tables.usernames) throw new Error("usernames_table_not_configured");
   const key = screenName.toLowerCase();
   // Check existing reservation
   try {

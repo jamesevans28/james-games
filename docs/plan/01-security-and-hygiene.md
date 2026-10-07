@@ -73,7 +73,7 @@ Steps:
 Done when: `grep -rn "console\." apps/backend-api/src apps/player-web/src | grep -v "console.warn\|console.error"` is empty, and the remaining warn/error calls print no identifiers (manual read).
 
 ## T1.7 Set `TABLE_USERNAMES` in production and enforce uniqueness
-Status: todo
+Status: done (2026-10-08) in code; takes effect on the next manual deploy. Checked read-only: table games4james-usernames is ACTIVE, key screenNameKey, 47 items, and the Lambda role (JamesGames_DynamoAccessforLambda) can read/write it. reserveScreenName throws per call when the table is not configured, rather than crashing at startup, so the rest of the API stays up. Follow-up for Phase 9: that role's DynamoDB policy uses Resource "*"; scope it to the games4james tables.
 Depends on: none
 Goal: screen-name uniqueness is enforced in prod, not only locally.
 Files: `.github/workflows/deploy.yml` (Lambda env block ~154-176), `apps/backend-api/src/services/userService.ts` (~199)

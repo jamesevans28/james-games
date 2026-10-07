@@ -162,6 +162,7 @@ jobs:
               "Variables": {
                 "SCORES_TABLE": "games4james-scores",
                 "TABLE_USERS": "games4james-users",
+                "TABLE_USERNAMES": "games4james-usernames",
                 "TABLE_RATINGS": "games4james-gameratings",
                 "TABLE_RATING_SUMMARY": "games4james-gameratings-summary",
                 "TABLE_FOLLOWS": "games4james-follows",
