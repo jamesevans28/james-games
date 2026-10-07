@@ -147,7 +147,6 @@ npm install -D @types/bcryptjs
 ```bash
 cd apps/player-web
 npm install firebase
-npm uninstall aws-amplify  # Remove Cognito dependency
 ```
 
 ---
@@ -155,6 +154,8 @@ npm uninstall aws-amplify  # Remove Cognito dependency
 ## Architecture Notes
 
 ### Why Keep AWS Lambda + DynamoDB?
+
+> Superseded: plan Phase 6 moves the data layer to Supabase Postgres. Firebase Auth stays. See docs/plan/06-sql-data-layer-supabase.md.
 
 1. **Existing infrastructure** - No migration needed for game data, scores, etc.
 2. **Cost** - DynamoDB + Lambda is very cost-effective
@@ -220,22 +221,6 @@ Firebase is used ONLY for authentication tokens. All user data stays in DynamoDB
    - No real names required
    - No public profiles by default
    - Parent email optional for recovery
-
----
-
-## Removing Cognito
-
-After Firebase is set up and working:
-
-1. Remove from backend package.json:
-
-   - `@aws-sdk/client-cognito-identity-provider`
-
-2. Remove from frontend package.json:
-
-   - `aws-amplify`
-
-3. Delete old Cognito config from AWS Console (when ready)
 
 ---
 

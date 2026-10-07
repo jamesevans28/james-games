@@ -1,3 +1,5 @@
+> Retired in plan Phase 6 (T6.5), when follows and presence move to Supabase Postgres. Until then this describes the live DynamoDB tables.
+
 # Followers & Presence AWS Setup
 
 This document explains how to provision the AWS resources needed for the followers, presence, and profile features. It assumes you are extending the existing Express/Lambda stack under `/app`.
@@ -6,7 +8,7 @@ This document explains how to provision the AWS resources needed for the followe
 
 - **Express API** (deployed via Lambda/Fargate) exposes `/followers`, `/users/:id`, and enhanced `/scores` endpoints.
 - **DynamoDB** stores follower edges, real-time presence, and per-user-per-game stats used by profiles/leaderboards.
-- **Cognito** already issues user identities; we only read `sub` (userId) and screen name/avatar snapshots.
+- **Firebase Auth** issues user identities; the API reads the verified uid (userId) and screen name/avatar snapshots.
 - **CloudWatch Events** (optional) can periodically clean up stale presence entries, though Dynamo TTL already handles expiry.
 
 ## DynamoDB Tables

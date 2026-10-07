@@ -42,7 +42,7 @@ Steps:
 Done when: `npm run typecheck` runs in all three workspaces (it may fail with the 10 known type errors until T1.8; the script itself must run), `npm run dev`, `npm run server`, `npm run admin:dev` each start.
 
 ## T0.5 Docs cleanup
-Status: todo
+Status: done (2026-10-08)
 Depends on: none
 Goal: `docs/` contains only true documents.
 Files: `docs/backend-express-lambda.md`, `docs/user-accounts-aws-setup.md`, `docs/followers-aws-setup.md`, `docs/firebase-auth-setup.md`

@@ -1,3 +1,5 @@
+> **Historical.** Describes the Cognito-era design and no longer matches the code. See docs/plan/ for the current plan.
+
 # Backend (Express on Lambda) — Starter
 
 This shows how to run an Express app in AWS Lambda behind API Gateway and integrate with Cognito (JWT authorizer) and DynamoDB.

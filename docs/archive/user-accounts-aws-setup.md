@@ -1,3 +1,5 @@
+> **Historical.** Describes the Cognito-era design and no longer matches the code. See docs/plan/ for the current plan.
+
 # User Accounts System — Architecture & AWS Setup
 
 This document describes how to introduce a real user account system while keeping the games playable without login. It covers architecture, data model, backend APIs, AWS setup (Cognito, API Gateway, Lambda, DynamoDB), and frontend integration plan.
