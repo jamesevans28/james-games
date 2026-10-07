@@ -263,7 +263,7 @@ export default function StreakCelebration() {
     }
 
     try {
-      const result = await checkinStreak(today);
+      const result = await checkinStreak();
       if (result) {
         // Show celebration if streak is 2+ days (every day with an active streak)
         if (result.currentStreak >= 2) {

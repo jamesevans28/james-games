@@ -162,16 +162,3 @@ export function adaptLegacyRow(legacy: any): RawScoreItem {
     version: 1,
   };
 }
-
-/**
- * Simple validation helper for incoming score submissions.
- */
-export function validateScoreInput(
-  gameId: unknown,
-  score: unknown
-): { gameId: string; score: number } {
-  if (!gameId || typeof gameId !== "string") throw new Error("gameId required");
-  const num = Number(score);
-  if (!Number.isFinite(num)) throw new Error("score must be a number");
-  return { gameId, score: num };
-}

@@ -114,7 +114,21 @@ function emptySummary(gameId: string): RatingSummary {
   return { gameId, avgRating: 0, ratingCount: 0 };
 }
 
-export async function postHighScore(args: { gameId: string; score: number; durationMs?: number }) {
+export type ScoreSubmissionResult = {
+  ok: boolean;
+  gameId: string;
+  score: number;
+  createdAt: string;
+  awardedXp: number;
+  summary: ExperienceSummary | null;
+};
+
+/** Saves a run. The server awards XP from its own game config and returns it. */
+export async function postHighScore(args: {
+  gameId: string;
+  score: number;
+  durationMs?: number;
+}): Promise<ScoreSubmissionResult | undefined> {
   if (!API_BASE) return;
   const res = await fetchWithAuth(`${API_BASE}/scores`, {
     method: "POST",
@@ -125,23 +139,7 @@ export async function postHighScore(args: { gameId: string; score: number; durat
     if (res.status === 401) return; // Not authenticated
     throw new Error(`Failed to submit score: ${res.status}`);
   }
-  return res.json();
-}
-
-export async function postExperienceRun(args: {
-  gameId: string;
-  score: number;
-  xpMultiplier?: number;
-}) {
-  if (!API_BASE) return { awardedXp: 0, summary: null } as any;
-  const res = await fetchWithAuth(`${API_BASE}/experience/runs`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(args),
-  });
-  if (res.status === 401) throw new Error("signin_required");
-  if (!res.ok) throw new Error(`Failed to award experience: ${res.status}`);
-  return (await res.json()) as { awardedXp: number; summary: ExperienceSummary };
+  return (await res.json()) as ScoreSubmissionResult;
 }
 
 export async function fetchExperienceSummary(): Promise<ExperienceSummary | null> {
@@ -338,14 +336,15 @@ export interface StreakData {
 
 /**
  * Check in for daily streak. Call this once per day when the app loads.
- * @param todayDate - Today's date in YYYY-MM-DD format (user's local timezone)
+ * Sends only the device's UTC offset; the server decides the date.
  */
-export async function checkinStreak(todayDate: string): Promise<StreakCheckinResponse | null> {
+export async function checkinStreak(): Promise<StreakCheckinResponse | null> {
   if (!API_BASE) return null;
+  const tzOffsetMinutes = -new Date().getTimezoneOffset(); // minutes east of UTC
   const res = await fetchWithAuth(`${API_BASE}/users/streak/checkin`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ todayDate }),
+    body: JSON.stringify({ tzOffsetMinutes }),
   });
   if (res.status === 401) return null;
   if (!res.ok) throw new Error(`Failed to checkin streak: ${res.status}`);

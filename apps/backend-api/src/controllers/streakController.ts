@@ -4,24 +4,19 @@ import streakService from "../services/streakService.js";
 /**
  * Record a daily login and return updated streak info.
  * POST /users/streak/checkin
- * Body: { todayDate: string } - YYYY-MM-DD in user's timezone
+ * Body: { tzOffsetMinutes?: number } — minutes east of UTC (e.g. Sydney 600/660).
+ * The server decides the date; any client-sent todayDate is ignored.
  */
 export async function recordStreakCheckin(req: Request, res: Response) {
-  // @ts-ignore
+  // @ts-ignore req.user is set by requireAuth (typed properly in T1.8)
   const userId = req.user?.userId as string | undefined;
   if (!userId) {
     return res.status(401).json({ error: "unauthorized" });
   }
-
-  const { todayDate } = (req.body || {}) as { todayDate?: string };
-
-  // Validate date format
-  if (!todayDate || !/^\d{4}-\d{2}-\d{2}$/.test(todayDate)) {
-    return res.status(400).json({ error: "todayDate must be in YYYY-MM-DD format" });
-  }
+  const { tzOffsetMinutes } = (req.body || {}) as { tzOffsetMinutes?: unknown };
 
   try {
-    const result = await streakService.recordDailyLogin(userId, todayDate);
+    const result = await streakService.recordDailyLogin(userId, tzOffsetMinutes);
     res.json({
       currentStreak: result.streak.currentStreak,
       longestStreak: result.streak.longestStreak,
@@ -30,8 +25,8 @@ export async function recordStreakCheckin(req: Request, res: Response) {
       isNewStreak: result.isNewStreak,
     });
   } catch (e: any) {
-    console.error("streakController.recordStreakCheckin error:", e);
-    res.status(500).json({ error: e?.message || "Failed to record streak" });
+    console.error("streakController.recordStreakCheckin failed", e?.name);
+    res.status(500).json({ error: "server_error" });
   }
 }
 

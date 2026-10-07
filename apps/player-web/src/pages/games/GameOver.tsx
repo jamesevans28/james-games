@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { postHighScore, postExperienceRun, type ExperienceSummary } from "../../lib/api";
+import { postHighScore, type ExperienceSummary } from "../../lib/api";
 import { useAuth } from "../../context/FirebaseAuthProvider";
-import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 
 type Props = {
   open: boolean;
   score: number | null;
   gameId?: string | null;
-  xpMultiplier?: number;
   /** Duration of the game session in milliseconds */
   durationMs?: number;
   onClose: () => void;
@@ -224,16 +222,13 @@ export default function GameOver({
   open,
   score,
   gameId,
-  xpMultiplier,
   durationMs,
   onClose,
   onPlayAgain,
   onViewLeaderboard,
 }: Props) {
   const postedRef = useRef<string | null>(null);
-  const xpPostedRef = useRef<string | null>(null);
   const { user, refreshProfile } = useAuth();
-  const { isOnline } = useOnlineStatus();
   const [startExperience, setStartExperience] = useState<ExperienceSummary | null>(null);
   const [endExperience, setEndExperience] = useState<ExperienceSummary | null>(null);
   const [xpAwarded, setXpAwarded] = useState<number | null>(null);
@@ -242,60 +237,66 @@ export default function GameOver({
   const [scoreError, setScoreError] = useState<string | null>(null);
   const [showLevelUp, setShowLevelUp] = useState(false);
 
+  // One request per run: the server validates the score, saves it and awards XP from
+  // its own game config. The response carries awardedXp and the new XP summary.
   useEffect(() => {
     if (!open) {
-      console.log("GameOver: not posting score because dialog is not open");
       setScoreError(null);
       return;
     }
     const s = Number(score || 0);
     const sig = `${gameId ?? ""}:${s}`;
-    if (postedRef.current === sig) {
-      console.log("GameOver: score already posted for this run", { sig });
-      return;
-    }
-    if (Number.isNaN(s) || s <= 0) {
-      console.log("GameOver: not posting score because score is zero/invalid", { score });
-      return;
-    }
-    if (!gameId) {
-      console.log("GameOver: not posting score because gameId is missing", { gameId });
-      return;
-    }
-    if (!user) {
-      console.log("GameOver: not posting score because user is not authenticated");
-      return;
-    }
+    if (postedRef.current === sig) return;
+    if (Number.isNaN(s) || s <= 0 || !gameId || !user) return;
 
-    // Check if offline
     if (!navigator.onLine) {
-      console.log("GameOver: not posting score because device is offline");
       setScoreError("You're offline. Score will not be saved.");
+      setXpError("You're offline. XP will not be awarded.");
       return;
     }
 
     postedRef.current = sig;
     setScoreError(null);
-    void postHighScore({ gameId, score: s, durationMs })
+    setXpPending(true);
+    setXpError(null);
+    setXpAwarded(null);
+    const currentExperience = user.experience;
+    if (currentExperience) setStartExperience(currentExperience);
+
+    let canceled = false;
+    postHighScore({ gameId, score: s, durationMs })
       .then((res) => {
-        console.log("GameOver: posted score", { gameId, score: s, durationMs });
-        return res;
-      })
-      .catch((e) => {
-        postedRef.current = null;
-        console.warn("Failed to post high score", e);
-        // Check if the error was due to going offline
-        if (!navigator.onLine) {
-          setScoreError("You're offline. Score could not be saved.");
-        } else {
-          setScoreError("Could not save score. Please try again.");
+        if (canceled) return;
+        setXpPending(false);
+        if (!res) {
+          setXpError("Sign in to earn experience.");
+          return;
         }
+        const summary = res.summary ?? null;
+        setEndExperience(summary ?? currentExperience ?? null);
+        setXpAwarded(res.awardedXp ?? 0);
+        if (currentExperience && summary && summary.level > currentExperience.level) {
+          setTimeout(() => setShowLevelUp(true), 1500); // after the XP bar animation
+        }
+        void refreshProfile();
+      })
+      .catch(() => {
+        if (canceled) return;
+        postedRef.current = null;
+        setXpPending(false);
+        setScoreError(
+          navigator.onLine
+            ? "Could not save score. Please try again."
+            : "You're offline. Score could not be saved."
+        );
       });
-  }, [open, score, gameId, user, isOnline, durationMs]);
+    return () => {
+      canceled = true;
+    };
+  }, [open, score, gameId, user?.userId, durationMs, refreshProfile]);
 
   useEffect(() => {
     if (!open) {
-      xpPostedRef.current = null;
       setXpAwarded(null);
       setXpPending(false);
       setXpError(null);
@@ -309,67 +310,6 @@ export default function GameOver({
       setEndExperience(user.experience);
     }
   }, [open, user?.experience, startExperience]);
-
-  useEffect(() => {
-    if (!open || !user || !gameId || !score || score <= 0) return;
-    const sig = `${gameId}:${score}`;
-    if (xpPostedRef.current === sig) return;
-
-    // Check if offline before attempting XP post
-    if (!navigator.onLine) {
-      setXpError("You're offline. XP will not be awarded.");
-      return;
-    }
-
-    xpPostedRef.current = sig;
-    setXpPending(true);
-    setXpError(null);
-    setXpAwarded(null);
-
-    const currentExperience = user.experience;
-    if (currentExperience) {
-      setStartExperience(currentExperience);
-    }
-
-    let canceled = false;
-    postExperienceRun({ gameId, score, xpMultiplier })
-      .then(({ summary, awardedXp }) => {
-        if (canceled) return;
-        // Backend may return { summary: null } in edge cases; don't crash the dialog.
-        setEndExperience(summary ?? currentExperience ?? null);
-        setXpAwarded(awardedXp);
-        setXpPending(false);
-
-        // Check for level up
-        if (
-          currentExperience &&
-          summary &&
-          typeof summary.level === "number" &&
-          summary.level > currentExperience.level
-        ) {
-          setTimeout(() => {
-            setShowLevelUp(true);
-          }, 1500); // Show after XP animation completes
-        }
-
-        void refreshProfile();
-      })
-      .catch((err: any) => {
-        if (canceled) return;
-        if (err?.message === "signin_required") {
-          setXpError("Sign in to earn experience.");
-        } else if (!navigator.onLine) {
-          setXpError("You're offline. XP could not be awarded.");
-        } else {
-          setXpError(err?.message || "Could not add experience right now.");
-        }
-        setXpPending(false);
-        xpPostedRef.current = null;
-      });
-    return () => {
-      canceled = true;
-    };
-  }, [open, user?.userId, gameId, score, xpMultiplier, refreshProfile, user?.experience, isOnline]);
 
   if (!open) return null;
 

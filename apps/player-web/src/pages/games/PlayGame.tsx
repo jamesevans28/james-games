@@ -445,7 +445,6 @@ export default function PlayGame() {
         open={showScore}
         score={lastScore}
         gameId={meta?.id}
-        xpMultiplier={meta?.xpMultiplier}
         durationMs={lastDurationMs}
         onClose={handleCloseScore}
         onPlayAgain={handlePlayAgain}

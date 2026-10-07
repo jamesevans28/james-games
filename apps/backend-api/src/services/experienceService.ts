@@ -78,18 +78,6 @@ function ensureRequirement(levels: ExperienceLevelRow[], level: number): Experie
   return levels[levels.length - 1];
 }
 
-export function calculateExperienceForScore(score: number, multiplier: number = 1.0): number {
-  /*
-    XP is awarded purely from in-game score. Each game declares a multiplier that reflects
-    how generous that title should be. We clamp to [1, 5000] so streaks cannot explode totals
-    or underflow when designers experiment with tiny multipliers.
-  */
-  if (!Number.isFinite(score) || score <= 0) return 0;
-  if (!Number.isFinite(multiplier) || multiplier <= 0) multiplier = 1.0;
-  const base = Math.floor(score * multiplier);
-  return Math.min(5000, Math.max(1, base));
-}
-
 export async function getExperienceSummary(userId: string): Promise<ExperienceSummary | null> {
   const user = await getUser(userId);
   if (!user) return null;
@@ -117,26 +105,20 @@ export function buildSummary(user: any): ExperienceSummary {
   };
 }
 
-export async function applyExperienceToUser(userId: string, xpEarned: number) {
-  if (xpEarned <= 0) {
-    const summary = await getExperienceSummary(userId);
-    if (!summary) throw new Error("user_not_found");
-    return { summary, awarded: 0 };
-  }
-  const user = await getUser(userId);
-  if (!user) throw new Error("user_not_found");
-  const levels = await loadExperienceLevels();
+/** Pure level-up maths: apply `xpEarned` to a level/progress/total triple. */
+export function addExperience(
+  levels: ExperienceLevelRow[],
+  start: { level: number; progress: number; total: number },
+  xpEarned: number
+) {
   const maxLevel = levels[levels.length - 1]?.level ?? EXPERIENCE_MAX_LEVEL;
-  let level = Math.min(Math.max(Number(user.xpLevel ?? 1), 1), maxLevel);
-  let progress = Math.max(0, Number(user.xpProgress ?? 0));
-  let total = Math.max(0, Number(user.xpTotal ?? 0));
+  let level = Math.min(Math.max(start.level, 1), maxLevel);
+  let progress = Math.max(0, start.progress);
   let remainingGain = xpEarned;
-
   while (remainingGain > 0) {
     const requirement = ensureRequirement(levels, level).requiredXp;
     if (level >= maxLevel) {
       progress = Math.min(requirement, progress + remainingGain);
-      remainingGain = 0;
       break;
     }
     const needed = requirement - progress;
@@ -149,40 +131,69 @@ export async function applyExperienceToUser(userId: string, xpEarned: number) {
       remainingGain = 0;
     }
   }
+  return { level, progress, total: Math.max(0, start.total) + xpEarned };
+}
 
-  total += xpEarned;
-  const stamp = new Date().toISOString();
-  try {
-    await ddb.send(
-      new UpdateCommand({
-        TableName: config.tables.users,
-        Key: { userId },
-        UpdateExpression:
-          "SET xpLevel = :lvl, xpProgress = :prog, xpTotal = :tot, xpUpdatedAt = :ts, updatedAt = :ts",
-        ExpressionAttributeValues: {
-          ":lvl": level,
-          ":prog": progress,
-          ":tot": total,
-          ":ts": stamp,
-        },
-        ConditionExpression: "attribute_exists(userId)",
-      })
-    );
-  } catch (err: any) {
-    if (err?.name === "ConditionalCheckFailedException") {
-      throw new Error("user_not_found");
-    }
-    throw err;
+const XP_WRITE_ATTEMPTS = 3;
+
+/**
+ * Add XP to a user. The write is conditional on xpUpdatedAt being unchanged since
+ * the read, so two runs finishing together can't overwrite each other's XP.
+ */
+export async function applyExperienceToUser(userId: string, xpEarned: number) {
+  if (xpEarned <= 0) {
+    const summary = await getExperienceSummary(userId);
+    if (!summary) throw new Error("user_not_found");
+    return { summary, awarded: 0 };
   }
+  const levels = await loadExperienceLevels();
 
-  cachedLevels ||= levels; // ensure cached after first load
-  const summary = buildSummary({
-    xpLevel: level,
-    xpProgress: progress,
-    xpTotal: total,
-    xpUpdatedAt: stamp,
-  });
-  return { summary, awarded: xpEarned };
+  for (let attempt = 1; attempt <= XP_WRITE_ATTEMPTS; attempt++) {
+    const user = await getUser(userId);
+    if (!user) throw new Error("user_not_found");
+    const prevStamp: string | undefined = user.xpUpdatedAt;
+    const next = addExperience(
+      levels,
+      {
+        level: Number(user.xpLevel ?? 1),
+        progress: Number(user.xpProgress ?? 0),
+        total: Number(user.xpTotal ?? 0),
+      },
+      xpEarned
+    );
+    const stamp = new Date().toISOString();
+    try {
+      await ddb.send(
+        new UpdateCommand({
+          TableName: config.tables.users,
+          Key: { userId },
+          UpdateExpression:
+            "SET xpLevel = :lvl, xpProgress = :prog, xpTotal = :tot, xpUpdatedAt = :ts, updatedAt = :ts",
+          ConditionExpression: prevStamp
+            ? "attribute_exists(userId) AND xpUpdatedAt = :prev"
+            : "attribute_exists(userId) AND attribute_not_exists(xpUpdatedAt)",
+          ExpressionAttributeValues: {
+            ":lvl": next.level,
+            ":prog": next.progress,
+            ":tot": next.total,
+            ":ts": stamp,
+            ...(prevStamp ? { ":prev": prevStamp } : {}),
+          },
+        })
+      );
+      const summary = buildSummary({
+        xpLevel: next.level,
+        xpProgress: next.progress,
+        xpTotal: next.total,
+        xpUpdatedAt: stamp,
+      });
+      return { summary, awarded: xpEarned };
+    } catch (err: any) {
+      if (err?.name !== "ConditionalCheckFailedException") throw err;
+      // Someone else wrote first (or the user vanished): re-read and try again.
+    }
+  }
+  throw new Error("xp_write_conflict");
 }
 
 export function invalidateExperienceCache() {

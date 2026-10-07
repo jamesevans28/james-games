@@ -27,7 +27,7 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 | `/auth/firebase` | register-anonymous, register-username, login-username, me, link-provider, change-pin, add-email, check-email-verified, admin/reset-pin |
 | `/users` | GET me, POST screen-name, POST preferences, PATCH settings, GET streak, POST streak/checkin, GET :userId |
 | `/scores` | GET :gameId (leaderboard), POST / (submit, auth) |
-| `/experience` | GET summary, POST runs |
+| `/experience` | GET summary (POST runs returns 410; XP comes from POST /scores) |
 | `/ratings` | GET /, GET :gameId, POST :gameId |
 | `/followers` | summary, following, followers, activity, ids, notifications, POST status, POST/DELETE :targetUserId |
 | `/games` | GET config, GET config/:gameId, GET feed, GET feed/personalized |

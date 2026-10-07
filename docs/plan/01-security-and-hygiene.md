@@ -38,7 +38,7 @@ Steps:
 Done when: the response body contains no URL; the settings UI does not promise verification that cannot be sent.
 
 ## T1.4 Server-side XP, score bounds and streak dates (P0)
-Status: todo
+Status: done (2026-10-08). Score limits default to 1,000,000 max and 2,000 per second (live top score is 87,682), overridable per game via game-config metadata.maxScore / maxScorePerSecond; non-integer scores are rounded, not rejected. XP is awarded inside POST /scores from the server game config (unknown games such as word-stack, which has no config row, use multiplier 1); POST /experience/runs returns 410. Note: server multipliers differ from the old client registry for some games (e.g. box-cutter 0.3 server vs 0.03 client), so XP per run changes for those. Streak date = server clock + clamped tzOffsetMinutes; XP and streak writes are conditional. Verified by 25 unit tests; authenticated live 400s were not exercised because the local API writes to production tables.
 Depends on: none
 Goal: scores, XP and streaks cannot be inflated from the client.
 Files: `apps/backend-api/src/controllers/scoresController.ts`, `services/scoresService.ts` (~169), `controllers/experienceController.ts` (~22), `services/experienceService.ts`, `controllers/streakController.ts` (~16-21), `services/streakService.ts`, `services/gamesConfigService.ts`, frontend `apps/player-web/src/lib/api.ts` (~131-145), `apps/player-web/src/pages/games/GameOver.tsx`
