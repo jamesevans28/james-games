@@ -1,5 +1,352 @@
 [
   {
+    "id": "blocker",
+    "title": "Blocker",
+    "tagline": "Drop blocks, clear lines, chain combos.",
+    "description": "Drag puzzle pieces onto an 8×8 board, clear full lines, trigger power blocks, and chase combos before you run out of moves.",
+    "objective": "Fill whole rows or columns to clear them. Every block you place scores a point, and clearing two or more lines at once leaves a power block. The game ends when none of your three pieces fit.",
+    "controls": "Drag a piece from the tray at the bottom onto the board. Tap the round button to turn all three pieces.",
+    "makers": [
+      "James",
+      "Tilly",
+      "Harvey"
+    ],
+    "status": "active",
+    "orientation": "portrait",
+    "design": {
+      "w": 540,
+      "h": 960
+    },
+    "input": [
+      "drag",
+      "tap"
+    ],
+    "scoring": {
+      "max": 500000,
+      "perSecondMax": 250,
+      "xpMultiplier": 0.63
+    },
+    "cover": "/assets/blocker/thumbnail.svg",
+    "createdAt": "2025-11-24T00:00:00.000Z",
+    "updatedAt": "2026-10-09T00:00:00.000Z",
+    "seo": {
+      "description": "Drop blocks, clear lines, chain combos. Easy to start, hard to stop. Free puzzle game, no ads.",
+      "category": "puzzle"
+    }
+  },
+  {
+    "id": "box-cutter",
+    "title": "Box Cutter",
+    "tagline": "Draw lines to box off the board. Dodge the fireball!",
+    "description": "Draw lines to capture territory while avoiding the bouncing enemy ball.",
+    "objective": "Box off enough of the board to clear each level (75% to start) without the fireball touching your line. You have 3 lives.",
+    "controls": "Use the on-screen arrow pad (or swipe, or the arrow keys) to move along the edge and draw a line across the board. Grab the clock to slow the fireball for 5 seconds. Tap Next level when a level is done.",
+    "makers": [
+      "James",
+      "Tilly",
+      "Harvey"
+    ],
+    "status": "active",
+    "orientation": "portrait",
+    "design": {
+      "w": 540,
+      "h": 960
+    },
+    "input": [
+      "dpad",
+      "swipe"
+    ],
+    "scoring": {
+      "max": 100000,
+      "perSecondMax": 1000,
+      "xpMultiplier": 0.03
+    },
+    "cover": "/assets/box-cutter/boxcutter.jpg",
+    "createdAt": "2025-12-23T00:00:00.000Z",
+    "updatedAt": "2026-10-09T00:00:00.000Z",
+    "seo": {
+      "description": "Draw lines to box off the board while dodging the fireball. Free, no ads, very satisfying.",
+      "category": "arcade"
+    }
+  },
+  {
+    "id": "cosmic-clash",
+    "title": "Cosmic Clash",
+    "tagline": "Blast the space invaders and survive the waves.",
+    "description": "Space Invaders-style shooter. Auto-fire at descending aliens, collect power-ups, survive waves!",
+    "objective": "Shoot down each wave of aliens before they land on your planet, and dodge their shots. Grab power-ups for double shots, rapid fire and a shield.",
+    "controls": "Hold left or right to move; tap a side to nudge. Your ship fires by itself. On a keyboard, use the arrow keys or A and D.",
+    "makers": [
+      "James",
+      "Tilly",
+      "Harvey"
+    ],
+    "status": "active",
+    "orientation": "portrait",
+    "design": {
+      "w": 540,
+      "h": 960
+    },
+    "input": [
+      "hold",
+      "tap",
+      "keyboard"
+    ],
+    "scoring": {
+      "max": 100000,
+      "perSecondMax": 150,
+      "xpMultiplier": 0.5
+    },
+    "cover": "/assets/cosmic-clash/thumbnail.svg",
+    "createdAt": "2025-11-21T00:00:00.000Z",
+    "updatedAt": "2026-10-09T00:00:00.000Z",
+    "seo": {
+      "description": "Blast the space invaders, grab power-ups and survive the waves. Free shooter, no ads.",
+      "category": "action"
+    }
+  },
+  {
+    "id": "flash-bash",
+    "title": "Flash Bash",
+    "tagline": "Watch the lights, then copy the pattern.",
+    "description": "Watch the sequence of colored shapes, then mimic them before time runs out. Sequences get longer!",
+    "objective": "Copy each pattern of flashing shapes. Patterns get longer, and every three patterns the shapes swap buttons.",
+    "controls": "Watch the shapes flash in the middle, then tap the buttons with the same shapes in the same order before the bar runs out. Keys 1 to 6 work on a keyboard.",
+    "makers": [
+      "James",
+      "Tilly",
+      "Harvey"
+    ],
+    "status": "active",
+    "orientation": "portrait",
+    "design": {
+      "w": 540,
+      "h": 960
+    },
+    "input": [
+      "tap"
+    ],
+    "scoring": {
+      "max": 5000,
+      "perSecondMax": 5,
+      "xpMultiplier": 4.13
+    },
+    "cover": "/assets/flash-bash/thumbnail.svg",
+    "createdAt": "2025-11-04T00:00:00.000Z",
+    "updatedAt": "2026-10-09T00:00:00.000Z",
+    "seo": {
+      "description": "Watch the lights, then copy the pattern. How long a sequence can you remember? Free memory game, no ads.",
+      "category": "memory"
+    }
+  },
+  {
+    "id": "hoop-city",
+    "title": "Hoop City",
+    "tagline": "Float the ball through hoops over the city.",
+    "description": "Tap to keep the ball afloat and drop it through every hoop as the city scrolls by. Swish through the middle for a Perfect and keep your combo going.",
+    "objective": "Get the ball through every hoop. Missing a hoop or letting the ball fall off the bottom ends the run. Clean passes build a combo; touching the rim resets it.",
+    "controls": "Tap anywhere (or press Space or Enter) to bounce the ball up.",
+    "makers": [
+      "James",
+      "Tilly",
+      "Harvey"
+    ],
+    "status": "active",
+    "orientation": "portrait",
+    "design": {
+      "w": 540,
+      "h": 960
+    },
+    "input": [
+      "tap"
+    ],
+    "scoring": {
+      "max": 20000,
+      "perSecondMax": 10,
+      "xpMultiplier": 2.15
+    },
+    "cover": "/assets/hoop-city/hoopcity.jpg",
+    "createdAt": "2025-11-28T00:00:00.000Z",
+    "updatedAt": "2026-10-09T00:00:00.000Z",
+    "seo": {
+      "description": "Tap to float the ball through hoops as the city scrolls past. Free, no ads, one more go guaranteed.",
+      "category": "arcade"
+    }
+  },
+  {
+    "id": "paddle-pop",
+    "title": "Paddle Pop",
+    "tagline": "Bounce the ball, smash the targets, grab power-ups.",
+    "description": "Deflect the marble, collect power-ups, hit bonus discs, avoid falling obstacles.",
+    "objective": "Keep the balls bouncing off your paddle and bump the numbered discs for points. Don't let a fireball touch your paddle.",
+    "controls": "Hold the left or right side of the screen to slide the paddle (arrow keys or A/D on a keyboard). Hit power-ups with the ball to collect them.",
+    "makers": [
+      "James",
+      "Tilly",
+      "Harvey"
+    ],
+    "status": "active",
+    "orientation": "portrait",
+    "design": {
+      "w": 540,
+      "h": 960
+    },
+    "input": [
+      "hold"
+    ],
+    "scoring": {
+      "max": 20000,
+      "perSecondMax": 50,
+      "xpMultiplier": 5.13
+    },
+    "cover": "/assets/paddle-pop/paddlepop.jpg",
+    "createdAt": "2025-11-05T00:00:00.000Z",
+    "updatedAt": "2026-10-09T00:00:00.000Z",
+    "seo": {
+      "description": "Bounce the ball, hit the targets, grab the power-ups. A free paddle game, no ads.",
+      "category": "arcade"
+    }
+  },
+  {
+    "id": "reflex-ring",
+    "title": "Reflex Ring",
+    "tagline": "Tap when the arrow hits the bright segment.",
+    "description": "Tap precisely as the arrow hits the highlighted segment. Speeds up over time.",
+    "objective": "Tap the screen exactly when the rotating arrow overlaps with the colored segment.",
+    "controls": "Tap anywhere when the arrow is over the coloured wedge. Collect power-ups with the arrow tip.",
+    "makers": [
+      "James",
+      "Tilly",
+      "Harvey"
+    ],
+    "status": "active",
+    "orientation": "portrait",
+    "design": {
+      "w": 540,
+      "h": 960
+    },
+    "input": [
+      "tap"
+    ],
+    "scoring": {
+      "max": 5000,
+      "perSecondMax": 15,
+      "xpMultiplier": 2.92
+    },
+    "cover": "/assets/reflex-ring/thumbnail.svg",
+    "createdAt": "2025-09-15T00:00:00.000Z",
+    "updatedAt": "2026-10-09T00:00:00.000Z",
+    "seo": {
+      "description": "Tap when the arrow hits the bright segment. It speeds up every round. Free, no ads.",
+      "category": "reflex"
+    }
+  },
+  {
+    "id": "serpento",
+    "title": "Serpento",
+    "tagline": "Eat, grow, and don't bite your own tail.",
+    "description": "Classic snake game. Steer to the apples, avoid the walls and yourself. Gets faster as you grow!",
+    "objective": "Eat apples to grow longer and score; don't hit the walls or your own tail.",
+    "controls": "Swipe up, down, left or right to steer, or tap the arrow pad under the board. Arrow keys or WASD on a keyboard.",
+    "makers": [
+      "James",
+      "Tilly",
+      "Harvey"
+    ],
+    "status": "active",
+    "orientation": "portrait",
+    "design": {
+      "w": 540,
+      "h": 960
+    },
+    "input": [
+      "swipe",
+      "dpad",
+      "keyboard"
+    ],
+    "scoring": {
+      "max": 340,
+      "perSecondMax": 13,
+      "xpMultiplier": 18.5
+    },
+    "cover": "/assets/serpento/thumbnail.svg",
+    "createdAt": "2025-11-17T00:00:00.000Z",
+    "updatedAt": "2026-10-09T00:00:00.000Z",
+    "seo": {
+      "description": "Eat to grow, don't hit the walls (or yourself). Our take on the classic snake game. Free, no ads.",
+      "category": "arcade"
+    }
+  },
+  {
+    "id": "word-rush",
+    "title": "Word Rush",
+    "tagline": "Guess the hidden words before the clock runs out.",
+    "description": "Pick four consonants and two vowels, then guess the hidden word or phrase before the clock runs out. Animals, food, places, kids' films and more.",
+    "objective": "Solve each hidden word or phrase before the timer runs out. You score a point for every second left on the clock.",
+    "controls": "Tap 4 consonants and 2 vowels, then Start. Type the answer on the on-screen keyboard (or a real keyboard) and tap Submit. Buy Letter shows a hidden letter for 30 seconds; Give Up ends the game.",
+    "makers": [
+      "James",
+      "Tilly",
+      "Harvey"
+    ],
+    "status": "active",
+    "orientation": "portrait",
+    "design": {
+      "w": 540,
+      "h": 960
+    },
+    "input": [
+      "tap",
+      "keyboard"
+    ],
+    "scoring": {
+      "max": 20000,
+      "perSecondMax": 60,
+      "xpMultiplier": 1.42
+    },
+    "cover": "/assets/word-rush/thumbnail.svg",
+    "createdAt": "2025-11-05T00:00:00.000Z",
+    "updatedAt": "2026-10-09T00:00:00.000Z",
+    "seo": {
+      "description": "Pick your letters, then guess the hidden words before the clock runs out. Free word game, no ads.",
+      "category": "word"
+    }
+  },
+  {
+    "id": "word-stack",
+    "title": "Word Stack",
+    "tagline": "Swap one letter at a time to build a stack of words.",
+    "description": "Everyone starts the day on the same 5-letter word. Swap one letter at a time to make new words and build the tallest stack you can.",
+    "objective": "Make as many new 5-letter words as you can. Each word scores its letter values. The run ends when no offered letter makes a new word, or when you press Finish.",
+    "controls": "Drag a green or blue letter tile onto a letter of the word to swap it. Press Finish when you want to stop.",
+    "makers": [
+      "James",
+      "Tilly",
+      "Harvey"
+    ],
+    "status": "active",
+    "orientation": "portrait",
+    "design": {
+      "w": 540,
+      "h": 960
+    },
+    "input": [
+      "drag"
+    ],
+    "scoring": {
+      "max": 20000,
+      "perSecondMax": 30,
+      "xpMultiplier": 1
+    },
+    "cover": "/assets/word-stack/thumbnail.svg",
+    "createdAt": "2025-12-26T00:00:00.000Z",
+    "updatedAt": "2026-10-09T00:00:00.000Z",
+    "seo": {
+      "description": "Start with one 5-letter word, then swap in letters to make new ones. Free word puzzle, no ads.",
+      "category": "word"
+    }
+  },
+  {
     "id": "stack-tower",
     "title": "Stack Tower",
     "tagline": "Drop each block on the tower. How high can you go?",
@@ -32,144 +379,6 @@
     }
   },
   {
-    "id": "paddle-pop",
-    "title": "Paddle Pop",
-    "tagline": "Bounce the ball, smash the targets, grab power-ups.",
-    "description": "Deflect the marble, collect power-ups, hit bonus discs, avoid falling obstacles.",
-    "objective": "Keep the ball in the air and hit targets.",
-    "controls": "Drag the paddle left and right.",
-    "makers": [
-      "James",
-      "Tilly",
-      "Harvey"
-    ],
-    "status": "active",
-    "orientation": "portrait",
-    "design": {
-      "w": 540,
-      "h": 960
-    },
-    "input": [
-      "hold"
-    ],
-    "scoring": {
-      "max": 1000000,
-      "perSecondMax": 2000,
-      "xpMultiplier": 5.13
-    },
-    "cover": "/assets/paddle-pop/paddlepop.jpg",
-    "createdAt": "2025-11-05T00:00:00.000Z",
-    "updatedAt": "2025-12-29T00:00:00.000Z",
-    "seo": {
-      "description": "Bounce the ball, hit the targets, grab the power-ups. A free paddle game, no ads.",
-      "category": "arcade"
-    }
-  },
-  {
-    "id": "word-stack",
-    "title": "Word Stack",
-    "tagline": "Swap one letter at a time to build a stack of words.",
-    "description": "Start with a 5-letter word, then drag offered letters to create new valid words. Six turns max.",
-    "objective": "Build a stack of valid 5-letter words using the offered letters.",
-    "controls": "Type your first word, then drag a letter tile onto the word.",
-    "makers": [
-      "James",
-      "Tilly",
-      "Harvey"
-    ],
-    "status": "active",
-    "orientation": "portrait",
-    "design": {
-      "w": 540,
-      "h": 960
-    },
-    "input": [
-      "drag",
-      "keyboard"
-    ],
-    "scoring": {
-      "max": 1000000,
-      "perSecondMax": 2000,
-      "xpMultiplier": 1
-    },
-    "cover": "/assets/word-stack/thumbnail.svg",
-    "createdAt": "2025-12-26T00:00:00.000Z",
-    "updatedAt": "2025-12-26T00:00:00.000Z",
-    "seo": {
-      "description": "Start with one 5-letter word, then swap in letters to make new ones. Free word puzzle, no ads.",
-      "category": "word"
-    }
-  },
-  {
-    "id": "box-cutter",
-    "title": "Box Cutter",
-    "tagline": "Draw lines to box off the board. Dodge the fireball!",
-    "description": "Draw lines to capture territory while avoiding the bouncing enemy ball.",
-    "objective": "Capture 75% of the screen by drawing enclosed areas without getting hit.",
-    "controls": "Use the on-screen directional pad to move your sparkly ball.",
-    "makers": [
-      "James",
-      "Tilly",
-      "Harvey"
-    ],
-    "status": "active",
-    "orientation": "portrait",
-    "design": {
-      "w": 540,
-      "h": 960
-    },
-    "input": [
-      "dpad",
-      "swipe"
-    ],
-    "scoring": {
-      "max": 1000000,
-      "perSecondMax": 2000,
-      "xpMultiplier": 0.03
-    },
-    "cover": "/assets/box-cutter/boxcutter.jpg",
-    "createdAt": "2025-12-23T00:00:00.000Z",
-    "updatedAt": "2025-12-23T00:00:00.000Z",
-    "seo": {
-      "description": "Draw lines to box off the board while dodging the fireball. Free, no ads, very satisfying.",
-      "category": "arcade"
-    }
-  },
-  {
-    "id": "hoop-city",
-    "title": "Hoop City",
-    "tagline": "Float the ball through hoops over the city.",
-    "description": "Tap to keep the ball afloat while threading every vertical hoop as the city scrolls by.",
-    "objective": "Float the ball through each hoop without touching the skyline or missing a ring.",
-    "controls": "Tap anywhere or press space to bounce upward.",
-    "makers": [
-      "James",
-      "Tilly",
-      "Harvey"
-    ],
-    "status": "active",
-    "orientation": "portrait",
-    "design": {
-      "w": 540,
-      "h": 960
-    },
-    "input": [
-      "tap"
-    ],
-    "scoring": {
-      "max": 1000000,
-      "perSecondMax": 2000,
-      "xpMultiplier": 2.15
-    },
-    "cover": "/assets/hoop-city/hoopcity.jpg",
-    "createdAt": "2025-11-28T00:00:00.000Z",
-    "updatedAt": "2025-12-02T00:00:00.000Z",
-    "seo": {
-      "description": "Tap to float the ball through hoops as the city scrolls past. Free, no ads, one more go guaranteed.",
-      "category": "arcade"
-    }
-  },
-  {
     "id": "block-breaker",
     "title": "Block Breaker",
     "tagline": "Smash every brick with your ball.",
@@ -181,7 +390,7 @@
       "Tilly",
       "Harvey"
     ],
-    "status": "beta",
+    "status": "inactive",
     "orientation": "portrait",
     "design": {
       "w": 540,
@@ -204,75 +413,6 @@
     }
   },
   {
-    "id": "reflex-ring",
-    "title": "Reflex Ring",
-    "tagline": "Tap when the arrow hits the bright segment.",
-    "description": "Tap precisely as the arrow hits the highlighted segment. Speeds up over time.",
-    "objective": "Tap the screen exactly when the rotating arrow overlaps with the colored segment.",
-    "controls": "Tap anywhere on the screen.",
-    "makers": [
-      "James",
-      "Tilly",
-      "Harvey"
-    ],
-    "status": "active",
-    "orientation": "portrait",
-    "design": {
-      "w": 540,
-      "h": 960
-    },
-    "input": [
-      "tap"
-    ],
-    "scoring": {
-      "max": 10000,
-      "perSecondMax": 10,
-      "xpMultiplier": 2.92
-    },
-    "cover": "/assets/reflex-ring/thumbnail.svg",
-    "createdAt": "2025-09-15T00:00:00.000Z",
-    "updatedAt": "2025-11-26T00:00:00.000Z",
-    "seo": {
-      "description": "Tap when the arrow hits the bright segment. It speeds up every round. Free, no ads.",
-      "category": "reflex"
-    }
-  },
-  {
-    "id": "blocker",
-    "title": "Blocker",
-    "tagline": "Drop blocks, clear lines, chain combos.",
-    "description": "Drag puzzle pieces into a 8x8 board, clear full lines, trigger power blocks, and chase combos before you run out of moves.",
-    "objective": "Place blocks to form full rows or columns to clear them.",
-    "controls": "Drag and drop blocks onto the grid.",
-    "makers": [
-      "James",
-      "Tilly",
-      "Harvey"
-    ],
-    "status": "active",
-    "orientation": "portrait",
-    "design": {
-      "w": 540,
-      "h": 960
-    },
-    "input": [
-      "drag",
-      "tap"
-    ],
-    "scoring": {
-      "max": 1000000,
-      "perSecondMax": 2000,
-      "xpMultiplier": 0.63
-    },
-    "cover": "/assets/blocker/thumbnail.svg",
-    "createdAt": "2025-11-24T00:00:00.000Z",
-    "updatedAt": "2025-11-25T00:00:00.000Z",
-    "seo": {
-      "description": "Drop blocks, clear lines, chain combos. Easy to start, hard to stop. Free puzzle game, no ads.",
-      "category": "puzzle"
-    }
-  },
-  {
     "id": "car-crash",
     "title": "Car Crash",
     "tagline": "Switch lanes and dodge the traffic.",
@@ -284,7 +424,7 @@
       "Tilly",
       "Harvey"
     ],
-    "status": "active",
+    "status": "inactive",
     "orientation": "portrait",
     "design": {
       "w": 540,
@@ -307,42 +447,6 @@
     }
   },
   {
-    "id": "cosmic-clash",
-    "title": "Cosmic Clash",
-    "tagline": "Blast the space invaders and survive the waves.",
-    "description": "Space Invaders-style shooter. Auto-fire at descending aliens, collect power-ups, survive waves!",
-    "objective": "Destroy waves of alien invaders.",
-    "controls": "Drag to move ship, it shoots automatically.",
-    "makers": [
-      "James",
-      "Tilly",
-      "Harvey"
-    ],
-    "status": "active",
-    "orientation": "portrait",
-    "design": {
-      "w": 540,
-      "h": 960
-    },
-    "input": [
-      "hold",
-      "tap",
-      "keyboard"
-    ],
-    "scoring": {
-      "max": 1000000,
-      "perSecondMax": 2000,
-      "xpMultiplier": 0.5
-    },
-    "cover": "/assets/cosmic-clash/thumbnail.svg",
-    "createdAt": "2025-11-21T00:00:00.000Z",
-    "updatedAt": "2025-11-25T00:00:00.000Z",
-    "seo": {
-      "description": "Blast the space invaders, grab power-ups and survive the waves. Free shooter, no ads.",
-      "category": "action"
-    }
-  },
-  {
     "id": "fill-the-cup",
     "title": "Fill the Cup",
     "tagline": "Hold to pour, let go to stop. Don't spill!",
@@ -354,7 +458,7 @@
       "Tilly",
       "Harvey"
     ],
-    "status": "active",
+    "status": "inactive",
     "orientation": "portrait",
     "design": {
       "w": 540,
@@ -377,40 +481,6 @@
     }
   },
   {
-    "id": "flash-bash",
-    "title": "Flash Bash",
-    "tagline": "Watch the lights, then copy the pattern.",
-    "description": "Watch the sequence of colored shapes, then mimic them before time runs out. Sequences get longer!",
-    "objective": "Memorize and repeat the sequence of flashing colors.",
-    "controls": "Tap the colored buttons in the correct order.",
-    "makers": [
-      "James",
-      "Tilly",
-      "Harvey"
-    ],
-    "status": "active",
-    "orientation": "portrait",
-    "design": {
-      "w": 540,
-      "h": 960
-    },
-    "input": [
-      "tap"
-    ],
-    "scoring": {
-      "max": 1000000,
-      "perSecondMax": 2000,
-      "xpMultiplier": 4.13
-    },
-    "cover": "/assets/flash-bash/thumbnail.svg",
-    "createdAt": "2025-11-04T00:00:00.000Z",
-    "updatedAt": "2025-11-25T00:00:00.000Z",
-    "seo": {
-      "description": "Watch the lights, then copy the pattern. How long a sequence can you remember? Free memory game, no ads.",
-      "category": "memory"
-    }
-  },
-  {
     "id": "ho-ho-home-delivery",
     "title": "Ho Ho Home Delivery",
     "tagline": "Help Santa drop presents down the chimneys.",
@@ -422,7 +492,7 @@
       "Tilly",
       "Harvey"
     ],
-    "status": "active",
+    "status": "inactive",
     "orientation": "portrait",
     "design": {
       "w": 540,
@@ -456,7 +526,7 @@
       "Tilly",
       "Harvey"
     ],
-    "status": "active",
+    "status": "inactive",
     "orientation": "portrait",
     "design": {
       "w": 540,
@@ -476,42 +546,6 @@
     "seo": {
       "description": "Aim, pick your power and shoot for the hoop. A free basketball game, no ads.",
       "category": "sports"
-    }
-  },
-  {
-    "id": "serpento",
-    "title": "Serpento",
-    "tagline": "Eat, grow, and don't bite your own tail.",
-    "description": "Classic snake game. Turn left/right to collect food, avoid walls and yourself. Gets faster as you grow!",
-    "objective": "Eat food to grow longer, avoid hitting walls or yourself.",
-    "controls": "Tap left or right side of screen to turn.",
-    "makers": [
-      "James",
-      "Tilly",
-      "Harvey"
-    ],
-    "status": "active",
-    "orientation": "portrait",
-    "design": {
-      "w": 540,
-      "h": 960
-    },
-    "input": [
-      "swipe",
-      "dpad",
-      "keyboard"
-    ],
-    "scoring": {
-      "max": 1000000,
-      "perSecondMax": 2000,
-      "xpMultiplier": 18.5
-    },
-    "cover": "/assets/serpento/thumbnail.svg",
-    "createdAt": "2025-11-17T00:00:00.000Z",
-    "updatedAt": "2025-11-25T00:00:00.000Z",
-    "seo": {
-      "description": "Eat to grow, don't hit the walls (or yourself). Our take on the classic snake game. Free, no ads.",
-      "category": "arcade"
     }
   },
   {
@@ -546,41 +580,6 @@
     "seo": {
       "description": "Crocs are swimming for your raft! Tap them before they snap. Free, no ads, and great for small fingers.",
       "category": "reflex"
-    }
-  },
-  {
-    "id": "word-rush",
-    "title": "Word Rush",
-    "tagline": "Guess the hidden words before the clock runs out.",
-    "description": "Guess words and phrases with your selected letters. 2-minute timer per level!",
-    "objective": "Solve the word puzzle before time runs out.",
-    "controls": "Tap letters to guess the word.",
-    "makers": [
-      "James",
-      "Tilly",
-      "Harvey"
-    ],
-    "status": "active",
-    "orientation": "portrait",
-    "design": {
-      "w": 540,
-      "h": 960
-    },
-    "input": [
-      "tap",
-      "keyboard"
-    ],
-    "scoring": {
-      "max": 1000000,
-      "perSecondMax": 2000,
-      "xpMultiplier": 1.42
-    },
-    "cover": "/assets/word-rush/thumbnail.svg",
-    "createdAt": "2025-11-05T00:00:00.000Z",
-    "updatedAt": "2025-11-25T00:00:00.000Z",
-    "seo": {
-      "description": "Pick your letters, then guess the hidden words before the clock runs out. Free word game, no ads.",
-      "category": "word"
     }
   }
 ]

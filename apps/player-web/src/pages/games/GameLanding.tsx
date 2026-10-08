@@ -14,7 +14,6 @@ import {
   type ScoreEntry,
 } from "../../lib/api";
 import { getUserName } from "../../utils/user";
-import { onGameOver } from "../../utils/gameEvents";
 import { ProfileAvatar } from "../../components/profile";
 import RatingStars from "../../components/RatingStars";
 import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";
@@ -22,13 +21,15 @@ import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/rati
 type Props = {
   meta: GameMeta;
   onPlay: () => void;
+  /** Bumped by PlayGame after each finished run, so the leaderboard reloads. */
+  refreshKey?: number;
 };
 
 // Global cache for leaderboards to avoid refetching on every load
 const leaderboardCache = new Map<string, { data: ScoreEntry[]; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-export default function GameLanding({ meta, onPlay }: Props) {
+export default function GameLanding({ meta, onPlay, refreshKey = 0 }: Props) {
   const [top, setTop] = useState<ScoreEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -153,22 +154,14 @@ export default function GameLanding({ meta, onPlay }: Props) {
       }
     };
 
+    // After a run (refreshKey > 0) a new score may have been posted: skip the cache.
+    if (refreshKey > 0) leaderboardCache.delete(meta.id);
     void load();
-
-    // Listen for game over events to refresh leaderboard when a new score might be posted
-    const off = onGameOver((detail) => {
-      if (detail.gameId === meta.id) {
-        // Clear cache and reload
-        leaderboardCache.delete(meta.id);
-        void load();
-      }
-    });
 
     return () => {
       cancelled = true;
-      off?.();
     };
-  }, [meta.id]);
+  }, [meta.id, refreshKey]);
 
   function fmtDateShort(iso?: string) {
     if (!iso) return null;

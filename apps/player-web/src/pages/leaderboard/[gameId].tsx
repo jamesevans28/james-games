@@ -160,7 +160,10 @@ export default function LeaderboardPage() {
             {rows.map((r, i) => {
               const isMe = myName && r.screenName === myName;
               const medal = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : null;
-              const medalColors: Record<string, { ring: string; badge: string; text: string }> = {
+              const medalColors: Record<
+                "gold" | "silver" | "bronze",
+                { ring: string; badge: string; text: string }
+              > = {
                 gold: { ring: "#fbbf24", badge: "#f59e0b", text: "#b7791f" },
                 silver: { ring: "#c0c6cf", badge: "#9ca3af", text: "#6b7280" },
                 bronze: { ring: "#d97706", badge: "#92400e", text: "#b45309" },

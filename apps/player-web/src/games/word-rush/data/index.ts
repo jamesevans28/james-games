@@ -1,56 +1,30 @@
-import { countries } from "./countries";
-import { cities } from "./cities";
-import { phrases } from "./phrases";
-import { fruits } from "./fruits";
-import { sports } from "./sports";
-import { actors } from "./actors";
-import { quotes } from "./quotes";
-import { landmarks } from "./landmarks";
 import { animals } from "./animals";
-import { brands } from "./brands";
-import { occupations } from "./occupations";
-import { tvShows } from "./tvshows";
-import { movies } from "./movies";
-import { kidsMovies } from "./kidsMovies";
+import { colours } from "./colours";
 import { food } from "./food";
-import { drink } from "./drink";
-import { kitchen } from "./kitchen";
-import { event } from "./event";
-import { counties } from "./counties";
-import { sportsPlayers } from "./sportsPlayers";
+import { house } from "./house";
+import { jobs } from "./jobs";
+import { kidsFilms } from "./kidsFilms";
+import { nature } from "./nature";
+import { places } from "./places";
+import { school } from "./school";
+import { sports } from "./sports";
 
 export type Category = {
   name: string;
-  words: string[];
+  /** Upper case A–Z, single spaces, and the odd apostrophe or hyphen (shown from the start). */
+  phrases: readonly string[];
 };
 
-export const categories: Category[] = [
-  { name: "Countries", words: countries },
-  { name: "Cities", words: cities },
-  { name: "Well Known Phrase", words: phrases },
-  { name: "Fruit", words: fruits },
-  { name: "Sports", words: sports },
-  { name: "Actor/Actress", words: actors },
-  { name: "Quote", words: quotes },
-  { name: "Landmark", words: landmarks },
-  { name: "Animals", words: animals },
-  { name: "Brands", words: brands },
-  { name: "Occupation", words: occupations },
-  { name: "TV Show", words: tvShows },
-  { name: "Movie", words: movies },
-  { name: "Kids Movie", words: kidsMovies },
-  { name: "Food", words: food },
-  { name: "Drink", words: drink },
-  { name: "In The Kitchen", words: kitchen },
-  { name: "Event", words: event },
-  { name: "Counties", words: counties },
-  { name: "Sports Player", words: sportsPlayers },
+/** Kid-safe categories (ages 6 to 10), UK/Australian spelling. */
+export const categories: readonly Category[] = [
+  { name: "Animals", phrases: animals },
+  { name: "Food", phrases: food },
+  { name: "Colours", phrases: colours },
+  { name: "School Things", phrases: school },
+  { name: "Places", phrases: places },
+  { name: "Sports", phrases: sports },
+  { name: "Kids' Films", phrases: kidsFilms },
+  { name: "Nature", phrases: nature },
+  { name: "Jobs", phrases: jobs },
+  { name: "Things in a House", phrases: house },
 ];
-
-export function getRandomCategory(): Category {
-  return categories[Math.floor(Math.random() * categories.length)];
-}
-
-export function getRandomWord(category: Category): string {
-  return category.words[Math.floor(Math.random() * category.words.length)];
-}

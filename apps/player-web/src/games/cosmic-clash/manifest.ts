@@ -7,18 +7,23 @@ export default defineGame({
   tagline: "Blast the space invaders and survive the waves.",
   description:
     "Space Invaders-style shooter. Auto-fire at descending aliens, collect power-ups, survive waves!",
-  objective: "Destroy waves of alien invaders.",
-  controls: "Drag to move ship, it shoots automatically.",
+  objective:
+    "Shoot down each wave of aliens before they land on your planet, and dodge their shots. Grab power-ups for double shots, rapid fire and a shield.",
+  controls:
+    "Hold left or right to move; tap a side to nudge. Your ship fires by itself. On a keyboard, use the arrow keys or A and D.",
   makers: [...brand.makers],
   status: "active",
   orientation: "portrait",
   design: { w: 540, h: 960 },
   input: ["hold", "tap", "keyboard"],
-  // Backend defaults until per-game limits are tuned (T6.6).
-  scoring: { max: 1_000_000, perSecondMax: 2_000, xpMultiplier: 0.5 },
+  // 10 points an alien, one hit per bullet. Fastest possible: rapid + double fire
+  // is 2 bullets every 275 ms ≈ 7.3 hits/s ≈ 73 points/s, so 150/s is ~2× the
+  // ceiling. A wave is 32 aliens = 320 points and takes 10 s+ to clear; a great
+  // run is 20–30 waves (6,000–10,000). 100,000 is ~300 waves.
+  scoring: { max: 100_000, perSecondMax: 150, xpMultiplier: 0.5 },
   cover: "/assets/cosmic-clash/thumbnail.svg",
   createdAt: "2025-11-21T00:00:00.000Z",
-  updatedAt: "2025-11-25T00:00:00.000Z",
+  updatedAt: "2026-10-09T00:00:00.000Z",
   seo: {
     description:
       "Blast the space invaders, grab power-ups and survive the waves. Free shooter, no ads.",

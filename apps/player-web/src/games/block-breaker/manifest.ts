@@ -9,7 +9,7 @@ export default defineGame({
   objective: "Break all the bricks with the ball.",
   controls: "Move the paddle with the mouse.",
   makers: [...brand.makers],
-  status: "beta",
+  status: "inactive",
   orientation: "portrait",
   design: { w: 540, h: 960 },
   input: ["drag"],

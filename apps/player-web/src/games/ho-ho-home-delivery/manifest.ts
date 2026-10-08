@@ -10,7 +10,7 @@ export default defineGame({
   objective: "Deliver presents into the chimneys as you fly over houses.",
   controls: "Tap to drop a present.",
   makers: [...brand.makers],
-  status: "active",
+  status: "inactive",
   orientation: "portrait",
   design: { w: 540, h: 960 },
   input: ["tap"],

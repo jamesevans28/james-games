@@ -43,6 +43,8 @@ function rasterizeLine(grid: Grid, a: Cell, b: Cell, mask: Uint8Array) {
 export function rasterizePolyline(grid: Grid, cells: Cell[], mask: Uint8Array) {
   if (cells.length < 2) return;
   for (let i = 0; i < cells.length - 1; i++) {
-    rasterizeLine(grid, cells[i], cells[i + 1], mask);
+    const from = cells[i];
+    const to = cells[i + 1];
+    if (from && to) rasterizeLine(grid, from, to, mask);
   }
 }

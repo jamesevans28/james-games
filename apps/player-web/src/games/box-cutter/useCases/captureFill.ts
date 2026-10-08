@@ -1,5 +1,5 @@
 import type { Cell, Grid } from "./grid";
-import { idx, inBounds } from "./grid";
+import { idx, inBounds, NEIGHBOURS } from "./grid";
 
 export type CaptureResult = {
   newlyFilledCount: number;
@@ -31,18 +31,12 @@ export function applyCapture(
     reachable[startIdx] = 1;
 
     while (qh < qt) {
-      const c = qC[qh];
-      const r = qR[qh];
+      // qh < qt, so both queues hold a value here.
+      const c = qC[qh] ?? 0;
+      const r = qR[qh] ?? 0;
       qh++;
 
-      const dirs = [
-        { dc: 1, dr: 0 },
-        { dc: -1, dr: 0 },
-        { dc: 0, dr: 1 },
-        { dc: 0, dr: -1 },
-      ];
-
-      for (const { dc, dr } of dirs) {
+      for (const { dc, dr } of NEIGHBOURS) {
         const nc = c + dc;
         const nr = r + dr;
         if (!inBounds(grid, nc, nr)) continue;

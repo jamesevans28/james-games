@@ -1,37 +1,13 @@
-import Phaser from "phaser";
-import PaddlePopScene from "./scene.ts";
+import type { CreateGame } from "../../platform/sdk";
+import { createGameMount } from "../../platform/mount";
+import PaddlePopScene from "./scenes/PaddlePopScene";
 
-export function mount(container: HTMLElement) {
-  const config: Phaser.Types.Core.GameConfig = {
-    type: Phaser.AUTO,
-    width: 540,
-    height: 960,
-    parent: container,
-    transparent: true,
-    input: {
-      activePointers: 3,
-    },
-    physics: {
-      default: "arcade",
-      arcade: {
-        gravity: { x: 0, y: 0 },
-        debug: false,
-      },
-    },
-    scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: 540,
-      height: 960,
-    },
-    scene: [PaddlePopScene],
-  };
+export { default as manifest } from "./manifest";
 
-  const game = new Phaser.Game(config);
-
-  return {
-    destroy: () => game.destroy(true),
-  };
-}
-
-export default {};
+export const create: CreateGame = (host, el) =>
+  createGameMount(host, el, {
+    scenes: [PaddlePopScene],
+    physics: { default: "arcade", arcade: { gravity: { x: 0, y: 0 }, debug: false } },
+    // The volcano background art covers this; it only shows while the art loads.
+    backgroundColor: "#111827",
+  });

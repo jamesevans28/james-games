@@ -94,7 +94,7 @@ export default function FirebaseLoginPage() {
 
     const validationErrors = validate();
     if (validationErrors.length > 0) {
-      setError(validationErrors[0]);
+      setError(validationErrors[0] ?? null);
       return;
     }
 

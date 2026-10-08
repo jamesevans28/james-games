@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { type GameMeta } from "../../games";
 import { type RatingSummary } from "../../lib/api";
 import { getLastPlayedGames } from "../../utils/playHistory";
-import { getBest } from "../../utils/bestScore";
+import { getBest } from "../../platform/storage/bestScore";
 import { brand } from "../../config/brand";
 
 type GameTileProps = {

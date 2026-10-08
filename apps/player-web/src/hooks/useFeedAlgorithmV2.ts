@@ -409,6 +409,7 @@ export function useInfiniteFeed(feedGames: FeedGame[]) {
       const result: FeedGame[] = [];
       for (let i = 0; i < count; i++) {
         const sourceGame = feedGames[i % feedGames.length];
+        if (!sourceGame) continue;
         result.push({
           ...sourceGame,
           // Unique feedIndex for each position in infinite scroll

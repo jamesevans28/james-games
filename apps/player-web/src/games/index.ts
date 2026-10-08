@@ -2,11 +2,8 @@
  * Thin view of the manifest registry (platform/registry.ts) in the shape the
  * pages already use. Don't add games here: add a folder with a manifest.ts.
  */
-import { allManifests, isSdkModule, loadGame, type AnyGameModule } from "../platform/registry";
-import type { GameManifest, GameStatus } from "../platform/sdk";
-
-export { isSdkModule };
-export type { LegacyGameModule } from "../platform/registry";
+import { allManifests, loadGame } from "../platform/registry";
+import type { GameManifest, GameModule, GameStatus } from "../platform/sdk";
 
 export type GameMeta = {
   id: string;
@@ -23,7 +20,7 @@ export type GameMeta = {
   makers?: string[];
   note?: string;
   noteBy?: string;
-  load: () => Promise<AnyGameModule>;
+  load: () => Promise<GameModule>;
 };
 
 export function toGameMeta(m: GameManifest): GameMeta {

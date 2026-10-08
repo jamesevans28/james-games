@@ -19,7 +19,7 @@ A game is a folder `apps/player-web/src/games/<id>/` with:
 
 The registry (`registry.ts`) finds the folder by its manifest. There is nothing to register by hand.
 
-Games talk to the platform only through the **host** they are given. They never use `window` events, `localStorage`, `window.location` or `utils/gameEvents`, and lint enforces this for `src/games/**`.
+Games talk to the platform only through the **host** they are given. They never use `window` events, `localStorage` or `window.location`, and lint enforces this for `src/games/**`.
 
 ## Skeleton
 

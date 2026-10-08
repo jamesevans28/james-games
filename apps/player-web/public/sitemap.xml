@@ -3,25 +3,43 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://games4james.com/</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://games4james.com/privacy</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://games4james.com/games-list</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://games4james.com/games/paddle-pop</loc>
+    <lastmod>2025-12-29T00:00:00.000Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://games4james.com/games/word-stack</loc>
     <lastmod>2025-12-26T00:00:00.000Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://games4james.com/games/box-cutter</loc>
+    <lastmod>2025-12-23T00:00:00.000Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://games4james.com/games/hoop-city</loc>
+    <lastmod>2025-12-02T00:00:00.000Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -32,19 +50,13 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://games4james.com/games/snapadile</loc>
+    <loc>https://games4james.com/games/blocker</loc>
     <lastmod>2025-11-25T00:00:00.000Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://games4james.com/games/car-crash</loc>
-    <lastmod>2025-11-25T00:00:00.000Z</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/games/fill-the-cup</loc>
+    <loc>https://games4james.com/games/cosmic-clash</loc>
     <lastmod>2025-11-25T00:00:00.000Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -56,20 +68,14 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://games4james.com/games/ho-ho-home-delivery</loc>
+    <loc>https://games4james.com/games/serpento</loc>
     <lastmod>2025-11-25T00:00:00.000Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://games4james.com/games/ready-steady-shoot</loc>
+    <loc>https://games4james.com/games/snapadile</loc>
     <lastmod>2025-11-25T00:00:00.000Z</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/games/paddle-pop</loc>
-    <lastmod>2025-12-29T00:00:00.000Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -80,122 +86,68 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://games4james.com/games/serpento</loc>
-    <lastmod>2025-11-25T00:00:00.000Z</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/games/blocker</loc>
-    <lastmod>2025-11-25T00:00:00.000Z</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/games/hoop-city</loc>
-    <lastmod>2025-12-02T00:00:00.000Z</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/games/cosmic-clash</loc>
-    <lastmod>2025-11-25T00:00:00.000Z</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/games/box-cutter</loc>
-    <lastmod>2025-12-23T00:00:00.000Z</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <loc>https://games4james.com/leaderboard/paddle-pop</loc>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://games4james.com/leaderboard/word-stack</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/leaderboard/reflex-ring</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/leaderboard/snapadile</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/leaderboard/car-crash</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/leaderboard/fill-the-cup</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/leaderboard/flash-bash</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/leaderboard/ho-ho-home-delivery</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/leaderboard/ready-steady-shoot</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/leaderboard/paddle-pop</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/leaderboard/word-rush</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/leaderboard/serpento</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/leaderboard/blocker</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/leaderboard/hoop-city</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://games4james.com/leaderboard/cosmic-clash</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://games4james.com/leaderboard/box-cutter</loc>
-    <lastmod>2026-10-08T01:30:07.577Z</lastmod>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://games4james.com/leaderboard/hoop-city</loc>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://games4james.com/leaderboard/reflex-ring</loc>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://games4james.com/leaderboard/blocker</loc>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://games4james.com/leaderboard/cosmic-clash</loc>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://games4james.com/leaderboard/flash-bash</loc>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://games4james.com/leaderboard/serpento</loc>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://games4james.com/leaderboard/snapadile</loc>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://games4james.com/leaderboard/word-rush</loc>
+    <lastmod>2026-10-08T19:46:37.963Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
