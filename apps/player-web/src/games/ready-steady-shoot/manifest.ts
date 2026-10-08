@@ -10,7 +10,7 @@ export default defineGame({
   objective: "Shoot the basketball into the hoop by adjusting angle and power.",
   controls: "Hold to aim, release to set power and shoot.",
   makers: [...brand.makers],
-  status: "active",
+  status: "inactive",
   orientation: "portrait",
   design: { w: 540, h: 960 },
   input: ["drag"],

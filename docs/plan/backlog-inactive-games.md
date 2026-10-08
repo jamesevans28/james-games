@@ -1,28 +1,40 @@
-# Backlog: inactive games and how to bring them back
+# Backlog: inactive games
 
-These are set `status: "inactive"` in T5.1. Scores are kept. Each entry is the rework that would make it worth reactivating (T11.9).
+These five games are set `status: "inactive"` (T5.1, 9 Oct 2026). Their code stays in `apps/player-web/src/games/<id>/` and still builds, but they are hidden from every list and the sitemap. A direct link shows a "taking a break" page. Bringing one back is T11.9: rework it on the Game SDK (follow the new-game checklist), ship as `beta`, then `active`.
 
-## Car Crash
+Notes come from the October 2026 review.
 
-Problem: 3-lane grid stepping feels stiff; the "speed-up" never sped up the cars because positions were re-snapped every tick; difficulty wasn't reset on restart.
-Rework: swipe-lane endless runner on continuous movement (no grid snap), 3 lanes → 4, near-miss bonus, kid-drawn vehicles from the art pipeline, coins to collect. Reuse the input kit `swipe()` and `holdZones()`.
+## Car Crash (`car-crash`)
 
-## Block Breaker (was beta)
+- **What it was:** a three-lane step dodger.
+- **Why it's resting:**
+  - Lane changes snap between grid steps, so it feels stiff.
+  - The speed-up levels only speed up the lane stripes; the cars are re-snapped every tick.
+  - Difficulty isn't reset on restart.
+- **Rework idea:** a swipe-lane endless runner with the kids' car drawings, using `swipe()` from the input kit and smooth lane tweens. Speed should ramp on elapsed time.
 
-Problem: broken (static paddle body, unreachable game over, always-right deflection).
-Rework: don't rebuild; add a "Bricks" mode to Paddle Pop (T5.8 stretch) that seeds a brick wall and scores per brick. Delete the folder once Paddle Pop has the mode.
+## Block Breaker (`block-breaker`)
 
-## Ready Steady Shoot
+- **What it was:** Breakout.
+- **Why it's resting:** it is broken.
+  - The paddle body is static, so the ball bounces off an invisible centre paddle.
+  - The ball can't leave the world bounds, so game over is unreachable.
+  - Deflection always goes right.
+- **Rework idea:** don't revive it as its own game. Fold bricks into Paddle Pop as a "Bricks" mode (stretch goal in T5.8), then delete this folder.
 
-Problem: only ~11% of the power bar mattered (speed clamped 1100–1500 from 0–3600), random side velocity made skill unreliable, debug bodies visible.
-Rework: fold into Hoop City as a "Free throw" bonus round every 10 hoops (T5.6 stretch): one meter, linear power → arc mapping covering the full bar, no random spread, swish = +5.
+## Ready Steady Shoot (`ready-steady-shoot`)
 
-## Fill the Cup
+- **What it was:** two-step basketball (aim, then power).
+- **Why it's resting:** it's frustrating as tuned.
+  - Only about 11% of the power bar changes the shot (speed is clamped to 1100–1500 out of a 0–3600 range).
+  - A random sideways velocity of ±50–150 makes skill unreliable.
+  - Debug physics bodies are visible.
+- **Rework idea:** a "Free throw" bonus round inside Hoop City every 10 hoops (stretch goal in T5.6), with a fixed, readable power curve and no random drift. Then delete this folder.
 
-Problem: leaks (containers and mask graphics never destroyed), inconsistent spacing, shallow.
-Rework: build one "conveyor timing" template (emitter over scrolling targets) with pure use-cases `targetWindow(speed, level)` and `judge(fillLevel, band)`; skins: cups (water), chimneys (presents), flowerpots (seeds), with AI-generated art. Fill the Cup becomes the default skin; difficulty from band width and conveyor speed.
+## Fill the Cup (`fill-the-cup`) and Ho Ho Home Delivery (`ho-ho-home-delivery`)
 
-## Ho Ho Home Delivery
-
-Problem: overlap zone was the whole roof, spawn gaps compounded, no drop cooldown, seasonal.
-Rework: the "chimneys" skin of the conveyor template above, enabled automatically in December (manifest `seasonal: { from: "12-01", to: "12-31" }` honoured by the registry).
+- **What they were:** both are "fixed emitter over scrolling targets": hold to pour into passing cups, or drop presents into passing chimneys.
+- **Why they're resting:**
+  - Fill the Cup leaks a container and a mask graphic per cup.
+  - Ho Ho's hit zone is the whole roof rather than the chimney, and its first spawns compound the gap (320, 640, 960).
+- **Rework idea:** one "conveyor timing" template game with skins: cups, chimneys, or whatever the kids draw. Seasonal swaps (Christmas chimneys in December) come from the manifest. Build it as a new SDK game, then delete both folders.

@@ -181,7 +181,7 @@
       "Tilly",
       "Harvey"
     ],
-    "status": "beta",
+    "status": "inactive",
     "orientation": "portrait",
     "design": {
       "w": 540,
@@ -284,7 +284,7 @@
       "Tilly",
       "Harvey"
     ],
-    "status": "active",
+    "status": "inactive",
     "orientation": "portrait",
     "design": {
       "w": 540,
@@ -354,7 +354,7 @@
       "Tilly",
       "Harvey"
     ],
-    "status": "active",
+    "status": "inactive",
     "orientation": "portrait",
     "design": {
       "w": 540,
@@ -422,7 +422,7 @@
       "Tilly",
       "Harvey"
     ],
-    "status": "active",
+    "status": "inactive",
     "orientation": "portrait",
     "design": {
       "w": 540,
@@ -456,7 +456,7 @@
       "Tilly",
       "Harvey"
     ],
-    "status": "active",
+    "status": "inactive",
     "orientation": "portrait",
     "design": {
       "w": 540,

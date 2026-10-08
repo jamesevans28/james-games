@@ -10,7 +10,7 @@ export default defineGame({
   objective: "Fill the glass to the target line without overflowing or underfilling.",
   controls: "Hold screen to pour, release to stop.",
   makers: [...brand.makers],
-  status: "active",
+  status: "inactive",
   orientation: "portrait",
   design: { w: 540, h: 960 },
   input: ["hold"],

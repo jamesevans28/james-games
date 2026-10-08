@@ -9,7 +9,7 @@ export default defineGame({
   objective: "Dodge incoming traffic by switching lanes.",
   controls: "Tap left or right to switch lanes.",
   makers: [...brand.makers],
-  status: "active",
+  status: "inactive",
   orientation: "portrait",
   design: { w: 540, h: 960 },
   input: ["tap"],

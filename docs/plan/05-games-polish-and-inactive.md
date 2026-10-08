@@ -6,7 +6,7 @@ Order: T5.1 first, then one keeper per session in the listed order. Fix-ups (T5.
 
 ## T5.1 Set the cut games to `inactive`
 
-Status: todo
+Status: done (2026-10-09). The five manifests (written in T4.8) are now `status: "inactive"`. A per-game `retireNote` was not added: the T4.8 break page has one friendly message for all of them. The grid shows 11 games, the sitemap has 25 URLs and 11 static pages, and `/games/car-crash` shows the break page. Rework notes are in `backlog-inactive-games.md`.
 Depends on: T4.8
 Goal: Car Crash, Block Breaker, Ready Steady Shoot, Fill the Cup and Ho Ho Home Delivery are hidden but intact.
 Files: those five `games/<id>/manifest.ts`, `platform/registry.ts`, `pages/games/PlayGame.tsx`, `pages/games-list/index.tsx`, `scripts/generate-sitemap.mjs`
