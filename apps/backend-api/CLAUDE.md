@@ -10,7 +10,7 @@ npm run backend:build   # tsc → apps/backend-api/dist
 npm run typecheck
 ```
 
-Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in values (ask James; never paste them into chat or commits). Local runs talk to the prototype's DynamoDB tables until Phase 6; their data is disposable (full reset, DECISIONS 2026-10-09), but keep the habit of not writing to production from a local shell.
+Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in values (ask James; never paste them into chat or commits). Local runs use the Supabase database in `DATABASE_URL`. Until relaunch it holds only test data, but keep the habit of not writing to production from a local shell.
 
 ## Structure (`src/`)
 
@@ -35,7 +35,13 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 
 ## Data layer
 
-DynamoDB tables named `games4james-*` are the prototype's and are deleted at relaunch (T13.6); their data is not migrated. Phase 6 replaces the data layer with Supabase Postgres + Drizzle and deletes the DynamoDB code. **Do not add new DynamoDB tables or new DynamoDB code.**
+Supabase Postgres (project in ap-southeast-2) through Drizzle ORM (Phase 6). The DynamoDB tables named `games4james-*` are the prototype's: not migrated, deleted at relaunch (T13.6). **Do not add DynamoDB code.**
+
+- `src/db/schema.ts` is the schema. After changing it run `npm run db:generate -w apps/backend-api` and commit the SQL it writes to `drizzle/`. Never edit a migration that has been applied; add a new one.
+- `src/db/client.ts`: `getDb()` (one `postgres` connection per Lambda container) and `setDb()` for tests.
+- Two connection strings: `DATABASE_URL` is the **transaction pooler** (port 6543) used by the API, which needs `prepare: false` (already set). `DATABASE_URL_MIGRATIONS` is the **session pooler** (port 5432) used only by `db:migrate`.
+- `npm run db:migrate|db:seed|db:ping -w apps/backend-api` read `.env.local`. `db:seed` upserts games from `apps/player-web/public/game-meta.json` (manifests own title, status, scoring) and the XP levels; it never touches admin-managed `metadata`. `db:ping` never prints the URLs.
+- Tests: `createTestDb()` from `src/test/db.ts` gives a fresh in-process Postgres (pglite) with the real migrations and three test games, and installs it as `getDb()`.
 
 ## Express 5 notes
 
