@@ -55,7 +55,9 @@ export function UsersPage() {
         </div>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
           <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Next Cursor</p>
-          <p className="mt-1 truncate text-sm text-slate-300">{nextCursor || "End of list"}</p>
+          <p className="mt-1 truncate text-sm text-slate-300">
+            {nextCursor ? `From #${nextCursor}` : "End of list"}
+          </p>
         </div>
       </header>
 
@@ -70,7 +72,7 @@ export function UsersPage() {
                 setSearch(e.target.value);
                 resetPagination();
               }}
-              placeholder="Search by user ID, handle, or email"
+              placeholder="Search by screen name, username, or user ID"
               className="w-full bg-transparent text-sm text-white placeholder:text-slate-500 focus:outline-none"
             />
           </div>
@@ -100,7 +102,7 @@ export function UsersPage() {
                 <th className="px-4 py-3">Username</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Flags</th>
-                <th className="px-4 py-3">Updated</th>
+                <th className="px-4 py-3">Joined</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-900">
@@ -132,9 +134,14 @@ export function UsersPage() {
                       <Database className="h-3 w-3" />
                       {user.admin ? "Admin" : "Member"}
                     </span>
+                    {user.enabled === false && (
+                      <span className="ml-2 inline-flex items-center rounded-full border border-rose-400/40 px-2 py-1 text-rose-200">
+                        Disabled
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-400">
-                    {user.updatedAt ? new Date(user.updatedAt).toLocaleString() : "—"}
+                    {user.createdAt ? new Date(user.createdAt).toLocaleString() : "—"}
                   </td>
                 </tr>
               ))}

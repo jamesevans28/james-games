@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   DEFAULT_SCORE_LIMITS,
   ScoreRejected,
+  assertCanSubmit,
   limitsFor,
   multiplierFor,
   validateScoreSubmission,
@@ -63,16 +64,55 @@ test("ignores untrustworthy durations instead of trusting them", () => {
   );
 });
 
-test("per-game limits and multipliers come from server config only", () => {
-  assert.deepEqual(limitsFor({ metadata: { maxScore: 500, maxScorePerSecond: 10 } }), {
+test("per-game limits and multipliers come from the games row only", () => {
+  assert.deepEqual(limitsFor({ maxScore: 500, maxScorePerSecond: 10 }), {
     maxScore: 500,
     maxScorePerSecond: 10,
   });
   assert.deepEqual(limitsFor(null), L);
-  assert.deepEqual(limitsFor({ metadata: { maxScore: -3 } }), L);
+  assert.deepEqual(limitsFor({ maxScore: -3, maxScorePerSecond: 0 }), L);
   assert.equal(multiplierFor({ xpMultiplier: 2.92 }), 2.92);
   assert.equal(multiplierFor(null), 1);
   assert.equal(multiplierFor({ xpMultiplier: 0 }), 1);
+});
+
+test("who may submit: game status, beta testers and disabled accounts", () => {
+  const kid = { betaTester: false, disabledAt: null };
+  const tester = { betaTester: true, disabledAt: null };
+  const status = (fn: () => void) => {
+    try {
+      fn();
+      return "ok";
+    } catch (e) {
+      return e instanceof ScoreRejected ? `${e.status} ${e.code}` : "other";
+    }
+  };
+  assert.equal(
+    status(() => assertCanSubmit({ status: "active" }, kid)),
+    "ok",
+  );
+  assert.equal(
+    status(() => assertCanSubmit({ status: "beta" }, tester)),
+    "ok",
+  );
+  assert.equal(
+    status(() => assertCanSubmit({ status: "beta" }, kid)),
+    "403 game_beta_only",
+  );
+  assert.equal(
+    status(() => assertCanSubmit({ status: "inactive" }, tester)),
+    "400 game_inactive",
+  );
+  assert.equal(
+    status(() => assertCanSubmit(null, kid)),
+    "404 game_not_found",
+  );
+  assert.equal(
+    status(() =>
+      assertCanSubmit({ status: "active" }, { betaTester: true, disabledAt: new Date() }),
+    ),
+    "403 account_disabled",
+  );
 });
 
 test("xp is score × multiplier, at least 1, capped per run", () => {

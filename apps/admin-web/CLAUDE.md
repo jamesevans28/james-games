@@ -23,6 +23,6 @@ It needs the backend running (`npm run server`) and an account whose user row ha
 
 `.env.local` (gitignored) uses the same names as player-web: `VITE_API_BASE_URL` and the six `VITE_FIREBASE_*` values. CI sets them from GitHub repo variables.
 
-## Known issues (fixed in the plan)
+## Moderation
 
-- The dashboard scans whole tables; Phase 6 (T6.8) replaces this with SQL aggregates and adds moderation actions.
+The users drawer can reset a screen name to a generated one, disable or enable an account, and delete a single play (best scores are recomputed). Games are read-only apart from their `metadata` (manifests own everything else).

@@ -8,8 +8,3 @@ export function errorInfo(err: unknown): { message?: string; name?: string; code
   const str = (v: unknown) => (typeof v === "string" ? v : undefined);
   return { message: str(e.message), name: str(e.name), code: str(e.code) };
 }
-
-/** True for DynamoDB's "condition not met" error (a lost race or a duplicate). */
-export function isConditionalCheckFailed(err: unknown): boolean {
-  return errorInfo(err).name === "ConditionalCheckFailedException";
-}

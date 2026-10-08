@@ -1,28 +1,34 @@
-import { test } from "vitest";
-import assert from "node:assert/strict";
+import { expect, test } from "vitest";
+import type { User } from "../db/schema.js";
 import { toPublicProfile } from "./publicProfile.js";
 
-const full = {
-  userId: "uid-1",
+const full: User = {
+  id: "uid-1",
+  username: "tilly",
   screenName: "BraveKoala",
-  email: "kid@example.com",
-  emailProvided: true,
+  screenNameSetByUser: true,
   avatar: 3,
-  preferences: { theme: "dark" },
-  validated: true,
-  betaTester: true,
-  admin: true,
-  createdAt: "2025-11-01T00:00:00.000Z",
-  updatedAt: "2026-01-01T00:00:00.000Z",
-  experience: { level: 4, progress: 10, required: 500, percent: 0.02, remaining: 490, total: 1510 },
-  currentStreak: 2,
-  longestStreak: 9,
-  lastLoginDate: "2026-01-05",
+  accountType: "username_pin",
   pinHash: "$2a$10$abc",
+  email: "kid@example.com",
+  emailVerified: true,
+  admin: true,
+  betaTester: true,
+  xpTotal: 1510,
+  xpLevel: 4,
+  xpProgress: 10,
+  streakCurrent: 2,
+  streakLongest: 9,
+  streakLastDay: "2026-01-05",
+  disabledAt: null,
+  prefs: { theme: "dark" },
+  createdAt: new Date("2025-11-01T00:00:00.000Z"),
+  updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+  lastSeenAt: new Date("2026-01-05T08:00:00.000Z"),
 };
 
 test("returns exactly the whitelisted keys", () => {
-  assert.deepEqual(Object.keys(toPublicProfile(full)).sort(), [
+  expect(Object.keys(toPublicProfile(full)).sort()).toEqual([
     "avatar",
     "createdAt",
     "currentStreak",
@@ -33,37 +39,31 @@ test("returns exactly the whitelisted keys", () => {
   ]);
 });
 
-test("strips email, admin, preferences, last login and PIN data", () => {
+test("strips email, admin, prefs, username, last seen and PIN data", () => {
   const json = JSON.stringify(toPublicProfile(full));
   for (const secret of [
     "kid@example.com",
     "admin",
-    "preferences",
-    "lastLoginDate",
+    "prefs",
+    "dark",
+    "tilly",
     "2026-01-05",
-    "pinHash",
+    "2026-01-01",
+    "$2a$10$abc",
     "betaTester",
+    "lastUpdated",
   ]) {
-    assert.ok(!json.includes(secret), `leaked ${secret}`);
+    expect(json, `leaked ${secret}`).not.toContain(secret);
   }
 });
 
 test("keeps the fields the profile page needs", () => {
   const p = toPublicProfile(full);
-  assert.equal(p.screenName, "BraveKoala");
-  assert.equal(p.avatar, 3);
-  assert.equal(p.currentStreak, 2);
-  assert.deepEqual(p.experience, full.experience);
-});
-
-test("fills safe defaults for a sparse row", () => {
-  assert.deepEqual(toPublicProfile({ userId: "uid-2" }), {
-    userId: "uid-2",
-    screenName: null,
-    avatar: null,
-    createdAt: null,
-    experience: null,
-    currentStreak: 0,
-    longestStreak: 0,
-  });
+  expect(p.screenName).toBe("BraveKoala");
+  expect(p.avatar).toBe(3);
+  expect(p.currentStreak).toBe(2);
+  expect(p.longestStreak).toBe(9);
+  expect(p.createdAt).toBe("2025-11-01T00:00:00.000Z");
+  expect(p.experience.level).toBe(4);
+  expect(p.experience.total).toBe(1510);
 });

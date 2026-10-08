@@ -23,7 +23,7 @@ import {
   waitForAuthReady,
   type User as FirebaseUser,
 } from "../lib/firebase";
-import { setAuthTokenGetter, type ExperienceSummary } from "../lib/api";
+import { setAuthTokenGetter, type ExperienceSummary, type MeResponse } from "../lib/api";
 import { errorCode } from "../utils/errorCode";
 import { API_BASE_URL } from "../config/env";
 
@@ -176,20 +176,8 @@ function readCachedSession(maxAgeMs: number = 24 * 60 * 60 * 1000): AuthUser | n
 }
 
 // Response bodies from the backend's /auth/firebase/* routes
-// (apps/backend-api/src/controllers/firebaseAuthController.ts).
-type FirebaseMeResponse = {
-  userId: string;
-  screenName?: string | null;
-  username?: string | null;
-  email?: string | null;
-  emailVerified?: boolean;
-  avatar?: number | null;
-  experience?: ExperienceSummary | null;
-  betaTester?: boolean;
-  admin?: boolean;
-  accountType?: AccountType;
-  providers?: string[];
-};
+// (apps/backend-api/src/controllers/firebaseAuthController.ts). GET /auth/firebase/me
+// returns the same { user } shape as GET /me (MeResponse in lib/api.ts).
 
 type RegisterAnonymousResponse = {
   ok: boolean;
@@ -260,7 +248,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           throw new Error("Failed to fetch profile");
         }
-        const data = (await res.json()) as FirebaseMeResponse;
+        const { user: data } = (await res.json()) as MeResponse;
+        if (!data) return null;
         const authUser: AuthUser = {
           userId: data.userId,
           screenName: data.screenName,
@@ -271,8 +260,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           experience: data.experience,
           betaTester: data.betaTester,
           admin: data.admin,
-          accountType: data.accountType || "anonymous",
-          providers: data.providers || getLinkedProviders(fbUser),
+          accountType: data.accountType,
+          providers: data.providers.length ? data.providers : getLinkedProviders(fbUser),
           isAnonymous: fbUser.isAnonymous,
         };
         return authUser;
@@ -292,9 +281,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch(`${apiBase}/auth/firebase/register-anonymous`, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ firebaseToken: token }),
         });
         if (!res.ok) {
           throw new Error("Failed to register anonymous user");
@@ -506,13 +494,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            username,
-            pin,
-            screenName,
-            firebaseToken: token,
-          }),
+          body: JSON.stringify({ username, pin, screenName }),
         });
         if (!res.ok) {
           throw new Error((await readApiError(res)) || "Registration failed");
@@ -604,9 +588,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await fetch(`${apiBase}/auth/firebase/link-provider`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ firebaseToken: token }),
       });
 
       // Fetch profile and set user
@@ -645,9 +628,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await fetch(`${apiBase}/auth/firebase/link-provider`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ firebaseToken: token }),
       });
 
       // Fetch profile and set user
@@ -686,9 +668,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await fetch(`${apiBase}/auth/firebase/link-provider`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ firebaseToken: token }),
       });
       // Refresh profile
       const profile = await fetchProfile(firebaseUser);
@@ -714,9 +695,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await fetch(`${apiBase}/auth/firebase/link-provider`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ firebaseToken: token }),
       });
       // Refresh profile
       const profile = await fetchProfile(firebaseUser);

@@ -32,12 +32,12 @@ Each game has one hero object (the croc, the snake, the rocket, the ring, the bl
 
 ## Asset types
 
-| Type    | Size                                | Background                       | Made by                                        |
-| ------- | ----------------------------------- | -------------------------------- | ---------------------------------------------- |
+| Type    | Size                                | Background                       | Made by                                         |
+| ------- | ----------------------------------- | -------------------------------- | ----------------------------------------------- |
 | Cover   | 1024×1024, hero centred, 15% margin | paper                            | `cover.mjs` (adds title sticker, writes OG too) |
-| OG card | 1200×630                            | paper                            | `cover.mjs`                                    |
-| Sprite  | 512×512 per frame, same grid        | transparent                      | `remove-bg.mjs` → `process.mjs` → `sheet.mjs`  |
-| Icon    | 512×512                             | transparent                      | `remove-bg.mjs` → `process.mjs`                |
+| OG card | 1200×630                            | paper                            | `cover.mjs`                                     |
+| Sprite  | 512×512 per frame, same grid        | transparent                      | `remove-bg.mjs` → `process.mjs` → `sheet.mjs`   |
+| Icon    | 512×512                             | transparent                      | `remove-bg.mjs` → `process.mjs`                 |
 | Avatar  | 256×256                             | transparent, white border        | `remove-bg.mjs` → `process.mjs` → `sticker.mjs` |
 | Sticker | 256×256                             | transparent, white border+shadow | `remove-bg.mjs` → `process.mjs` → `sticker.mjs` |
 

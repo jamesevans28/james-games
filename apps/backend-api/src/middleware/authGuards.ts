@@ -23,6 +23,11 @@ export function setTokenVerifierForTests(fn: typeof verifyToken | null): void {
   verifyToken = fn ?? verifyFirebaseToken;
 }
 
+/** The `accountType` custom claim, set by the backend when it mints or upgrades an account. */
+function accountTypeOf(claim: unknown): AuthUser["accountType"] {
+  return claim === "username_pin" || claim === "linked" ? claim : "anonymous";
+}
+
 export async function attachUser(req: Request, res: Response, next: NextFunction) {
   req.user = undefined;
 
@@ -45,8 +50,8 @@ export async function attachUser(req: Request, res: Response, next: NextFunction
       email: decodedToken.email,
       emailVerified: decodedToken.email_verified,
       isAnonymous: decodedToken.firebase?.sign_in_provider === "anonymous",
-      accountType: decodedToken.accountType || "anonymous",
-      displayName: decodedToken.name || decodedToken.displayName,
+      accountType: accountTypeOf(decodedToken.accountType),
+      displayName: typeof decodedToken.name === "string" ? decodedToken.name : undefined,
       providers: decodedToken.firebase?.identities
         ? Object.keys(decodedToken.firebase.identities)
         : [],

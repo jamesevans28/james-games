@@ -1,60 +1,27 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import type { Request, Response } from "express";
-import {
-  getRatingSummary,
-  getRatingSummaries,
-  getUserRating,
-  upsertRating,
-  validateRatingInput,
-} from "../services/ratingsService.js";
-import { sendServerError } from "../lib/http.js";
-import { errorInfo } from "../lib/errors.js";
+import { getRatingSummaries, getRatingSummary, rateGame } from "../services/ratingsService.js";
 
+/** GET /ratings?ids=a,b,c → { summaries } (zeros for unrated games). */
 export async function listRatingSummaries(req: Request, res: Response) {
-  try {
-    const idsRaw = String((req.query as any).ids || "");
-    const ids = idsRaw
-      .split(",")
-      .map((id) => id.trim())
-      .filter(Boolean);
-    if (!ids.length) return res.json({ summaries: [] });
-    const summaries = await getRatingSummaries(ids);
-    res.json({ summaries });
-  } catch (e) {
-    sendServerError(res, "ratings_request_failed", e);
-  }
+  const raw = typeof req.query.ids === "string" ? req.query.ids : "";
+  const ids = raw
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  res.json({ summaries: ids.length ? await getRatingSummaries(ids) : [] });
 }
 
+/** GET /ratings/:gameId → summary, with userRating when the viewer has rated. */
 export async function getRatingSummaryController(req: Request, res: Response) {
-  try {
-    const gameId = String((req.params as any).gameId);
-    const summary = await getRatingSummary(gameId);
-    const userId = req.user?.userId;
-    if (userId) {
-      const userRating = await getUserRating(gameId, userId);
-      if (typeof userRating === "number") {
-        return res.json({ ...summary, userRating });
-      }
-    }
-    res.json(summary);
-  } catch (e) {
-    sendServerError(res, "ratings_request_failed", e);
-  }
+  res.json(await getRatingSummary(String(req.params.gameId), req.user?.userId));
 }
 
+/** POST /ratings/:gameId { rating: 1–5 } (requireAuth) → summary with userRating. */
 export async function submitRating(req: Request, res: Response) {
-  try {
-    const { rating } = req.body || {};
-    const { gameId, rating: ratingValue } = validateRatingInput((req.params as any).gameId, rating);
-    const userId = req.user?.userId;
-    if (!userId) return res.status(401).json({ error: "unauthorized" });
-    const result = await upsertRating({ gameId, userId, rating: ratingValue });
-    res.json(result);
-  } catch (e) {
-    const { message } = errorInfo(e);
-    if (message && (message.includes("required") || message.includes("between"))) {
-      return res.status(400).json({ error: message });
-    }
-    sendServerError(res, "ratings_request_failed", e);
-  }
+  const userId = req.user?.userId;
+  if (!userId) return res.status(401).json({ error: "unauthorized" });
+  const body = (req.body ?? {}) as { rating?: unknown };
+  const result = await rateGame(userId, String(req.params.gameId), body.rating);
+  if (!result.ok) return res.status(result.status).json({ error: result.error });
+  res.json(result.summary);
 }

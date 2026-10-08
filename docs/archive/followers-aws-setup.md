@@ -1,4 +1,4 @@
-> Retired in plan Phase 6 (T6.5), when follows and presence move to Supabase Postgres. Until then this describes the live DynamoDB tables.
+> Archived (T6.3): follows and presence now live in Supabase Postgres (`apps/backend-api/src/db/schema.ts`). This describes the retired DynamoDB tables. Do not follow it.
 
 # Followers & Presence AWS Setup
 

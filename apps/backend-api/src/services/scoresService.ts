@@ -1,39 +1,22 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
-import { DynamoDBDocumentClient, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { dynamoClient } from "../config/aws.js";
-import { config } from "../config/index.js";
-import { getUser } from "./dynamoService.js";
-import { getStatsForUsers, recordUserGameSession } from "./userGameStatsService.js";
-import { randomUUID } from "crypto";
-import { log } from "../lib/log.js";
-import { bestPerUser, compareScores } from "./leaderboardRules.js";
-
-const ddb = DynamoDBDocumentClient.from(dynamoClient);
-
-// New score item shape (v2):
-// gameId (PK)
-// score (numeric) used as GSI sort key via GameScoresByScore
-// createdAt ISO string
-// userId (optional for legacy guest scores)
-// screenNameSnapshot (string) preserved at time of write – used only as fallback
-// avatarSnapshot (number) preserved at time of write – used only as fallback
-// legacyName (string) for old rows migrated from previous table
-// version: 2 (optional for future migrations)
-
-export interface RawScoreItem {
-  // id is the sort key (new table schema) so every play is a unique item
-  id: string;
-  gameId: string;
-  score: number;
-  createdAt: string;
-  userId?: string;
-  screenNameSnapshot?: string;
-  avatarSnapshot?: number;
-  legacyName?: string;
-  version?: number;
-  /** Duration of the game session in milliseconds */
-  durationMs?: number;
-}
+import { getDb } from "../db/client.js";
+import { getGameById, insertPlay, listLeaderboard, upsertBestScore } from "../repos/playsRepo.js";
+import { lockUser, recordGamePlay, updateUserProgress } from "../repos/statsRepo.js";
+import {
+  ScoreRejected,
+  assertCanSubmit,
+  isValidGameId,
+  limitsFor,
+  multiplierFor,
+  validateScoreSubmission,
+  xpForScore,
+} from "./scoringRules.js";
+import {
+  addExperience,
+  buildSummary,
+  loadExperienceLevels,
+  type ExperienceSummary,
+} from "./experienceService.js";
+import { applyDailyStreak, type StreakResult } from "./streakService.js";
 
 export interface PublicScoreRow {
   userId?: string;
@@ -44,124 +27,104 @@ export interface PublicScoreRow {
   level?: number | null;
 }
 
-/**
- * Write a score with user context. If user info is provided we snapshot
- * screenName & avatar but later readers will prefer the CURRENT user profile.
- */
-export async function putScoreWithUser(args: {
+export type ScoreSubmission = {
   gameId: string;
   score: number;
-  durationMs?: number;
-  userId?: string;
-  screenName?: string | null;
-  avatar?: number | null;
-}) {
-  const now = new Date().toISOString();
-  const item: RawScoreItem = {
-    id: randomUUID(),
-    gameId: args.gameId,
-    score: args.score,
-    createdAt: now,
-    version: 2,
-  };
-  if (args.durationMs !== undefined && args.durationMs > 0) {
-    item.durationMs = args.durationMs;
-  }
-  if (args.userId) {
-    item.userId = args.userId;
-    if (args.screenName) item.screenNameSnapshot = args.screenName;
-    if (typeof args.avatar === "number") item.avatarSnapshot = args.avatar;
-  }
-  await ddb.send(
-    new PutCommand({
-      TableName: config.tables.scores,
-      Item: item,
-    }),
-  );
-  if (args.userId) {
-    recordUserGameSession(args.userId, args.gameId, args.score).catch((err) => {
-      log.warn("user_game_session_record_failed", undefined, err);
+  createdAt: string;
+  xpAwarded: number;
+  newBest: boolean;
+  /** Only when this run levelled the player up. */
+  newLevel?: number;
+  summary: ExperienceSummary;
+  streak: StreakResult["streak"] & { extended: boolean; isNewStreak: boolean };
+};
+
+/**
+ * Saves one run in a single transaction: check the game and the player, validate
+ * the score against the game's own limits, insert the play, raise the best score,
+ * add XP (score × the game's multiplier from the database), count today's streak
+ * and update the per-game stats. Throws ScoreRejected for anything refused.
+ */
+export async function submitScore(
+  userId: string,
+  body: { gameId?: unknown; score?: unknown; durationMs?: unknown; tzOffsetMinutes?: unknown },
+  nowMs: number = Date.now(),
+): Promise<ScoreSubmission> {
+  if (!isValidGameId(body.gameId)) throw new ScoreRejected("gameId_invalid");
+  const gameId = body.gameId;
+  // Loaded before the transaction: the Lambda has a single connection.
+  const levels = await loadExperienceLevels();
+
+  return getDb().transaction(async (tx) => {
+    const game = await getGameById(gameId, tx);
+    const user = await lockUser(tx, userId);
+    const player = assertCanSubmit(game, user);
+    const valid = validateScoreSubmission(body, limitsFor(game));
+
+    const xpAwarded = xpForScore(valid.score, multiplierFor(game));
+    const now = new Date(nowMs);
+    const play = await insertPlay(tx, {
+      userId,
+      gameId,
+      score: valid.score,
+      durationMs: valid.durationMs ?? null,
+      xpAwarded,
     });
-  }
-  return item;
+    const best = await upsertBestScore(tx, {
+      userId,
+      gameId,
+      score: valid.score,
+      playId: play.id,
+      achievedAt: play.createdAt,
+    });
+
+    const xp = addExperience(
+      levels,
+      { level: player.xpLevel, progress: player.xpProgress, total: player.xpTotal },
+      xpAwarded,
+    );
+    const updated =
+      xpAwarded > 0
+        ? await updateUserProgress(tx, userId, {
+            xpLevel: xp.level,
+            xpProgress: xp.progress,
+            xpTotal: xp.total,
+          })
+        : player;
+
+    const streak = await applyDailyStreak(tx, player, body.tzOffsetMinutes, nowMs);
+    await recordGamePlay(tx, { userId, gameId, score: valid.score, playedAt: now });
+
+    return {
+      gameId,
+      score: valid.score,
+      createdAt: play.createdAt.toISOString(),
+      xpAwarded,
+      newBest: best !== null,
+      ...(xp.level > player.xpLevel ? { newLevel: xp.level } : {}),
+      summary: buildSummary(updated ?? player),
+      streak: { ...streak.streak, extended: streak.extended, isNewStreak: streak.isNewStreak },
+    };
+  });
 }
 
 /**
- * Fetch top scores and hydrate with CURRENT user profile (screenName/avatar).
- * Fallback: snapshot values or legacyName when user no longer exists.
- *
- * With includeUserIds (the "following" board) it returns one best row per
- * allowed user, combining the global top list with each user's stats row, so a
- * friend ranked outside the global top 100 still appears.
+ * The leaderboard for a game from best_scores: one row per player, highest
+ * first, public fields only. `friendsOf` limits it to that player and the
+ * players they follow.
  */
-export async function getTopScoresHydrated(
+export async function getLeaderboard(
   gameId: string,
-  limit = 10,
-  opts?: { includeUserIds?: string[] },
+  limit: number,
+  opts: { friendsOf?: string } = {},
 ): Promise<PublicScoreRow[]> {
-  const fetchLimit = Math.max(limit * 5, 100);
-  const result = await ddb.send(
-    new QueryCommand({
-      TableName: config.tables.scores,
-      IndexName: config.tables.scoreGsi,
-      KeyConditionExpression: "gameId = :g",
-      ExpressionAttributeValues: { ":g": gameId },
-      ScanIndexForward: false, // descending by score (if GSI sort key is score)
-      Limit: fetchLimit,
-    }),
-  );
-  const items = (result.Items || []) as RawScoreItem[];
-  items.sort(compareScores);
-
-  let sliced: RawScoreItem[];
-  if (opts?.includeUserIds && opts.includeUserIds.length > 0) {
-    const allowed = new Set(opts.includeUserIds);
-    const stats = await getStatsForUsers(gameId, opts.includeUserIds);
-    const best = bestPerUser(items, stats, allowed).slice(0, limit);
-    // Keep snapshot fields when the best came from a score row.
-    sliced = best.map(
-      (b) =>
-        items.find((r) => r.userId === b.userId && r.score === b.score) ?? {
-          id: `stats:${b.userId}`,
-          gameId,
-          score: b.score,
-          createdAt: b.createdAt,
-          userId: b.userId,
-        },
-    );
-  } else {
-    sliced = items.slice(0, limit);
-  }
-  // Collect distinct userIds for profile hydration
-  const userIds = Array.from(new Set(sliced.map((r) => r.userId).filter(Boolean))) as string[];
-  const userProfiles: Record<string, any> = {};
-  await Promise.all(
-    userIds.map(async (uid) => {
-      try {
-        const profile = await getUser(uid);
-        if (profile) userProfiles[uid] = profile;
-      } catch {
-        // ignore individual failures
-      }
-    }),
-  );
-  return sliced.map((row) => {
-    const profile = row.userId ? userProfiles[row.userId] : null;
-    const screenName =
-      (profile?.screenName as string) || row.screenNameSnapshot || row.legacyName || "Player";
-    const avatar =
-      typeof profile?.avatar === "number"
-        ? profile.avatar
-        : typeof row.avatarSnapshot === "number"
-          ? row.avatarSnapshot
-          : 1;
-    return {
-      userId: row.userId,
-      screenName,
-      avatar,
-      score: row.score,
-      createdAt: row.createdAt,
-      level: typeof profile?.xpLevel === "number" ? profile.xpLevel : undefined,
-    };
-  });
+  const rows = await listLeaderboard(gameId, limit, opts);
+  return rows.map((r) => ({
+    userId: r.userId,
+    screenName: r.screenName,
+    avatar: r.avatar,
+    score: r.score,
+    createdAt: r.achievedAt.toISOString(),
+    level: r.level,
+  }));
 }

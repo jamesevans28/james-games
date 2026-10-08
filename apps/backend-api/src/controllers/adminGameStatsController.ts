@@ -1,14 +1,9 @@
 import type { Request, Response } from "express";
 import { getGameStats } from "../services/gameStatsService.js";
-import { sendServerError } from "../lib/http.js";
 
+/** GET /admin/games/:gameId/stats */
 export async function show(req: Request, res: Response) {
-  const gameId = String(req.params.gameId);
-  if (!gameId) return res.status(400).json({ error: "gameId_required" });
-  try {
-    const stats = await getGameStats(gameId);
-    res.json(stats);
-  } catch (err) {
-    sendServerError(res, "admin_game_stats_failed", err);
-  }
+  const stats = await getGameStats(String(req.params.gameId));
+  if (!stats) return res.status(404).json({ error: "game_not_found" });
+  res.json(stats);
 }

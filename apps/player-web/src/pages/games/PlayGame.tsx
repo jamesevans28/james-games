@@ -90,7 +90,6 @@ export default function PlayGame() {
   usePresenceReporter({
     status: presenceStatus,
     gameId: meta?.id,
-    gameTitle: meta?.title,
     enabled: !!meta,
   });
 

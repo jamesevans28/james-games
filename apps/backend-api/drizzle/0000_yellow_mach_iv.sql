@@ -124,6 +124,7 @@ CREATE INDEX "best_scores_board_idx" ON "best_scores" USING btree ("game_id","sc
 CREATE INDEX "follows_target_idx" ON "follows" USING btree ("target_user_id");--> statement-breakpoint
 CREATE INDEX "plays_game_score_idx" ON "plays" USING btree ("game_id","score" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "plays_user_created_idx" ON "plays" USING btree ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "plays_created_idx" ON "plays" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "ratings_game_idx" ON "ratings" USING btree ("game_id");--> statement-breakpoint
 CREATE INDEX "screen_name_history_user_idx" ON "screen_name_history" USING btree ("user_id","changed_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "user_game_stats_recent_idx" ON "user_game_stats" USING btree ("user_id","last_played_at" DESC NULLS LAST);--> statement-breakpoint

@@ -1,21 +1,44 @@
-import { test } from "vitest";
-import assert from "node:assert/strict";
-import { isUsernameTakenByOther } from "./usernamePolicy.js";
+import { expect, test } from "vitest";
+import {
+  cleanScreenName,
+  isValidAvatar,
+  isValidPin,
+  isValidPrefs,
+  isValidUsername,
+  normalizeUsername,
+} from "./usernamePolicy.js";
 
-test("a free username is not taken", () => {
-  assert.equal(isUsernameTakenByOther(null, "uid-a"), false);
-  assert.equal(isUsernameTakenByOther(undefined, "uid-a"), false);
+test("usernames are 3-20 letters, digits or underscores", () => {
+  expect(isValidUsername("tilly_2")).toBe(true);
+  expect(isValidUsername("ab")).toBe(false);
+  expect(isValidUsername("a".repeat(21))).toBe(false);
+  expect(isValidUsername("has space")).toBe(false);
+  expect(isValidUsername(42)).toBe(false);
+  expect(normalizeUsername("Tilly")).toBe("tilly");
 });
 
-test("the owner can re-register their own username", () => {
-  assert.equal(isUsernameTakenByOther({ userId: "uid-a" }, "uid-a"), false);
+test("PINs are 4-8 digits", () => {
+  expect(isValidPin("1234")).toBe(true);
+  expect(isValidPin("12345678")).toBe(true);
+  expect(isValidPin("123")).toBe(false);
+  expect(isValidPin("123456789")).toBe(false);
+  expect(isValidPin("12a4")).toBe(false);
 });
 
-test("another account's username is taken", () => {
-  assert.equal(isUsernameTakenByOther({ userId: "uid-b" }, "uid-a"), true);
+test("screen names are trimmed and length-checked", () => {
+  expect(cleanScreenName("  Bouncy Otter ")).toBe("Bouncy Otter");
+  expect(cleanScreenName(" a ")).toBeNull();
+  expect(cleanScreenName("x".repeat(33))).toBeNull();
+  expect(cleanScreenName(undefined)).toBeNull();
 });
 
-test("a migrated account's username is taken too (no reclaim by name)", () => {
-  const migrated = { userId: "uid-b", accountType: "migrated" };
-  assert.equal(isUsernameTakenByOther(migrated, "uid-a"), true);
+test("avatars and preferences", () => {
+  expect(isValidAvatar(3)).toBe(true);
+  expect(isValidAvatar(0)).toBe(false);
+  expect(isValidAvatar(1.5)).toBe(false);
+  expect(isValidAvatar("3")).toBe(false);
+  expect(isValidPrefs({ theme: "dark" })).toBe(true);
+  expect(isValidPrefs([])).toBe(false);
+  expect(isValidPrefs(null)).toBe(false);
+  expect(isValidPrefs({ big: "x".repeat(5000) })).toBe(false);
 });

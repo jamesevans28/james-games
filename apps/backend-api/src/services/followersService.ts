@@ -1,292 +1,256 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
-
+/**
+ * Follows and presence (Postgres). Following is instant today: the edge is
+ * inserted as "accepted" (friend requests come in T7.6). Names, avatars and
+ * levels are joined from users at read time, never copied onto the edge.
+ * Presence older than 2 minutes counts as offline (decided by the database clock).
+ */
+import { getUserById } from "../repos/usersRepo.js";
 import {
-  DynamoDBDocumentClient,
-  PutCommand,
-  DeleteCommand,
-  QueryCommand,
-  GetCommand,
-  BatchGetCommand,
-} from "@aws-sdk/lib-dynamodb";
-import { dynamoClient } from "../config/aws.js";
-import { config } from "../config/index.js";
-import { getUser } from "./dynamoService.js";
+  acceptedFollowExists,
+  countFollowerRows,
+  countFollowingRows,
+  deleteFollow,
+  insertFollow,
+  listFollowerRows,
+  listFollowingIdRows,
+  listFollowingRows,
+  type FollowListRow,
+} from "../repos/followsRepo.js";
+import { gameExists, upsertPresence } from "../repos/presenceRepo.js";
 import { buildSummary, type ExperienceSummary } from "./experienceService.js";
-import { log } from "../lib/log.js";
-import { isConditionalCheckFailed } from "../lib/errors.js";
 
-const ddb = DynamoDBDocumentClient.from(dynamoClient);
-const FOLLOWED_BY_INDEX = config.tables.followsByTargetIndex || "FollowedBy";
-const PRESENCE_TTL_SECONDS = Number(process.env.PRESENCE_TTL_SECONDS || 120);
+export const PRESENCE_STATUSES = [
+  "looking_for_game",
+  "home",
+  "browsing_high_scores",
+  "browsing_leaderboard",
+  "game_lobby",
+  "playing",
+  "in_score_dialog",
+] as const;
 
-export type FollowEdge = {
-  userId: string;
-  targetUserId: string;
-  targetScreenName?: string | null;
-  targetAvatar?: number | null;
-  followerScreenName?: string | null;
-  followerAvatar?: number | null;
-  createdAt: string;
-};
+export type PresenceStatus = (typeof PRESENCE_STATUSES)[number];
 
-export type PresenceStatus =
-  | "looking_for_game"
-  | "home"
-  | "browsing_high_scores"
-  | "browsing_leaderboard"
-  | "game_lobby"
-  | "playing"
-  | "in_score_dialog";
+export function isPresenceStatus(value: unknown): value is PresenceStatus {
+  return typeof value === "string" && (PRESENCE_STATUSES as readonly string[]).includes(value);
+}
+
+/** A rule broken by the request: the controller replies `status` with `{ error: code }`. */
+export class FollowersError extends Error {
+  constructor(
+    readonly code: string,
+    readonly status: number,
+  ) {
+    super(code);
+    this.name = "FollowersError";
+  }
+}
 
 export type PresenceRecord = {
   userId: string;
   status: PresenceStatus;
-  gameId?: string;
-  gameTitle?: string;
+  gameId: string | null;
+  /** From the games table, never from the client. */
+  gameTitle: string | null;
   updatedAt: string;
 };
 
-export type PresenceUpdatePayload = {
-  status: PresenceStatus;
-  gameId?: string;
-  gameTitle?: string;
+/** An edge from the owner to someone they follow (GET /followers/following and /activity). */
+export type FollowingEdge = {
+  userId: string;
+  targetUserId: string;
+  targetScreenName: string;
+  targetAvatar: number;
+  createdAt: string;
+  /** Null when the person is offline (no presence in the last 2 minutes). */
+  presence: PresenceRecord | null;
+  /** When their presence was last updated, online or not. */
+  lastOnline: string | null;
+  targetExperience: ExperienceSummary;
 };
 
-export async function followUser(userId: string, targetUserId: string) {
-  if (!config.tables.follows) throw new Error("follows_table_not_configured");
-  if (userId === targetUserId) throw new Error("cannot_follow_self");
-  const targetProfile = await getUser(targetUserId);
-  if (!targetProfile) throw new Error("user_not_found");
-  const followerProfile = await getUser(userId);
-  const now = new Date().toISOString();
-  try {
-    await ddb.send(
-      new PutCommand({
-        TableName: config.tables.follows,
-        Item: {
-          userId,
-          targetUserId,
-          targetScreenName: targetProfile.screenName ?? null,
-          targetAvatar: typeof targetProfile.avatar === "number" ? targetProfile.avatar : null,
-          followerScreenName: followerProfile?.screenName ?? null,
-          followerAvatar:
-            typeof followerProfile?.avatar === "number" ? followerProfile.avatar : null,
-          createdAt: now,
-        },
-        ConditionExpression: "attribute_not_exists(userId) AND attribute_not_exists(targetUserId)",
-      }),
-    );
-  } catch (err) {
-    if (isConditionalCheckFailed(err)) {
-      throw Object.assign(new Error("already_following"), { code: "CONFLICT" });
-    }
-    throw err;
-  }
+/** An edge from a follower to the owner (GET /followers/followers). */
+export type FollowerEdge = {
+  userId: string;
+  targetUserId: string;
+  followerScreenName: string;
+  followerAvatar: number;
+  createdAt: string;
+  presence: PresenceRecord | null;
+  followerExperience: ExperienceSummary;
+};
+
+function experienceOf(row: FollowListRow): ExperienceSummary {
+  // Only the XP columns: buildSummary must not see updatedAt or any private field.
+  return buildSummary({ xpLevel: row.xpLevel, xpProgress: row.xpProgress, xpTotal: row.xpTotal });
+}
+
+function presenceOf(row: FollowListRow): PresenceRecord | null {
+  if (!row.online || !row.presenceUpdatedAt || !isPresenceStatus(row.presenceStatus)) return null;
+  return {
+    userId: row.userId,
+    status: row.presenceStatus,
+    gameId: row.presenceGameId,
+    gameTitle: row.presenceGameTitle,
+    updatedAt: row.presenceUpdatedAt.toISOString(),
+  };
+}
+
+function toFollowingEdge(ownerId: string, row: FollowListRow): FollowingEdge {
+  return {
+    userId: ownerId,
+    targetUserId: row.userId,
+    targetScreenName: row.screenName,
+    targetAvatar: row.avatar,
+    createdAt: row.followedAt.toISOString(),
+    presence: presenceOf(row),
+    lastOnline: row.presenceUpdatedAt?.toISOString() ?? null,
+    targetExperience: experienceOf(row),
+  };
+}
+
+function toFollowerEdge(ownerId: string, row: FollowListRow): FollowerEdge {
+  return {
+    userId: row.userId,
+    targetUserId: ownerId,
+    followerScreenName: row.screenName,
+    followerAvatar: row.avatar,
+    createdAt: row.followedAt.toISOString(),
+    presence: presenceOf(row),
+    followerExperience: experienceOf(row),
+  };
+}
+
+export async function followUser(userId: string, targetUserId: string): Promise<{ ok: true }> {
+  if (userId === targetUserId) throw new FollowersError("cannot_follow_self", 400);
+  const [follower, target] = await Promise.all([getUserById(userId), getUserById(targetUserId)]);
+  if (!follower) throw new FollowersError("profile_not_found", 404);
+  if (follower.disabledAt) throw new FollowersError("account_disabled", 403);
+  if (!target) throw new FollowersError("user_not_found", 404);
+  const created = await insertFollow(userId, targetUserId);
+  if (!created) throw new FollowersError("already_following", 409);
   return { ok: true };
 }
 
-export async function unfollowUser(userId: string, targetUserId: string) {
-  if (!config.tables.follows) throw new Error("follows_table_not_configured");
-  await ddb.send(
-    new DeleteCommand({
-      TableName: config.tables.follows,
-      Key: { userId, targetUserId },
-    }),
-  );
+export async function unfollowUser(userId: string, targetUserId: string): Promise<{ ok: true }> {
+  await deleteFollow(userId, targetUserId);
   return { ok: true };
 }
 
-export async function listFollowing(userId: string): Promise<FollowEdge[]> {
-  if (!config.tables.follows) return [];
-  const res = await ddb.send(
-    new QueryCommand({
-      TableName: config.tables.follows,
-      KeyConditionExpression: "userId = :u",
-      ExpressionAttributeValues: { ":u": userId },
-    }),
-  );
-  return (res.Items || []) as FollowEdge[];
+/** Everyone `userId` follows, with presence and experience. */
+export async function listFollowing(userId: string): Promise<FollowingEdge[]> {
+  const rows = await listFollowingRows(userId);
+  return rows.map((row) => toFollowingEdge(userId, row));
 }
 
-export async function listFollowers(userId: string): Promise<FollowEdge[]> {
-  if (!config.tables.follows || !FOLLOWED_BY_INDEX) return [];
-  const res = await ddb.send(
-    new QueryCommand({
-      TableName: config.tables.follows,
-      IndexName: FOLLOWED_BY_INDEX,
-      KeyConditionExpression: "targetUserId = :t",
-      ExpressionAttributeValues: { ":t": userId },
-    }),
-  );
-  return (res.Items || []) as FollowEdge[];
-}
-
-export async function isFollowing(userId: string, targetUserId: string): Promise<boolean> {
-  if (!config.tables.follows) return false;
-  const res = await ddb.send(
-    new GetCommand({
-      TableName: config.tables.follows,
-      Key: { userId, targetUserId },
-    }),
-  );
-  return !!res.Item;
-}
-
-export async function countFollowing(userId: string) {
-  if (!config.tables.follows) return 0;
-  const res = await ddb.send(
-    new QueryCommand({
-      TableName: config.tables.follows,
-      KeyConditionExpression: "userId = :u",
-      ExpressionAttributeValues: { ":u": userId },
-      Select: "COUNT",
-    }),
-  );
-  return res.Count || 0;
-}
-
-export async function countFollowers(userId: string) {
-  if (!config.tables.follows || !FOLLOWED_BY_INDEX) return 0;
-  const res = await ddb.send(
-    new QueryCommand({
-      TableName: config.tables.follows,
-      IndexName: FOLLOWED_BY_INDEX,
-      KeyConditionExpression: "targetUserId = :t",
-      ExpressionAttributeValues: { ":t": userId },
-      Select: "COUNT",
-    }),
-  );
-  return res.Count || 0;
-}
-
-export async function updatePresence(userId: string, payload: PresenceUpdatePayload) {
-  if (!config.tables.presence) throw new Error("presence_table_not_configured");
-  const now = Date.now();
-  const iso = new Date(now).toISOString();
-  const expiresAt = Math.floor(now / 1000) + PRESENCE_TTL_SECONDS;
-  await ddb.send(
-    new PutCommand({
-      TableName: config.tables.presence,
-      Item: {
-        userId,
-        status: payload.status,
-        gameId: payload.gameId || null,
-        gameTitle: payload.gameTitle || null,
-        updatedAt: iso,
-        expiresAt,
-      },
-    }),
-  );
-  return { ok: true };
-}
-
-export async function getPresence(userId: string): Promise<PresenceRecord | null> {
-  if (!config.tables.presence) return null;
-  const res = await ddb.send(
-    new GetCommand({
-      TableName: config.tables.presence,
-      Key: { userId },
-    }),
-  );
-  return (res.Item as PresenceRecord) || null;
-}
-
-export async function getPresenceForUsers(
-  userIds: string[],
-): Promise<Record<string, PresenceRecord>> {
-  if (!config.tables.presence || userIds.length === 0) return {};
-  const unique = Array.from(new Set(userIds));
-  const batches: string[][] = [];
-  while (unique.length) batches.push(unique.splice(0, 100));
-  const out: Record<string, PresenceRecord> = {};
-  for (const batch of batches) {
-    const res = await ddb.send(
-      new BatchGetCommand({
-        RequestItems: {
-          [config.tables.presence]: {
-            Keys: batch.map((userId) => ({ userId })),
-          },
-        },
-      }),
-    );
-    const rows = res.Responses?.[config.tables.presence] || [];
-    rows.forEach((item) => {
-      const record = item as PresenceRecord;
-      if (record?.userId) out[record.userId] = record;
-    });
-  }
-  return out;
-}
-
-export type FollowingEdgeWithExtras = FollowEdge & {
-  presence?: PresenceRecord | null;
-  targetExperience?: ExperienceSummary | null;
-};
-
-export type FollowerEdgeWithExtras = FollowEdge & {
-  presence?: PresenceRecord | null;
-  followerExperience?: ExperienceSummary | null;
-};
-
-async function buildProfileMap(userIds: string[]) {
-  const unique = Array.from(new Set(userIds.filter(Boolean)));
-  const pairs = await Promise.all(
-    unique.map(async (id) => {
-      try {
-        const profile = await getUser(id);
-        return profile ? ([id, profile] as const) : null;
-      } catch (err) {
-        log.warn("follow_profile_fetch_failed", undefined, err);
-        return null;
-      }
-    }),
-  );
-  return pairs.reduce<Record<string, any>>((acc, pair) => {
-    if (!pair) return acc;
-    acc[pair[0]] = pair[1];
-    return acc;
-  }, {});
-}
-
-export async function listFollowingWithPresence(
+/** Everyone following `userId`, newest first, with presence and experience. */
+export async function listFollowers(
   userId: string,
-  opts: { gameId?: string } = {},
-): Promise<FollowingEdgeWithExtras[]> {
-  const edges = await listFollowing(userId);
-  if (!edges.length) return [];
-  const presenceMap = await getPresenceForUsers(edges.map((edge) => edge.targetUserId));
-  const profileMap = await buildProfileMap(edges.map((edge) => edge.targetUserId));
-  return edges
-    .map((edge) => {
-      const presence = presenceMap[edge.targetUserId];
-      const profile = profileMap[edge.targetUserId];
-      return {
-        ...edge,
-        presence,
-        targetExperience: profile ? buildSummary(profile) : null,
-      };
-    })
-    .filter((edge) => {
-      if (!opts.gameId) return true;
-      return edge.presence?.gameId === opts.gameId;
-    });
+  opts: { limit?: number } = {},
+): Promise<FollowerEdge[]> {
+  const rows = await listFollowerRows(userId, opts);
+  return rows.map((row) => toFollowerEdge(userId, row));
 }
 
-export async function listFollowersWithPresence(
-  targetUserId: string,
-): Promise<FollowerEdgeWithExtras[]> {
-  const edges = await listFollowers(targetUserId);
-  if (!edges.length) return [];
-  const presenceMap = await getPresenceForUsers(edges.map((edge) => edge.userId));
-  const profileMap = await buildProfileMap(edges.map((edge) => edge.userId));
-  return edges.map((edge) => ({
-    ...edge,
-    presence: presenceMap[edge.userId],
-    followerExperience: profileMap[edge.userId] ? buildSummary(profileMap[edge.userId]) : null,
+/** Followed people who are online now, optionally in one game and/or with given statuses. */
+export async function listFollowingActivity(
+  userId: string,
+  filter: { gameId?: string; statuses?: string[] } = {},
+): Promise<FollowingEdge[]> {
+  const statuses = filter.statuses?.filter(isPresenceStatus);
+  // A status filter with no valid statuses matches nobody.
+  if (filter.statuses?.length && !statuses?.length) return [];
+  const rows = await listFollowingRows(userId, {
+    onlineOnly: true,
+    gameId: filter.gameId,
+    statuses,
+  });
+  return rows.map((row) => toFollowingEdge(userId, row));
+}
+
+export function isFollowing(userId: string, targetUserId: string): Promise<boolean> {
+  return acceptedFollowExists(userId, targetUserId);
+}
+
+export function getFollowingIds(userId: string): Promise<string[]> {
+  return listFollowingIdRows(userId);
+}
+
+export function countFollowing(userId: string): Promise<number> {
+  return countFollowingRows(userId);
+}
+
+export function countFollowers(userId: string): Promise<number> {
+  return countFollowerRows(userId);
+}
+
+/** GET /followers/summary: the shape the followers page reads. */
+export async function getFollowersSummary(userId: string) {
+  const [following, followers] = await Promise.all([listFollowing(userId), listFollowers(userId)]);
+  return {
+    following: following.map((edge) => ({
+      userId: edge.targetUserId,
+      targetUserId: edge.targetUserId,
+      screenName: edge.targetScreenName,
+      targetScreenName: edge.targetScreenName,
+      avatar: edge.targetAvatar,
+      targetAvatar: edge.targetAvatar,
+      createdAt: edge.createdAt,
+      level: edge.targetExperience.level,
+      presence: edge.presence,
+      lastOnline: edge.lastOnline,
+    })),
+    followers: followers.map((edge) => ({
+      userId: edge.userId,
+      screenName: edge.followerScreenName,
+      avatar: edge.followerAvatar,
+      createdAt: edge.createdAt,
+      level: edge.followerExperience.level,
+    })),
+    followingCount: following.length,
+    followersCount: followers.length,
+  };
+}
+
+const NOTIFICATIONS_LIMIT = 100;
+
+/** GET /followers/notifications: the newest followers. */
+export async function getFollowNotifications(userId: string) {
+  const followers = await listFollowers(userId, { limit: NOTIFICATIONS_LIMIT });
+  return followers.map((edge) => ({
+    userId: edge.userId,
+    screenName: edge.followerScreenName,
+    avatar: edge.followerAvatar,
+    createdAt: edge.createdAt,
   }));
 }
 
-export async function getFollowingIds(userId: string): Promise<string[]> {
-  const rows = await listFollowing(userId);
-  return rows.map((row) => row.targetUserId);
+const GAME_ID_MAX_LENGTH = 64;
+
+/**
+ * Records what the player is doing. Only a known status and an existing game id
+ * are accepted; the title shown to friends always comes from the games table.
+ */
+export async function updatePresence(
+  userId: string,
+  input: { status?: unknown; gameId?: unknown },
+): Promise<{ ok: true }> {
+  if (input.status === undefined || input.status === null || input.status === "") {
+    throw new FollowersError("status_required", 400);
+  }
+  if (!isPresenceStatus(input.status)) throw new FollowersError("invalid_status", 400);
+  let gameId: string | null = null;
+  if (input.gameId !== undefined && input.gameId !== null && input.gameId !== "") {
+    if (
+      typeof input.gameId !== "string" ||
+      input.gameId.length > GAME_ID_MAX_LENGTH ||
+      !(await gameExists(input.gameId))
+    ) {
+      throw new FollowersError("invalid_game", 400);
+    }
+    gameId = input.gameId;
+  }
+  const saved = await upsertPresence(userId, input.status, gameId);
+  if (!saved) throw new FollowersError("profile_not_found", 404);
+  return { ok: true };
 }

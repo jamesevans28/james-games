@@ -100,6 +100,8 @@ export const plays = pgTable(
   (t) => [
     index("plays_game_score_idx").on(t.gameId, t.score.desc()),
     index("plays_user_created_idx").on(t.userId, t.createdAt.desc()),
+    // Admin dashboard aggregates filter plays by date (T6.8).
+    index("plays_created_idx").on(t.createdAt),
   ],
 );
 

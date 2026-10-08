@@ -1,35 +1,18 @@
-/** Pure leaderboard rules (no database access). */
+/** Pure leaderboard rules (no database access). The ordering itself is done in SQL. */
 
-export type ScoreLike = { userId?: string; score: number; createdAt: string };
-export type StatLike = { userId: string; bestScore?: number; lastPlayedAt?: string };
+export const LEADERBOARD_DEFAULT_LIMIT = 10;
+export const LEADERBOARD_MAX_LIMIT = 50;
 
-/** Highest score first; an earlier time wins a tie. */
-export function compareScores(a: ScoreLike, b: ScoreLike): number {
-  if (b.score !== a.score) return b.score - a.score;
-  return a.createdAt.localeCompare(b.createdAt);
+/** Rows to return for a `?limit=` value: a whole number from 1 to 50, default 10. */
+export function leaderboardLimit(raw: unknown): number {
+  const n = Math.floor(Number(raw));
+  if (!Number.isFinite(n) || n <= 0) return LEADERBOARD_DEFAULT_LIMIT;
+  return Math.min(LEADERBOARD_MAX_LIMIT, n);
 }
 
-/**
- * One best entry per allowed user, from two partial sources: score rows (the
- * global top list) and per-user stats rows (best score per user and game).
- * Either source may be missing a user, so the best of both wins.
- */
-export function bestPerUser(
-  rows: ScoreLike[],
-  stats: StatLike[],
-  allowed: Set<string>,
-): ScoreLike[] {
-  const best = new Map<string, ScoreLike>();
-  const consider = (candidate: ScoreLike) => {
-    if (!candidate.userId || !allowed.has(candidate.userId)) return;
-    const current = best.get(candidate.userId);
-    if (!current || compareScores(candidate, current) < 0) best.set(candidate.userId, candidate);
-  };
-  rows.forEach(consider);
-  for (const s of stats) {
-    if (typeof s.bestScore === "number" && s.bestScore > 0) {
-      consider({ userId: s.userId, score: s.bestScore, createdAt: s.lastPlayedAt ?? "" });
-    }
-  }
-  return [...best.values()].sort(compareScores);
+export type LeaderboardScope = "overall" | "following";
+
+/** `?scope=following` (or `friends`) is the friends board; anything else is the overall board. */
+export function leaderboardScope(raw: unknown): LeaderboardScope {
+  return raw === "following" || raw === "friends" ? "following" : "overall";
 }

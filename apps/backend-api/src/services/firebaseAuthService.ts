@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 // Firebase Authentication Service
 // Handles token verification, custom token creation for username+PIN, and user management
 
@@ -104,7 +103,7 @@ export async function getFirebaseUser(uid: string): Promise<FirebaseUser | null>
  */
 export async function createCustomToken(
   uid: string,
-  claims?: Record<string, any>,
+  claims?: Record<string, unknown>,
 ): Promise<string> {
   const auth = getFirebaseAuth();
   return await auth.createCustomToken(uid, claims);
@@ -216,7 +215,7 @@ export function recordLoginAttempt(identifier: string, success: boolean): void {
  * Set custom claims on a Firebase user.
  * Useful for marking account type, linked status, etc.
  */
-export async function setUserClaims(uid: string, claims: Record<string, any>): Promise<void> {
+export async function setUserClaims(uid: string, claims: Record<string, unknown>): Promise<void> {
   const auth = getFirebaseAuth();
   await auth.setCustomUserClaims(uid, claims);
 }

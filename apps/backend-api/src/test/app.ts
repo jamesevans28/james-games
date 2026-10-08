@@ -39,6 +39,8 @@ function fakeVerify(token: string): Promise<DecodedIdToken> {
   } as unknown as DecodedIdToken);
 }
 
+// Tests poke at arbitrary JSON response fields; `any` keeps them readable.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TestResponse = { status: number; body: any };
 
 export async function startTestApp() {

@@ -42,7 +42,13 @@ const result = await build({
 
 const zip = path.join(root, "bundle.zip");
 rmSync(zip, { force: true });
-execFileSync("zip", ["-q", "-j", zip, path.join(outDir, "lambda.mjs"), path.join(outDir, "lambda.mjs.map")]);
+execFileSync("zip", [
+  "-q",
+  "-j",
+  zip,
+  path.join(outDir, "lambda.mjs"),
+  path.join(outDir, "lambda.mjs.map"),
+]);
 const mb = (bytes) => `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 console.log(
   `lambda.mjs ${mb(statSync(path.join(outDir, "lambda.mjs")).size)}, bundle.zip ${mb(statSync(zip).size)}, ` +

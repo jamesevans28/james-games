@@ -1,61 +1,41 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import type { Request, Response } from "express";
 import {
-  listGameConfigs,
-  getGameConfig,
-  createGameConfig,
-  updateGameConfig,
+  getAdminGameConfig,
+  getVisibleGameConfig,
+  listAllGameConfigs,
+  listVisibleGameConfigs,
+  updateGameMetadataFromAdmin,
 } from "../services/gamesConfigService.js";
-import { sendServerError } from "../lib/http.js";
-import { errorInfo } from "../lib/errors.js";
 
+// The catalogue is a few dozen games, so lists come back whole (no nextCursor).
+
+/** GET /games/config: active games, plus beta games for a signed-in beta tester. */
 export async function list(req: Request, res: Response) {
-  try {
-    const limit = req.query.limit ? Number(req.query.limit) : undefined;
-    const cursor = typeof req.query.cursor === "string" ? req.query.cursor : undefined;
-    const result = await listGameConfigs({ limit, cursor });
-    res.json(result);
-  } catch (err) {
-    sendServerError(res, "game_config_list_failed", err);
-  }
+  res.json({ items: await listVisibleGameConfigs(req.user?.userId) });
 }
 
+/** GET /games/config/:gameId */
 export async function show(req: Request, res: Response) {
-  const gameId = String(req.params.gameId);
-  if (!gameId) return res.status(400).json({ error: "gameId_required" });
-  try {
-    const game = await getGameConfig(gameId);
-    if (!game) return res.status(404).json({ error: "game_not_found" });
-    res.json(game);
-  } catch (err) {
-    sendServerError(res, "game_config_get_failed", err);
-  }
+  const game = await getVisibleGameConfig(String(req.params.gameId), req.user?.userId);
+  if (!game) return res.status(404).json({ error: "game_not_found" });
+  res.json(game);
 }
 
-export async function create(req: Request, res: Response) {
-  const body = req.body || {};
-  try {
-    const created = await createGameConfig(body);
-    res.status(201).json(created);
-  } catch (err) {
-    if (errorInfo(err).message === "gameId_and_title_required") {
-      return res.status(400).json({ error: "gameId_and_title_required" });
-    }
-    sendServerError(res, "admin_create_game_failed", err);
-  }
+/** GET /admin/games: every game, inactive included. */
+export async function adminList(_req: Request, res: Response) {
+  res.json({ items: await listAllGameConfigs() });
 }
 
-export async function update(req: Request, res: Response) {
-  const gameId = String(req.params.gameId);
-  if (!gameId) return res.status(400).json({ error: "gameId_required" });
-  const body = req.body || {};
-  try {
-    const updated = await updateGameConfig(gameId, body);
-    res.json(updated);
-  } catch (err) {
-    if (errorInfo(err).message === "no_fields_to_update") {
-      return res.status(400).json({ error: "no_fields_to_update" });
-    }
-    sendServerError(res, "admin_update_game_failed", err);
-  }
+/** GET /admin/games/:gameId */
+export async function adminShow(req: Request, res: Response) {
+  const game = await getAdminGameConfig(String(req.params.gameId));
+  if (!game) return res.status(404).json({ error: "game_not_found" });
+  res.json(game);
+}
+
+/** PATCH|PUT|POST /admin/games/:gameId with `{ metadata }`; everything else comes from the manifests. */
+export async function adminUpdate(req: Request, res: Response) {
+  const result = await updateGameMetadataFromAdmin(String(req.params.gameId), req.body);
+  if (!result.ok) return res.status(result.status).json({ error: result.error });
+  res.json(result.game);
 }

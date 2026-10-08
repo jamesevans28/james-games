@@ -15,27 +15,27 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 ## Structure (`src/`)
 
 - `index.ts` builds the Express app (CORS, JSON, `attachUser`, routes). `lambda.ts` wraps it with `serverless-http` and is the Lambda entry; the handler is `dist/lambda.handler`. `dev-server.ts` runs it locally.
-- `routes/` → `controllers/` → `services/` → DynamoDB. Some controllers still call DynamoDB directly; new code goes through a service.
+- `routes/` → `controllers/` (HTTP only) → `services/` (rules) → `repos/` (Drizzle queries, one file per area) → Postgres.
 - `middleware/authGuards.ts`: verifies the Firebase ID token from `Authorization: Bearer …` and sets `req.user`. `requireAuth` and `requireAdmin` guard routes. Admin is a boolean on the user row.
-- `config/index.ts`: env and table names. `data/experienceLevels.ts`: default XP curve.
+- `config/index.ts`: env. `data/experienceLevels.ts`: the XP curve (seeded into `experience_levels`). `db/`: schema, client, migrate/seed/housekeeping.
 
 ## Route map
 
-| Prefix           | Routes                                                                                                                                 |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `/me`            | GET current user                                                                                                                       |
-| `/auth/firebase` | register-anonymous, register-username, login-username, me, link-provider, change-pin, add-email, check-email-verified, admin/reset-pin |
-| `/users`         | POST screen-name, POST preferences, PATCH settings, GET streak, POST streak/checkin, GET :userId                                       |
-| `/scores`        | GET :gameId (leaderboard), POST / (submit, auth)                                                                                       |
-| `/experience`    | GET summary (POST runs returns 410; XP comes from POST /scores)                                                                        |
-| `/ratings`       | GET /, GET :gameId, POST :gameId                                                                                                       |
-| `/followers`     | summary, following, followers, activity, ids, notifications, POST status, POST/DELETE :targetUserId                                    |
-| `/games`         | GET config, GET config/:gameId, GET feed, GET feed/personalized                                                                        |
-| `/admin`         | users list/get/update, games list/create/get/stats/update, metrics/dashboard                                                           |
+| Prefix           | Routes                                                                                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/me`            | GET current user                                                                                                                                        |
+| `/auth/firebase` | register-anonymous, register-username, login-username, me (same as `/me`), link-provider, change-pin, add-email, check-email-verified, admin/reset-pin  |
+| `/users`         | POST screen-name, POST preferences, PATCH settings, GET streak, POST streak/checkin, GET :userId                                                        |
+| `/scores`        | GET :gameId (leaderboard), POST / (submit, auth)                                                                                                        |
+| `/experience`    | GET summary (POST runs returns 410; XP comes from POST /scores)                                                                                         |
+| `/ratings`       | GET /, GET :gameId, POST :gameId                                                                                                                        |
+| `/followers`     | summary, following, followers, activity, ids, notifications, POST status, POST/DELETE :targetUserId                                                     |
+| `/games`         | GET config, GET config/:gameId, GET feed, GET feed/personalized                                                                                         |
+| `/admin`         | users list/get/update, users/:id reset-screen-name/disable/enable, DELETE plays/:playId, games list/get/stats/update (metadata only), metrics/dashboard |
 
 ## Data layer
 
-Supabase Postgres (project in ap-southeast-2) through Drizzle ORM (Phase 6). The DynamoDB tables named `games4james-*` are the prototype's: not migrated, deleted at relaunch (T13.6). **Do not add DynamoDB code.**
+Supabase Postgres (project in ap-southeast-2) through Drizzle ORM (Phase 6). The prototype's AWS NoSQL tables (`games4james-*`) are not migrated and are deleted at relaunch (T13.6). **All data lives in Postgres.**
 
 - `src/db/schema.ts` is the schema. After changing it run `npm run db:generate -w apps/backend-api` and commit the SQL it writes to `drizzle/`. Never edit a migration that has been applied; add a new one.
 - `src/db/client.ts`: `getDb()` (one `postgres` connection per Lambda container) and `setDb()` for tests.
@@ -59,10 +59,12 @@ Supabase Postgres (project in ap-southeast-2) through Drizzle ORM (Phase 6). The
 
 ## Environment variables (names only)
 
-`APP_BASE_URL`, `AWS_REGION`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `CORS_ALLOWED_ORIGINS`, and the table names `TABLE_USERS`, `SCORES_TABLE`, `TABLE_RATINGS`, `TABLE_RATING_SUMMARY`, `TABLE_FOLLOWS`, `TABLE_PRESENCE`, `TABLE_USER_GAME_STATS`, `TABLE_EXPERIENCE_LEVELS`, `TABLE_GAME_CONFIG`, `TABLE_USERNAMES`. Production values are set by the deploy workflow.
+`DATABASE_URL`, `DATABASE_URL_MIGRATIONS` (migrations only), `APP_BASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `CORS_ALLOWED_ORIGINS`. Production values are set by `deploy-api.yml` from GitHub secrets.
 
 ## Deploy
 
-Manual for now (GitHub Actions → Deploy Apps → Run workflow): a `checks` job (typecheck + tests), then `tsc`, zip `dist` + prod `node_modules`, `aws lambda update-function-code`, then the env block.
+Manual until relaunch (GitHub → Actions → **Deploy API** → Run workflow; T13.4 turns on the push trigger). It runs the `ci.yml` gates, then `db:migrate`, `db:seed`, `npm run bundle` (esbuild → one `lambda.mjs`, see `scripts/bundle.mjs`), uploads `bundle.zip`, and sets runtime `nodejs24.x`, handler `lambda.handler`, 512 MB, 10 s and the env block. `migrate_only` skips the Lambda.
 
-Lambda `gamesjames_scores` (checked 2026-10-08): runtime `nodejs22.x`, handler `dist/lambda.handler`, x86_64, 128 MB, 3 s timeout. Local dev and CI use Node 24 (`.nvmrc`); the compiled output (ES2022) runs on both. T9.1 moves the runtime to `nodejs24.x` and should raise memory/timeout (3 s is tight for Firebase cold starts). Bundling with esbuild comes in T9.3.
+## Tests
+
+`createTestDb()` (src/test/db.ts) and `startTestApp()` (src/test/app.ts) give each test file its own in-process Postgres with the real migrations, three test games, and fake Firebase tokens (`test:<uid>[:<accountType>[:<email>]]`). Route tests live in `src/routes/*.routes.test.ts`; mock Firebase Admin calls other than token verification with `vi.mock`.

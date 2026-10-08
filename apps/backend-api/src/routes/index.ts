@@ -12,8 +12,7 @@ import { me } from "../controllers/usersController.js";
 
 const router = Router();
 
-// Mount feature route modules
-// Backwards-compatible top-level /me route (keeps SPA calls working)
+// The signed-in user's own account. GET /auth/firebase/me is the same handler.
 router.get("/me", requireAuth, me);
 
 // Firebase auth routes

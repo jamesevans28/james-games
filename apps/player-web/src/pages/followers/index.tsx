@@ -110,7 +110,13 @@ export default function FollowersPage() {
   }, []);
 
   const describePresence = useCallback(
-    (presence?: { status?: PresenceStatus; gameTitle?: string | null; gameId?: string | null }) => {
+    (
+      presence?: {
+        status?: PresenceStatus;
+        gameTitle?: string | null;
+        gameId?: string | null;
+      } | null,
+    ) => {
       if (!presence?.status) return null;
       const base = STATUS_LABELS[presence.status] || "Online";
       const shouldShowGame = ["game_lobby", "playing", "in_score_dialog"].includes(presence.status);

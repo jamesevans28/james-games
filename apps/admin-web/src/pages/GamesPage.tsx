@@ -1,14 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Gamepad2, Plus } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
 import { adminApi, type GameConfig, type PaginatedResponse } from "../lib/api";
 import { GameDrawer } from "../components/games/GameDrawer";
-import { CreateGameModal } from "../components/games/CreateGameModal";
 
 export function GamesPage() {
   const [cursorStack, setCursorStack] = useState<Array<string | undefined>>([undefined]);
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
   const currentCursor = cursorStack[cursorStack.length - 1];
 
   const queryKey = useMemo(() => ["admin-games", currentCursor], [currentCursor]);
@@ -36,15 +34,9 @@ export function GamesPage() {
           <p className="text-xs uppercase tracking-[0.45em] text-slate-500">Content Pipeline</p>
           <h2 className="text-2xl font-semibold text-white">Games</h2>
           <p className="text-sm text-slate-400">
-            Edit metadata, XP multipliers, and beta visibility.
+            Games, titles, status and scoring come from the game manifests. Edit metadata here.
           </p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="inline-flex items-center gap-2 rounded-2xl bg-brand-600 px-5 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white"
-        >
-          <Plus className="h-4 w-4" /> Add Game
-        </button>
       </header>
 
       <div className="rounded-3xl border border-white/5 bg-slate-950/60 p-5 backdrop-blur">
@@ -76,7 +68,6 @@ export function GamesPage() {
       </div>
 
       {selectedGame && <GameDrawer gameId={selectedGame} onClose={() => setSelectedGame(null)} />}
-      <CreateGameModal open={showCreate} onClose={() => setShowCreate(false)} />
     </div>
   );
 }
@@ -96,10 +87,10 @@ function GameCard({ game, onSelect }: { game: GameConfig; onSelect: () => void }
       </p>
       <div className="mt-4 flex flex-wrap gap-2 text-xs uppercase tracking-widest">
         <span className="rounded-full border border-slate-800 px-3 py-1 text-slate-300">
-          XP × {game.xpMultiplier?.toFixed?.(2) ?? "1.00"}
+          XP × {game.xpMultiplier.toFixed(2)}
         </span>
         <span className="rounded-full border border-slate-800 px-3 py-1 text-slate-300">
-          {game.betaOnly ? "Beta" : "Public"}
+          {game.status}
         </span>
       </div>
     </button>
