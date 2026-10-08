@@ -60,7 +60,7 @@ Done when: James can see Tilly's and Harvey's play time for the week.
 
 Status: todo
 Depends on: T4.9, T8.9
-Order of ideas from the review: Stack Tower (one-tap, graphics only; the pilot for "kid owns a game" with Harvey), Bubble Pop Rescue (Snapadile skeleton; Tilly's animals), Bounce Up (input kit), Colour Sort (puzzle), Draw-a-Path Kart (Box Cutter grid). Each ships as `beta`, then `active` after the family plays it for a week.
+Order of ideas from the review: Stack Tower (built in T4.9 as the SDK example, status `beta`; it needs Harvey's note, a real cover and SFX to go `active`), Bubble Pop Rescue (Snapadile skeleton; Tilly's animals), Bounce Up (input kit), Colour Sort (puzzle), Draw-a-Path Kart (Box Cutter grid). Each ships as `beta`, then `active` after the family plays it for a week.
 Done when: a new `active` game exists with cover, note, SFX, tests and a share card.
 
 ## T11.9 Reactivate reworked games

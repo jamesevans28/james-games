@@ -65,7 +65,7 @@ Steps:
 Status: todo
 Depends on: T1.1, T6.3
 Files: `pages/firebase-login.tsx`, backend `firebaseAuthService.ts` rate limiting
-Steps: 6-digit PIN minimum for new accounts (existing 4-digit allowed until changed, with a nudge); server-side throttling stored in Postgres (per user and per IP, sliding window); lockout messages that don't reveal whether a username exists; "Forgot PIN" goes to the parent page instructions (James resets from admin).
+Steps: 6-digit PIN for every account (no 4-digit path: full reset, no old accounts); server-side throttling stored in Postgres (per user and per IP, sliding window); lockout messages that don't reveal whether a username exists; "Forgot PIN" goes to the parent page instructions (James resets from admin).
 Done when: tests for the throttle; brute-force script against local server gets 429 after N attempts across cold starts (restart the server mid-test).
 
 ## T7.8 Privacy, parent and about pages
@@ -76,7 +76,7 @@ Files: `pages/about.tsx`, `pages/privacy.tsx`, `pages/parents.tsx` (new), footer
 Steps:
 
 1. About: who makes it (James, Tilly, Harvey), what it is, that it's free with no ads.
-2. Privacy: exactly what is stored (uid, screen name, avatar, scores, optional email for sign-in, friend codes), what isn't (no ads, no selling, no tracking across sites), analytics statement (per T7.9), how to delete an account (settings → delete, or email), contact. Plain language, short.
+2. Privacy: exactly what is stored (uid, screen name, avatar, scores, optional email for sign-in, friend codes), what isn't (no ads, no selling, no tracking across sites), analytics statement (per T7.9), the support page and supporter perks (payments go through Ko-fi/Stripe, we never see card details; T12.1/T12.2), how to delete an account (settings → delete, or email), contact. Plain language, short. Replaces the T3.5 placeholder page.
 3. Parents: how accounts work (anonymous by default, PIN accounts, Google/Apple), how to turn off social, how to delete, how to report a name.
 4. Account deletion: `DELETE /me` removes the user and anonymises plays (keeps scores under "Deleted player"); settings button with a confirmation step.
    Done when: pages exist and are linked from the drawer and the login page; deletion works end-to-end locally.

@@ -1,8 +1,8 @@
 # Phase 9: CI/CD
 
-Goal: every push to `main` runs gates (lint, typecheck, tests, manifest/art checks) and auto-deploys only the apps whose files changed; pull requests get the same gates without deploying. Database migrations run in the pipeline. Everything stays on free tiers (GitHub Actions free minutes for public repos are unlimited; for a private repo 2,000 min/month, which is plenty with path filters).
+Goal: every push to `main` and every pull request runs gates (lint, typecheck, tests, manifest/art checks). The per-app deploy workflows exist and are path-filtered, but **stay `workflow_dispatch`-only until T13.4 turns auto-deploy on** (DECISIONS 2026-10-09: no deploying work in progress before relaunch). Database migrations run in the pipeline. Everything stays on free tiers (GitHub Actions free minutes for public repos are unlimited; for a private repo 2,000 min/month, which is plenty with path filters).
 
-Start T9.1 right after Phase 1; finish T9.4–T9.6 alongside Phase 6.
+Do T9.1–T9.3 straight after Phase 6 (the Lambda env then includes `DATABASE_URL`); T9.4–T9.6 alongside Phase 7; T9.8 with Phase 10.
 
 ## T9.1 Split the workflow: `ci.yml` (gates) and `deploy-*.yml` (per app)
 
@@ -12,12 +12,12 @@ Files: `.github/workflows/ci.yml`, `deploy-web.yml`, `deploy-admin.yml`, `deploy
 Steps:
 
 1. `ci.yml`: on `pull_request` and `push` to `main`: checkout, Node from `.nvmrc`, `npm ci`, `npm run typecheck`, `npm run lint` (once T4.1), `npm test` (once T4.2), `npm run web:build`, `npm run admin:build`, `npm run backend:build`, `node scripts/art/check.mjs` (once T8.3). Cache `~/.npm`.
-2. `deploy-web.yml`: on `push` to `main` with `paths: [apps/player-web/**, scripts/**, package*.json]` and `workflow_dispatch`; `needs` a reusable gate job (call `ci.yml` via `workflow_call`) then the existing S3 sync + cache headers + CloudFront invalidation. Invalidate only `/index.html`, `/sitemap.xml`, `/static-games/*` and `/manifest.webmanifest` instead of `/*` (hashed assets don't need it; keeps CloudFront free-tier invalidations low).
+2. `deploy-web.yml`: `workflow_dispatch` now, with the `push` to `main` trigger (`paths: [apps/player-web/**, scripts/**, package*.json]`) written but commented out until T13.4; `needs` a reusable gate job (call `ci.yml` via `workflow_call`) then the existing S3 sync + cache headers + CloudFront invalidation. Invalidate only `/index.html`, `/sitemap.xml`, `/static-games/*` and `/manifest.webmanifest` instead of `/*` (hashed assets don't need it; keeps CloudFront free-tier invalidations low).
 3. `deploy-admin.yml`: same for `apps/admin-web/**`.
-4. `deploy-api.yml`: for `apps/backend-api/**`: build, prod-only install, zip, `update-function-code`, wait, then `update-function-configuration` with runtime `nodejs24.x` (or `nodejs22.x` if 24 isn't offered in the region) and the env block. Secrets via GitHub secrets as today; after Phase 6 the env includes `DATABASE_URL` and `DATA_BACKEND`.
+4. `deploy-api.yml`: for `apps/backend-api/**`: build, prod-only install, zip, `update-function-code`, wait, then `update-function-configuration` with runtime `nodejs24.x` (or `nodejs22.x` if 24 isn't offered in the region) and the env block. Secrets via GitHub secrets as today; after Phase 6 the env includes `DATABASE_URL` and the new Firebase project's credentials, and no `TABLE_*` variables.
 5. Concurrency groups per workflow so overlapping pushes cancel older runs.
    Also (found in T2.1): the Lambda runs on 128 MB with a 3 s timeout; raise to at least 512 MB / 10 s when moving the runtime to nodejs24.x, and check cold-start times.
-   Done when: a docs-only PR runs `ci.yml` only; a change to `apps/player-web` deploys only the web; all three deploys succeed from `main`.
+   Done when: a docs-only PR runs `ci.yml` only; each deploy workflow runs green from `workflow_dispatch` against the current (old) production, which is harmless because production still uses the old build until T13.4 flips the variables.
 
 ## T9.2 Branch protection and PR template
 

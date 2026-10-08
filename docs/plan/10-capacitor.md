@@ -43,7 +43,7 @@ Files: `platform/adapters/auth.capacitor.ts`, Firebase console (MANUAL), `ios/Ap
 Steps:
 
 1. `npm i @capacitor-firebase/authentication firebase` (matching versions). Implement `AuthAdapter` for native using `FirebaseAuthentication.signInWithGoogle()`/`signInWithApple()`/`signInAnonymously()` with `skipNativeAuth: false` and credential hand-off to the web SDK (`signInWithCredential`) so the backend token flow stays identical.
-2. MANUAL (James): Firebase console → add iOS app (bundle `com.games4james.app`) and Android app (package `com.games4james.app`, SHA-1 of the debug and release keystores); download `GoogleService-Info.plist` and `google-services.json` into the native projects (gitignore the release ones if they contain restricted keys; the Firebase config is not secret but keep the pattern tidy). Enable Apple sign-in in Firebase and in the Apple Developer portal (Sign in with Apple capability).
+2. MANUAL (James): Firebase console (the `games4james` project from T6.0) → add iOS app (bundle `com.games4james.app`) and Android app (package `com.games4james.app`, SHA-1 of the debug and release keystores); download `GoogleService-Info.plist` and `google-services.json` into the native projects (gitignore the release ones if they contain restricted keys; the Firebase config is not secret but keep the pattern tidy). Enable Apple sign-in in Firebase and in the Apple Developer portal (Sign in with Apple capability).
 3. Username+PIN works unchanged (plain HTTPS to the API). Add the native origins to `CORS_ALLOWED_ORIGINS` (`capacitor://localhost`, `https://localhost`).
    Done when: Google and Apple sign-in work on simulator/emulator; anonymous → PIN upgrade works; the backend sees the same uid as the web.
 
@@ -65,7 +65,7 @@ Done when: checked on both platforms.
 
 Status: todo
 Depends on: Phase 7 complete, T8.4, T8.7
-MANUAL (James): enrol in the Apple Developer Program and Google Play Console (decide timing by cost). Claude prepares: app name, subtitle, description (family voice), keywords, category (Games › Family/Kids; Apple Kids category with age band 6–8), privacy nutrition labels (data: identifiers (uid), user content (screen name, scores); not used for tracking), content rating questionnaire answers, screenshots (generate 6.7" and 6.1" iPhone and Android phone sets from the Browser pane/simulator with the `scripts/art/store-shots.mjs` frame compositor), privacy policy URL (T7.8), support URL (parents page).
+MANUAL (James): enrol in the Apple Developer Program and Google Play Console. These accounts are also needed for in-app purchases (T12.3), so they pay for themselves if the supporter tier works; enrol once Phase 7 is done so the store review happens soon after the web relaunch. Claude prepares: app name, subtitle, description (family voice), keywords, category (Games › Family/Kids; Apple Kids category with age band 6–8), privacy nutrition labels (data: identifiers (uid), user content (screen name, scores); not used for tracking), content rating questionnaire answers, screenshots (generate 6.7" and 6.1" iPhone and Android phone sets from the Browser pane/simulator with the `scripts/art/store-shots.mjs` frame compositor), privacy policy URL (T7.8), support URL (parents page).
 Done when: both listings exist in draft with all assets uploaded.
 
 ## T10.7 Apple Kids category compliance checklist

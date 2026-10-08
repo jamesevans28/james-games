@@ -60,7 +60,9 @@ The Browser pane launch config is `.claude/launch.json` (`player-web`). Use a 37
 
 - `flingo.fun` is dead. The brand is Games4James at https://games4james.com (API at https://api.games4james.com).
 - "Word Rush with Tom": Tom was a placeholder. The kids are Tilly and Harvey.
-- DynamoDB is being replaced by Supabase Postgres (Phase 6). Do not add new DynamoDB tables.
+- DynamoDB is being replaced by Supabase Postgres (Phase 6) with **no data migration**: this is a full reset for the summer 2026/27 relaunch (Phase 13). Do not add DynamoDB code, and do not write shims that carry prototype data forward.
+- The Firebase project `flingo-fun` is replaced by `games4james` (T6.0). Don't configure the old one.
+- Deploys stay manual until relaunch (Phase 13). Never run the deploy workflow unless James asks.
 - Cognito is gone. Auth is Firebase (anonymous, username + PIN, Google, Apple).
 - Cut games (Car Crash, Block Breaker, Ready Steady Shoot, Fill the Cup, Ho Ho Home Delivery) are set `inactive`, not deleted (Phase 5).
 

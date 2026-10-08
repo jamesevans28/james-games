@@ -40,11 +40,11 @@ A game is a folder `src/games/<id>/` with a `manifest.ts` (`defineGame`) and an 
 
 Copy `.env.example` to `.env.local` (gitignored). Never commit values.
 
-| Variable                                                                                                     | Meaning                                                                           |
-| ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
-| `VITE_API_BASE_URL`                                                                                          | Backend origin. Local `http://localhost:8787`, prod `https://api.games4james.com` |
-| `VITE_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_STORAGE_BUCKET`, `_MESSAGING_SENDER_ID`, `_APP_ID` | Firebase web app config (project `flingo-fun`)                                    |
-| `VITE_FIREBASE_MEASUREMENT_ID`                                                                               | Optional analytics id                                                             |
+| Variable                                                                                                     | Meaning                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `VITE_API_BASE_URL`                                                                                          | Backend origin. Local `http://localhost:8787`, prod `https://api.games4james.com`                        |
+| `VITE_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_STORAGE_BUCKET`, `_MESSAGING_SENDER_ID`, `_APP_ID` | Firebase web app config (project `games4james` from T6.0; the prototype's `flingo-fun` is being retired) |
+| `VITE_FIREBASE_MEASUREMENT_ID`                                                                               | Optional analytics id                                                                                    |
 
 CI sets the same names from GitHub repo variables plus `VITE_BUILD_NUMBER`.
 
