@@ -168,6 +168,8 @@ export type ScoreSubmissionResult = {
   streak?: StreakData & { extended: boolean; isNewStreak: boolean };
   /** Present only when this run collected the weekly sticker (T7.5). */
   stickerEarned?: { id: string; kind: "weekly" };
+  /** True when the server had already saved this play id (an offline-queue resend). */
+  duplicate?: boolean;
 };
 
 const scoreSavedListeners = new Set<(result: ScoreSubmissionResult) => void>();
@@ -189,9 +191,13 @@ export async function postHighScore(args: {
   gameId: string;
   score: number;
   durationMs?: number;
+  /** Idempotency key for the offline queue (T10.4). */
+  playId?: string;
+  /** Kept from when the run was played, for queued resends. */
+  tzOffsetMinutes?: number;
 }): Promise<ScoreSubmissionResult | undefined> {
   if (!API_BASE) return;
-  const tzOffsetMinutes = -new Date().getTimezoneOffset(); // minutes east of UTC
+  const tzOffsetMinutes = args.tzOffsetMinutes ?? -new Date().getTimezoneOffset(); // minutes east of UTC
   const res = await fetchWithAuth(`${API_BASE}/scores`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

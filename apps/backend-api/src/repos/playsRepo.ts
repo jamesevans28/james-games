@@ -11,9 +11,16 @@ export async function getGameById(gameId: string, db: Db = getDb()): Promise<Gam
   return row ?? null;
 }
 
+/** One play by id (offline-queue resends carry the id the client generated). */
+export async function getPlayById(db: Db, id: string): Promise<Play | null> {
+  const [row] = await db.select().from(plays).where(eq(plays.id, id)).limit(1);
+  return row ?? null;
+}
+
 export async function insertPlay(
   db: Db,
   row: {
+    id?: string;
     userId: string;
     gameId: string;
     score: number;

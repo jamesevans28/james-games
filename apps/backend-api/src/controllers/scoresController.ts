@@ -18,6 +18,7 @@ export async function createScore(req: Request, res: Response) {
     score?: unknown;
     durationMs?: unknown;
     tzOffsetMinutes?: unknown;
+    playId?: unknown;
   };
   try {
     const result = await submitScore(userId, body);
@@ -34,6 +35,7 @@ export async function createScore(req: Request, res: Response) {
       summary: result.summary,
       streak: result.streak,
       ...(result.stickerEarned ? { stickerEarned: result.stickerEarned } : {}),
+      ...(result.duplicate ? { duplicate: true } : {}),
     });
   } catch (e) {
     if (e instanceof ScoreRejected) {

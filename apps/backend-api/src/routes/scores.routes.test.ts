@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { and, eq } from "drizzle-orm";
+import { seedDatabase } from "../db/seedData.js";
 import { startTestApp, type TestApp } from "../test/app.js";
 import { bestScores, follows, plays, userGameStats, users } from "../db/schema.js";
 import { localDayFor, localWeekFor } from "../services/streakRules.js";
@@ -46,6 +47,36 @@ async function userRow(id: string) {
 }
 
 describe("POST /scores", () => {
+  test("a resend with the same play id is saved once (offline queue, T10.4)", async () => {
+    await api.addUser({ id: "queue-kid" });
+    await seedDatabase(api.db, [
+      {
+        id: "queue-game",
+        title: "Queue",
+        status: "active",
+        scoring: { max: 1000, perSecondMax: 50, xpMultiplier: 1 },
+      },
+    ]);
+    const playId = "3f2b8c1e-7a4d-4c6b-9e2f-1a2b3c4d5e6f";
+    const body = { gameId: "queue-game", score: 40, durationMs: 10_000, playId };
+    const first = await submit("queue-kid", body);
+    expect(first.status).toBe(200);
+    expect(first.body.duplicate).toBeUndefined();
+    const again = await submit("queue-kid", body);
+    expect(again.status).toBe(200);
+    expect(again.body).toMatchObject({
+      duplicate: true,
+      newBest: false,
+      xpAwarded: first.body.xpAwarded,
+    });
+    expect(await playsFor("queue-kid", "queue-game")).toHaveLength(1);
+    expect((await statsFor("queue-kid", "queue-game"))?.plays).toBe(1);
+
+    await api.addUser({ id: "someone-else" });
+    const stolen = await submit("someone-else", body);
+    expect(stolen.status).toBe(409);
+  });
+
   test("a normal score saves the play, best, stats, XP and streak", async () => {
     await api.addUser({ id: "ann" });
     const res = await submit("ann", {

@@ -8,6 +8,7 @@ import InstallPWA from "./components/InstallPWA";
 import IOSInstallHint from "./components/IOSInstallHint";
 import SplashScreen from "./components/SplashScreen";
 import { adapters } from "./platform/adapters";
+import { useScoreQueueFlusher } from "./hooks/useScoreQueueFlusher";
 import { AuthProvider } from "./context/FirebaseAuthProvider";
 import { GameCatalogProvider } from "./context/GameCatalogProvider";
 import PageTransition from "./components/PageTransition";
@@ -29,6 +30,7 @@ const SupportPage = lazy(() => import("./pages/support"));
 
 function AppRoutes() {
   const location = useLocation();
+  useScoreQueueFlusher();
 
   return (
     <PageTransition>

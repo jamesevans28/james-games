@@ -49,7 +49,7 @@ Steps:
 
 ## T10.4 Offline queue and native storage
 
-Status: todo
+Status: done 2026-10-09 (lib/scoreQueue.ts through the storage adapter; client play ids make POST /scores idempotent; checked on the local stack: offline run queued, sent on reconnect, on the leaderboard once)
 Depends on: T10.1, T6.3
 Steps: score/sticker submissions are queued in `StorageAdapter` when offline and flushed on reconnect (idempotency key = play id; backend accepts duplicates idempotently). Best scores and play history live in Preferences on native.
 Done when: play offline on the simulator, reconnect, see the score on the leaderboard; a test covers the queue logic.
