@@ -35,6 +35,14 @@ export default defineConfig({
       },
       {
         test: {
+          name: "scripts",
+          root: "scripts",
+          include: ["**/*.test.mjs"],
+          environment: "node",
+        },
+      },
+      {
+        test: {
           name: "infra",
           root: "infra",
           include: ["**/*.test.mjs"],
