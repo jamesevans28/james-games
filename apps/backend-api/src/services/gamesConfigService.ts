@@ -1,155 +1,106 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
-import {
-  DynamoDBDocumentClient,
-  GetCommand,
-  PutCommand,
-  UpdateCommand,
-  ScanCommand,
-} from "@aws-sdk/lib-dynamodb";
-import { Buffer } from "node:buffer";
-import { dynamoClient } from "../config/aws.js";
-import { config } from "../config/index.js";
+import type { Game } from "../db/schema.js";
+import { getGame, listGames, updateGameMetadata, type GameStatus } from "../repos/gamesRepo.js";
+import { getUserById } from "../repos/usersRepo.js";
+import { clearFeedCache } from "./feedService.js";
 
-const ddb = DynamoDBDocumentClient.from(dynamoClient);
+/**
+ * Game config. Rows are seeded from the manifests on every deploy (title, status,
+ * scoring); the only admin-editable field is `metadata` (featured, campaigns, promo text).
+ */
 
-export type GameConfigRecord = {
+/** The shape GET /games/config returns (player-web useGameCatalog reads it). */
+export type GameConfig = {
   gameId: string;
   title: string;
-  description?: string;
-  objective?: string;
-  controls?: string;
-  thumbnail?: string;
-  xpMultiplier?: number;
-  betaOnly?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  metadata?: Record<string, any> | null;
+  description: string | null;
+  status: GameStatus;
+  betaOnly: boolean;
+  xpMultiplier: number;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
-const allowedFields: Array<keyof GameConfigRecord> = [
-  "title",
-  "description",
-  "objective",
-  "controls",
-  "thumbnail",
-  "xpMultiplier",
-  "betaOnly",
-  "metadata",
-];
+export type AdminGameConfig = GameConfig & { maxScore: number; maxScorePerSecond: number };
 
-function normalize(item?: Record<string, any> | null): GameConfigRecord | null {
-  if (!item) return null;
+const MAX_METADATA_BYTES = 16_384;
+
+export function toGameConfig(row: Game): GameConfig {
   return {
-    gameId: item.gameId,
-    title: item.title,
-    description: item.description,
-    objective: item.objective,
-    controls: item.controls,
-    thumbnail: item.thumbnail,
-    xpMultiplier: item.xpMultiplier !== undefined ? Number(item.xpMultiplier) : undefined,
-    betaOnly: Boolean(item.betaOnly),
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-    metadata: item.metadata ?? null,
+    gameId: row.id,
+    title: row.title,
+    description: row.description,
+    status: row.status,
+    betaOnly: row.status === "beta",
+    xpMultiplier: row.xpMultiplier,
+    metadata: row.metadata ?? null,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }
 
-function encodeCursor(key?: Record<string, any>) {
-  if (!key) return undefined;
-  return Buffer.from(JSON.stringify(key)).toString("base64url");
+function toAdminGameConfig(row: Game): AdminGameConfig {
+  return { ...toGameConfig(row), maxScore: row.maxScore, maxScorePerSecond: row.maxScorePerSecond };
 }
 
-function decodeCursor(cursor?: string) {
-  if (!cursor) return undefined;
-  try {
-    return JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"));
-  } catch {
-    return undefined;
+/** Beta testers see beta games; nobody sees inactive ones outside the admin. */
+export async function visibleStatuses(viewerId?: string): Promise<GameStatus[]> {
+  if (!viewerId) return ["active"];
+  const viewer = await getUserById(viewerId);
+  return viewer?.betaTester ? ["active", "beta"] : ["active"];
+}
+
+export async function listVisibleGameConfigs(viewerId?: string): Promise<GameConfig[]> {
+  const rows = await listGames(await visibleStatuses(viewerId));
+  return rows.map(toGameConfig);
+}
+
+export async function getVisibleGameConfig(
+  gameId: string,
+  viewerId?: string,
+): Promise<GameConfig | null> {
+  const row = await getGame(gameId);
+  if (!row) return null;
+  const statuses = await visibleStatuses(viewerId);
+  return statuses.includes(row.status) ? toGameConfig(row) : null;
+}
+
+export async function listAllGameConfigs(): Promise<AdminGameConfig[]> {
+  return (await listGames()).map(toAdminGameConfig);
+}
+
+export async function getAdminGameConfig(gameId: string): Promise<AdminGameConfig | null> {
+  const row = await getGame(gameId);
+  return row ? toAdminGameConfig(row) : null;
+}
+
+export type MetadataUpdateResult =
+  { ok: true; game: AdminGameConfig } | { ok: false; status: 400 | 404; error: string };
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** Admin edit: the body must be exactly `{ metadata: object | null }`. */
+export async function updateGameMetadataFromAdmin(
+  gameId: string,
+  body: unknown,
+): Promise<MetadataUpdateResult> {
+  if (!isPlainObject(body) || !("metadata" in body)) {
+    return { ok: false, status: 400, error: "metadata_required" };
   }
-}
-
-export async function listGameConfigs(opts: { limit?: number; cursor?: string }) {
-  const limit = Math.min(Math.max(Number(opts.limit) || 20, 5), 100);
-  const resp = await ddb.send(
-    new ScanCommand({
-      TableName: config.tables.gameConfigs,
-      Limit: limit,
-      ExclusiveStartKey: decodeCursor(opts.cursor),
-    }),
-  );
-  return {
-    items: (resp.Items || [])
-      .map((item) => normalize(item as any))
-      .filter(Boolean) as GameConfigRecord[],
-    nextCursor: encodeCursor(resp.LastEvaluatedKey as any),
-  };
-}
-
-export async function getGameConfig(gameId: string) {
-  const resp = await ddb.send(
-    new GetCommand({
-      TableName: config.tables.gameConfigs,
-      Key: { gameId },
-    }),
-  );
-  return normalize(resp.Item as any);
-}
-
-export async function createGameConfig(input: GameConfigRecord) {
-  if (!input.gameId || !input.title) throw new Error("gameId_and_title_required");
-  const now = new Date().toISOString();
-  const item: Record<string, any> = {
-    gameId: input.gameId,
-    title: input.title,
-    description: input.description ?? null,
-    objective: input.objective ?? null,
-    controls: input.controls ?? null,
-    thumbnail: input.thumbnail ?? null,
-    xpMultiplier: input.xpMultiplier ?? 1,
-    betaOnly: Boolean(input.betaOnly),
-    metadata: input.metadata ?? null,
-    createdAt: now,
-    updatedAt: now,
-  };
-  await ddb.send(
-    new PutCommand({
-      TableName: config.tables.gameConfigs,
-      Item: item,
-      ConditionExpression: "attribute_not_exists(gameId)",
-    }),
-  );
-  return normalize(item) as GameConfigRecord;
-}
-
-export async function updateGameConfig(gameId: string, patch: Partial<GameConfigRecord>) {
-  const fields = allowedFields.filter((field) => patch[field] !== undefined);
-  if (!fields.length) throw new Error("no_fields_to_update");
-
-  const sets = ["updatedAt = :u"];
-  const values: Record<string, any> = { ":u": new Date().toISOString() };
-  const names: Record<string, string> = {};
-
-  fields.forEach((field, idx) => {
-    const token = `#f${idx}`;
-    sets.push(`${token} = :v${idx}`);
-    names[token] = field;
-    if (field === "betaOnly") {
-      values[`:v${idx}`] = Boolean(patch[field]);
-    } else {
-      values[`:v${idx}`] = patch[field as keyof GameConfigRecord];
-    }
-  });
-
-  await ddb.send(
-    new UpdateCommand({
-      TableName: config.tables.gameConfigs,
-      Key: { gameId },
-      UpdateExpression: "SET " + sets.join(", "),
-      ExpressionAttributeValues: values,
-      ExpressionAttributeNames: Object.keys(names).length ? names : undefined,
-      ConditionExpression: "attribute_exists(gameId)",
-    }),
-  );
-
-  return (await getGameConfig(gameId)) as GameConfigRecord;
+  if (Object.keys(body).some((key) => key !== "metadata")) {
+    return { ok: false, status: 400, error: "only_metadata_editable" };
+  }
+  const { metadata } = body;
+  if (metadata !== null && !isPlainObject(metadata)) {
+    return { ok: false, status: 400, error: "invalid_metadata" };
+  }
+  if (JSON.stringify(metadata).length > MAX_METADATA_BYTES) {
+    return { ok: false, status: 400, error: "metadata_too_large" };
+  }
+  const row = await updateGameMetadata(gameId, metadata);
+  if (!row) return { ok: false, status: 404, error: "game_not_found" };
+  clearFeedCache();
+  return { ok: true, game: toAdminGameConfig(row) };
 }

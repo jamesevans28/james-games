@@ -1,257 +1,88 @@
-# Firebase Authentication Setup Guide
+# Firebase Authentication setup
 
-How Firebase Authentication is set up for Games4James. Steps 1–6 are the from-scratch setup, which T6.0 automates where the CLI allows.
+Games4James uses Firebase Authentication only (no Firestore or Storage). Supported sign-ins:
 
-## Overview
+- **Anonymous** (instant play);
+- **username + PIN**: the backend checks the PIN and mints a custom token;
+- **Google**;
+- **Apple**, from Phase 10.
 
-We're using Firebase Authentication with:
+The database is Supabase Postgres (Phase 6); Firebase holds no game data.
 
-- **Anonymous authentication** for instant play (kids)
-- **Username + PIN** for kid-friendly accounts (custom tokens)
-- **Social sign-on** (Google, Apple) and email for account linking
+The project is `games4james` (plan T6.0, decided 9 Oct 2026). It replaces the prototype's `flingo-fun` project, which is not used for anything and is deleted after relaunch (T13.6).
 
-The backend remains on AWS Lambda + DynamoDB. Firebase is used only for authentication.
+## Values
 
----
+| Setting                 | Value                                                                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------------------------- |
+| Project id              | `games4james` (if taken, `games4james-app`: run the script with `G4J_FIREBASE_PROJECT=games4james-app`)  |
+| Display name            | Games4James                                                                                              |
+| Web app                 | `games4james-web`                                                                                        |
+| Authorised domains      | `localhost`, `<project>.firebaseapp.com`, `<project>.web.app`, `games4james.com`, `auth.games4james.com` |
+| Custom auth domain      | `auth.games4james.com` (relaunch, T13.3)                                                                 |
+| OAuth handler URL       | `https://auth.games4james.com/__/auth/handler` (relaunch)                                                |
+| Consent screen app name | Games4James                                                                                              |
+| Consent screen logo     | `apps/player-web/public/brand/icon-512.png`                                                              |
+| Home page / privacy     | `https://games4james.com` / `https://games4james.com/privacy`                                            |
+| Service account key     | `~/.config/games4james/<project>-admin.json`. It is never committed and never pasted into chat.          |
 
-## Status (9 Oct 2026): a new project replaces `flingo-fun`
+## Set up the project (T6.0), MANUAL (James), about 15 minutes
 
-Decision (DECISIONS.md, 2026-10-09): the prototype's Firebase project `flingo-fun` is **not** reused. T6.0 creates a new project `games4james` (most of it scripted by `scripts/firebase-setup.sh`), local development moves to it straight away, and production switches to it on relaunch day (T13.3–T13.4). `flingo-fun` is deleted 30 days after relaunch (T13.6).
+1. **Log in, once:**
 
-**Do not do any of the console steps on `flingo-fun`.** The sections below are rewritten in T6.0 for the new project with its exact values; until then they describe the general shape only.
+   ```bash
+   firebase login
+   ```
 
-| Setting (new project)      | Value                                                          |
-| -------------------------- | -------------------------------------------------------------- |
-| Firebase project id        | `games4james` (fallback `games4james-app` if taken)            |
-| Display name               | Games4James                                                    |
-| Site origin                | `https://games4james.com`                                      |
-| Custom auth domain         | `auth.games4james.com` (relaunch, T13.3)                       |
-| OAuth handler URL          | `https://auth.games4james.com/__/auth/handler`                 |
-| App name on consent screen | Games4James                                                    |
-| App logo                   | `apps/player-web/public/brand/icon-512.png`                    |
-| Privacy policy             | `https://games4james.com/privacy`                              |
-| Providers                  | Anonymous, Email (for custom tokens), Google, Apple (Phase 10) |
+   ```bash
+   gcloud auth login
+   ```
 
----
+   Use the Google account that should own the project.
 
-## Step 1: Create Firebase Project
+2. **Run the script from the repo root:**
 
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Click "Add project"
-3. Name it `games4james` (T6.0's script does this)
-4. Disable Google Analytics (optional, simplifies setup)
-5. Click "Create project"
+   ```bash
+   scripts/firebase-setup.sh
+   ```
 
----
+   `--dry-run` prints what it would do. The script:
+   - creates the project;
+   - enables the Identity Toolkit API;
+   - creates the web app;
+   - writes the `VITE_FIREBASE_*` values into `apps/player-web/.env.local` and `apps/admin-web/.env.local`, keeping a `.bak` copy;
+   - sets the authorised domains;
+   - creates the backend service-account key and writes `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL` and `FIREBASE_PRIVATE_KEY` into `apps/backend-api/.env.local`.
 
-## Step 2: Enable Authentication Methods
+   It stops once and asks you to click **Authentication → Get started** and enable **Anonymous** in the console. Google offers no API for that first switch-on.
 
-1. In Firebase Console, go to **Authentication** → **Sign-in method**
-2. Enable the following providers:
+3. **Turn on Google sign-in.** In the console go to Authentication → Sign-in method → **Google** → Enable, pick your support email, and save. This also creates the web OAuth client.
 
-### Anonymous
+4. **Brand the consent screen.** In Google Cloud console (same project) go to APIs & Services → **OAuth consent screen** (Branding). Set the app name, logo, home page and privacy URL from the table, then save.
 
-- Click "Anonymous" → Enable → Save
+5. **Restart and test:**
+   - Restart `npm run dev` and `npm run server`.
+   - In the app, play as a guest. That's an anonymous sign-in.
+   - Create an account with a username and PIN, then sign out and back in.
+   - Try "Continue with Google".
 
-### Email/Password (for future email linking)
+## At relaunch (T13.3), MANUAL (James)
 
-- Click "Email/Password" → Enable → Save
-- Optionally enable "Email link (passwordless sign-in)"
+1. **Custom auth domain:**
+   - In Firebase console go to **Hosting** → Get started (skip the deploy steps) → **Add custom domain** → `auth.games4james.com`.
+   - Add the DNS records it shows in Route 53 and wait for "Connected".
+   - Set `VITE_FIREBASE_AUTH_DOMAIN=auth.games4james.com` in the GitHub variables (T13.4).
+2. **Google web OAuth client** (Google Cloud → Credentials → "Web client (auto created by Google Service)"):
+   - Add the authorised JavaScript origins `https://games4james.com` and `https://auth.games4james.com`.
+   - Add the redirect URI `https://auth.games4james.com/__/auth/handler`.
+3. **Apple** (Phase 10): on the Services ID, set the domain `auth.games4james.com` and the return URL from the table.
 
-### Google (Optional, for social sign-on)
+## How it fits together
 
-- Click "Google" → Enable
-- Select your support email
-- Save
-
-### Apple (Optional, required for iOS App Store)
-
-- Click "Apple" → Enable
-- Configure Services ID and other settings per Apple's requirements
-- Save
-
----
-
-## Step 3: Register Web App
-
-1. In Firebase Console, click the gear icon → "Project settings"
-2. Scroll down to "Your apps" → Click the web icon `</>`
-3. Register the web app (any nickname)
-4. Copy the Firebase config object - you'll need this for the frontend
-
-Example config:
-
-```javascript
-const firebaseConfig = {
-  apiKey: "AIza...",
-  authDomain: "james-games.firebaseapp.com",
-  projectId: "james-games",
-  storageBucket: "james-games.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123",
-};
-```
-
----
-
-## Step 4: Generate Service Account Key (for Backend)
-
-1. In Firebase Console, click gear icon → "Project settings"
-2. Go to "Service accounts" tab
-3. Click "Generate new private key"
-4. Download the JSON file
-5. **Keep this file secure - never commit to git!**
-
-The JSON file will look like:
-
-```json
-{
-  "type": "service_account",
-  "project_id": "james-games",
-  "private_key_id": "...",
-  "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
-  "client_email": "firebase-adminsdk-...@james-games.iam.gserviceaccount.com",
-  "client_id": "...",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  ...
-}
-```
-
----
-
-## Step 5: Configure Environment Variables
-
-### Backend (.env.local)
-
-Add these to your backend environment:
-
-```bash
-# Firebase Admin SDK
-FIREBASE_PROJECT_ID=james-games
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@james-games.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-
-# Or use the service account JSON file path (for local dev)
-# GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
-```
-
-For AWS Lambda deployment, set these as environment variables in your Lambda configuration or use AWS Secrets Manager.
-
-### Frontend (.env.local)
-
-```bash
-# Firebase Web Config
-VITE_FIREBASE_API_KEY=AIza...
-VITE_FIREBASE_AUTH_DOMAIN=james-games.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=james-games
-VITE_FIREBASE_STORAGE_BUCKET=james-games.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-VITE_FIREBASE_APP_ID=1:123456789:web:abc123
-```
-
----
-
-## Step 6: Install Dependencies
-
-### Backend
-
-```bash
-cd apps/backend-api
-npm install firebase-admin bcryptjs
-npm install -D @types/bcryptjs
-```
-
-### Frontend
-
-```bash
-cd apps/player-web
-npm install firebase
-```
-
----
-
-## Architecture Notes
-
-### Why Keep AWS Lambda + DynamoDB?
-
-> Superseded: plan Phase 6 moves the data layer to Supabase Postgres. Firebase Auth stays. See docs/plan/06-sql-data-layer-supabase.md.
-
-1. **Existing infrastructure** - No migration needed for game data, scores, etc.
-2. **Cost** - DynamoDB + Lambda is very cost-effective
-3. **Flexibility** - Firebase Auth works with any backend
-4. **Data locality** - Keep all data in one place (AWS)
-
-Firebase is used ONLY for authentication tokens. All user data stays in DynamoDB.
-
-### Authentication Flow
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Frontend                                 │
-├─────────────────────────────────────────────────────────────────┤
-│  Firebase SDK                                                    │
-│  ├── signInAnonymously() → Anonymous UID                        │
-│  ├── signInWithCustomToken() → Username+PIN login               │
-│  ├── signInWithPopup() → Google/Apple social login              │
-│  └── linkWithCredential() → Upgrade anonymous account           │
-├─────────────────────────────────────────────────────────────────┤
-│  Every API call includes:                                        │
-│  Authorization: Bearer <firebase-id-token>                       │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    Backend (AWS Lambda)                          │
-├─────────────────────────────────────────────────────────────────┤
-│  Firebase Admin SDK                                              │
-│  ├── verifyIdToken() → Validates all requests                   │
-│  ├── createCustomToken() → For username+PIN login               │
-│  └── getUser() → Get Firebase user details                      │
-├─────────────────────────────────────────────────────────────────┤
-│  DynamoDB                                                        │
-│  └── Users table stores: username, pinHash, screenName, etc.    │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Account Types
-
-| Type         | Auth Method        | Email Required | Recovery          |
-| ------------ | ------------------ | -------------- | ----------------- |
-| Anonymous    | Firebase Anonymous | No             | None (link later) |
-| Username+PIN | Custom Token       | No             | Link email/social |
-| Linked       | Google/Apple/Email | Yes            | Built-in          |
-
-### Security Considerations
-
-1. **PIN Security**
-
-   - Server-side hashing with bcrypt (cost factor 10+)
-   - Rate limiting: 5 attempts per 15 minutes
-   - Account lockout after 10 failed attempts
-
-2. **Token Security**
-
-   - Firebase ID tokens expire after 1 hour
-   - Frontend refreshes automatically
-   - Backend validates every request
-
-3. **COPPA Compliance**
-   - No email required for kids
-   - No real names required
-   - No public profiles by default
-   - Parent email optional for recovery
-
----
-
-## Testing Checklist
-
-- [ ] Anonymous sign-in works
-- [ ] Username+PIN registration works
-- [ ] Username+PIN login works
-- [ ] PIN rate limiting works
-- [ ] Token refresh works
-- [ ] Google sign-in works (if enabled)
-- [ ] Account linking works (anonymous → username+PIN)
-- [ ] Account linking works (anonymous → Google)
-- [ ] Existing game data preserved after login
+- **Frontend:** `apps/player-web/src/lib/firebase.ts` initialises the web SDK from the `VITE_FIREBASE_*` variables. `context/FirebaseAuthProvider.tsx` owns every flow:
+  - it signs in anonymously on first visit;
+  - it upgrades by linking a provider or registering a username + PIN;
+  - every API call sends `Authorization: Bearer <Firebase ID token>`.
+- **Backend:** `apps/backend-api/src/middleware/authGuards.ts` verifies the ID token with the Admin SDK (`FIREBASE_*` env) and sets `req.user`. Username + PIN login checks the bcrypt PIN hash in the database, then returns a custom token the client signs in with.
+- **Admin:** `apps/admin-web` signs in with Google. The API checks the `admin` flag on the user row.
+- **Logs:** never log emails, usernames, user ids or raw Firebase error objects (see `apps/backend-api/src/lib/log.ts`).

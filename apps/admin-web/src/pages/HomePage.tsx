@@ -49,7 +49,7 @@ export function HomePage() {
                 value={metrics.totals.users}
                 icon={Users}
                 accent="from-sky-500/20 via-sky-400/10 to-transparent"
-                detail={`${metrics.totals.betaTesters} beta • ${metrics.totals.admins} admins`}
+                detail={`${metrics.totals.betaTesters} beta • ${metrics.totals.admins} admins • ${metrics.totals.disabled} disabled`}
               />
               <MetricCard
                 title="Active This Week"
@@ -107,9 +107,80 @@ export function HomePage() {
               </div>
             </div>
           </section>
+
+          <section className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/60 p-6">
+            <header>
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Last 14 days</p>
+              <h2 className="text-xl font-semibold text-white">Daily activity (UTC)</h2>
+            </header>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm text-slate-300">
+                <thead className="text-xs uppercase tracking-widest text-slate-500">
+                  <tr>
+                    <th className="py-2 pr-4">Day</th>
+                    <th className="py-2 pr-4">Plays</th>
+                    <th className="py-2 pr-4">Active players</th>
+                    <th className="py-2">New users</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-900">
+                  {[...metrics.daily].reverse().map((d) => (
+                    <tr key={d.day}>
+                      <td className="py-2 pr-4 text-slate-400">{d.day}</td>
+                      <td className="py-2 pr-4">{numberFormatter.format(d.plays)}</td>
+                      <td className="py-2 pr-4">{numberFormatter.format(d.activeUsers)}</td>
+                      <td className="py-2">{numberFormatter.format(d.newUsers)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
         </>
       ) : null}
+
+      <RecentNameChanges />
     </div>
+  );
+}
+
+/** Moderation: the latest renames, so a rude name can be spotted and reset from Users. */
+function RecentNameChanges() {
+  const query = useQuery({
+    queryKey: ["admin-name-changes"],
+    queryFn: () => adminApi.listNameChanges(30),
+  });
+  const items = query.data?.items ?? [];
+  return (
+    <section className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
+      <h2 className="mb-3 text-lg font-semibold text-white">Recent name changes</h2>
+      {query.isLoading ? (
+        <p className="text-sm text-slate-400">Loading…</p>
+      ) : items.length === 0 ? (
+        <p className="text-sm text-slate-400">No name changes yet.</p>
+      ) : (
+        <table className="w-full text-left text-sm text-slate-300">
+          <thead className="text-xs uppercase text-slate-500">
+            <tr>
+              <th className="py-1">When</th>
+              <th className="py-1">From</th>
+              <th className="py-1">To</th>
+              <th className="py-1">Now</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((c) => (
+              <tr key={`${c.userId}-${c.changedAt}`} className="border-t border-slate-800">
+                <td className="py-1">{new Date(c.changedAt).toLocaleString()}</td>
+                <td className="py-1">{c.oldName}</td>
+                <td className="py-1">{c.newName}</td>
+                <td className="py-1">{c.currentName}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
   );
 }
 

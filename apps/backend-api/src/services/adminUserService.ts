@@ -1,171 +1,192 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
-import { DynamoDBDocumentClient, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { Buffer } from "node:buffer";
-import { dynamoClient } from "../config/aws.js";
-import { config } from "../config/index.js";
-import { getUser, updateUserEmailMetadata } from "./dynamoService.js";
+/**
+ * Admin console: user search, user detail and moderation (T6.3, T6.8).
+ * Admin responses may include email; logs never do.
+ */
+import { getDb } from "../db/client.js";
+import type { User } from "../db/schema.js";
+import {
+  getUserById,
+  getUserForUpdate,
+  isScreenNameTaken,
+  renameUser,
+  updateUser,
+} from "../repos/usersRepo.js";
+import {
+  bestPlayFor,
+  deleteBestScore,
+  deletePlayRow,
+  deleteStats,
+  latestPlayFor,
+  listRecentNameChanges,
+  listRecentPlays,
+  listUserGameStats,
+  listUsersPage,
+  putBestScore,
+  setDisabledAt,
+  updateStatsAfterRemoval,
+} from "../repos/adminRepo.js";
+import { newScreenName } from "./userService.js";
 
-const ddb = DynamoDBDocumentClient.from(dynamoClient);
+const RECENT_PLAYS = 20;
+
+/** A 4xx outcome; the controller turns it into `{ error: code }` with this status. */
+export class AdminError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+  ) {
+    super(code);
+    this.name = "AdminError";
+  }
+}
 
 export type AdminUserSummary = {
   userId: string;
-  username?: string | null;
-  screenName?: string | null;
-  email?: string | null;
-  emailProvided?: boolean;
-  validated?: boolean;
-  betaTester?: boolean;
-  admin?: boolean;
-  createdAt?: string | null;
-  updatedAt?: string | null;
+  username: string | null;
+  screenName: string;
+  email: string | null;
+  emailProvided: boolean;
+  validated: boolean;
+  accountType: User["accountType"];
+  betaTester: boolean;
+  admin: boolean;
+  enabled: boolean;
+  disabledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  lastSeenAt: string | null;
 };
 
-function normalizeUser(item: Record<string, any>): AdminUserSummary {
+const iso = (d: Date | null) => (d ? d.toISOString() : null);
+
+function toSummary(user: User): AdminUserSummary {
   return {
-    userId: item.userId,
-    username: item.username ?? null,
-    screenName: item.screenName ?? null,
-    email: item.email ?? null,
-    emailProvided: item.emailProvided ?? false,
-    validated: item.validated ?? false,
-    betaTester: Boolean(item.betaTester),
-    admin: Boolean(item.admin),
-    createdAt: item.createdAt ?? null,
-    updatedAt: item.updatedAt ?? null,
+    userId: user.id,
+    username: user.username,
+    screenName: user.screenName,
+    email: user.email,
+    emailProvided: Boolean(user.email),
+    validated: user.emailVerified,
+    accountType: user.accountType,
+    betaTester: user.betaTester,
+    admin: user.admin,
+    enabled: !user.disabledAt,
+    disabledAt: iso(user.disabledAt),
+    createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString(),
+    lastSeenAt: iso(user.lastSeenAt),
   };
 }
 
-function encodeCursor(key?: Record<string, any>) {
-  if (!key) return undefined;
-  return Buffer.from(JSON.stringify(key)).toString("base64url");
-}
-
-function decodeCursor(cursor?: string) {
-  if (!cursor) return undefined;
-  try {
-    return JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"));
-  } catch {
-    return undefined;
-  }
-}
-
+/** Offset pagination; the cursor is the opaque next offset. */
 export async function listUsers(opts: { limit?: number; cursor?: string; search?: string }) {
-  const limit = Math.min(Math.max(Number(opts.limit) || 25, 5), 100);
-  let exclusiveStartKey = decodeCursor(opts.cursor);
-  const projection =
-    "#id, username, screenName, email, emailProvided, validated, betaTester, admin, createdAt, updatedAt";
-  let items: AdminUserSummary[] = [];
-  let lastEvaluatedKey: Record<string, any> | undefined;
-
-  for (let page = 0; page < (opts.search ? 5 : 1); page++) {
-    const resp = await ddb.send(
-      new ScanCommand({
-        TableName: config.tables.users,
-        Limit: limit,
-        ExclusiveStartKey: exclusiveStartKey,
-        ProjectionExpression: projection,
-        ExpressionAttributeNames: { "#id": "userId" },
-      }),
-    );
-    const pageItems = (resp.Items || []).map((item) => normalizeUser(item as any));
-    if (opts.search) {
-      const query = opts.search.toLowerCase();
-      items = items.concat(
-        pageItems.filter((user) => {
-          return (
-            user.userId.toLowerCase().includes(query) ||
-            (user.username ?? "").toLowerCase().includes(query) ||
-            (user.screenName ?? "").toLowerCase().includes(query) ||
-            (user.email ?? "").toLowerCase().includes(query)
-          );
-        }),
-      );
-    } else {
-      items = pageItems;
-    }
-    lastEvaluatedKey = resp.LastEvaluatedKey as any;
-    if (!opts.search || items.length >= limit || !lastEvaluatedKey) break;
-    exclusiveStartKey = lastEvaluatedKey;
-  }
-
+  const limit = Math.min(Math.max(Math.trunc(Number(opts.limit)) || 25, 5), 100);
+  const parsed = Number(opts.cursor);
+  const offset = Number.isInteger(parsed) && parsed > 0 ? parsed : 0;
+  const rows = await listUsersPage({ search: opts.search, limit, offset });
   return {
-    items: items.slice(0, limit),
-    nextCursor: encodeCursor(lastEvaluatedKey),
+    items: rows.slice(0, limit).map(toSummary),
+    nextCursor: rows.length > limit ? String(offset + limit) : undefined,
   };
 }
 
 export async function getAdminUser(userId: string) {
-  const profile = await getUser(userId);
-  const user: AdminUserSummary = normalizeUser(profile || { userId });
+  const user = await getUserById(userId);
+  if (!user) throw new AdminError(404, "user_not_found");
+  const [gameStats, recentPlays] = await Promise.all([
+    listUserGameStats(userId),
+    listRecentPlays(userId, RECENT_PLAYS),
+  ]);
   return {
-    ...user,
-    email: user.email ?? null,
-    emailVerified: profile?.validated ?? false,
-    emailProvided: user.emailProvided ?? false,
-    accountType: profile?.accountType ?? "unknown",
-    enabled: true,
+    ...toSummary(user),
+    emailVerified: user.emailVerified,
+    avatar: user.avatar,
+    xp: { total: user.xpTotal, level: user.xpLevel, progress: user.xpProgress },
+    streak: { current: user.streakCurrent, longest: user.streakLongest },
+    gameStats: gameStats.map((s) => ({ ...s, lastPlayedAt: s.lastPlayedAt.toISOString() })),
+    recentPlays: recentPlays.map((p) => ({ ...p, createdAt: p.createdAt.toISOString() })),
   };
 }
 
+/** Only the access flags are editable here; names and email belong to the player. */
 export async function updateAdminUser(
+  actorId: string,
   userId: string,
-  changes: {
-    email?: string;
-    username?: string;
-    betaTester?: boolean;
-    admin?: boolean;
-  },
+  changes: { betaTester?: unknown; admin?: unknown },
 ) {
-  // Note: Password management is now handled through Firebase Auth.
-  // Admin can only update DynamoDB metadata (betaTester, admin flags).
-  if (
-    !changes.email &&
-    !changes.username &&
-    changes.betaTester === undefined &&
-    changes.admin === undefined
-  ) {
-    throw new Error("no_changes_provided");
+  const patch: { betaTester?: boolean; admin?: boolean } = {};
+  for (const key of ["betaTester", "admin"] as const) {
+    const value = changes[key];
+    if (value === undefined) continue;
+    if (typeof value !== "boolean") throw new AdminError(400, "invalid_flag");
+    patch[key] = value;
   }
-
-  const tasks: Array<Promise<any>> = [];
-
-  if (changes.email) {
-    // Update email in DynamoDB only (Firebase manages actual auth email)
-    tasks.push(updateUserEmailMetadata(userId, { email: changes.email, emailProvided: true }));
+  if (!Object.keys(patch).length) throw new AdminError(400, "no_changes_provided");
+  if (actorId === userId && patch.admin === false) {
+    throw new AdminError(400, "cannot_remove_own_admin");
   }
-
-  if (
-    changes.username !== undefined ||
-    changes.betaTester !== undefined ||
-    changes.admin !== undefined
-  ) {
-    const sets = ["updatedAt = :u"];
-    const values: Record<string, any> = { ":u": new Date().toISOString() };
-    if (changes.username !== undefined) {
-      sets.push("username = :un");
-      values[":un"] = changes.username || null;
-    }
-    if (changes.betaTester !== undefined) {
-      sets.push("betaTester = :bt");
-      values[":bt"] = Boolean(changes.betaTester);
-    }
-    if (changes.admin !== undefined) {
-      sets.push("admin = :ad");
-      values[":ad"] = Boolean(changes.admin);
-    }
-    tasks.push(
-      ddb.send(
-        new UpdateCommand({
-          TableName: config.tables.users,
-          Key: { userId },
-          UpdateExpression: "SET " + sets.join(", "),
-          ExpressionAttributeValues: values,
-          ConditionExpression: "attribute_exists(userId)",
-        }),
-      ),
-    );
-  }
-
-  await Promise.all(tasks);
+  const updated = await updateUser(userId, patch);
+  if (!updated) throw new AdminError(404, "user_not_found");
   return getAdminUser(userId);
+}
+
+const NAME_ATTEMPTS = 8;
+
+/** Replaces the player's screen name with a generated one (they can pick again later). */
+export async function resetScreenName(userId: string) {
+  const updated = await getDb().transaction(async (tx) => {
+    const user = await getUserForUpdate(tx, userId);
+    if (!user) throw new AdminError(404, "user_not_found");
+    for (let attempt = 0; attempt < NAME_ATTEMPTS; attempt++) {
+      const name = newScreenName();
+      if (name.toLowerCase() === user.screenName.toLowerCase()) continue;
+      if (await isScreenNameTaken(tx, name, userId)) continue;
+      return renameUser(tx, user, name, false);
+    }
+    throw new Error("screen_name_generation_exhausted");
+  });
+  if (!updated) throw new AdminError(404, "user_not_found");
+  return getAdminUser(userId);
+}
+
+export async function setUserDisabled(actorId: string, userId: string, disabled: boolean) {
+  if (disabled && actorId === userId) throw new AdminError(400, "cannot_disable_self");
+  const user = await getUserById(userId);
+  if (!user) throw new AdminError(404, "user_not_found");
+  // Keep the original timestamp when disabling twice.
+  const next = disabled ? (user.disabledAt ?? new Date()) : null;
+  const updated = await setDisabledAt(userId, next);
+  if (!updated) throw new AdminError(404, "user_not_found");
+  return getAdminUser(userId);
+}
+
+/**
+ * Deletes one play and, in the same transaction, rebuilds that player's best
+ * score and stats for the game from the plays that remain. XP already awarded
+ * is left as it is.
+ */
+export async function deletePlay(playId: string) {
+  return getDb().transaction(async (tx) => {
+    const play = await deletePlayRow(tx, playId);
+    if (!play) throw new AdminError(404, "play_not_found");
+    const { userId, gameId } = play;
+    if (!userId) return { deleted: true, playId, gameId, userId: null, bestScore: null };
+
+    const best = await bestPlayFor(tx, userId, gameId);
+    const latest = best ? await latestPlayFor(tx, userId, gameId) : null;
+    if (best && latest) {
+      await putBestScore(tx, { ...best, userId });
+      await updateStatsAfterRemoval(tx, userId, gameId, { best, latest });
+    } else {
+      await deleteBestScore(tx, userId, gameId);
+      await deleteStats(tx, userId, gameId);
+    }
+    return { deleted: true, playId, gameId, userId, bestScore: best?.score ?? null };
+  });
+}
+
+/** Recent screen-name changes for the moderation list (T6.7). */
+export async function recentNameChanges(limit = 50) {
+  const rows = await listRecentNameChanges(Math.min(Math.max(limit, 1), 200));
+  return rows.map((r) => ({ ...r, changedAt: r.changedAt.toISOString() }));
 }

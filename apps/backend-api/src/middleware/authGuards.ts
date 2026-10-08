@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 // Auth guards and user attachment middleware (Firebase-based)
 import type { Request, Response, NextFunction } from "express";
 import { verifyIdToken as verifyFirebaseToken } from "../services/firebaseAuthService.js";
-import { getUser } from "../services/dynamoService.js";
+import { getUserById } from "../repos/usersRepo.js";
 import { log } from "../lib/log.js";
 
 // Extended user info attached to request
@@ -14,6 +13,19 @@ export interface AuthUser {
   accountType: "anonymous" | "username_pin" | "linked";
   displayName?: string;
   providers?: string[];
+}
+
+type DecodedToken = Awaited<ReturnType<typeof verifyFirebaseToken>>;
+let verifyToken: (token: string) => Promise<DecodedToken> = verifyFirebaseToken;
+
+/** Route tests swap in a fake verifier (src/test/app.ts); production never calls this. */
+export function setTokenVerifierForTests(fn: typeof verifyToken | null): void {
+  verifyToken = fn ?? verifyFirebaseToken;
+}
+
+/** The `accountType` custom claim, set by the backend when it mints or upgrades an account. */
+function accountTypeOf(claim: unknown): AuthUser["accountType"] {
+  return claim === "username_pin" || claim === "linked" ? claim : "anonymous";
 }
 
 export async function attachUser(req: Request, res: Response, next: NextFunction) {
@@ -30,7 +42,7 @@ export async function attachUser(req: Request, res: Response, next: NextFunction
 
   try {
     // Verify Firebase ID token
-    const decodedToken = await verifyFirebaseToken(token);
+    const decodedToken = await verifyToken(token);
 
     // Build user object from token claims
     const user: AuthUser = {
@@ -38,8 +50,8 @@ export async function attachUser(req: Request, res: Response, next: NextFunction
       email: decodedToken.email,
       emailVerified: decodedToken.email_verified,
       isAnonymous: decodedToken.firebase?.sign_in_provider === "anonymous",
-      accountType: decodedToken.accountType || "anonymous",
-      displayName: decodedToken.name || decodedToken.displayName,
+      accountType: accountTypeOf(decodedToken.accountType),
+      displayName: typeof decodedToken.name === "string" ? decodedToken.name : undefined,
       providers: decodedToken.firebase?.identities
         ? Object.keys(decodedToken.firebase.identities)
         : [],
@@ -98,17 +110,14 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
     return res.status(401).json({ error: "unauthorized" });
   }
   try {
-    const profile = await getUser(user.userId);
+    const profile = await getUserById(user.userId);
     if (profile?.admin) {
       // Surface the profile for downstream handlers to avoid duplicate lookups
       req.authProfile = profile;
       return next();
     }
     return res.status(403).json({ error: "admin_required" });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ error: "admin_check_failed" });
   }
 }
-
-// Legacy export for backwards compatibility during migration
-export const requireValidatedEmail = requireVerifiedEmail;

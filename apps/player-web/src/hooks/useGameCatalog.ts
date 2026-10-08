@@ -14,15 +14,15 @@
  * - betaOnly
  * - metadata: { campaigns, featured, promoText, etc. }
  *
- * Display fields (title, copy, thumbnail, dates) stay bundled: the server rows are
- * stale (e.g. old SVG thumbnails) and Phase 4 manifests become their source of truth.
- * XP multipliers are server-side only (T1.4), so they are not merged either.
+ * Display fields (title, copy, cover, dates) come from the bundled manifests: the
+ * server's games rows are seeded from the same manifests and add only status and
+ * admin metadata. XP multipliers are server-side only (T1.4).
  */
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { games as bundledGames, type GameMeta } from "../games";
 import { API_BASE_URL } from "../config/env";
-import { readMigrated, STORAGE_KEYS } from "../utils/storageKeys";
+import { readStored, STORAGE_KEYS } from "../utils/storageKeys";
 
 const API_BASE = API_BASE_URL;
 const CACHE_KEY = STORAGE_KEYS.catalog;
@@ -79,7 +79,7 @@ interface CatalogCache {
  */
 function loadCache(): CatalogCache | null {
   try {
-    const raw = readMigrated("catalog");
+    const raw = readStored("catalog");
     if (!raw) return null;
     const parsed = JSON.parse(raw) as CatalogCache;
     if (Date.now() - parsed.timestamp > CACHE_TTL_MS) {

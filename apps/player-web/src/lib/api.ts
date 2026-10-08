@@ -59,12 +59,14 @@ export type FollowingActivityEntry = {
   targetScreenName?: string | null;
   targetAvatar?: number | null;
   createdAt?: string;
+  /** Null when they are offline (no presence in the last 2 minutes). */
   presence?: {
     status: PresenceStatus;
-    gameId?: string;
-    gameTitle?: string;
+    gameId?: string | null;
+    /** From the server's games table. */
+    gameTitle?: string | null;
     updatedAt: string;
-  };
+  } | null;
 };
 
 export type FollowingSummaryEntry = {
@@ -115,23 +117,27 @@ export type OkResponse = { ok: boolean };
 /** PATCH /users/settings. `screenName` is the name the server actually assigned. */
 export type UpdateSettingsResponse = { ok: boolean; screenName?: string };
 
-/** The signed-in user's own profile, from GET /me. */
+/**
+ * The signed-in user's own account. GET /me and GET /auth/firebase/me return the
+ * same shape (backend userService.CurrentUser), or 404 before the account is registered.
+ */
 export type MeUser = {
   userId: string;
+  username: string | null;
+  screenName: string;
+  avatar: number;
+  accountType: "anonymous" | "username_pin" | "linked";
   email: string | null;
-  emailProvided: boolean;
-  screenName?: string | null;
-  avatar?: number | null;
-  preferences?: Record<string, unknown>;
-  validated?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  experience?: ExperienceSummary | null;
-  betaTester?: boolean;
-  admin?: boolean;
-  currentStreak?: number;
-  longestStreak?: number;
-  lastLoginDate?: string | null;
+  emailVerified: boolean;
+  /** Linked sign-in providers (from the ID token). */
+  providers: string[];
+  preferences: Record<string, unknown>;
+  betaTester: boolean;
+  admin: boolean;
+  experience: ExperienceSummary;
+  streak: { current: number; longest: number; lastDay: string | null };
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type MeResponse = { user: MeUser | null };
@@ -171,19 +177,28 @@ export type ScoreSubmissionResult = {
   createdAt: string;
   awardedXp: number;
   summary: ExperienceSummary | null;
+  /** True when this run beat the player's best for the game. */
+  newBest?: boolean;
+  /** Present only when the run levelled the player up. */
+  newLevel?: number;
+  streak?: StreakData & { extended: boolean; isNewStreak: boolean };
 };
 
-/** Saves a run. The server awards XP from its own game config and returns it. */
+/**
+ * Saves a run. The server awards XP from its own game config and counts today's
+ * streak; it gets only the device's UTC offset and decides the date itself.
+ */
 export async function postHighScore(args: {
   gameId: string;
   score: number;
   durationMs?: number;
 }): Promise<ScoreSubmissionResult | undefined> {
   if (!API_BASE) return;
+  const tzOffsetMinutes = -new Date().getTimezoneOffset(); // minutes east of UTC
   const res = await fetchWithAuth(`${API_BASE}/scores`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(args),
+    body: JSON.stringify({ ...args, tzOffsetMinutes }),
   });
   if (!res.ok) {
     if (res.status === 401) return; // Not authenticated
@@ -223,24 +238,49 @@ export async function getTopScores(
   return (await res.json()) as ScoreEntry[];
 }
 
-// Update user settings (currently only screenName). Returns { ok, screenName }.
+/** The friendly message from a `{ error, code }` body, or a generic one. */
+async function errorFrom(res: Response, fallback: string): Promise<Error> {
+  try {
+    const body = (await res.json()) as { error?: unknown };
+    if (typeof body.error === "string" && body.error) return new Error(body.error);
+  } catch {
+    // not JSON
+  }
+  return new Error(`${fallback}: ${res.status}`);
+}
+
+/** PATCH /me/screen-name (T6.7). Returns the name the server stored. */
 export async function updateSettings(data: {
   screenName: string;
 }): Promise<UpdateSettingsResponse> {
   if (!API_BASE) return { ok: false };
-  const res = await fetchWithAuth(`${API_BASE}/users/settings`, {
+  const res = await fetchWithAuth(`${API_BASE}/me/screen-name`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Failed to update settings: ${res.status}`);
+  if (!res.ok) throw await errorFrom(res, "Failed to update your name");
   return (await res.json()) as UpdateSettingsResponse;
 }
 
-// Fetch current user profile including screenName.
+export type ScreenNameCheck =
+  { ok: true; name: string } | { ok: false; code: string; message: string };
+
+/** Live check for the name field: the server's rules, then whether it's free. */
+export async function checkScreenName(name: string): Promise<ScreenNameCheck | null> {
+  if (!API_BASE) return null;
+  const url = new URL("/users/screen-name/check", API_BASE);
+  url.searchParams.set("name", name);
+  const res = await fetchWithAuth(url.toString());
+  if (!res.ok) return null;
+  return (await res.json()) as ScreenNameCheck;
+}
+
+// The signed-in user's account; { user: null } when signed out or not registered yet.
 export async function fetchMe(): Promise<MeResponse> {
   if (!API_BASE) return { user: null };
   const res = await fetchWithAuth(`${API_BASE}/me`);
+  if (res.status === 401 || res.status === 404) return { user: null };
   if (!res.ok) throw new Error(`Failed to load profile: ${res.status}`);
   return (await res.json()) as MeResponse;
 }
@@ -323,10 +363,10 @@ export async function unfollowUserApi(targetUserId: string): Promise<OkResponse>
   return (await res.json()) as OkResponse;
 }
 
+/** The server derives the game title from `gameId`; it never accepts a title from the client. */
 export async function updatePresenceStatus(payload: {
   status: PresenceStatus;
   gameId?: string;
-  gameTitle?: string;
 }): Promise<OkResponse> {
   if (!API_BASE) return { ok: false };
   const res = await fetchWithAuth(`${API_BASE}/followers/status`, {

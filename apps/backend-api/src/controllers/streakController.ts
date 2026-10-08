@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
-import streakService from "../services/streakService.js";
-import { log } from "../lib/log.js";
+import streakService, { UserNotFound } from "../services/streakService.js";
 import { sendServerError } from "../lib/http.js";
 
 /**
@@ -26,8 +25,8 @@ export async function recordStreakCheckin(req: Request, res: Response) {
       isNewStreak: result.isNewStreak,
     });
   } catch (e) {
-    log.error("streak_checkin_failed", undefined, e);
-    res.status(500).json({ error: "server_error" });
+    if (e instanceof UserNotFound) return res.status(404).json({ error: "user_not_found" });
+    sendServerError(res, "streak_checkin_failed", e);
   }
 }
 
@@ -49,7 +48,6 @@ export async function getStreak(req: Request, res: Response) {
       lastLoginDate: streak.lastLoginDate,
     });
   } catch (e) {
-    log.error("streak_get_failed", undefined, e);
     sendServerError(res, "streak_get_failed", e);
   }
 }

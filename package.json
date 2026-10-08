@@ -30,7 +30,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "local:auth": "firebase emulators:start --only auth --project demo-games4james",
+    "local:server": "DATABASE_URL=pglite:.local/db FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIREBASE_PROJECT_ID=demo-games4james npm run dev --workspace apps/backend-api",
+    "local:web": "VITE_FIREBASE_AUTH_EMULATOR_URL=http://127.0.0.1:9099 VITE_FIREBASE_PROJECT_ID=demo-games4james VITE_FIREBASE_AUTH_DOMAIN=localhost VITE_FIREBASE_API_KEY=demo-key VITE_FIREBASE_APP_ID=demo-app VITE_API_BASE_URL=http://localhost:8787 npm run dev --workspace apps/player-web",
+    "local:admin": "VITE_FIREBASE_AUTH_EMULATOR_URL=http://127.0.0.1:9099 VITE_FIREBASE_PROJECT_ID=demo-games4james VITE_FIREBASE_AUTH_DOMAIN=localhost VITE_FIREBASE_API_KEY=demo-key VITE_FIREBASE_APP_ID=demo-app VITE_API_BASE_URL=http://localhost:8787 npm run dev --workspace apps/admin-web"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

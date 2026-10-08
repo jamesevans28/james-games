@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 // Firebase Authentication Service
 // Handles token verification, custom token creation for username+PIN, and user management
 
@@ -17,6 +16,15 @@ function getFirebaseApp(): App {
   const existing = getApps()[0];
   if (existing) {
     firebaseApp = existing;
+    return firebaseApp;
+  }
+
+  // Local stack (npm run local): the Auth emulator needs only a project id, and the
+  // Admin SDK then mints unsigned custom tokens the emulator accepts.
+  if (process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+    firebaseApp = initializeApp({
+      projectId: process.env.FIREBASE_PROJECT_ID || "demo-games4james",
+    });
     return firebaseApp;
   }
 
@@ -104,7 +112,7 @@ export async function getFirebaseUser(uid: string): Promise<FirebaseUser | null>
  */
 export async function createCustomToken(
   uid: string,
-  claims?: Record<string, any>,
+  claims?: Record<string, unknown>,
 ): Promise<string> {
   const auth = getFirebaseAuth();
   return await auth.createCustomToken(uid, claims);
@@ -216,7 +224,7 @@ export function recordLoginAttempt(identifier: string, success: boolean): void {
  * Set custom claims on a Firebase user.
  * Useful for marking account type, linked status, etc.
  */
-export async function setUserClaims(uid: string, claims: Record<string, any>): Promise<void> {
+export async function setUserClaims(uid: string, claims: Record<string, unknown>): Promise<void> {
   const auth = getFirebaseAuth();
   await auth.setCustomUserClaims(uid, claims);
 }

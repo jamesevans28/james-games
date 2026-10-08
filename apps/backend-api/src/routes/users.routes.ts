@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   changeScreenName,
+  checkScreenName,
   updatePreferences,
   updateSettings,
   getPublicProfile,
@@ -10,11 +11,11 @@ import { requireAuth } from "../middleware/authGuards.js";
 
 const router = Router();
 
-// Logged-in protected
-// Note: Email update/verification is now handled through Firebase Auth linked providers.
+// The caller's own account
+router.get("/screen-name/check", requireAuth, checkScreenName);
 router.post("/screen-name", requireAuth, changeScreenName);
-router.post("/preferences", requireAuth, updatePreferences);
-router.patch("/settings", requireAuth, updateSettings); // unified settings endpoint (screenName for now)
+router.post("/preferences", requireAuth, updatePreferences); // { avatar?, preferences? }
+router.patch("/settings", requireAuth, updateSettings); // { screenName }
 
 // Streak tracking
 router.get("/streak", requireAuth, getStreak);

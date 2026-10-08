@@ -69,8 +69,8 @@ export default function FirebaseLoginPage() {
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
       errors.push("Username can only contain letters, numbers, and underscores");
     }
-    if (!pin || pin.length < 4) {
-      errors.push("PIN must be at least 4 digits");
+    if (!pin || pin.length !== 6) {
+      errors.push("PIN must be 6 digits");
     }
     if (!/^\d+$/.test(pin)) {
       errors.push("PIN must be numbers only");
@@ -251,31 +251,29 @@ export default function FirebaseLoginPage() {
           </label>
 
           <label className="block">
-            <div className="text-sm font-bold text-ink mb-1.5">PIN (4-8 digits)</div>
+            <div className="text-sm font-bold text-ink mb-1.5">PIN (6 digits)</div>
             <input
               value={pin}
               onChange={(e) => {
                 // Only allow digits
-                const val = e.target.value.replace(/\D/g, "").slice(0, 8);
+                const val = e.target.value.replace(/\D/g, "").slice(0, 6);
                 setPin(val);
               }}
               type="password"
               inputMode="numeric"
               pattern="[0-9]*"
-              maxLength={8}
+              maxLength={6}
               className="w-full p-3.5 bg-paper-2 border border-line rounded-2xl placeholder-ink-3 text-ink focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 font-mono text-xl tracking-widest transition-all"
               placeholder="••••"
               autoComplete={mode === "register" ? "new-password" : "current-password"}
             />
-            {triedSubmit && (!pin || pin.length < 4) && (
-              <div className="text-grape text-xs mt-1 font-medium">
-                PIN must be at least 4 digits
-              </div>
+            {triedSubmit && (!pin || pin.length !== 6) && (
+              <div className="text-grape text-xs mt-1 font-medium">PIN must be 6 digits</div>
             )}
             <div className="text-xs text-ink-2 mt-1.5">
               {mode === "register"
                 ? "Pick 4 to 8 numbers you'll remember (not your birthday)."
-                : "Enter your 4-8 digit PIN"}
+                : "Enter your 6-digit PIN"}
             </div>
           </label>
 

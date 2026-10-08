@@ -1,4 +1,4 @@
-import { readMigrated, STORAGE_KEYS } from "./storageKeys";
+import { readStored, STORAGE_KEYS } from "./storageKeys";
 
 /** Recently played games, newest first, kept in localStorage on this device. */
 const LAST_PLAYED_KEY = STORAGE_KEYS.lastPlayed;
@@ -6,7 +6,7 @@ const MAX_LAST_PLAYED = 10;
 
 export function getLastPlayedGames(): string[] {
   try {
-    const stored = readMigrated("lastPlayed");
+    const stored = readStored("lastPlayed");
     if (!stored) return [];
     const parsed: unknown = JSON.parse(stored);
     if (!Array.isArray(parsed)) return [];

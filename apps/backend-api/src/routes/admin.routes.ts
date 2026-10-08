@@ -4,12 +4,16 @@ import {
   index as listUsers,
   show as getUser,
   update as updateUser,
+  resetName as resetScreenName,
+  nameChanges as listNameChanges,
+  disable as disableUser,
+  enable as enableUser,
+  removePlay as deletePlay,
 } from "../controllers/adminUsersController.js";
 import {
-  list as listGames,
-  create as createGame,
-  show as getGame,
-  update as updateGame,
+  adminList as listGames,
+  adminShow as getGame,
+  adminUpdate as updateGame,
 } from "../controllers/gamesConfigController.js";
 import { show as getGameStats } from "../controllers/adminGameStatsController.js";
 import { dashboard as getDashboardMetrics } from "../controllers/adminMetricsController.js";
@@ -23,9 +27,13 @@ router.get("/users/:userId", getUser);
 router.patch("/users/:userId", updateUser);
 router.put("/users/:userId", updateUser);
 router.post("/users/:userId", updateUser);
+router.post("/users/:userId/reset-screen-name", resetScreenName);
+router.get("/screen-names", listNameChanges);
+router.post("/users/:userId/disable", disableUser);
+router.post("/users/:userId/enable", enableUser);
+router.delete("/plays/:playId", deletePlay);
 
 router.get("/games", listGames);
-router.post("/games", createGame);
 router.get("/games/:gameId", getGame);
 router.get("/games/:gameId/stats", getGameStats);
 router.patch("/games/:gameId", updateGame);

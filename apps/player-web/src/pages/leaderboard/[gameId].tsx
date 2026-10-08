@@ -26,7 +26,6 @@ export default function LeaderboardPage() {
   usePresenceReporter({
     status: "browsing_leaderboard",
     gameId: meta?.id,
-    gameTitle: meta?.title,
     enabled: !!meta,
   });
 

@@ -39,6 +39,17 @@ npm run typecheck           # tsc --noEmit across workspaces
 npm test                    # Vitest, all projects (root vitest.config.ts); test:coverage for coverage
 ```
 
+**Local stack, no cloud accounts needed:** the Firebase Auth emulator plus an on-disk Postgres via pglite, with data in `apps/backend-api/.local/`. Start them in this order, or use the launch configs of the same names:
+
+```bash
+npm run local:auth          # Firebase Auth emulator on :9099 (needs the firebase CLI and Java)
+npm run local:server        # API on :8787 on the local database (migrated and seeded on start)
+npm run local:web           # player web on :3000 talking to both
+npm run local:admin         # admin on :3100
+```
+
+Use it to check UI changes end to end: sign up, play, scores, settings. Delete `apps/backend-api/.local/` for a fresh database.
+
 The Browser pane launch config is `.claude/launch.json` (`player-web`). Use a 375×812 viewport when checking UI.
 
 ## Conventions

@@ -1,6 +1,6 @@
 import { test, beforeEach, afterEach, vi } from "vitest";
 import assert from "node:assert/strict";
-import { readMigrated, STORAGE_KEYS } from "./storageKeys.ts";
+import { readStored, STORAGE_KEYS } from "./storageKeys.ts";
 
 class MemoryStorage {
   private m = new Map<string, string>();
@@ -30,23 +30,14 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("moves a legacy value to the new key and removes the old one", () => {
-  localStorage.setItem("flingo_last_played_games", '["snapadile"]');
-  assert.equal(readMigrated("lastPlayed"), '["snapadile"]');
-  assert.equal(localStorage.getItem(STORAGE_KEYS.lastPlayed), '["snapadile"]');
-  assert.equal(localStorage.getItem("flingo_last_played_games"), null);
-});
-
-test("a value already under the new key wins over a legacy one", () => {
+test("reads the g4j: key", () => {
   localStorage.setItem(STORAGE_KEYS.lastPlayed, '["hoop-city"]');
-  localStorage.setItem("flingo_last_played_games", '["snapadile"]');
-  assert.equal(readMigrated("lastPlayed"), '["hoop-city"]');
-  assert.equal(localStorage.getItem("flingo_last_played_games"), null);
+  assert.equal(readStored("lastPlayed"), '["hoop-city"]');
 });
 
-test("nothing stored is null", () => assert.equal(readMigrated("catalog"), null));
+test("nothing stored is null", () => assert.equal(readStored("catalog"), null));
 
 test("never throws when storage is unavailable", () => {
   vi.stubGlobal("localStorage", undefined);
-  assert.equal(readMigrated("lastPlayed"), null);
+  assert.equal(readStored("lastPlayed"), null);
 });

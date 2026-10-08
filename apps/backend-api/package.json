@@ -7,24 +7,33 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/dev-server.ts",
-    "seed:game-configs": "node ./scripts/seed-game-configs-standalone.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --project backend-api --root ../.."
+    "test": "vitest run --project backend-api --root ../..",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/migrate.ts",
+    "db:seed": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/seed.ts",
+    "db:ping": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/ping.ts",
+    "db:housekeeping": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/housekeeping.run.ts",
+    "bundle": "node scripts/bundle.mjs"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.1147.0",
-    "@aws-sdk/lib-dynamodb": "^3.1147.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
+    "drizzle-orm": "^0.45.4",
     "express": "^5.2.1",
     "firebase-admin": "^14.5.0",
+    "obscenity": "^0.4.6",
+    "postgres": "^3.4.9",
     "serverless-http": "^4.0.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^24.19.1",
     "dotenv": "^18.0.6",
+    "drizzle-kit": "^0.31.11",
+    "esbuild": "^0.28.2",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   }

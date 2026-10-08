@@ -1,12 +1,21 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
-import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
-import { dynamoClient } from "../config/aws.js";
-import { config } from "../config/index.js";
-import { listGameConfigs } from "./gamesConfigService.js";
+/**
+ * Admin dashboard (T6.8): a handful of SQL aggregates, no table scans in code.
+ * "7d" figures are a rolling 7 days; `daily` is the last 14 UTC days, oldest first.
+ */
+import {
+  liveGameCount,
+  newUsersPerDay,
+  playActivity,
+  playsPerDay,
+  topGamesByPlays,
+  userTotals,
+} from "../repos/adminRepo.js";
 
-const ddb = DynamoDBDocumentClient.from(dynamoClient);
+const DAY_MS = 24 * 60 * 60 * 1000;
+const DAILY_DAYS = 14;
+const TOP_GAMES = 5;
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+export type DailyMetric = { day: string; plays: number; activeUsers: number; newUsers: number };
 
 export type DashboardMetrics = {
   timeframe: { since: string; days: number };
@@ -14,6 +23,7 @@ export type DashboardMetrics = {
     users: number;
     betaTesters: number;
     admins: number;
+    disabled: number;
     newUsers7d: number;
     gamesLive: number;
   };
@@ -22,191 +32,101 @@ export type DashboardMetrics = {
     totalPlays7d: number;
     avgScore7d: number;
   };
+  daily: DailyMetric[];
   topGames: Array<{
     gameId: string;
     title: string;
-    thumbnail?: string | null;
+    thumbnail: string | null;
     plays7d: number;
     share: number;
   }>;
   recommendations: string[];
 };
 
-export async function getDashboardMetrics(): Promise<DashboardMetrics> {
-  const sinceMs = Date.now() - WEEK_MS;
-  const sinceIso = new Date(sinceMs).toISOString();
+/** The last `n` UTC calendar days ending with `now`'s day, as YYYY-MM-DD, oldest first. */
+export function lastUtcDays(now: Date, n: number): string[] {
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Array.from({ length: n }, (_, i) =>
+    new Date(today - (n - 1 - i) * DAY_MS).toISOString().slice(0, 10),
+  );
+}
 
-  const [userSummary, activitySummary, allGames] = await Promise.all([
-    summarizeUsers(sinceIso),
-    summarizeActivity(sinceIso),
-    fetchAllGames(),
+function thumbnailOf(metadata: Record<string, unknown> | null): string | null {
+  const value = metadata?.thumbnail;
+  return typeof value === "string" ? value : null;
+}
+
+export async function getDashboardMetrics(now: Date = new Date()): Promise<DashboardMetrics> {
+  const since7d = new Date(now.getTime() - 7 * DAY_MS);
+  const days = lastUtcDays(now, DAILY_DAYS);
+  const dailySince = new Date(`${days[0]}T00:00:00.000Z`);
+
+  const [users, gamesLive, activity, dailyPlays, dailyUsers, top] = await Promise.all([
+    userTotals(since7d),
+    liveGameCount(),
+    playActivity(since7d),
+    playsPerDay(dailySince),
+    newUsersPerDay(dailySince),
+    topGamesByPlays(since7d, TOP_GAMES),
   ]);
 
-  const gamesMap = new Map(allGames.map((game) => [game.gameId, game]));
-  const topGames = activitySummary.gameCounts
-    .map(({ gameId, count }) => ({
-      gameId,
-      title: gamesMap.get(gameId)?.title || gameId,
-      thumbnail: gamesMap.get(gameId)?.thumbnail ?? null,
-      plays7d: count,
-    }))
-    .sort((a, b) => b.plays7d - a.plays7d)
-    .slice(0, 5)
-    .map((game) => ({
-      ...game,
-      share: activitySummary.totalPlays7d
-        ? Number((game.plays7d / activitySummary.totalPlays7d).toFixed(3))
-        : 0,
-    }));
+  const playsByDay = new Map(dailyPlays.map((d) => [d.day, d]));
+  const usersByDay = new Map(dailyUsers.map((d) => [d.day, d.newUsers]));
+  const daily = days.map((day) => ({
+    day,
+    plays: playsByDay.get(day)?.plays ?? 0,
+    activeUsers: playsByDay.get(day)?.activeUsers ?? 0,
+    newUsers: usersByDay.get(day) ?? 0,
+  }));
 
-  const recommendations = buildRecommendations(userSummary, activitySummary, topGames);
+  const totalPlays7d = activity.plays;
+  const topGames = top.map((g) => ({
+    gameId: g.gameId,
+    title: g.title,
+    thumbnail: thumbnailOf(g.metadata),
+    plays7d: g.plays,
+    share: totalPlays7d ? Number((g.plays / totalPlays7d).toFixed(3)) : 0,
+  }));
+
+  const totals = {
+    users: users.users,
+    betaTesters: users.betaTesters,
+    admins: users.admins,
+    disabled: users.disabled,
+    newUsers7d: users.newUsers,
+    gamesLive,
+  };
 
   return {
-    timeframe: { since: sinceIso, days: 7 },
-    totals: {
-      users: userSummary.total,
-      betaTesters: userSummary.betaTesters,
-      admins: userSummary.admins,
-      newUsers7d: userSummary.newUsers,
-      gamesLive: allGames.length,
-    },
+    timeframe: { since: since7d.toISOString(), days: 7 },
+    totals,
     activity: {
-      activeUsers7d: activitySummary.activeUsers,
-      totalPlays7d: activitySummary.totalPlays7d,
-      avgScore7d: activitySummary.totalPlays7d
-        ? Number((activitySummary.totalScore7d / activitySummary.totalPlays7d).toFixed(2))
-        : 0,
+      activeUsers7d: activity.activeUsers,
+      totalPlays7d,
+      avgScore7d: Number(Number(activity.avgScore).toFixed(2)),
     },
+    daily,
     topGames,
-    recommendations,
+    recommendations: buildRecommendations(totals, activity.activeUsers, topGames),
   };
-}
-
-async function summarizeUsers(sinceIso: string) {
-  if (!config.tables.users) {
-    return { total: 0, betaTesters: 0, admins: 0, newUsers: 0 };
-  }
-  let total = 0;
-  let betaTesters = 0;
-  let admins = 0;
-  let newUsers = 0;
-  let lastKey: Record<string, any> | undefined;
-  let iterations = 0;
-
-  do {
-    const resp = await ddb.send(
-      new ScanCommand({
-        TableName: config.tables.users,
-        ProjectionExpression: "userId, betaTester, admin, createdAt",
-        ExclusiveStartKey: lastKey,
-      }),
-    );
-    const items = resp.Items || [];
-    for (const item of items) {
-      total += 1;
-      if (item?.betaTester) betaTesters += 1;
-      if (item?.admin) admins += 1;
-      if (item?.createdAt && item.createdAt >= sinceIso) newUsers += 1;
-    }
-    lastKey = resp.LastEvaluatedKey;
-    iterations += 1;
-  } while (lastKey && iterations < 500);
-
-  return { total, betaTesters, admins, newUsers };
-}
-
-async function summarizeActivity(sinceIso: string) {
-  if (!config.tables.scores) {
-    return {
-      activeUsers: 0,
-      totalPlays7d: 0,
-      totalScore7d: 0,
-      gameCounts: [] as Array<{ gameId: string; count: number }>,
-    };
-  }
-
-  const userIds = new Set<string>();
-  const gameCounter = new Map<string, number>();
-  let totalPlays7d = 0;
-  let totalScore7d = 0;
-  let lastKey: Record<string, any> | undefined;
-  let iterations = 0;
-
-  do {
-    const resp = await ddb.send(
-      new ScanCommand({
-        TableName: config.tables.scores,
-        ProjectionExpression: "#g, score, createdAt, userId",
-        FilterExpression: "createdAt >= :since",
-        ExpressionAttributeNames: { "#g": "gameId" },
-        ExpressionAttributeValues: { ":since": sinceIso },
-        ExclusiveStartKey: lastKey,
-      }),
-    );
-
-    const items = resp.Items || [];
-    for (const raw of items) {
-      const createdAt = raw?.createdAt as string | undefined;
-      if (!createdAt || createdAt < sinceIso) continue;
-      totalPlays7d += 1;
-      const numericScore = Number(raw?.score ?? 0);
-      if (!Number.isNaN(numericScore)) totalScore7d += numericScore;
-      const gid = raw?.gameId as string | undefined;
-      if (gid) gameCounter.set(gid, (gameCounter.get(gid) || 0) + 1);
-      const uid = raw?.userId as string | undefined;
-      if (uid) userIds.add(uid);
-    }
-
-    lastKey = resp.LastEvaluatedKey;
-    iterations += 1;
-  } while (lastKey && iterations < 500);
-
-  return {
-    activeUsers: userIds.size,
-    totalPlays7d,
-    totalScore7d,
-    gameCounts: Array.from(gameCounter.entries()).map(([gameId, count]) => ({ gameId, count })),
-  };
-}
-
-async function fetchAllGames() {
-  const games = [] as Array<{ gameId: string; title: string; thumbnail?: string | null }>;
-  let cursor: string | undefined;
-  let iterations = 0;
-  do {
-    const resp = await listGameConfigs({ limit: 100, cursor });
-    games.push(
-      ...resp.items.map((g) => ({
-        gameId: g.gameId,
-        title: g.title,
-        thumbnail: g.thumbnail ?? null,
-      })),
-    );
-    cursor = resp.nextCursor;
-    iterations += 1;
-  } while (cursor && iterations < 20);
-  return games;
 }
 
 function buildRecommendations(
-  users: { total: number; betaTesters: number; admins: number; newUsers: number },
-  activity: { activeUsers: number; totalPlays7d: number },
-  topGames: Array<{ gameId: string; title: string; plays7d: number; share: number }>,
+  totals: { users: number; betaTesters: number },
+  activeUsers: number,
+  topGames: Array<{ title: string; share: number }>,
 ) {
   const recs: string[] = [];
-  if (topGames[0] && topGames[0].share > 0.4) {
+  const leader = topGames[0];
+  if (leader && leader.share > 0.4) {
     recs.push(
-      `${topGames[0].title} accounts for ${(topGames[0].share * 100).toFixed(
-        1,
-      )}% of weekly plays — consider featuring another game to balance engagement.`,
+      `${leader.title} accounts for ${(leader.share * 100).toFixed(1)}% of weekly plays — consider featuring another game to balance engagement.`,
     );
   }
-  if (activity.activeUsers < Math.max(10, Math.round(users.total * 0.1))) {
-    recs.push(
-      "Active users are low versus total audience — schedule a push notification or email campaign.",
-    );
+  if (activeUsers < Math.max(10, Math.round(totals.users * 0.1))) {
+    recs.push("Active players are low versus total accounts — consider a new game drop or event.");
   }
-  if (users.betaTesters / Math.max(users.total, 1) < 0.05) {
+  if (totals.betaTesters / Math.max(totals.users, 1) < 0.05) {
     recs.push("Recruit more beta testers to keep early feedback flowing.");
   }
   if (!recs.length) {

@@ -1,6 +1,7 @@
 // Firebase configuration for the player-web frontend
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import {
+  connectAuthEmulator,
   getAuth,
   signInAnonymously,
   signInWithCustomToken,
@@ -17,9 +18,12 @@ import {
   type UserCredential,
 } from "firebase/auth";
 
+/** Set by `npm run local`: talk to the Firebase Auth emulator instead of the real project. */
+const emulatorUrl: string | undefined = import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_URL;
+
 // Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? (emulatorUrl ? "demo-key" : undefined),
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
@@ -35,6 +39,7 @@ export function initializeFirebase(): { app: FirebaseApp; auth: Auth } {
   if (!app) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
+    if (emulatorUrl) connectAuthEmulator(auth, emulatorUrl, { disableWarnings: true });
   }
   return { app, auth: auth! };
 }

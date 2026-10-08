@@ -3,21 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { adminApi, type GameConfig, type GameStats } from "../../lib/api";
 
-const defaultGame: GameConfig = {
-  gameId: "",
-  title: "",
-  description: "",
-  objective: "",
-  controls: "",
-  thumbnail: "",
-  xpMultiplier: 1,
-  betaOnly: false,
-  metadata: {},
-};
-
 export function GameDrawer({ gameId, onClose }: { gameId: string | null; onClose: () => void }) {
   const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<GameConfig>(defaultGame);
   const [metadataText, setMetadataText] = useState("{}");
   const [metadataError, setMetadataError] = useState<string | null>(null);
 
@@ -35,15 +22,14 @@ export function GameDrawer({ gameId, onClose }: { gameId: string | null; onClose
 
   useEffect(() => {
     if (gameQuery.data) {
-      setDraft({ ...gameQuery.data });
       setMetadataText(JSON.stringify(gameQuery.data.metadata ?? {}, null, 2));
     }
   }, [gameQuery.data]);
 
   const updateMutation = useMutation({
-    mutationFn: (payload: Partial<GameConfig>) => {
+    mutationFn: (metadata: Record<string, unknown> | null) => {
       if (!gameId) return Promise.reject(new Error("missing-game"));
-      return adminApi.updateGame(gameId, payload);
+      return adminApi.updateGameMetadata(gameId, metadata);
     },
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: ["admin-games"] });
@@ -55,10 +41,6 @@ export function GameDrawer({ gameId, onClose }: { gameId: string | null; onClose
   const game = gameQuery.data;
   const stats = statsQuery.data;
 
-  const handleChange = (field: keyof GameConfig, value: GameConfig[keyof GameConfig]) => {
-    setDraft((prev) => ({ ...prev, [field]: value }));
-  };
-
   const handleSave = async () => {
     setMetadataError(null);
     let metadata: Record<string, unknown> | null;
@@ -68,9 +50,7 @@ export function GameDrawer({ gameId, onClose }: { gameId: string | null; onClose
       setMetadataError("Metadata must be valid JSON");
       return;
     }
-    const payload: Partial<GameConfig> = { ...draft, metadata };
-    delete payload.gameId;
-    await updateMutation.mutateAsync(payload);
+    await updateMutation.mutateAsync(metadata);
   };
 
   return (
@@ -94,62 +74,7 @@ export function GameDrawer({ gameId, onClose }: { gameId: string | null; onClose
           ) : game ? (
             <div className="space-y-4">
               <UsagePanel stats={stats ?? null} loading={statsQuery.isLoading} />
-              <Field label="Title">
-                <input
-                  value={draft.title}
-                  onChange={(e) => handleChange("title", e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-transparent px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                />
-              </Field>
-              <Field label="Description">
-                <textarea
-                  value={draft.description || ""}
-                  onChange={(e) => handleChange("description", e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-transparent px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                  rows={3}
-                />
-              </Field>
-              <Field label="Objective">
-                <textarea
-                  value={draft.objective || ""}
-                  onChange={(e) => handleChange("objective", e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-transparent px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                  rows={2}
-                />
-              </Field>
-              <Field label="Controls">
-                <textarea
-                  value={draft.controls || ""}
-                  onChange={(e) => handleChange("controls", e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-transparent px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                  rows={2}
-                />
-              </Field>
-              <Field label="Thumbnail Path">
-                <input
-                  value={draft.thumbnail || ""}
-                  onChange={(e) => handleChange("thumbnail", e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-transparent px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                />
-              </Field>
-              <Field label="XP Multiplier">
-                <input
-                  type="number"
-                  step="0.01"
-                  value={draft.xpMultiplier || 0}
-                  onChange={(e) => handleChange("xpMultiplier", Number(e.target.value))}
-                  className="w-full rounded-xl border border-slate-800 bg-transparent px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                />
-              </Field>
-              <label className="flex items-center gap-3 text-sm text-slate-300">
-                <input
-                  type="checkbox"
-                  checked={Boolean(draft.betaOnly)}
-                  onChange={(e) => handleChange("betaOnly", e.target.checked)}
-                  className="h-5 w-5"
-                />
-                Beta Only
-              </label>
+              <ReadOnlySummary game={game} />
               <Field label="Metadata (JSON)">
                 <textarea
                   value={metadataText}
@@ -158,6 +83,11 @@ export function GameDrawer({ gameId, onClose }: { gameId: string | null; onClose
                   className="w-full rounded-xl border border-slate-800 bg-transparent px-3 py-2 text-sm font-mono focus:border-brand-500 focus:outline-none"
                 />
                 {metadataError && <p className="mt-1 text-xs text-rose-400">{metadataError}</p>}
+                {updateMutation.isError && (
+                  <p className="mt-1 text-xs text-rose-400">
+                    Save failed: {updateMutation.error.message}
+                  </p>
+                )}
               </Field>
               <button
                 onClick={handleSave}
@@ -172,6 +102,32 @@ export function GameDrawer({ gameId, onClose }: { gameId: string | null; onClose
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Seeded from the game manifest on deploy, so shown but not editable. */
+function ReadOnlySummary({ game }: { game: GameConfig }) {
+  const rows = [
+    { label: "Status", value: game.status },
+    { label: "XP multiplier", value: game.xpMultiplier.toFixed(2) },
+    { label: "Max score", value: game.maxScore.toLocaleString() },
+    { label: "Max score / s", value: game.maxScorePerSecond.toLocaleString() },
+  ];
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-300">
+      {game.description && <p className="mb-3 text-slate-400">{game.description}</p>}
+      <dl className="grid grid-cols-2 gap-2">
+        {rows.map((row) => (
+          <div key={row.label}>
+            <dt className="text-[0.6rem] uppercase tracking-[0.3em] text-slate-500">{row.label}</dt>
+            <dd className="text-white">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-3 text-xs text-slate-500">
+        These come from the game manifest. Change them in the game folder and redeploy.
+      </p>
     </div>
   );
 }

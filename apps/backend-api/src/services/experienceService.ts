@@ -1,17 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
-import { DynamoDBDocumentClient, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { dynamoClient } from "../config/aws.js";
-import { config } from "../config/index.js";
 import {
   DEFAULT_EXPERIENCE_LEVELS,
   EXPERIENCE_MAX_LEVEL,
   type ExperienceLevelRow,
 } from "../data/experienceLevels.js";
-import { getUser } from "./dynamoService.js";
+import type { Db } from "../db/client.js";
+import type { User } from "../db/schema.js";
+import { getUserById } from "../repos/usersRepo.js";
+import { listExperienceLevels } from "../repos/statsRepo.js";
 import { log } from "../lib/log.js";
-import { isConditionalCheckFailed } from "../lib/errors.js";
-
-const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
 export type ExperienceSummary = {
   level: number;
@@ -23,50 +19,29 @@ export type ExperienceSummary = {
   lastUpdated?: string;
 };
 
+/** The users-row fields a summary is built from. */
+export type ExperienceSource = Pick<User, "xpLevel" | "xpProgress" | "xpTotal"> & {
+  updatedAt?: Date | string | null;
+};
+
 let cachedLevels: ExperienceLevelRow[] | null = null;
 let lastLoadedAt = 0;
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes is plenty for admin updates
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
-async function loadExperienceLevels(): Promise<ExperienceLevelRow[]> {
+/** The XP curve from experience_levels (cached 5 minutes per container), or the default curve. */
+export async function loadExperienceLevels(db?: Db): Promise<ExperienceLevelRow[]> {
   const now = Date.now();
-  if (cachedLevels && now - lastLoadedAt < CACHE_TTL_MS) {
-    return cachedLevels;
-  }
-  if (!config.tables.experienceLevels) {
-    cachedLevels = DEFAULT_EXPERIENCE_LEVELS;
-    lastLoadedAt = now;
-    return cachedLevels;
-  }
+  if (cachedLevels && now - lastLoadedAt < CACHE_TTL_MS) return cachedLevels;
+  let levels = DEFAULT_EXPERIENCE_LEVELS;
   try {
-    const res = await ddb.send(
-      new ScanCommand({
-        TableName: config.tables.experienceLevels,
-      }),
-    );
-    const rows = ((res.Items || []) as Array<{ level: number; requiredXp: number }>).filter(
-      (row) => typeof row.level === "number" && typeof row.requiredXp === "number",
-    );
-    if (rows.length) {
-      rows.sort((a, b) => a.level - b.level);
-      const normalized: ExperienceLevelRow[] = [];
-      rows.forEach((row, index) => {
-        const prev = normalized[index - 1];
-        normalized.push({
-          level: row.level,
-          requiredXp: row.requiredXp,
-          cumulativeXp: prev ? prev.cumulativeXp + row.requiredXp : row.requiredXp,
-        });
-      });
-      cachedLevels = normalized;
-      lastLoadedAt = now;
-      return cachedLevels;
-    }
+    const rows = await listExperienceLevels(db);
+    if (rows.length) levels = rows;
   } catch (err) {
     log.warn("experience_levels_load_failed", undefined, err);
   }
-  cachedLevels = DEFAULT_EXPERIENCE_LEVELS;
+  cachedLevels = levels;
   lastLoadedAt = now;
-  return cachedLevels;
+  return levels;
 }
 
 function ensureRequirement(levels: ExperienceLevelRow[], level: number): ExperienceLevelRow {
@@ -82,21 +57,22 @@ function ensureRequirement(levels: ExperienceLevelRow[], level: number): Experie
 }
 
 export async function getExperienceSummary(userId: string): Promise<ExperienceSummary | null> {
-  const user = await getUser(userId);
-  if (!user) return null;
-  return buildSummary(user);
+  const [user] = await Promise.all([getUserById(userId), loadExperienceLevels()]);
+  return user ? buildSummary(user) : null;
 }
 
-export function buildSummary(user: any): ExperienceSummary {
-  const level = Math.min(Math.max(Number(user?.xpLevel ?? 1), 1), EXPERIENCE_MAX_LEVEL);
-  const progress = Math.max(0, Number(user?.xpProgress ?? 0));
-  const total = Math.max(0, Number(user?.xpTotal ?? 0));
+/** Summary for a users row. Synchronous: uses the cached curve (or the default one). */
+export function buildSummary(user: ExperienceSource): ExperienceSummary {
+  const level = Math.min(Math.max(Number(user.xpLevel ?? 1), 1), EXPERIENCE_MAX_LEVEL);
+  const progress = Math.max(0, Number(user.xpProgress ?? 0));
+  const total = Math.max(0, Number(user.xpTotal ?? 0));
   const levels = cachedLevels || DEFAULT_EXPERIENCE_LEVELS;
   const requirementRow = ensureRequirement(levels, level);
-  // `requiredXp` represents how much XP must be banked at the current level before leveling up.
-  const required = Math.max(1, Number(requirementRow?.requiredXp || 500));
+  // `requiredXp` is how much XP must be banked at the current level before levelling up.
+  const required = Math.max(1, Number(requirementRow.requiredXp || 500));
   const clampedProgress = Math.min(progress, required);
   const percent = Math.min(1, clampedProgress / required);
+  const updatedAt = user.updatedAt;
   return {
     level,
     progress: clampedProgress,
@@ -104,7 +80,7 @@ export function buildSummary(user: any): ExperienceSummary {
     percent,
     remaining: Math.max(0, required - clampedProgress),
     total,
-    lastUpdated: user?.xpUpdatedAt || user?.updatedAt,
+    lastUpdated: updatedAt instanceof Date ? updatedAt.toISOString() : (updatedAt ?? undefined),
   };
 }
 
@@ -135,68 +111,6 @@ export function addExperience(
     }
   }
   return { level, progress, total: Math.max(0, start.total) + xpEarned };
-}
-
-const XP_WRITE_ATTEMPTS = 3;
-
-/**
- * Add XP to a user. The write is conditional on xpUpdatedAt being unchanged since
- * the read, so two runs finishing together can't overwrite each other's XP.
- */
-export async function applyExperienceToUser(userId: string, xpEarned: number) {
-  if (xpEarned <= 0) {
-    const summary = await getExperienceSummary(userId);
-    if (!summary) throw new Error("user_not_found");
-    return { summary, awarded: 0 };
-  }
-  const levels = await loadExperienceLevels();
-
-  for (let attempt = 1; attempt <= XP_WRITE_ATTEMPTS; attempt++) {
-    const user = await getUser(userId);
-    if (!user) throw new Error("user_not_found");
-    const prevStamp: string | undefined = user.xpUpdatedAt;
-    const next = addExperience(
-      levels,
-      {
-        level: Number(user.xpLevel ?? 1),
-        progress: Number(user.xpProgress ?? 0),
-        total: Number(user.xpTotal ?? 0),
-      },
-      xpEarned,
-    );
-    const stamp = new Date().toISOString();
-    try {
-      await ddb.send(
-        new UpdateCommand({
-          TableName: config.tables.users,
-          Key: { userId },
-          UpdateExpression:
-            "SET xpLevel = :lvl, xpProgress = :prog, xpTotal = :tot, xpUpdatedAt = :ts, updatedAt = :ts",
-          ConditionExpression: prevStamp
-            ? "attribute_exists(userId) AND xpUpdatedAt = :prev"
-            : "attribute_exists(userId) AND attribute_not_exists(xpUpdatedAt)",
-          ExpressionAttributeValues: {
-            ":lvl": next.level,
-            ":prog": next.progress,
-            ":tot": next.total,
-            ":ts": stamp,
-            ...(prevStamp ? { ":prev": prevStamp } : {}),
-          },
-        }),
-      );
-      const summary = buildSummary({
-        xpLevel: next.level,
-        xpProgress: next.progress,
-        xpTotal: next.total,
-        xpUpdatedAt: stamp,
-      });
-      return { summary, awarded: xpEarned };
-    } catch (err) {
-      if (!isConditionalCheckFailed(err)) throw err;
-      // Someone else wrote first (or the user vanished): re-read and try again.
-    }
-  }
-  throw new Error("xp_write_conflict");
 }
 
 export function invalidateExperienceCache() {

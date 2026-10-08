@@ -1,4 +1,5 @@
-// Firebase Authentication Routes
+// Firebase auth routes. attachUser runs globally (src/index.ts), so req.user is the
+// verified bearer token's user wherever a route needs it.
 import { Router } from "express";
 import {
   registerWithUsername,
@@ -6,29 +7,28 @@ import {
   registerAnonymous,
   linkProvider,
   changePin,
-  getCurrentUser,
   addEmail,
   checkEmailVerifiedStatus,
   adminResetUserPin,
 } from "../controllers/firebaseAuthController.js";
-import { attachUser, requireAuth, requireRegisteredAccount } from "../middleware/authGuards.js";
+import { me } from "../controllers/usersController.js";
+import { requireAdmin, requireAuth, requireRegisteredAccount } from "../middleware/authGuards.js";
 
 const router = Router();
 
-// Public routes (no auth required)
-router.post("/register-anonymous", registerAnonymous);
-router.post("/register-username", registerWithUsername);
+// Public
 router.post("/login-username", loginWithUsername);
 
-// Authenticated routes
-router.use(attachUser);
-router.get("/me", requireAuth, getCurrentUser);
+// The caller's own account (bearer token required)
+router.post("/register-anonymous", requireAuth, registerAnonymous);
+router.post("/register-username", requireAuth, registerWithUsername);
+router.get("/me", requireAuth, me); // same handler and shape as GET /me
 router.post("/link-provider", requireAuth, linkProvider);
 router.post("/change-pin", requireAuth, requireRegisteredAccount, changePin);
 router.post("/add-email", requireAuth, addEmail);
 router.post("/check-email-verified", requireAuth, checkEmailVerifiedStatus);
 
-// Admin routes
-router.post("/admin/reset-pin", requireAuth, adminResetUserPin);
+// Admin
+router.post("/admin/reset-pin", requireAdmin, adminResetUserPin);
 
 export default router;

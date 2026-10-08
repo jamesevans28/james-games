@@ -75,6 +75,3 @@ export function RequireVerifiedEmail({ children }: { children: ReactElement }) {
 
   return children;
 }
-
-// Legacy export for backwards compatibility
-export const RequireValidated = RequireVerifiedEmail;

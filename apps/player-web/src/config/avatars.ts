@@ -1,8 +1,7 @@
 /**
  * Avatar set. Placeholder SVG animal faces until Phase 8 delivers the AI set.
  *
- * Profiles store a 1-based number. Numbers from the old 89-tile sprite sheets
- * wrap onto this set, so every existing profile still shows a face.
+ * Profiles store a 1-based number (users.avatar).
  */
 export type AvatarDef = { id: number; name: string; src: string; background: string };
 
@@ -29,6 +28,5 @@ export const AVATARS: readonly AvatarDef[] = [
 /** The avatar for a stored number; anything missing or invalid is avatar 1. */
 export function avatarFor(value: unknown): AvatarDef {
   const n = typeof value === "number" ? value : Number(value);
-  const index = Number.isInteger(n) && n >= 1 ? (n - 1) % AVATARS.length : 0;
-  return AVATARS[index] ?? DEFAULT_AVATAR;
+  return AVATARS.find((a) => a.id === n) ?? DEFAULT_AVATAR;
 }

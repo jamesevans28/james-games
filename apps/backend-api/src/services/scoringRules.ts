@@ -5,10 +5,7 @@
 
 export type ScoreLimits = { maxScore: number; maxScorePerSecond: number };
 
-/**
- * Defaults until per-game manifests supply real limits (plan T4.3 / T6.6).
- * Highest live score on 2026-10-08 was 87,682 (Box Cutter), so 1,000,000 leaves headroom.
- */
+/** Fallback when a games row has a non-positive limit (seeded rows always have real ones, T6.6). */
 export const DEFAULT_SCORE_LIMITS: ScoreLimits = { maxScore: 1_000_000, maxScorePerSecond: 2_000 };
 
 /** A run longer than this is treated as "no duration" rather than trusted. */
@@ -16,30 +13,59 @@ const MAX_TRUSTED_DURATION_MS = 6 * 60 * 60 * 1000;
 
 export const XP_PER_RUN_CAP = 5000;
 
+/** A submission the server refuses. `status` is the HTTP status (400 unless said otherwise). */
 export class ScoreRejected extends Error {
-  constructor(public readonly code: string) {
+  constructor(
+    public readonly code: string,
+    public readonly status: number = 400,
+  ) {
     super(code);
   }
 }
 
-type ConfigLike =
-  { xpMultiplier?: unknown; metadata?: Record<string, unknown> | null } | null | undefined;
+/** The games-row fields the rules read (max_score, max_score_per_second, xp_multiplier, status). */
+type GameLike = {
+  status?: "active" | "beta" | "inactive";
+  maxScore?: unknown;
+  maxScorePerSecond?: unknown;
+  xpMultiplier?: unknown;
+};
 
 const positive = (v: unknown): number | undefined =>
   typeof v === "number" && Number.isFinite(v) && v > 0 ? v : undefined;
 
-/** Limits for a game: optional `metadata.maxScore` / `metadata.maxScorePerSecond` override the defaults. */
-export function limitsFor(config: ConfigLike): ScoreLimits {
+/** Limits for a game, from its games row. */
+export function limitsFor(game: GameLike | null | undefined): ScoreLimits {
   return {
-    maxScore: positive(config?.metadata?.maxScore) ?? DEFAULT_SCORE_LIMITS.maxScore,
-    maxScorePerSecond:
-      positive(config?.metadata?.maxScorePerSecond) ?? DEFAULT_SCORE_LIMITS.maxScorePerSecond,
+    maxScore: positive(game?.maxScore) ?? DEFAULT_SCORE_LIMITS.maxScore,
+    maxScorePerSecond: positive(game?.maxScorePerSecond) ?? DEFAULT_SCORE_LIMITS.maxScorePerSecond,
   };
 }
 
-/** Server-side XP multiplier for a game; unknown games get 1. */
-export function multiplierFor(config: ConfigLike): number {
-  return positive(config?.xpMultiplier) ?? 1;
+/** Server-side XP multiplier for a game; a missing or bad value gives 1. */
+export function multiplierFor(game: GameLike | null | undefined): number {
+  return positive(game?.xpMultiplier) ?? 1;
+}
+
+/** Game ids are manifest folder names. */
+export function isValidGameId(v: unknown): v is string {
+  return typeof v === "string" && /^[a-z0-9-]{1,40}$/.test(v);
+}
+
+/**
+ * Whether a player may post a score for a game: unknown and inactive games take
+ * no scores; beta games only from beta testers; disabled accounts never.
+ */
+export function assertCanSubmit<P extends { betaTester: boolean; disabledAt: Date | null }>(
+  game: GameLike | null,
+  player: P | null,
+): P {
+  if (!game) throw new ScoreRejected("game_not_found", 404);
+  if (!player) throw new ScoreRejected("user_not_found", 404);
+  if (player.disabledAt) throw new ScoreRejected("account_disabled", 403);
+  if (game.status === "inactive") throw new ScoreRejected("game_inactive", 400);
+  if (game.status === "beta" && !player.betaTester) throw new ScoreRejected("game_beta_only", 403);
+  return player;
 }
 
 export type ValidScore = { gameId: string; score: number; durationMs?: number };
@@ -49,9 +75,7 @@ export function validateScoreSubmission(
   limits: ScoreLimits,
 ): ValidScore {
   const { gameId, score, durationMs } = input;
-  if (typeof gameId !== "string" || !/^[a-z0-9-]{1,40}$/.test(gameId)) {
-    throw new ScoreRejected("gameId_invalid");
-  }
+  if (!isValidGameId(gameId)) throw new ScoreRejected("gameId_invalid");
   if (typeof score !== "number" || !Number.isFinite(score) || score < 0) {
     throw new ScoreRejected("score_invalid");
   }

@@ -7,7 +7,6 @@ const HEARTBEAT_MS = 30 * 1000;
 export function usePresenceReporter(args: {
   status: PresenceStatus;
   gameId?: string;
-  gameTitle?: string;
   enabled?: boolean;
 }) {
   const { user, initialized } = useAuth();
@@ -24,7 +23,6 @@ export function usePresenceReporter(args: {
         await updatePresenceStatus({
           status: args.status,
           gameId: args.gameId,
-          gameTitle: args.gameTitle,
         });
       } catch {
         // Presence is best-effort: the next heartbeat tries again.
@@ -40,5 +38,5 @@ export function usePresenceReporter(args: {
       cancelled = true;
       if (timeoutId) window.clearTimeout(timeoutId);
     };
-  }, [user?.userId, initialized, args.status, args.gameId, args.gameTitle, args.enabled]);
+  }, [user?.userId, initialized, args.status, args.gameId, args.enabled]);
 }

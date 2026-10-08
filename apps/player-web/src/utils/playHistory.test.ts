@@ -26,8 +26,7 @@ test("ignores corrupt or foreign values", () => {
   expect(getLastPlayedGames()).toEqual(["ok"]);
 });
 
-test("reads the flingo-era key once and moves it", () => {
-  localStorage.setItem("flingo_last_played_games", JSON.stringify(["blocker"]));
+test("reads the g4j: key", () => {
+  localStorage.setItem("g4j:lastPlayed", JSON.stringify(["blocker"]));
   expect(getLastPlayedGames()).toEqual(["blocker"]);
-  expect(localStorage.getItem("flingo_last_played_games")).toBeNull();
 });

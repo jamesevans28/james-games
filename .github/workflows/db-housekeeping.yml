@@ -1,0 +1,46 @@
+name: Database housekeeping
+
+# T6.9. Daily: delete stale presence rows and idle guest accounts, and keep the
+# free Supabase project from pausing (it pauses after 7 days with no queries).
+# Needs the repository secret DATABASE_URL (transaction pooler). Until that
+# secret exists the job skips itself instead of failing.
+on:
+  schedule:
+    - cron: "17 16 * * *" # 02:17 AEST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  housekeeping:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Skip when the database is not configured
+        id: gate
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::notice::DATABASE_URL secret not set; skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.gate.outputs.skip != 'true'
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        if: steps.gate.outputs.skip != 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: "npm"
+
+      - name: Install dependencies
+        if: steps.gate.outputs.skip != 'true'
+        run: npm ci
+
+      - name: Run housekeeping
+        if: steps.gate.outputs.skip != 'true'
+        run: npm run db:housekeeping -w apps/backend-api

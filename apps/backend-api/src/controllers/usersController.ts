@@ -1,134 +1,107 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import type { Request, Response } from "express";
-import userService from "../services/userService.js";
 import {
-  countFollowers,
-  countFollowing,
-  listFollowers,
-  listFollowing,
-  isFollowing,
-} from "../services/followersService.js";
-import { getRecentGamesForUser } from "../services/userGameStatsService.js";
-import { toPublicProfile } from "../services/publicProfile.js";
+  UserError,
+  changeScreenName as changeScreenNameFor,
+  checkScreenNameFor,
+  getCurrentUser,
+  getPublicProfile as getPublicProfileFor,
+  updatePreferences as updatePreferencesFor,
+} from "../services/userService.js";
+import { isValidAvatar, isValidPrefs } from "../services/usernamePolicy.js";
 import { sendServerError } from "../lib/http.js";
-import { errorInfo } from "../lib/errors.js";
 
+/** Answers a UserError with its status and message, anything else with a logged 500. */
+export function replyWithError(res: Response, event: string, err: unknown) {
+  if (err instanceof UserError) {
+    return res.status(err.status).json({ error: err.message, code: err.code });
+  }
+  return sendServerError(res, event, err);
+}
+
+/** The request body as a plain object (never trusted: every field is checked). */
+export function bodyOf(req: Request): Record<string, unknown> {
+  const body: unknown = req.body;
+  return body && typeof body === "object" && !Array.isArray(body)
+    ? (body as Record<string, unknown>)
+    : {};
+}
+
+/**
+ * GET /me and GET /auth/firebase/me (one handler, one shape): `{ user: CurrentUser }`,
+ * or 404 when the account has no row yet (the client then registers it).
+ */
 export async function me(req: Request, res: Response) {
-  if (!req.user?.userId) return res.json({ user: null });
+  const auth = req.user;
+  if (!auth) return res.status(401).json({ error: "unauthorized" });
   try {
-    const userId = req.user.userId;
-    const profile = await userService.getProfile(userId);
-    res.json({
-      user: {
-        userId,
-        email: (profile?.email ?? req.user?.email) || null,
-        emailProvided: profile?.emailProvided ?? false,
-        screenName: profile.screenName,
-        avatar: profile.avatar,
-        preferences: profile.preferences,
-        validated: profile.validated,
-        createdAt: profile.createdAt,
-        updatedAt: profile.updatedAt,
-        experience: profile.experience,
-        betaTester: profile.betaTester,
-        admin: profile.admin,
-        // Streak data
-        currentStreak: profile.currentStreak,
-        longestStreak: profile.longestStreak,
-        lastLoginDate: profile.lastLoginDate,
-      },
+    const user = await getCurrentUser(auth.userId, {
+      email: auth.email,
+      emailVerified: auth.emailVerified,
+      providers: auth.providers,
     });
+    if (!user) return res.status(404).json({ error: "user_not_found" });
+    return res.json({ user });
   } catch (e) {
-    sendServerError(res, "users_request_failed", e);
+    return sendServerError(res, "users_me_failed", e);
   }
 }
 
-// Note: Email verification is now handled through Firebase Auth linked providers.
-// Users can link their account to Google/Apple which provides verified email.
-
-export async function changeScreenName(req: Request, res: Response) {
-  const userId = req.user?.userId as string;
-  const { screenName } = (req.body || {}) as { screenName?: string };
-  if (!screenName || screenName.trim().length < 2)
-    return res.status(400).json({ error: "screenName must be at least 2 chars" });
+async function setScreenName(req: Request, res: Response) {
+  const auth = req.user;
+  if (!auth) return res.status(401).json({ error: "unauthorized" });
   try {
-    const assigned = await userService.changeScreenName(userId, screenName.trim());
-    res.json({ ok: true, screenName: assigned });
+    const assigned = await changeScreenNameFor(auth.userId, bodyOf(req).screenName);
+    return res.json({ ok: true, screenName: assigned });
   } catch (e) {
-    res.status(400).json({ error: errorInfo(e).message || "unable to update screen name" });
+    return replyWithError(res, "users_screen_name_failed", e);
   }
 }
 
+/** GET /users/screen-name/check?name=… → { ok, name } or { ok: false, code, message } */
+export async function checkScreenName(req: Request, res: Response) {
+  const auth = req.user;
+  if (!auth) return res.status(401).json({ error: "unauthorized" });
+  try {
+    return res.json(await checkScreenNameFor(auth.userId, req.query.name));
+  } catch (e) {
+    return sendServerError(res, "users_screen_name_check_failed", e);
+  }
+}
+
+/** PATCH /me/screen-name and POST /users/screen-name { screenName } */
+export const changeScreenName = setScreenName;
+
+/** PATCH /users/settings { screenName } (the settings screen's endpoint). */
+export const updateSettings = setScreenName;
+
+/** POST /users/preferences { avatar?: number, preferences?: object } */
 export async function updatePreferences(req: Request, res: Response) {
-  const userId = req.user?.userId as string;
+  const auth = req.user;
+  if (!auth) return res.status(401).json({ error: "unauthorized" });
+  const { avatar, preferences } = bodyOf(req);
+  if (avatar !== undefined && !isValidAvatar(avatar)) {
+    return res.status(400).json({ error: "invalid_avatar" });
+  }
+  if (preferences !== undefined && !isValidPrefs(preferences)) {
+    return res.status(400).json({ error: "invalid_preferences" });
+  }
   try {
-    await userService.updatePreferencesForUser(userId, req.body || {});
-    res.json({ ok: true });
+    await updatePreferencesFor(auth.userId, { avatar, preferences });
+    return res.json({ ok: true });
   } catch (e) {
-    res.status(400).json({ error: errorInfo(e).message || "update failed" });
+    return replyWithError(res, "users_preferences_failed", e);
   }
 }
 
-// Unified user settings update endpoint (currently only supports screenName).
-// PATCH /users/settings { screenName: string }
-export async function updateSettings(req: Request, res: Response) {
-  const userId = req.user?.userId;
-  if (!userId) return res.status(401).json({ error: "unauthorized" });
-  const { screenName } = (req.body || {}) as { screenName?: string };
-  if (!screenName || screenName.trim().length < 2) {
-    return res.status(400).json({ error: "screenName must be >= 2 chars" });
-  }
-  try {
-    const assigned = await userService.changeScreenName(userId, screenName.trim());
-    res.json({ ok: true, screenName: assigned });
-  } catch (e) {
-    res.status(400).json({ error: errorInfo(e).message || "update failed" });
-  }
-}
-
+/** GET /users/:userId: a public profile (whitelisted fields only) plus follow data. */
 export async function getPublicProfile(req: Request, res: Response) {
-  const targetUserId = String((req.params as any)?.userId || "").trim();
+  const targetUserId = String(req.params.userId ?? "").trim();
   if (!targetUserId) return res.status(400).json({ error: "userId_required" });
   try {
-    const profile = await userService.getProfile(targetUserId);
-    if (!profile || !profile.screenName) {
-      return res.status(404).json({ error: "user_not_found" });
-    }
-    const [followingCount, followersCount, followingEdges, followerEdges, recentGames] =
-      await Promise.all([
-        countFollowing(targetUserId),
-        countFollowers(targetUserId),
-        listFollowing(targetUserId),
-        listFollowers(targetUserId),
-        getRecentGamesForUser(targetUserId, 10),
-      ]);
-    const viewerId = req.user?.userId;
-    let viewerFollows = false;
-    if (viewerId && viewerId !== targetUserId) {
-      viewerFollows = await isFollowing(viewerId, targetUserId);
-    }
-    res.json({
-      // Whitelisted fields only: never email, admin, preferences or last login.
-      profile: toPublicProfile(profile),
-      followingCount,
-      followersCount,
-      following: followingEdges.slice(0, 25).map((edge) => ({
-        userId: edge.targetUserId,
-        screenName: edge.targetScreenName,
-        avatar: edge.targetAvatar,
-        createdAt: edge.createdAt,
-      })),
-      followers: followerEdges.slice(0, 25).map((edge) => ({
-        userId: edge.userId,
-        screenName: edge.followerScreenName,
-        avatar: edge.followerAvatar,
-        createdAt: edge.createdAt,
-      })),
-      recentGames,
-      isSelf: viewerId === targetUserId,
-      isFollowing: viewerFollows,
-    });
-  } catch (err) {
-    sendServerError(res, "users_request_failed", err);
+    const profile = await getPublicProfileFor(targetUserId, req.user?.userId);
+    if (!profile) return res.status(404).json({ error: "user_not_found" });
+    return res.json(profile);
+  } catch (e) {
+    return sendServerError(res, "users_public_profile_failed", e);
   }
 }

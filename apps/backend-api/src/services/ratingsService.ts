@@ -1,124 +1,63 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
-import {
-  BatchGetCommand,
-  DynamoDBDocumentClient,
-  GetCommand,
-  PutCommand,
-  UpdateCommand,
-} from "@aws-sdk/lib-dynamodb";
-import { dynamoClient } from "../config/aws.js";
-import { config } from "../config/index.js";
+import { getGame } from "../repos/gamesRepo.js";
+import { aggregateRatings, getUserStars, upsertRating } from "../repos/ratingsRepo.js";
+import { getUserById } from "../repos/usersRepo.js";
 
-const ddb = DynamoDBDocumentClient.from(dynamoClient);
-const ratingsTable = config.tables.ratings;
-const ratingSummaryTable = config.tables.ratingSummary;
-const SUMMARY_BATCH_LIMIT = 100;
+/** Star ratings: 1–5, one per player per game. Summaries are live SQL aggregates. */
 
 export type RatingSummary = {
   gameId: string;
   ratingCount: number;
   avgRating: number;
-  updatedAt?: string;
+  userRating?: number;
 };
 
-function normalizeSummary(item: any, gameId: string): RatingSummary {
-  const ratingCount = Number(item?.ratingCount ?? 0) || 0;
-  const ratingSum = Number(item?.ratingSum ?? 0) || 0;
-  return {
-    gameId,
-    ratingCount,
-    avgRating: ratingCount > 0 ? ratingSum / ratingCount : 0,
-    updatedAt: item?.updatedAt,
-  };
-}
+export const MAX_SUMMARY_IDS = 100;
 
-export function validateRatingInput(gameId: unknown, rating: unknown) {
-  if (!gameId || typeof gameId !== "string") throw new Error("gameId required");
-  const value = Number(rating);
-  if (!Number.isFinite(value)) throw new Error("rating must be a number");
-  if (value < 1 || value > 5) throw new Error("rating must be between 1 and 5");
-  return { gameId, rating: Math.round(value) };
-}
-
-export async function upsertRating(args: { gameId: string; userId: string; rating: number }) {
-  const now = new Date().toISOString();
-  const ratingKey = { gameId: args.gameId, userId: args.userId };
-
-  const existing = await ddb.send(new GetCommand({ TableName: ratingsTable, Key: ratingKey }));
-  const previousRating = Number(existing.Item?.rating ?? 0) || null;
-  const createdAt = existing.Item?.createdAt || now;
-
-  await ddb.send(
-    new PutCommand({
-      TableName: ratingsTable,
-      Item: {
-        gameId: args.gameId,
-        userId: args.userId,
-        rating: args.rating,
-        createdAt,
-        updatedAt: now,
-      },
-    }),
-  );
-
-  const delta = args.rating - (previousRating ?? 0);
-  const countDelta = previousRating ? 0 : 1;
-  const summaryResult = await ddb.send(
-    new UpdateCommand({
-      TableName: ratingSummaryTable,
-      Key: { gameId: args.gameId },
-      UpdateExpression:
-        "SET ratingSum = if_not_exists(ratingSum, :zero) + :delta, ratingCount = if_not_exists(ratingCount, :zero) + :count, updatedAt = :now",
-      ExpressionAttributeValues: {
-        ":zero": 0,
-        ":delta": delta,
-        ":count": countDelta,
-        ":now": now,
-      },
-      ReturnValues: "ALL_NEW",
-    }),
-  );
-
-  const summary = normalizeSummary(summaryResult.Attributes, args.gameId);
-  return { ...summary, userRating: args.rating };
-}
-
-export async function getRatingSummary(gameId: string): Promise<RatingSummary> {
-  const res = await ddb.send(new GetCommand({ TableName: ratingSummaryTable, Key: { gameId } }));
-  if (!res.Item) {
-    return { gameId, ratingCount: 0, avgRating: 0 };
-  }
-  return normalizeSummary(res.Item, gameId);
+/** Whole stars 1–5, or null when the input isn't a usable rating. */
+export function parseStars(value: unknown): number | null {
+  if (typeof value !== "number" && typeof value !== "string") return null;
+  if (typeof value === "string" && value.trim() === "") return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 1 || n > 5) return null;
+  return Math.round(n);
 }
 
 export async function getRatingSummaries(gameIds: string[]): Promise<RatingSummary[]> {
-  if (!gameIds.length) return [];
-  const unique = Array.from(new Set(gameIds));
-  const summaries: RatingSummary[] = [];
-  for (let i = 0; i < unique.length; i += SUMMARY_BATCH_LIMIT) {
-    const chunk = unique.slice(i, i + SUMMARY_BATCH_LIMIT);
-    const res = await ddb.send(
-      new BatchGetCommand({
-        RequestItems: {
-          [ratingSummaryTable]: {
-            Keys: chunk.map((gameId) => ({ gameId })),
-          },
-        },
-      }),
-    );
-    const items = res.Responses?.[ratingSummaryTable] || [];
-    items.forEach((item: any) => summaries.push(normalizeSummary(item, item.gameId)));
-  }
-  // Ensure every requested id has a response (even if zero data)
-  unique.forEach((gameId) => {
-    if (!summaries.find((s) => s.gameId === gameId)) {
-      summaries.push({ gameId, ratingCount: 0, avgRating: 0 });
-    }
-  });
-  return summaries;
+  const unique = Array.from(new Set(gameIds)).slice(0, MAX_SUMMARY_IDS);
+  const found = new Map((await aggregateRatings(unique)).map((r) => [r.gameId, r]));
+  return unique.map((gameId) => ({
+    gameId,
+    ratingCount: found.get(gameId)?.ratingCount ?? 0,
+    avgRating: found.get(gameId)?.avgRating ?? 0,
+  }));
 }
 
-export async function getUserRating(gameId: string, userId: string) {
-  const res = await ddb.send(new GetCommand({ TableName: ratingsTable, Key: { gameId, userId } }));
-  return res.Item ? Number(res.Item.rating) : null;
+/** The summary, plus the viewer's own stars when they have rated. */
+export async function getRatingSummary(gameId: string, viewerId?: string): Promise<RatingSummary> {
+  const [summary] = await getRatingSummaries([gameId]);
+  const result: RatingSummary = summary ?? { gameId, ratingCount: 0, avgRating: 0 };
+  if (viewerId) {
+    const stars = await getUserStars(viewerId, gameId);
+    if (stars !== null) result.userRating = stars;
+  }
+  return result;
+}
+
+export type RateResult =
+  { ok: true; summary: RatingSummary } | { ok: false; status: 400 | 404; error: string };
+
+export async function rateGame(
+  userId: string,
+  gameId: string,
+  rating: unknown,
+): Promise<RateResult> {
+  const stars = parseStars(rating);
+  if (stars === null) return { ok: false, status: 400, error: "invalid_rating" };
+  const [game, user] = await Promise.all([getGame(gameId), getUserById(userId)]);
+  if (!game || game.status === "inactive") {
+    return { ok: false, status: 404, error: "game_not_found" };
+  }
+  if (!user) return { ok: false, status: 404, error: "user_not_found" };
+  await upsertRating(userId, gameId, stars);
+  return { ok: true, summary: await getRatingSummary(gameId, userId) };
 }

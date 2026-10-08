@@ -59,14 +59,36 @@ export type AdminAccount = {
 };
 
 export type AdminUserSummary = AdminAccount & {
+  accountType?: string;
+  enabled?: boolean;
+  disabledAt?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+  lastSeenAt?: string | null;
 };
 
 export type AdminUserDetail = AdminUserSummary & {
   emailVerified?: boolean;
-  status?: string;
-  enabled?: boolean;
+  avatar?: number;
+  xp?: { total: number; level: number; progress: number };
+  streak?: { current: number; longest: number };
+  gameStats?: Array<{
+    gameId: string;
+    title: string;
+    plays: number;
+    bestScore: number;
+    lastScore: number;
+    lastPlayedAt: string;
+  }>;
+  recentPlays?: Array<{
+    playId: string;
+    gameId: string;
+    title: string;
+    score: number;
+    durationMs: number | null;
+    xpAwarded: number;
+    createdAt: string;
+  }>;
 };
 
 export type PaginatedResponse<T> = {
@@ -74,18 +96,19 @@ export type PaginatedResponse<T> = {
   nextCursor?: string;
 };
 
+/** Seeded from the game manifests on deploy; admins edit only `metadata`. */
 export type GameConfig = {
   gameId: string;
   title: string;
-  description?: string | null;
-  objective?: string | null;
-  controls?: string | null;
-  thumbnail?: string | null;
-  xpMultiplier?: number;
-  betaOnly?: boolean;
-  metadata?: Record<string, unknown> | null;
-  createdAt?: string | null;
-  updatedAt?: string | null;
+  description: string | null;
+  status: "active" | "beta" | "inactive";
+  betaOnly: boolean;
+  xpMultiplier: number;
+  maxScore: number;
+  maxScorePerSecond: number;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type DashboardMetrics = {
@@ -94,6 +117,7 @@ export type DashboardMetrics = {
     users: number;
     betaTesters: number;
     admins: number;
+    disabled: number;
     newUsers7d: number;
     gamesLive: number;
   };
@@ -102,6 +126,7 @@ export type DashboardMetrics = {
     totalPlays7d: number;
     avgScore7d: number;
   };
+  daily: Array<{ day: string; plays: number; activeUsers: number; newUsers: number }>;
   topGames: Array<{
     gameId: string;
     title: string;
@@ -126,8 +151,17 @@ export type GameStats = {
   since: string;
 };
 
+export type NameChange = {
+  userId: string;
+  oldName: string;
+  newName: string;
+  currentName: string;
+  changedAt: string;
+};
+
 export const adminApi = {
-  fetchMe: () => request<{ user?: AdminAccount } | AdminAccount>("/me", { method: "GET" }),
+  /** GET /me: `{ user }`, the same shape as the player app's (backend userService.CurrentUser). */
+  fetchMe: () => request<{ user: AdminAccount | null }>("/me", { method: "GET" }),
   listUsers: (params: { cursor?: string; search?: string; limit?: number }) => {
     const url = new URL(`${API_BASE}/admin/users`);
     if (params.cursor) url.searchParams.set("cursor", params.cursor);
@@ -138,18 +172,20 @@ export const adminApi = {
     });
   },
   getUser: (userId: string) => request<AdminUserDetail>(`/admin/users/${userId}`),
-  updateUser: (
-    userId: string,
-    payload: {
-      email?: string;
-      betaTester?: boolean;
-      admin?: boolean;
-      username?: string;
-    },
-  ) =>
+  updateUser: (userId: string, payload: { betaTester?: boolean; admin?: boolean }) =>
     request<AdminUserDetail>(`/admin/users/${userId}`, {
       method: "POST",
       body: JSON.stringify(payload),
+    }),
+  resetScreenName: (userId: string) =>
+    request<AdminUserDetail>(`/admin/users/${userId}/reset-screen-name`, { method: "POST" }),
+  setUserEnabled: (userId: string, enabled: boolean) =>
+    request<AdminUserDetail>(`/admin/users/${userId}/${enabled ? "enable" : "disable"}`, {
+      method: "POST",
+    }),
+  deletePlay: (playId: string) =>
+    request<{ deleted: boolean; bestScore: number | null }>(`/admin/plays/${playId}`, {
+      method: "DELETE",
     }),
   listGames: (params: { cursor?: string; limit?: number }) => {
     const url = new URL(`${API_BASE}/admin/games`);
@@ -159,14 +195,15 @@ export const adminApi = {
   },
   getGame: (gameId: string) => request<GameConfig>(`/admin/games/${gameId}`),
   getGameStats: (gameId: string) => request<GameStats>(`/admin/games/${gameId}/stats`),
-  createGame: (payload: GameConfig) =>
-    request<GameConfig>(`/admin/games`, { method: "POST", body: JSON.stringify(payload) }),
-  updateGame: (gameId: string, payload: Partial<GameConfig>) =>
+  updateGameMetadata: (gameId: string, metadata: Record<string, unknown> | null) =>
     request<GameConfig>(`/admin/games/${gameId}`, {
-      method: "POST",
-      body: JSON.stringify(payload),
+      method: "PATCH",
+      body: JSON.stringify({ metadata }),
     }),
   getDashboardMetrics: () => request<DashboardMetrics>(`/admin/metrics/dashboard`),
+  /** Latest screen-name changes, newest first (T6.7 moderation). */
+  listNameChanges: (limit = 50) =>
+    request<{ items: NameChange[] }>(`/admin/screen-names?limit=${limit}`, { method: "GET" }),
   resetUserPin: (userId: string, newPin: string) =>
     request<{ success: boolean; message: string }>(`/auth/firebase/admin/reset-pin`, {
       method: "POST",
@@ -174,11 +211,8 @@ export const adminApi = {
     }),
 };
 
-export function normalizeAccount(
-  payload: { user?: AdminAccount } | AdminAccount | null | undefined,
-) {
-  if (!payload) return null;
-  const account = "user" in payload ? payload.user : (payload as AdminAccount);
+export function normalizeAccount(payload: { user: AdminAccount | null } | null | undefined) {
+  const account = payload?.user;
   if (!account?.userId) return null;
   return account;
 }

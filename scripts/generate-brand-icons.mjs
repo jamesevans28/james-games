@@ -9,12 +9,10 @@
 // Outputs: logo.svg (wordmark), icon-32/180/192/512.png, icon-512-maskable.png,
 //          og-1200x630.png, all in apps/player-web/public/brand/.
 import { readFileSync, writeFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import path from "node:path";
-import opentype from "opentype.js";
 import sharp from "sharp";
+import { display, layout, pathData, textPath, textWidth } from "./lib/text.mjs";
 
-const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const outDir = path.join(root, "apps/player-web/public/brand");
 const brand = JSON.parse(
@@ -32,55 +30,6 @@ const C = {
   grape: "#8E6CEF",
 };
 const CRAYONS = [C.tomato, C.sun, C.grass, C.sky, C.grape];
-
-function loadFont(file) {
-  const buf = readFileSync(require.resolve(file));
-  return opentype.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
-}
-const display = loadFont("@fontsource/baloo-2/files/baloo-2-latin-800-normal.woff");
-const body = loadFont("@fontsource/nunito/files/nunito-latin-800-normal.woff");
-
-// opentype.js's shaper chokes on these fonts' ccmp lookups, so lay glyphs out by
-// hand (char → glyph, plus kerning). Latin text only, which is all we draw.
-function layout(text, font, size) {
-  const scale = size / font.unitsPerEm;
-  const glyphs = Array.from(text).map((ch) => font.charToGlyph(ch));
-  let x = 0;
-  return glyphs.map((glyph, i) => {
-    const at = x;
-    const next = glyphs[i + 1];
-    const kern = next ? Number(font.getKerningValue(glyph, next)) : 0;
-    x += (glyph.advanceWidth + (Number.isFinite(kern) ? kern : 0)) * scale;
-    return { glyph, x: at, advance: x - at };
-  });
-}
-
-// opentype.js 2.0's Path.toPathData() sometimes writes "NaN" for valid points,
-// so serialise the commands ourselves. Each contour is closed explicitly.
-function pathData(glyph, x, y, size) {
-  const n = (v) => Number(v).toFixed(2);
-  return glyph
-    .getPath(x, y, size)
-    .commands.map((c) => {
-      switch (c.type) {
-        case "M":
-          return `M${n(c.x)} ${n(c.y)}`;
-        case "L":
-          return `L${n(c.x)} ${n(c.y)}`;
-        case "Q":
-          return `Q${n(c.x1)} ${n(c.y1)} ${n(c.x)} ${n(c.y)}`;
-        case "C":
-          return `C${n(c.x1)} ${n(c.y1)} ${n(c.x2)} ${n(c.y2)} ${n(c.x)} ${n(c.y)}`;
-        case "Z":
-          return "Z";
-        default:
-          throw new Error(`unknown path command ${c.type}`);
-      }
-    })
-    .join("")
-    .replace(/(?<!Z)(?=M)(?!^)/g, "Z")
-    .replace(/([^Z])$/, "$1Z");
-}
 
 /**
  * The wordmark as SVG markup: one path per letter, crayon fills, a thick ink
@@ -125,17 +74,6 @@ function wordmark(text, size) {
     )
     .join("");
   return { svg: `<g>${shadowLayer}${letterLayer}</g>`, width, height };
-}
-
-/** Plain text as a single path (for taglines), left-aligned at (x, baseline). */
-function textPath(text, x, baseline, size, fill, font = body) {
-  const d = layout(text, font, size)
-    .map(({ glyph, x: gx }) => pathData(glyph, x + gx, baseline, size))
-    .join("");
-  return `<path d="${d}" fill="${fill}"/>`;
-}
-function textWidth(text, size, font = body) {
-  return layout(text, font, size).reduce((sum, g) => sum + g.advance, 0);
 }
 
 const markSvg = readFileSync(path.join(outDir, "logo-mark.svg"), "utf8");
