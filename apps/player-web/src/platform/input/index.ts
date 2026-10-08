@@ -2,4 +2,4 @@
 export { holdZones, tapZones, swipe, keys, type InputHandle } from "./kit";
 export { createDPad as dpad, type DPadDirection, type DPadInstance, type DPadMode } from "./dpad";
 export { createOnScreenKeyboard } from "./onScreenKeyboard";
-export { classifySwipe, OPPOSITE, type Direction4 } from "./gestures";
+export { classifySwipe, zoneIndex, sideOf, OPPOSITE, type Direction4 } from "./gestures";

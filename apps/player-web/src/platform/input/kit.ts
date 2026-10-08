@@ -93,15 +93,29 @@ export function holdZones(
   return { ...handle, direction: () => current };
 }
 
-/** Tap one of `count` vertical strips (0 = leftmost). */
+/**
+ * Tap one of `count` vertical strips (0 = leftmost). With `count: 1` Space and
+ * Enter also tap on desktop (`keyboard: false` turns that off).
+ */
 export function tapZones(
   scene: Phaser.Scene,
-  opts: { count: number; onTap: (zone: number, pointer: Phaser.Input.Pointer) => void },
+  opts: {
+    count: number;
+    onTap: (zone: number, pointer?: Phaser.Input.Pointer) => void;
+    keyboard?: boolean;
+  },
 ): InputHandle {
   const down = (p: Phaser.Input.Pointer) =>
     opts.onTap(zoneIndex(p.x, scene.scale.width, opts.count), p);
   scene.input.on("pointerdown", down);
-  return autoDestroy(scene, () => scene.input.off("pointerdown", down));
+  const offKeys =
+    opts.count === 1 && opts.keyboard !== false
+      ? keys(scene, { " ": () => opts.onTap(0), Enter: () => opts.onTap(0) }).destroy
+      : () => {};
+  return autoDestroy(scene, () => {
+    scene.input.off("pointerdown", down);
+    offKeys();
+  });
 }
 
 /** Swipe anywhere; arrow keys and WASD mirror it on desktop. */

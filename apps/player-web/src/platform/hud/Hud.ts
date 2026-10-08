@@ -44,12 +44,13 @@ export class Hud {
         stroke: color === this.inkCss ? undefined : this.inkCss,
         strokeThickness: color === this.inkCss ? 0 : 6,
       })
-      .setDepth(DEPTH + 1);
+      .setDepth(DEPTH + 1)
+      .setScrollFactor(0); // the HUD stays put when a game scrolls its camera
   }
 
   /** A rounded paper panel with an ink outline and hard shadow, sized to `content`. */
   private panel(content: Phaser.GameObjects.Text, padX = 14, padY = 6): void {
-    const g = this.scene.add.graphics().setDepth(DEPTH);
+    const g = this.scene.add.graphics().setDepth(DEPTH).setScrollFactor(0);
     const redraw = () => {
       const b = content.getBounds();
       const x = b.x - padX;
