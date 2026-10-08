@@ -40,8 +40,11 @@ jobs:
       - name: Tests
         run: npm test
 
+      # A production build refuses to run without an API origin; CI only checks it builds.
       - name: Build player web
         run: npm run web:build
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://api.games4james.com' }}
 
       - name: Build admin
         run: npm run admin:build
