@@ -151,6 +151,14 @@ export type GameStats = {
   since: string;
 };
 
+export type NameChange = {
+  userId: string;
+  oldName: string;
+  newName: string;
+  currentName: string;
+  changedAt: string;
+};
+
 export const adminApi = {
   /** GET /me: `{ user }`, the same shape as the player app's (backend userService.CurrentUser). */
   fetchMe: () => request<{ user: AdminAccount | null }>("/me", { method: "GET" }),
@@ -193,6 +201,9 @@ export const adminApi = {
       body: JSON.stringify({ metadata }),
     }),
   getDashboardMetrics: () => request<DashboardMetrics>(`/admin/metrics/dashboard`),
+  /** Latest screen-name changes, newest first (T6.7 moderation). */
+  listNameChanges: (limit = 50) =>
+    request<{ items: NameChange[] }>(`/admin/screen-names?limit=${limit}`, { method: "GET" }),
   resetUserPin: (userId: string, newPin: string) =>
     request<{ success: boolean; message: string }>(`/auth/firebase/admin/reset-pin`, {
       method: "POST",

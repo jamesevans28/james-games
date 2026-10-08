@@ -1,6 +1,6 @@
-import { and, count, desc, eq, sql } from "drizzle-orm";
-import { getDb } from "../db/client.js";
-import { follows, users, type NewUser, type User } from "../db/schema.js";
+import { and, count, desc, eq, gte, ne, sql } from "drizzle-orm";
+import { getDb, type Db } from "../db/client.js";
+import { follows, screenNameHistory, users, type NewUser, type User } from "../db/schema.js";
 
 /** Pure data access for the users table. Services own the rules. */
 
@@ -64,6 +64,51 @@ export async function updateUser(
     .where(eq(users.id, id))
     .returning();
   return row ?? null;
+}
+
+/** Reads and locks a user row for the rest of the transaction. */
+export async function getUserForUpdate(db: Db, id: string): Promise<User | null> {
+  const [row] = await db.select().from(users).where(eq(users.id, id)).limit(1).for("update");
+  return row ?? null;
+}
+
+/** True when another user already has this screen name (case-insensitive). */
+export async function isScreenNameTaken(db: Db, name: string, exceptUserId: string) {
+  const [row] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(and(sql`lower(${users.screenName}) = lower(${name})`, ne(users.id, exceptUserId)))
+    .limit(1);
+  return Boolean(row);
+}
+
+/** Renames a user and records the change in screen_name_history (call inside a transaction). */
+export async function renameUser(
+  db: Db,
+  user: User,
+  newName: string,
+  setByUser: boolean,
+): Promise<User | null> {
+  const [row] = await db
+    .update(users)
+    .set({ screenName: newName, screenNameSetByUser: setByUser, updatedAt: new Date() })
+    .where(eq(users.id, user.id))
+    .returning();
+  if (row) {
+    await db
+      .insert(screenNameHistory)
+      .values({ userId: user.id, oldName: user.screenName, newName });
+  }
+  return row ?? null;
+}
+
+/** How many times the player renamed themselves since `since` (admin resets excluded by the caller's choice of rows). */
+export async function countRenamesSince(db: Db, userId: string, since: Date): Promise<number> {
+  const [row] = await db
+    .select({ n: count() })
+    .from(screenNameHistory)
+    .where(and(eq(screenNameHistory.userId, userId), gte(screenNameHistory.changedAt, since)));
+  return row?.n ?? 0;
 }
 
 /** A user shown in someone else's follow list (public fields only). */

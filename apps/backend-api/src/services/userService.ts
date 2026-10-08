@@ -1,19 +1,25 @@
 import crypto from "node:crypto";
+import { getDb } from "../db/client.js";
 import type { NewUser, User } from "../db/schema.js";
 import {
   SCREEN_NAME_KEY,
   USERNAME_KEY,
   countFollows,
+  countRenamesSince,
   getUserById,
   getUserByUsername,
+  getUserForUpdate,
   insertUser,
   isFollowingUser,
+  isScreenNameTaken,
   listFollowerUsers,
   listFollowingUsers,
+  renameUser,
   uniqueViolation,
   updateUser,
 } from "../repos/usersRepo.js";
 import { buildSummary, type ExperienceSummary } from "./experienceService.js";
+import { SCREEN_NAME_MESSAGES, checkScreenName, generateScreenName } from "./screenNames.js";
 import {
   checkEmailVerified,
   createCustomToken,
@@ -44,61 +50,44 @@ const notFound = () => new UserError(404, "user_not_found", "User not found");
 // Screen names
 // ---------------------------------------------------------------------------
 
-// Fun adjectives and nouns for generated screen names (T6.7 replaces this generator).
-const ADJECTIVES = [
-  "Brave", "Cheeky", "Clever", "Curious", "Daring", "Eager", "Fearless", "Gentle",
-  "Happy", "Jolly", "Keen", "Lively", "Merry", "Noble", "Playful", "Quick", "Silly",
-  "Swift", "Witty", "Zany", "Awesome", "Bold", "Cool", "Dazzling", "Epic", "Funky",
-  "Giggly", "Hyper", "Jazzy", "Kooky", "Lucky", "Mighty", "Nifty", "Peppy", "Quirky",
-  "Rowdy", "Snappy", "Cheerful", "Bouncy", "Zippy",
-]; // prettier-ignore
-
-const NOUNS = [
-  "Koala", "Panda", "Tiger", "Eagle", "Dolphin", "Penguin", "Otter", "Fox", "Wolf",
-  "Bear", "Hawk", "Owl", "Rabbit", "Squirrel", "Deer", "Lion", "Cheetah", "Turtle",
-  "Hedgehog", "Monkey", "Parrot", "Racoon", "Badger", "Beaver", "Falcon", "Jaguar",
-  "Lemur", "Lynx", "Moose", "Peacock", "Platypus", "Puma", "Raven", "Seal", "Shark",
-  "Sloth", "Swan", "Walrus", "Whale", "Zebra",
-]; // prettier-ignore
-
-/** A playful generated name such as "BraveKoala". */
-export function generatePlayfulName(): string {
-  const adjective = ADJECTIVES[crypto.randomInt(ADJECTIVES.length)] ?? "Happy";
-  const noun = NOUNS[crypto.randomInt(NOUNS.length)] ?? "Koala";
-  return `${adjective}${noun}`;
+/** A fresh generated name such as "bouncy-otter-42" (T6.7). */
+export function newScreenName(): string {
+  return generateScreenName(() => crypto.randomInt(1_000_000) / 1_000_000);
 }
 
-const SCREEN_NAME_RETRIES = 6;
+const GENERATED_NAME_TRIES = 8;
+const RENAMES_PER_30_DAYS = 3;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-function screenNameCandidates(base: string): string[] {
-  const out = [base];
-  for (let i = 0; i < SCREEN_NAME_RETRIES; i++) {
-    out.push(`${base}#${String(crypto.randomInt(10000)).padStart(4, "0")}`);
-  }
-  return out;
-}
+const nameTaken = () => new UserError(409, "taken", SCREEN_NAME_MESSAGES.taken);
 
 /**
- * Runs `write` with `base`, then `base#NNNN` variants, until the case-insensitive
- * unique index on screen names (users_screen_name_lower_key) accepts one. Any other
+ * Runs `write` until the case-insensitive unique index on screen names
+ * (users_screen_name_lower_key) accepts the name. A name the player chose gets one
+ * try (409 when taken); a generated one is regenerated on each clash. Any other
  * error, including a username clash, is thrown straight away.
  */
 async function withUniqueScreenName<T>(
-  base: string,
+  chosen: string | null,
   write: (screenName: string) => Promise<T>,
 ): Promise<T> {
-  for (const candidate of screenNameCandidates(base)) {
+  const tries = chosen ? 1 : GENERATED_NAME_TRIES;
+  for (let i = 0; i < tries; i++) {
     try {
-      return await write(candidate);
+      return await write(chosen ?? newScreenName());
     } catch (err) {
       if (uniqueViolation(err) !== SCREEN_NAME_KEY) throw err;
     }
   }
-  throw new UserError(
-    409,
-    "screen_name_taken",
-    "could not assign requested screen name; it may be taken",
-  );
+  if (chosen) throw nameTaken();
+  throw new Error("screen_name_generation_exhausted");
+}
+
+/** Checks a name the player typed against the rules; throws a friendly 400. */
+function validChosenName(raw: unknown): string {
+  const check = checkScreenName(typeof raw === "string" ? raw : "");
+  if (!check.ok) throw new UserError(400, check.problem, SCREEN_NAME_MESSAGES[check.problem]);
+  return check.name;
 }
 
 /** Creates the row with a generated screen name, unless it already exists. */
@@ -106,7 +95,7 @@ async function createWithGeneratedName(
   uid: string,
   fields: Omit<NewUser, "id" | "screenName">,
 ): Promise<{ user: User; isNew: boolean }> {
-  const created = await withUniqueScreenName(generatePlayfulName(), (screenName) =>
+  const created = await withUniqueScreenName(null, (screenName) =>
     insertUser({ ...fields, id: uid, screenName }),
   );
   if (created) return { user: created, isNew: true };
@@ -116,12 +105,50 @@ async function createWithGeneratedName(
   return { user: existing, isNew: false };
 }
 
-export async function changeScreenName(uid: string, desired: string): Promise<string> {
-  const user = await withUniqueScreenName(desired, (screenName) =>
-    updateUser(uid, { screenName, screenNameSetByUser: true }),
-  );
-  if (!user) throw notFound();
-  return user.screenName;
+/**
+ * The player renames themselves (T6.7): the name must pass the rules, be free
+ * (case-insensitive), and they get 3 changes per 30 days. Recorded in
+ * screen_name_history for moderation.
+ */
+export async function changeScreenName(
+  uid: string,
+  raw: unknown,
+  now = new Date(),
+): Promise<string> {
+  const desired = validChosenName(raw);
+  try {
+    return await getDb().transaction(async (tx) => {
+      const user = await getUserForUpdate(tx, uid);
+      if (!user) throw notFound();
+      if (user.screenName === desired) return desired;
+      const recent = await countRenamesSince(tx, uid, new Date(now.getTime() - 30 * DAY_MS));
+      if (recent >= RENAMES_PER_30_DAYS) {
+        throw new UserError(429, "too_many_changes", SCREEN_NAME_MESSAGES.too_many_changes);
+      }
+      if (await isScreenNameTaken(tx, desired, uid)) throw nameTaken();
+      const renamed = await renameUser(tx, user, desired, true);
+      if (!renamed) throw notFound();
+      return renamed.screenName;
+    });
+  } catch (err) {
+    if (uniqueViolation(err) === SCREEN_NAME_KEY) throw nameTaken();
+    throw err;
+  }
+}
+
+/** Live check for the settings field: rules first, then availability. */
+export async function checkScreenNameFor(
+  uid: string,
+  raw: unknown,
+): Promise<{ ok: true; name: string } | { ok: false; code: string; message: string }> {
+  const check = checkScreenName(typeof raw === "string" ? raw : "");
+  if (!check.ok) {
+    return { ok: false, code: check.problem, message: SCREEN_NAME_MESSAGES[check.problem] };
+  }
+  if (await isScreenNameTaken(getDb(), check.name, uid)) {
+    return { ok: false, code: "taken", message: SCREEN_NAME_MESSAGES.taken };
+  }
+  return { ok: true, name: check.name };
 }
 
 // ---------------------------------------------------------------------------
@@ -143,6 +170,7 @@ export async function registerUsername(
   uid: string,
   input: { username: string; pin: string; screenName?: string },
 ): Promise<{ user: User; customToken: string }> {
+  const chosenName = input.screenName === undefined ? null : validChosenName(input.screenName);
   const username = normalizeUsername(input.username);
   const fields = {
     username,
@@ -153,13 +181,13 @@ export async function registerUsername(
 
   let user: User | null;
   try {
-    if (existing && !input.screenName) {
+    if (existing && !chosenName) {
       // Keep the current screen name: the login username is never shown publicly.
       user = await updateUser(uid, fields);
     } else {
-      const named = { ...fields, screenNameSetByUser: Boolean(input.screenName) };
+      const named = { ...fields, screenNameSetByUser: Boolean(chosenName) };
       user = await withUniqueScreenName(
-        input.screenName ?? generatePlayfulName(),
+        chosenName,
         async (screenName) =>
           (existing ? null : await insertUser({ ...named, id: uid, screenName })) ??
           updateUser(uid, { ...named, screenName }),

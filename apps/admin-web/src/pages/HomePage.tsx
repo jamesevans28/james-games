@@ -138,7 +138,49 @@ export function HomePage() {
           </section>
         </>
       ) : null}
+
+      <RecentNameChanges />
     </div>
+  );
+}
+
+/** Moderation: the latest renames, so a rude name can be spotted and reset from Users. */
+function RecentNameChanges() {
+  const query = useQuery({
+    queryKey: ["admin-name-changes"],
+    queryFn: () => adminApi.listNameChanges(30),
+  });
+  const items = query.data?.items ?? [];
+  return (
+    <section className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
+      <h2 className="mb-3 text-lg font-semibold text-white">Recent name changes</h2>
+      {query.isLoading ? (
+        <p className="text-sm text-slate-400">Loading…</p>
+      ) : items.length === 0 ? (
+        <p className="text-sm text-slate-400">No name changes yet.</p>
+      ) : (
+        <table className="w-full text-left text-sm text-slate-300">
+          <thead className="text-xs uppercase text-slate-500">
+            <tr>
+              <th className="py-1">When</th>
+              <th className="py-1">From</th>
+              <th className="py-1">To</th>
+              <th className="py-1">Now</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((c) => (
+              <tr key={`${c.userId}-${c.changedAt}`} className="border-t border-slate-800">
+                <td className="py-1">{new Date(c.changedAt).toLocaleString()}</td>
+                <td className="py-1">{c.oldName}</td>
+                <td className="py-1">{c.newName}</td>
+                <td className="py-1">{c.currentName}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
   );
 }
 

@@ -2,11 +2,12 @@ import type { Request, Response } from "express";
 import {
   UserError,
   changeScreenName as changeScreenNameFor,
+  checkScreenNameFor,
   getCurrentUser,
   getPublicProfile as getPublicProfileFor,
   updatePreferences as updatePreferencesFor,
 } from "../services/userService.js";
-import { cleanScreenName, isValidAvatar, isValidPrefs } from "../services/usernamePolicy.js";
+import { isValidAvatar, isValidPrefs } from "../services/usernamePolicy.js";
 import { sendServerError } from "../lib/http.js";
 
 /** Answers a UserError with its status and message, anything else with a logged 500. */
@@ -48,19 +49,26 @@ export async function me(req: Request, res: Response) {
 async function setScreenName(req: Request, res: Response) {
   const auth = req.user;
   if (!auth) return res.status(401).json({ error: "unauthorized" });
-  const screenName = cleanScreenName(bodyOf(req).screenName);
-  if (!screenName) {
-    return res.status(400).json({ error: "screenName must be 2-32 characters" });
-  }
   try {
-    const assigned = await changeScreenNameFor(auth.userId, screenName);
+    const assigned = await changeScreenNameFor(auth.userId, bodyOf(req).screenName);
     return res.json({ ok: true, screenName: assigned });
   } catch (e) {
     return replyWithError(res, "users_screen_name_failed", e);
   }
 }
 
-/** POST /users/screen-name { screenName } */
+/** GET /users/screen-name/check?name=… → { ok, name } or { ok: false, code, message } */
+export async function checkScreenName(req: Request, res: Response) {
+  const auth = req.user;
+  if (!auth) return res.status(401).json({ error: "unauthorized" });
+  try {
+    return res.json(await checkScreenNameFor(auth.userId, req.query.name));
+  } catch (e) {
+    return sendServerError(res, "users_screen_name_check_failed", e);
+  }
+}
+
+/** PATCH /me/screen-name and POST /users/screen-name { screenName } */
 export const changeScreenName = setScreenName;
 
 /** PATCH /users/settings { screenName } (the settings screen's endpoint). */

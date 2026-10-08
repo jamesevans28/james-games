@@ -238,18 +238,42 @@ export async function getTopScores(
   return (await res.json()) as ScoreEntry[];
 }
 
-// Update user settings (currently only screenName). Returns { ok, screenName }.
+/** The friendly message from a `{ error, code }` body, or a generic one. */
+async function errorFrom(res: Response, fallback: string): Promise<Error> {
+  try {
+    const body = (await res.json()) as { error?: unknown };
+    if (typeof body.error === "string" && body.error) return new Error(body.error);
+  } catch {
+    // not JSON
+  }
+  return new Error(`${fallback}: ${res.status}`);
+}
+
+/** PATCH /me/screen-name (T6.7). Returns the name the server stored. */
 export async function updateSettings(data: {
   screenName: string;
 }): Promise<UpdateSettingsResponse> {
   if (!API_BASE) return { ok: false };
-  const res = await fetchWithAuth(`${API_BASE}/users/settings`, {
+  const res = await fetchWithAuth(`${API_BASE}/me/screen-name`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Failed to update settings: ${res.status}`);
+  if (!res.ok) throw await errorFrom(res, "Failed to update your name");
   return (await res.json()) as UpdateSettingsResponse;
+}
+
+export type ScreenNameCheck =
+  { ok: true; name: string } | { ok: false; code: string; message: string };
+
+/** Live check for the name field: the server's rules, then whether it's free. */
+export async function checkScreenName(name: string): Promise<ScreenNameCheck | null> {
+  if (!API_BASE) return null;
+  const url = new URL("/users/screen-name/check", API_BASE);
+  url.searchParams.set("name", name);
+  const res = await fetchWithAuth(url.toString());
+  if (!res.ok) return null;
+  return (await res.json()) as ScreenNameCheck;
 }
 
 // The signed-in user's account; { user: null } when signed out or not registered yet.

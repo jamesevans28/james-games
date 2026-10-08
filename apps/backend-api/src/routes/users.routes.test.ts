@@ -10,7 +10,7 @@ describe("/users routes", () => {
   });
   afterAll(() => api.close());
 
-  it("screen-name and settings change the name; a clash gets a #NNNN suffix", async () => {
+  it("screen-name, settings and PATCH /me/screen-name rename with rules, uniqueness and a limit", async () => {
     await api.addUser({ id: "sn-1", screenName: "First" });
     await api.addUser({ id: "sn-2", screenName: "Taken Name" });
 
@@ -42,8 +42,35 @@ describe("/users routes", () => {
       as: "sn-1",
       body: { screenName: "TAKEN NAME" },
     });
-    expect(clash.status).toBe(200);
-    expect(clash.body.screenName).toMatch(/^TAKEN NAME#\d{4}$/);
+    expect(clash.status).toBe(409);
+    expect(clash.body.code).toBe("taken");
+
+    const rude = await api.request("PATCH", "/me/screen-name", {
+      as: "sn-1",
+      body: { screenName: "shit head" },
+    });
+    expect(rude.status).toBe(400);
+    expect(rude.body.code).toBe("not_allowed");
+
+    const check = await api.request("GET", "/users/screen-name/check?name=taken%20name", {
+      as: "sn-1",
+    });
+    expect(check.body).toMatchObject({ ok: false, code: "taken" });
+    const free = await api.request("GET", "/users/screen-name/check?name=Zoomy", { as: "sn-1" });
+    expect(free.body).toEqual({ ok: true, name: "Zoomy" });
+
+    // Third change in 30 days is fine, the fourth is refused.
+    const third = await api.request("PATCH", "/me/screen-name", {
+      as: "sn-1",
+      body: { screenName: "Zoomy" },
+    });
+    expect(third.body).toEqual({ ok: true, screenName: "Zoomy" });
+    const fourth = await api.request("PATCH", "/me/screen-name", {
+      as: "sn-1",
+      body: { screenName: "Zoomier" },
+    });
+    expect(fourth.status).toBe(429);
+    expect(fourth.body.code).toBe("too_many_changes");
 
     const missing = await api.request("PATCH", "/users/settings", {
       as: "no-row",

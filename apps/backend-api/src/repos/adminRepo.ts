@@ -84,36 +84,6 @@ export async function listRecentPlays(userId: string, limit: number) {
     .limit(limit);
 }
 
-/** Reads and locks a user row for the rest of the transaction. */
-export async function getUserForUpdate(db: Db, id: string): Promise<User | null> {
-  const [row] = await db.select().from(users).where(eq(users.id, id)).limit(1).for("update");
-  return row ?? null;
-}
-
-/** True when another user already has this screen name (case-insensitive). */
-export async function isScreenNameTaken(db: Db, name: string, exceptUserId: string) {
-  const [row] = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(and(sql`lower(${users.screenName}) = lower(${name})`, ne(users.id, exceptUserId)))
-    .limit(1);
-  return Boolean(row);
-}
-
-export async function setScreenName(db: Db, user: User, newName: string): Promise<User | null> {
-  const [row] = await db
-    .update(users)
-    .set({ screenName: newName, screenNameSetByUser: false, updatedAt: new Date() })
-    .where(eq(users.id, user.id))
-    .returning();
-  if (row) {
-    await db
-      .insert(screenNameHistory)
-      .values({ userId: user.id, oldName: user.screenName, newName });
-  }
-  return row ?? null;
-}
-
 export async function setDisabledAt(userId: string, disabledAt: Date | null): Promise<User | null> {
   const [row] = await getDb()
     .update(users)
@@ -264,5 +234,21 @@ export async function topGamesByPlays(since: Date, limit: number) {
     .where(gte(plays.createdAt, since))
     .groupBy(games.id)
     .orderBy(desc(plays7d), asc(games.id))
+    .limit(limit);
+}
+
+/** The latest screen-name changes, newest first, with the player's current name. */
+export async function listRecentNameChanges(limit: number) {
+  return getDb()
+    .select({
+      userId: screenNameHistory.userId,
+      oldName: screenNameHistory.oldName,
+      newName: screenNameHistory.newName,
+      changedAt: screenNameHistory.changedAt,
+      currentName: users.screenName,
+    })
+    .from(screenNameHistory)
+    .innerJoin(users, eq(users.id, screenNameHistory.userId))
+    .orderBy(desc(screenNameHistory.changedAt))
     .limit(limit);
 }

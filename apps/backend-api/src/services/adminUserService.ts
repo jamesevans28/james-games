@@ -2,27 +2,30 @@
  * Admin console: user search, user detail and moderation (T6.3, T6.8).
  * Admin responses may include email; logs never do.
  */
-import { randomInt } from "node:crypto";
 import { getDb } from "../db/client.js";
 import type { User } from "../db/schema.js";
-import { getUserById, updateUser } from "../repos/usersRepo.js";
+import {
+  getUserById,
+  getUserForUpdate,
+  isScreenNameTaken,
+  renameUser,
+  updateUser,
+} from "../repos/usersRepo.js";
 import {
   bestPlayFor,
   deleteBestScore,
   deletePlayRow,
   deleteStats,
-  getUserForUpdate,
-  isScreenNameTaken,
   latestPlayFor,
+  listRecentNameChanges,
   listRecentPlays,
   listUserGameStats,
   listUsersPage,
   putBestScore,
   setDisabledAt,
-  setScreenName,
   updateStatsAfterRemoval,
 } from "../repos/adminRepo.js";
-import { generatePlayfulName } from "./userService.js";
+import { newScreenName } from "./userService.js";
 
 const RECENT_PLAYS = 20;
 
@@ -129,24 +132,16 @@ export async function updateAdminUser(
 
 const NAME_ATTEMPTS = 8;
 
-/** A generated name nobody else has: the plain name first, then with 2-4 digits. */
-function candidateName(attempt: number): string {
-  const base = generatePlayfulName();
-  if (attempt < 2) return base;
-  const digits = attempt < 5 ? randomInt(10, 100) : randomInt(1000, 10000);
-  return `${base}${digits}`;
-}
-
 /** Replaces the player's screen name with a generated one (they can pick again later). */
 export async function resetScreenName(userId: string) {
   const updated = await getDb().transaction(async (tx) => {
     const user = await getUserForUpdate(tx, userId);
     if (!user) throw new AdminError(404, "user_not_found");
     for (let attempt = 0; attempt < NAME_ATTEMPTS; attempt++) {
-      const name = candidateName(attempt);
+      const name = newScreenName();
       if (name.toLowerCase() === user.screenName.toLowerCase()) continue;
       if (await isScreenNameTaken(tx, name, userId)) continue;
-      return setScreenName(tx, user, name);
+      return renameUser(tx, user, name, false);
     }
     throw new Error("screen_name_generation_exhausted");
   });
@@ -188,4 +183,10 @@ export async function deletePlay(playId: string) {
     }
     return { deleted: true, playId, gameId, userId, bestScore: best?.score ?? null };
   });
+}
+
+/** Recent screen-name changes for the moderation list (T6.7). */
+export async function recentNameChanges(limit = 50) {
+  const rows = await listRecentNameChanges(Math.min(Math.max(limit, 1), 200));
+  return rows.map((r) => ({ ...r, changedAt: r.changedAt.toISOString() }));
 }

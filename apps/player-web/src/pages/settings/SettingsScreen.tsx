@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchMe, updateSettings } from "../../lib/api";
+import { checkScreenName, fetchMe, updateSettings, type ScreenNameCheck } from "../../lib/api";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { OfflineBanner } from "../../components/OfflineBanner";
@@ -67,7 +67,26 @@ export default function SettingsScreen() {
     };
   }, []);
 
-  const dirty = screenName.trim() !== initial.trim() && screenName.trim().length >= 2;
+  const dirty = screenName.trim() !== initial.trim() && screenName.trim().length >= 3;
+  const [nameCheck, setNameCheck] = useState<ScreenNameCheck | null>(null);
+
+  // Live availability check, debounced, only while the name differs from the saved one.
+  useEffect(() => {
+    const wanted = screenName.trim();
+    if (!dirty) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void checkScreenName(wanted).then((result) => {
+        if (!cancelled) setNameCheck(result);
+      });
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [screenName, dirty]);
+  const shownCheck = dirty ? nameCheck : null;
+  const nameBlocked = shownCheck?.ok === false;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -283,19 +302,29 @@ export default function SettingsScreen() {
           <input
             type="text"
             value={screenName}
-            onChange={(e) => setScreenName(e.target.value)}
+            onChange={(e) => {
+              setScreenName(e.target.value);
+              setNameCheck(null);
+            }}
             className="w-full bg-paper-2 border border-line rounded-xl px-4 py-3 text-sm text-ink placeholder-ink-3 focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 transition-all"
-            maxLength={24}
+            maxLength={16}
             placeholder="Your public name"
+            aria-describedby="screen-name-help"
           />
-          <p className="mt-2 text-xs text-ink-2">2–24 characters. Shown on leaderboards.</p>
+          <p id="screen-name-help" className="mt-2 text-xs text-ink-2" aria-live="polite">
+            {shownCheck?.ok === false
+              ? shownCheck.message
+              : shownCheck?.ok
+                ? "✓ That name is free."
+                : "3–16 letters, numbers, spaces or dashes. Shown on leaderboards. Don't use your real name."}
+          </p>
         </div>
         {error && <div className="text-sm text-grape font-medium">{error}</div>}
         {success && <div className="text-sm text-brand font-medium">✓ Saved!</div>}
         <div className="flex gap-2">
           <button
             type="submit"
-            disabled={!dirty || saving}
+            disabled={!dirty || saving || nameBlocked}
             className={`btn ${
               dirty
                 ? "btn-primary"

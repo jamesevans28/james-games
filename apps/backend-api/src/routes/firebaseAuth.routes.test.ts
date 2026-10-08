@@ -39,7 +39,7 @@ describe("/auth/firebase routes", () => {
       accountType: "anonymous",
       isNew: true,
     });
-    expect(first.body.screenName).toMatch(/^[A-Z][a-z]+[A-Z][a-z]+(#\d{4})?$/);
+    expect(first.body.screenName).toMatch(/^[a-z]+-[a-z]+-\d{2}$/);
 
     const again = await api.request("POST", "/auth/firebase/register-anonymous", {
       as: "anon-1",
@@ -99,13 +99,13 @@ describe("/auth/firebase routes", () => {
     const reg = await api.request("POST", "/auth/firebase/register-username", {
       as: "kid-1",
       accountType: "anonymous",
-      body: { username: "Tilly_1", pin: "432100", screenName: "Tilly Rocket" },
+      body: { username: "Tilly_1", pin: "432100", screenName: "Rocket Star" },
     });
     expect(reg.status).toBe(200);
     expect(reg.body).toEqual({
       ok: true,
       customToken: "custom-token-for-kid-1",
-      screenName: "Tilly Rocket",
+      screenName: "Rocket Star",
       accountType: "username_pin",
     });
     expect(firebase.setUserClaims).toHaveBeenCalledWith("kid-1", {
@@ -136,7 +136,7 @@ describe("/auth/firebase routes", () => {
       ok: true,
       customToken: "custom-token-for-kid-1",
       userId: "kid-1",
-      screenName: "Tilly Rocket",
+      screenName: "Rocket Star",
       accountType: "username_pin",
     });
     expect(firebase.createCustomToken).toHaveBeenLastCalledWith("kid-1", {
@@ -168,14 +168,14 @@ describe("/auth/firebase routes", () => {
     expect(badName.status).toBe(400);
   });
 
-  it("register-username suffixes a taken screen name", async () => {
+  it("register-username refuses a taken screen name", async () => {
     await api.addUser({ id: "first", screenName: "Rocket" });
     const res = await api.request("POST", "/auth/firebase/register-username", {
       as: "second",
       body: { username: "second_kid", pin: "123456", screenName: "rocket" },
     });
-    expect(res.status).toBe(200);
-    expect(res.body.screenName).toMatch(/^rocket#\d{4}$/);
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe("taken");
   });
 
   it("change-pin checks the current PIN; admin reset-pin needs an admin", async () => {

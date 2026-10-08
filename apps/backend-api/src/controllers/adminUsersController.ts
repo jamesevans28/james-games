@@ -4,6 +4,7 @@ import {
   deletePlay,
   getAdminUser,
   listUsers,
+  recentNameChanges,
   resetScreenName,
   setUserDisabled,
   updateAdminUser,
@@ -47,6 +48,15 @@ export async function update(req: Request, res: Response) {
     res.json(updated);
   } catch (err) {
     fail(res, "admin_update_user_failed", err);
+  }
+}
+
+/** GET /admin/screen-names?limit= : the latest renames, newest first (T6.7). */
+export async function nameChanges(req: Request, res: Response) {
+  try {
+    res.json({ items: await recentNameChanges(Number(req.query.limit) || 50) });
+  } catch (err) {
+    fail(res, "admin_name_changes_failed", err);
   }
 }
 

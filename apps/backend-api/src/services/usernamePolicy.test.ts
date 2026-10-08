@@ -1,6 +1,5 @@
 import { expect, test } from "vitest";
 import {
-  cleanScreenName,
   isValidAvatar,
   isValidPin,
   isValidPrefs,
@@ -23,13 +22,6 @@ test("PINs are exactly 6 digits", () => {
   expect(isValidPin("12345678")).toBe(false);
   expect(isValidPin("1234567")).toBe(false);
   expect(isValidPin("12a4")).toBe(false);
-});
-
-test("screen names are trimmed and length-checked", () => {
-  expect(cleanScreenName("  Bouncy Otter ")).toBe("Bouncy Otter");
-  expect(cleanScreenName(" a ")).toBeNull();
-  expect(cleanScreenName("x".repeat(33))).toBeNull();
-  expect(cleanScreenName(undefined)).toBeNull();
 });
 
 test("avatars and preferences", () => {

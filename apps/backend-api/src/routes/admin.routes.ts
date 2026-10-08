@@ -5,6 +5,7 @@ import {
   show as getUser,
   update as updateUser,
   resetName as resetScreenName,
+  nameChanges as listNameChanges,
   disable as disableUser,
   enable as enableUser,
   removePlay as deletePlay,
@@ -27,6 +28,7 @@ router.patch("/users/:userId", updateUser);
 router.put("/users/:userId", updateUser);
 router.post("/users/:userId", updateUser);
 router.post("/users/:userId/reset-screen-name", resetScreenName);
+router.get("/screen-names", listNameChanges);
 router.post("/users/:userId/disable", disableUser);
 router.post("/users/:userId/enable", enableUser);
 router.delete("/plays/:playId", deletePlay);

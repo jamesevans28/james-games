@@ -61,7 +61,7 @@ describe("moderation", () => {
   test("reset screen name to a generated one and record history", async () => {
     const after = await resetScreenName("kid");
     expect(after.screenName).not.toBe("Rude-Name");
-    expect(after.screenName).toMatch(/^[A-Za-z]+\d*$/);
+    expect(after.screenName).toMatch(/^[a-z]+-[a-z]+-\d{2}$/);
     const [row] = await db.select().from(users).where(eq(users.id, "kid"));
     expect(row!.screenNameSetByUser).toBe(false);
     const history = await db

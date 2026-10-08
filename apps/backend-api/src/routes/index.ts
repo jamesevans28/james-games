@@ -8,12 +8,13 @@ import experienceRoutes from "./experience.routes.js";
 import adminRoutes from "./admin.routes.js";
 import gamesRoutes from "./games.routes.js";
 import { requireAuth } from "../middleware/authGuards.js";
-import { me } from "../controllers/usersController.js";
+import { changeScreenName, me } from "../controllers/usersController.js";
 
 const router = Router();
 
 // The signed-in user's own account. GET /auth/firebase/me is the same handler.
 router.get("/me", requireAuth, me);
+router.patch("/me/screen-name", requireAuth, changeScreenName);
 
 // Firebase auth routes
 router.use("/auth/firebase", firebaseAuthRoutes);

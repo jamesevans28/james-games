@@ -13,12 +13,7 @@ import {
   registerUsername,
   syncEmailVerified,
 } from "../services/userService.js";
-import {
-  cleanScreenName,
-  isValidPin,
-  isValidUsername,
-  normalizeUsername,
-} from "../services/usernamePolicy.js";
+import { isValidPin, isValidUsername, normalizeUsername } from "../services/usernamePolicy.js";
 import { log } from "../lib/log.js";
 import { errorInfo } from "../lib/errors.js";
 import { bodyOf, replyWithError } from "./usersController.js";
@@ -62,14 +57,11 @@ export async function registerWithUsername(req: Request, res: Response) {
     });
   }
   if (!isValidPin(body.pin)) {
-    return res.status(400).json({ error: "PIN must be 4-8 digits" });
+    return res.status(400).json({ error: "PIN must be 6 digits" });
   }
-  let screenName: string | undefined;
-  if (body.screenName !== undefined && body.screenName !== null && body.screenName !== "") {
-    const cleaned = cleanScreenName(body.screenName);
-    if (!cleaned) return res.status(400).json({ error: "screenName must be 2-32 characters" });
-    screenName = cleaned;
-  }
+  // The service checks a chosen screen name against the T6.7 rules (400 with a friendly message).
+  const screenName =
+    typeof body.screenName === "string" && body.screenName.trim() ? body.screenName : undefined;
   try {
     const { user, customToken } = await registerUsername(auth.userId, {
       username: body.username,
