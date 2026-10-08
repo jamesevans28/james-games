@@ -53,7 +53,7 @@ Steps:
 
 ## T4.3 SDK types and `defineGame`
 
-Status: todo
+Status: done (2026-10-08). `platform/sdk.ts` holds the types and `defineGame`. `platform/manifestSchema.ts` holds the zod schema, which is tests-only so zod never ships, plus a compile-time check that schema and type agree. `platform/manifest.test.ts` validates every manifest (folder = id, unique, cover and sfx files exist) and checks a broken fixture fails. Changes from the step list: `seo` is `{ description, category }` (meta keywords were dropped in T3.4), `cover` may be SVG until Phase 8, `GameResult` has no duration because the platform measures it, and `safeArea()` is a function.
 Depends on: T4.2
 Goal: the contract every game implements.
 Files: `apps/player-web/src/platform/sdk.ts`
@@ -70,11 +70,16 @@ Steps:
 
 ## T4.4 Host and mount
 
-Status: todo
-Depends on: T4.3
-Goal: the platform creates games; games never touch `window`, `localStorage` or `gameEvents` directly.
-Files: `platform/host.ts`, `platform/mount.ts`, `platform/storage/bestScore.ts` (move from utils), `platform/audio/*`, `pages/games/PlayGame.tsx`
-Steps:
+Status: done (2026-10-08). New: `platform/host.ts`, `controller.ts`, `mount.ts`, `rng.ts` and `storage/bestScore.ts` (`utils/bestScore.ts` is a re-export shim until T5.13). The host measures the run without paused time, takes one `gameOver` per run, and saves the best before telling React. `controlGame` is Phaser-free, so it is unit-tested with a fake game. Reflex Ring is the pilot.
+
+- `PlayGame` takes the SDK path when a module has `create`. Both paths feed one `finishedRun` state.
+- "Play again" calls `instance.restart()`. In the Browser pane the same `Phaser.Game`, renderer and canvas were kept.
+- Hiding the tab pauses the run behind a React "Paused" overlay.
+- The dev global `window.__g4jGame` exposes the running game.
+  Depends on: T4.3
+  Goal: the platform creates games; games never touch `window`, `localStorage` or `gameEvents` directly.
+  Files: `platform/host.ts`, `platform/mount.ts`, `platform/storage/bestScore.ts` (move from utils), `platform/audio/*`, `pages/games/PlayGame.tsx`
+  Steps:
 
 1. `createHost({ manifest, onGameOver, platformAdapters })`: wraps `bestScore`, audio kit, haptics (`navigator.vibrate` web; Capacitor later), analytics (`utils/analytics.ts`), `rng` (seeded, mulberry32), safe-area from CSS env vars.
 2. `createGameMount(host, el, { scenes, physics? })`: builds the Phaser config from `manifest.design` (FIT, CENTER_BOTH, transparent, `parent: el`), injects `host` into the scene registry (`game.registry.set("host", host)`), returns a `GameInstance` whose `restart()` restarts the active scene (not a new `Phaser.Game`), `pause/resume` call `scene.pause/resume` and stop audio, `destroy()` calls `game.destroy(true)` and removes listeners.
@@ -84,11 +89,15 @@ Steps:
 
 ## T4.5 BasePlatformScene and HUD kit
 
-Status: todo
-Depends on: T4.4
-Goal: a base scene every game extends, with the shared HUD and lifecycle.
-Files: `platform/scenes/BasePlatformScene.ts`, `platform/hud/*`
-Steps:
+Status: done (2026-10-08).
+
+- **Base scene.** `BasePlatformScene` handles `startRun()`, `endRun()` (one report after `endRunDelayMs`), `onCleanup`, and pause/resume hooks. The timing rule lives in the pure `runEnder.ts` and is tested.
+- **HUD.** `hud/Hud.ts` provides score, best, hearts, timer, popup and countdown as sticker panels. The pure `hud/format.ts` is tested.
+- **Snapadile** runs on the base scene with its hand-rolled HUD, overlay, restart and oscillator deleted. The full cycle was checked in the Browser pane.
+  Depends on: T4.4
+  Goal: a base scene every game extends, with the shared HUD and lifecycle.
+  Files: `platform/scenes/BasePlatformScene.ts`, `platform/hud/*`
+  Steps:
 
 1. `BasePlatformScene extends Phaser.Scene`: `get host()`, `hud` (score, best, hearts(n), timer(ms), popup(text, x, y), countdown(3)), `endRun(score, stats?)` (freezes input, plays the end sting, calls `host.gameOver` after a configurable delay with the duration computed by the base), `onPause/onResume` hooks, standard `shutdown` cleanup (timers, tweens, listeners), `safeArea` offsets for HUD placement, `fonts` from the host.
 2. HUD visuals in the sticker-book style: ink-outlined rounded panels, `BRAND_FONTS.display`, colours from `host.colors`.
@@ -97,11 +106,15 @@ Steps:
 
 ## T4.6 Input kit
 
-Status: todo
-Depends on: T4.5
-Goal: all touch patterns in one place.
-Files: `platform/input/{tapZones,holdZones,swipe,dpad,keys}.ts` (move `game/ui/dpad.ts` and `onScreenKeyboard.ts` here)
-Steps:
+Status: done (2026-10-08).
+
+- **Kit.** `platform/input/`: `holdZones`, `tapZones` (Space and Enter work for a single zone), `swipe` and `keys`, plus the moved and restyled `dpad` and on-screen keyboard. The pure `gestures.ts` is tested. Every helper tears down on scene shutdown.
+- **Games moved.** Cosmic Clash uses `holdZones`. Serpento steers by absolute direction with swipe plus a sticky d-pad, and can't reverse into itself. Blocker uses `zoneIndex`. All three were checked in the Browser pane.
+- **Not done.** An 8-way d-pad: no game needs one yet.
+  Depends on: T4.5
+  Goal: all touch patterns in one place.
+  Files: `platform/input/{tapZones,holdZones,swipe,dpad,keys}.ts` (move `game/ui/dpad.ts` and `onScreenKeyboard.ts` here)
+  Steps:
 
 1. `holdZones(scene, { left, right })` (Paddle Pop, Cosmic Clash, Car Crash pattern), `tapZones`, `swipe(scene, { threshold })` returning direction events, `dpad(scene, opts)` (existing, generalised: sticky/momentary, 4-way/8-way), `keys(scene, map)` mirroring keyboard to the same events for desktop.
 2. Each helper returns `{ destroy() }` and is auto-destroyed by the base scene on shutdown.
@@ -109,11 +122,16 @@ Steps:
 
 ## T4.7 Audio kit
 
-Status: todo
-Depends on: T4.5
-Goal: one `AudioContext`, a mute toggle, synthesized defaults, and a loader for AI-generated SFX from Phase 8.
-Files: `platform/audio/{context,synth,sfx,mute}.ts`, `components/layout/Header.tsx` (mute button), settings
-Steps:
+Status: done (2026-10-08).
+
+- **Audio kit.** The single AudioContext is created only from the first tap or key press, so there are no autoplay warnings. It has synth beep, ding, thud and pop. Mute is global and saved in `g4j:muted`. Recorded SFX load from `public/assets/<id>/sfx/` for the manifest's `sfx` list, with a synth fallback.
+- **Mute button.** It sits in the game header for SDK games only, and also mutes the running Phaser sound. Muting in Reflex Ring carried into Snapadile.
+- **Reflex Ring** now has hit, perfect and end sounds.
+- **Not done.** The legacy games' oscillator copies are removed as each game migrates in Phase 5.
+  Depends on: T4.5
+  Goal: one `AudioContext`, a mute toggle, synthesized defaults, and a loader for AI-generated SFX from Phase 8.
+  Files: `platform/audio/{context,synth,sfx,mute}.ts`, `components/layout/Header.tsx` (mute button), settings
+  Steps:
 
 1. Lazy single `AudioContext` created on first user gesture. `synth.beep(freq, ms)`, `ding()`, `thud()`, `pop()`.
 2. `sfx.load(manifestId, names[])` loads `public/assets/<id>/sfx/*.mp3` if present, falls back to synth.
@@ -123,11 +141,16 @@ Steps:
 
 ## T4.8 Registry from manifests, sitemap and SEO from manifests
 
-Status: todo
-Depends on: T4.3
-Goal: adding a game = adding a folder.
-Files: `platform/registry.ts`, `games/index.ts` (becomes a thin re-export), `scripts/generate-sitemap.mjs`, `utils/seoKeywords.ts` (`GAME_SEO_META` moves into manifests), `hooks/useGameCatalog.ts`
-Steps:
+Status: done (2026-10-08).
+
+- **Manifests.** Every game has a manifest. Scoring limits are the backend defaults, to be tuned in T6.6.
+- **Registry.** `platform/registry.ts` globs manifests eagerly and code lazily. `games/index.ts` is a thin `GameMeta` view (`allGames` and `games`), with no array.
+- **Inactive games.** A direct link shows a "taking a break" page.
+- **SEO.** `GAME_SEO_META` and the fake ESRB `contentRating` are gone. `scripts/export-manifests.mts` (tsx, zod-validated) writes `public/game-meta.json`, and the sitemap and static pages use only `active` games from it.
+  Depends on: T4.3
+  Goal: adding a game = adding a folder.
+  Files: `platform/registry.ts`, `games/index.ts` (becomes a thin re-export), `scripts/generate-sitemap.mjs`, `utils/seoKeywords.ts` (`GAME_SEO_META` moves into manifests), `hooks/useGameCatalog.ts`
+  Steps:
 
 1. `registry.ts`: `import.meta.glob("../games/*/manifest.ts", { eager: true })` → `games: GameManifest[]` sorted by `updatedAt`; `loadGame(id)` → `import(\`../games/${id}/index.ts\`)`.
 2. `status` filtering: `active` shown to all; `beta` to beta testers; `inactive` hidden everywhere (but routes still resolve for direct links with an "This game is taking a break" page).
@@ -137,11 +160,19 @@ Steps:
 
 ## T4.9 Developer docs for the SDK
 
-Status: todo
-Depends on: T4.8
-Goal: Claude can add a game from the docs alone.
-Files: `apps/player-web/src/platform/README.md`, `apps/player-web/CLAUDE.md`, `docs/plan/templates/new-game-checklist.md`
-Steps:
+Status: done (2026-10-08).
+
+- **Docs.** `src/platform/README.md` and `docs/plan/templates/new-game-checklist.md`.
+- **Validation run.** A separate agent built `src/games/stack-tower/` (`beta`, by Harvey) from only those two documents. It has pure `useCases/overlap.ts` with 9 tests and a placeholder cover. Checks passed, and the full play cycle worked in the Browser pane.
+- **Fixes from its 16 documentation findings.**
+  - The HUD now uses `setScrollFactor(0)`.
+  - `zoneIndex` and `sideOf` are exported from `platform/input`.
+  - `tapZones` taps on Space and Enter.
+  - The README gained: the asset path, colour conversion, `update`/`runEnded`, the restart object rules, mount options, HUD placement, audio fallbacks, a manifest field table, scoring guidance and per-game check commands.
+    Depends on: T4.8
+    Goal: Claude can add a game from the docs alone.
+    Files: `apps/player-web/src/platform/README.md`, `apps/player-web/CLAUDE.md`, `docs/plan/templates/new-game-checklist.md`
+    Steps:
 
 1. README: the contract, a 60-line example game ("Stack Tower" skeleton from Phase 11 ideas), the host API, HUD/input/audio kits, how `endRun` and restart work, the manifest fields, how covers and SFX are discovered.
 2. New-game checklist: folder, manifest, cover via Phase 8 pipeline, tests for use-cases, Browser pane smoke test, status `beta` first.
