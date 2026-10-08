@@ -24,19 +24,17 @@ Check UI in the Browser pane with the `player-web` launch config at a 375×812 v
 | `games/`      | One folder per game plus `index.ts`, the registry                                                                                                                                          |
 | `game/`       | Phaser-agnostic shared helpers: `ui/dpad.ts`, `ui/onScreenKeyboard.ts`, `words/` dictionary                                                                                                |
 | `utils/`      | Analytics, `gameEvents.ts` (game → React events), `playHistory.ts`, `errorCode.ts`, share links, SEO keywords                                                                              |
-| `platform/`   | Arrives in Phase 4: the Game SDK (host, mount, base scene, HUD/input/audio kits)                                                                                                           |
+| `platform/`   | The Game SDK: `sdk.ts` (contract), `registry.ts`, `host.ts`, `mount.ts`, `scenes/`, `hud/`, `input/`, `audio/`, `storage/`. See its README                                                 |
 | `config/`     | `env.ts` (API origin), `brand.json` + `brand.ts` (every brand string, colour, path)                                                                                                        |
 
 Routes are defined in `src/App.tsx`.
 
-## How a game is registered today
+## Games and the SDK
 
-1. Folder `src/games/<id>/` with `index.ts` exporting `mount(container) → { destroy() }`.
-2. A `manifest.ts` (`defineGame({...})`); the registry in `src/platform/registry.ts` finds it automatically.
-3. Assets in `public/assets/<id>/`.
-4. The scene calls `dispatchGameOver({ gameId, score })` from `utils/gameEvents.ts`; `PlayGame.tsx` shows `GameOver.tsx`, which posts the score.
+A game is a folder `src/games/<id>/` with a `manifest.ts` (`defineGame`) and an `index.ts` exporting `create(host, el)`. The registry (`src/platform/registry.ts`) picks it up; there is nothing to register by hand. **Read `src/platform/README.md` before touching a game**, and follow `docs/plan/templates/new-game-checklist.md` for a new one.
 
-Phase 4 replaces this with `manifest.ts` + `create(host, el)`. New games after Phase 4 must use the SDK.
+- **On the SDK.** Reflex Ring (host and mount) and Snapadile (also `BasePlatformScene` and the HUD).
+- **Legacy games.** All the others still export `mount(container)` and report through `utils/gameEvents.ts`. `PlayGame.tsx` supports both paths until Phase 5 migrates the rest (T5.13 removes the legacy path).
 
 ## Environment variables
 
