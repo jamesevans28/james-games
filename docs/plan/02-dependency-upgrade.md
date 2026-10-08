@@ -50,7 +50,7 @@ Steps:
 Done when: `npm run typecheck` exits 0 everywhere.
 
 ## T2.3 Vite 8, plugin-react 6, vite-plugin-pwa 2, Tailwind 4.3
-Status: todo
+Status: done (2026-10-08). Vite 8.3, @vitejs/plugin-react 6.1, vite-plugin-pwa 2.0, Tailwind 4.3 (+ @tailwindcss/vite) in both web apps; npm dedupe so every plugin shares Vite 8. Player web: vite/config.dev.mjs + config.prod.mjs merged into vite.config.ts (command-based: API-URL guard on build only, service worker in dev only with VITE_SW_DEV=1); Phaser chunk via Rolldown output.codeSplitting.groups (manualChunks object form is gone); default Oxc minifier replaces terser (JS total 2.02 MB vs 2.03 MB before). Admin: @tailwindcss/postcss + postcss.config.js replaced by @tailwindcss/vite; tracked tsc output vite.config.js/.d.ts deleted (Vite loads .js before .ts, so edits to the .ts would have been ignored); build now typechecks with --noEmit. Project references removed from both tsconfigs. Verified: typecheck, both builds, Tailwind CSS generated, sw.js has the T1.5 API rules, dev server runs a game with only expected API-offline errors, and dev registers no service worker.
 Depends on: T2.2
 Goal: the two web apps build on the latest toolchain.
 Files: `apps/player-web/vite/*.mjs`, `apps/player-web/postcss.config.js`, `apps/admin-web/vite.config.ts`, `apps/admin-web/postcss.config.js`, `apps/*/index.css`

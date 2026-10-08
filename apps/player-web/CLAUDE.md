@@ -5,7 +5,7 @@ The product: a React 19 + Vite + Tailwind 4 PWA that hosts Phaser mini-games. Re
 ## Commands (from the repo root)
 
 ```bash
-npm run dev          # http://localhost:3000 (vite/config.dev.mjs)
+npm run dev          # http://localhost:3000 (vite.config.ts)
 npm run web:build    # regenerates SEO files, then vite build → apps/player-web/dist
 npm run typecheck    # tsc --noEmit for every workspace
 ```
@@ -54,5 +54,5 @@ CI sets the same names from GitHub repo variables plus `VITE_BUILD_NUMBER`.
 
 - Brand strings still say flingo in many files. Phase 3 moves them into `src/config/brand.ts`; until then don't add new ones.
 - The Phaser version is 3.90 until Phase 2 (T2.7) moves to Phaser 4.
-- `vite/config.prod.mjs` holds the PWA manifest and service-worker caching rules. Never cache an authenticated endpoint (see T1.5).
+- `vite.config.ts` holds the PWA manifest and service-worker caching rules (one config for dev and build; set `VITE_SW_DEV=1` to run the service worker in dev). Never cache an authenticated endpoint (see T1.5).
 - Best scores live in localStorage under inconsistent keys until T1.10.

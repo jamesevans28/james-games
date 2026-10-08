@@ -23,6 +23,5 @@
     "verbatimModuleSyntax": true
   },
   "include": ["src"],
-  "exclude": ["src/**/*.test.ts"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "exclude": ["src/**/*.test.ts"]
 }

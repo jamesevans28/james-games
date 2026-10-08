@@ -1,9 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 
-// Simple Vite config for the admin console placeholder.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [tailwindcss(), react()],
   server: {
     port: 3100,
   },
