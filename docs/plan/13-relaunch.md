@@ -6,7 +6,7 @@ Gate: Phases 5, 6, 7 and 8 done; T9.1–T9.3 done; T12.1 done; the new-game chec
 
 ## T13.1 Readiness check
 
-Status: todo
+Status: pre-flight run 2026-10-09 (all code gates green; blocked on Phase 8 art and the manual cloud setup), see docs/relaunch-log.md
 Depends on: the gate above
 Steps: Claude runs the full gate (`npm run lint`, `typecheck`, `test`, `format:check`, all three builds, `generate-seo`), plays every active game once in the Browser pane at 375×812 (run, game over, Play again, mute, pause), checks every screen for "flingo", "Tom" and placeholder copy (`TODO note`), and records the results in `docs/relaunch-log.md`. Anything red blocks T13.2.
 Done when: the log shows all green with the commit hash.
