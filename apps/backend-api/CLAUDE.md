@@ -14,24 +14,24 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 
 ## Structure (`src/`)
 
-- `index.ts` builds the Express app (CORS, JSON, `attachUser`, routes). `lambda.ts` wraps it with `serverless-http` and is the Lambda entry; the handler is `dist/lambda.handler`. `dev-server.ts` runs it locally.
+- `index.ts` builds the Express app (CORS, JSON, `attachUser`, routes). `lambda.ts` wraps it with `serverless-http` and is the Lambda entry; `npm run bundle` makes `bundle/lambda.mjs` and the handler is `lambda.handler`. `dev-server.ts` runs it locally.
 - `routes/` → `controllers/` (HTTP only) → `services/` (rules) → `repos/` (Drizzle queries, one file per area) → Postgres.
 - `middleware/authGuards.ts`: verifies the Firebase ID token from `Authorization: Bearer …` and sets `req.user`. `requireAuth` and `requireAdmin` guard routes. Admin is a boolean on the user row.
 - `config/index.ts`: env. `data/experienceLevels.ts`: the XP curve (seeded into `experience_levels`). `db/`: schema, client, migrate/seed/housekeeping.
 
 ## Route map
 
-| Prefix           | Routes                                                                                                                                                  |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/me`            | GET current user                                                                                                                                        |
-| `/auth/firebase` | register-anonymous, register-username, login-username, me (same as `/me`), link-provider, change-pin, add-email, check-email-verified, admin/reset-pin  |
-| `/users`         | POST screen-name, POST preferences, PATCH settings, GET streak, POST streak/checkin, GET :userId                                                        |
-| `/scores`        | GET :gameId (leaderboard), POST / (submit, auth)                                                                                                        |
-| `/experience`    | GET summary (POST runs returns 410; XP comes from POST /scores)                                                                                         |
-| `/ratings`       | GET /, GET :gameId, POST :gameId                                                                                                                        |
-| `/followers`     | summary, following, followers, activity, ids, notifications, POST status, POST/DELETE :targetUserId                                                     |
-| `/games`         | GET config, GET config/:gameId, GET feed, GET feed/personalized                                                                                         |
-| `/admin`         | users list/get/update, users/:id reset-screen-name/disable/enable, DELETE plays/:playId, games list/get/stats/update (metadata only), metrics/dashboard |
+| Prefix           | Routes                                                                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/me`            | GET current user, PATCH screen-name                                                                                                                                       |
+| `/auth/firebase` | register-anonymous, register-username, login-username, me (same as `/me`), link-provider, change-pin, add-email, check-email-verified, admin/reset-pin                    |
+| `/users`         | GET screen-name/check, POST screen-name, POST preferences, PATCH settings, GET streak, POST streak/checkin, GET :userId                                                   |
+| `/scores`        | GET :gameId (leaderboard), POST / (submit, auth)                                                                                                                          |
+| `/experience`    | GET summary (POST runs returns 410; XP comes from POST /scores)                                                                                                           |
+| `/ratings`       | GET /, GET :gameId, POST :gameId                                                                                                                                          |
+| `/followers`     | summary, following, followers, activity, ids, notifications, POST status, POST/DELETE :targetUserId                                                                       |
+| `/games`         | GET config, GET config/:gameId, GET feed, GET feed/personalized                                                                                                           |
+| `/admin`         | users list/get/update, users/:id reset-screen-name/disable/enable, DELETE plays/:playId, GET screen-names, games list/get/stats/update (metadata only), metrics/dashboard |
 
 ## Data layer
 
@@ -48,7 +48,7 @@ Supabase Postgres (project in ap-southeast-2) through Drizzle ORM (Phase 6). The
 - Route params are typed `string | string[]`: read them as `String(req.params.x)`.
 - Path syntax: no bare `*` or `?` segments (use `/{*splat}` and `{/:optional}`). Preflight is handled by the global `cors()` middleware.
 - Async handlers that throw reach `errorHandler` (src/lib/http.ts). Unknown routes get JSON `404 {"error":"not_found"}`.
-- The Lambda entry (`dist/lambda.js`, serverless-http 4) handles both REST API (v1) and HTTP API (v2) events.
+- The Lambda entry (`bundle/lambda.mjs`, serverless-http 4) handles both REST API (v1) and HTTP API (v2) events.
 
 ## Rules
 
