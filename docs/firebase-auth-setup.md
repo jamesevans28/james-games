@@ -1,6 +1,6 @@
 # Firebase Authentication Setup Guide
 
-This document provides step-by-step instructions for setting up Firebase Authentication for the James Games application.
+How Firebase Authentication is set up for Games4James. The live Firebase project id is `flingo-fun` (a leftover name; it stays, because changing a project id means a new project and a user migration). Steps 1–6 below are the original from-scratch setup; the section straight after this one is what to do now for the games4james.com domain.
 
 ## Overview
 
@@ -14,11 +14,76 @@ The backend remains on AWS Lambda + DynamoDB. Firebase is used only for authenti
 
 ---
 
+## Games4James domain setup (plan T3.5): MANUAL (James)
+
+Goal: the Google and Apple sign-in screens say **Games4James**, and the sign-in redirect goes through `auth.games4james.com` rather than `flingo-fun.firebaseapp.com`. Nothing here needs a secret in the repo.
+
+| Setting | Value |
+|---|---|
+| Firebase project | `flingo-fun` |
+| Site origin | `https://games4james.com` |
+| Custom auth domain | `auth.games4james.com` |
+| OAuth handler URL | `https://auth.games4james.com/__/auth/handler` |
+| App name on consent screen | `Games4James` |
+| App logo | `apps/player-web/public/brand/icon-512.png` (upload the file) |
+| Home page | `https://games4james.com` |
+| Privacy policy | `https://games4james.com/privacy` (placeholder page, live after the next deploy) |
+
+### 1. Authorised domains (2 minutes)
+
+Firebase console → project `flingo-fun` → **Authentication** → **Settings** → **Authorised domains**.
+
+- Add `games4james.com`, and `auth.games4james.com` once step 2 is done.
+- Keep `localhost` (local dev).
+- Remove `flingo.fun` and `www.flingo.fun` if present.
+- Leave `flingo-fun.firebaseapp.com` and `flingo-fun.web.app` until step 2 works end to end, then they can stay (harmless).
+
+### 2. Custom auth domain via Firebase Hosting (15 minutes plus DNS time)
+
+Firebase only serves its sign-in helper pages (`/__/auth/...`) from Hosting, so the custom auth domain is a Hosting custom domain. Hosting is free on the Spark plan, and nothing needs deploying: the `/__/` pages are built in.
+
+1. Firebase console → **Hosting** → **Get started**. Click through the wizard; skip the CLI and deploy steps.
+2. **Add custom domain** → `auth.games4james.com` → don't tick "redirect".
+3. Firebase shows DNS records (a TXT record to verify, then A records or a CNAME). Add them wherever games4james.com's DNS lives (Route 53: Hosted zones → games4james.com → Create record). Wait until Firebase says **Connected**; SSL can take up to a day.
+4. Check: `https://auth.games4james.com/__/auth/handler` loads (a blank or "missing parameters" page is fine; a certificate error is not).
+5. Set `VITE_FIREBASE_AUTH_DOMAIN=auth.games4james.com`:
+   - GitHub → repo → Settings → Secrets and variables → Actions → **Variables** → `VITE_FIREBASE_AUTH_DOMAIN`.
+   - Your local `apps/player-web/.env.local`.
+
+### 3. Google sign-in consent screen (10 minutes)
+
+[Google Cloud console](https://console.cloud.google.com/) → pick project `flingo-fun` → **APIs & Services**.
+
+1. **OAuth consent screen** (or *Google Auth Platform → Branding*): app name `Games4James`, user support email (yours), logo `icon-512.png`, home page `https://games4james.com`, privacy policy `https://games4james.com/privacy`, authorised domain `games4james.com`. Save.
+2. **Credentials** → the OAuth 2.0 client named *Web client (auto created by Google Service)*:
+   - Authorised JavaScript origins: add `https://games4james.com` and `https://auth.games4james.com`.
+   - Authorised redirect URIs: add `https://auth.games4james.com/__/auth/handler`. Keep the existing `flingo-fun.firebaseapp.com` one.
+   - Save.
+
+### 4. Apple sign-in (only if Apple sign-in is turned on)
+
+[Apple Developer](https://developer.apple.com/account/resources/identifiers/list/serviceId) → Identifiers → Services IDs → the Services ID used in Firebase's Apple provider → **Sign In with Apple → Configure**:
+
+- Domains and subdomains: add `auth.games4james.com`.
+- Return URLs: add `https://auth.games4james.com/__/auth/handler`.
+- Save, then Continue → Save.
+
+### 5. Check it (after the next deploy, T3.6)
+
+1. Open `https://games4james.com/login` in a private window → **Continue with Google**.
+2. The Google screen should say "to continue to **Games4James**" (or `auth.games4james.com`), not `flingo-fun.firebaseapp.com`.
+3. Finish sign-in. You should land back on games4james.com, signed in.
+4. Repeat with Apple if enabled.
+
+If sign-in fails with `auth/unauthorized-domain`, step 1 is missing a domain. If it fails with `redirect_uri_mismatch`, step 3.2 is missing the handler URL.
+
+---
+
 ## Step 1: Create Firebase Project
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Click "Add project"
-3. Name it `james-games` (or your preferred name)
+3. Name it (the live project is `flingo-fun`)
 4. Disable Google Analytics (optional, simplifies setup)
 5. Click "Create project"
 
@@ -56,7 +121,7 @@ The backend remains on AWS Lambda + DynamoDB. Firebase is used only for authenti
 
 1. In Firebase Console, click the gear icon → "Project settings"
 2. Scroll down to "Your apps" → Click the web icon `</>`
-3. Register app with nickname: `james-games-web`
+3. Register the web app (any nickname)
 4. Copy the Firebase config object - you'll need this for the frontend
 
 Example config:

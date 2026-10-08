@@ -100,6 +100,12 @@ const sitemapUrls = [
     changefreq: "daily",
     priority: "1.0",
   },
+  {
+    loc: `${domain}/privacy`,
+    lastmod: now,
+    changefreq: "monthly",
+    priority: "0.3",
+  },
   // Games list page
   {
     loc: `${domain}/games-list`,

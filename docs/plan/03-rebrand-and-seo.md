@@ -72,7 +72,7 @@ Steps:
 Done when: `curl -A facebookexternalhit https://games4james.com/games/snapadile` returns the Snapadile static page with its own `og:image`; `sitemap.xml` has 0 flingo URLs; Google Rich Results test passes for the home page and one game page.
 
 ## T3.5 Firebase auth domain, authorised domains, OAuth consent
-Status: todo
+Status: blocked (MANUAL: James runs steps 1–4). Claude's part is done (2026-10-08): `docs/firebase-auth-setup.md` has a "Games4James domain setup" section with every value, and a placeholder `/privacy` page exists (linked from the side drawer and in the sitemap). The privacy page says follower presence is visible to anyone who follows you, because that is true today; T7.x makes it friends-only and must update the page.
 Depends on: T3.1
 Goal: the Google/Apple sign-in screens say Games4James, not flingo-fun.
 MANUAL (James) with Claude preparing the exact values:

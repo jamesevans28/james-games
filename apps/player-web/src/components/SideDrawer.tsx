@@ -363,7 +363,10 @@ export default function SideDrawer({
             )}
 
             <div className="mt-4 text-[10px] text-ink-3 text-center font-medium">
-              Build {buildLabel}
+              <Link to="/privacy" onClick={onClose} className="underline hover:text-ink">
+                Privacy
+              </Link>
+              {" · "}Build {buildLabel}
             </div>
           </div>
         </div>
