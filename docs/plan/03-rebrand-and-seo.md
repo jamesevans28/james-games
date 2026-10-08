@@ -86,7 +86,7 @@ Steps:
 
 ## T3.5 Firebase auth domain, authorised domains, OAuth consent
 
-Status: blocked (MANUAL: James runs steps 1–4). Claude's part is done (2026-10-08): `docs/firebase-auth-setup.md` has a "Games4James domain setup" section with every value, and a placeholder `/privacy` page exists (linked from the side drawer and in the sitemap). The privacy page says follower presence is visible to anyone who follows you, because that is true today; T7.x makes it friends-only and must update the page.
+Status: moved to T13.3 (2026-10-09). These console steps now apply to the new `games4james` Firebase project (T6.0) and are done once, at relaunch. Do not do them on `flingo-fun`. The placeholder `/privacy` page from this task stays.
 Depends on: T3.1
 Goal: the Google/Apple sign-in screens say Games4James, not flingo-fun.
 MANUAL (James) with Claude preparing the exact values:
@@ -100,7 +100,7 @@ MANUAL (James) with Claude preparing the exact values:
 
 ## T3.6 Deploy the rebrand and move Search Console
 
-Status: blocked (needs T3.5 MANUAL steps, James's OK to change repo variables, and a manual deploy run). Done so far (2026-10-08): step 5's header fix is in `deploy.yml`. Only Vite's hashed bundles (files directly in `dist/assets/`) are `immutable`. Game art in `dist/assets/<game>/` gets `max-age=86400`. `sw.js`, `registerSW.js` and `manifest.webmanifest` are `no-cache`, and `index.html` stays `no-store`.
+Status: moved to T13.4 and T13.5 (2026-10-09). The cache-header fix in `deploy.yml` is done; the repo variables, deploy and Search Console happen at relaunch.
 Repo variables on 2026-10-08:
 
 - `CORS_ALLOWED_ORIGINS` still lists the flingo origins. Proposed value: `https://games4james.com,https://admin.games4james.com`. The admin origin is needed by the admin app. Production does not need `localhost`, because local dev uses the local API.

@@ -10,7 +10,7 @@ npm run backend:build   # tsc → apps/backend-api/dist
 npm run typecheck
 ```
 
-Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in values (ask James; never paste them into chat or commits). Local runs talk to the real DynamoDB tables in the AWS account, so treat writes with care.
+Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in values (ask James; never paste them into chat or commits). Local runs talk to the prototype's DynamoDB tables until Phase 6; their data is disposable (full reset, DECISIONS 2026-10-09), but keep the habit of not writing to production from a local shell.
 
 ## Structure (`src/`)
 
@@ -35,7 +35,7 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 
 ## Data layer
 
-DynamoDB tables named `games4james-*` (users, scores, gameratings, gameratings-summary, follows, presence, userGameStats, experience-levels, game-config, usernames). Phase 6 moves everything to Supabase Postgres with Drizzle. **Do not add new DynamoDB tables.**
+DynamoDB tables named `games4james-*` are the prototype's and are deleted at relaunch (T13.6); their data is not migrated. Phase 6 replaces the data layer with Supabase Postgres + Drizzle and deletes the DynamoDB code. **Do not add new DynamoDB tables or new DynamoDB code.**
 
 ## Express 5 notes
 

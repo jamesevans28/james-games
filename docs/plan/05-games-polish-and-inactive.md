@@ -14,13 +14,13 @@ Steps:
 
 1. Create a minimal manifest for each with `status: "inactive"` and a `retireNote` ("Taking a break while we rework it").
 2. Direct links show a friendly "taking a break" page with a link home; they are excluded from sitemap, feed, grid and leaderboard lists.
-3. Existing scores stay in the database (nothing is deleted).
+3. (Full reset: there are no scores to keep.)
 4. Add a `docs/plan/backlog-inactive-games.md` with the review's rework notes per game (Car Crash → swipe-lane runner; Block Breaker → bricks mode inside Paddle Pop; Ready Steady Shoot → Hoop City free-throw bonus with fixed power curve; Fill the Cup + Ho Ho → one "conveyor timing" template with skins).
    Done when: the grid shows 11 games; `/games/car-crash` renders the break page; `npm test` passes.
 
 ## T5.2 Reflex Ring (pilot, finished)
 
-Status: todo
+Status: todo (T4.4 and T4.7 already moved it onto host/mount with kit audio; steps 1's HUD/base-scene part and steps 2–5 remain)
 Depends on: T4.4 (it was the mount pilot), T4.5
 Goal: fully on the SDK, polished.
 Files: `games/reflex-ring/**`
@@ -35,7 +35,7 @@ Steps:
 
 ## T5.3 Snapadile
 
-Status: todo
+Status: todo (T4.5 already moved it onto `BasePlatformScene` and the HUD; the use-cases, countdown and sprite swap remain)
 Depends on: T5.2
 Steps: same migration recipe. Extract `spawnSchedule(elapsedMs)`, `lives`, `scoreFor(hit)` to use-cases with tests. Stop ripple timers on shutdown. Replace the generated rectangle croc/raft with the Phase 8 AI sprites when available (manifest `cover` and `assets` fields point at the new files; until then keep the current ones). Add a 3-2-1 countdown from the HUD kit.
 Done when: as T5.2.
