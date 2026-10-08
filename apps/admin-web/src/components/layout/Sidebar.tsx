@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router";
 import { Users, Gamepad2, LogOut, LayoutDashboard } from "lucide-react";
 import clsx from "clsx";
 import { useAdminAuth } from "../../context/AdminAuthContext";

@@ -1,15 +1,7 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router";
 import HomeFeed from "./pages/home/HomeFeed";
-import GamesList from "./pages/games-list";
-import PlayGame from "./pages/games/PlayGame";
-import LeaderboardPage from "./pages/leaderboard/[gameId]";
-import LoginPage from "./pages/firebase-login";
 import RootLayout from "./components/layout/RootLayout";
-import SettingsScreen from "./pages/settings";
-import AvatarSelect from "./pages/settings/AvatarSelect";
-import FollowersPage from "./pages/followers";
-import ProfilePage from "./pages/profile/[userId]";
-import NotificationsPage from "./pages/notifications";
 import { RequireRegistered } from "./components/RouteGuards";
 import SWUpdatePrompt from "./components/SWUpdatePrompt";
 import InstallPWA from "./components/InstallPWA";
@@ -21,11 +13,24 @@ import { AuthProvider } from "./context/FirebaseAuthProvider";
 import { GameCatalogProvider } from "./context/GameCatalogProvider";
 import PageTransition from "./components/PageTransition";
 
+// The home feed loads with the app so the first screen paints at once; every other
+// page is its own chunk, fetched on first visit (and precached by the service worker).
+const GamesList = lazy(() => import("./pages/games-list"));
+const PlayGame = lazy(() => import("./pages/games/PlayGame"));
+const LeaderboardPage = lazy(() => import("./pages/leaderboard/[gameId]"));
+const LoginPage = lazy(() => import("./pages/firebase-login"));
+const SettingsScreen = lazy(() => import("./pages/settings"));
+const AvatarSelect = lazy(() => import("./pages/settings/AvatarSelect"));
+const FollowersPage = lazy(() => import("./pages/followers"));
+const ProfilePage = lazy(() => import("./pages/profile/[userId]"));
+const NotificationsPage = lazy(() => import("./pages/notifications"));
+
 function AppRoutes() {
   const location = useLocation();
 
   return (
     <PageTransition>
+      <Suspense fallback={null}>
       <Routes location={location}>
         <Route element={<RootLayout />}>
           <Route path="/" element={<HomeFeed />} />
@@ -69,6 +74,7 @@ function AppRoutes() {
           <Route path="/leaderboard/:gameId" element={<LeaderboardPage />} />
         </Route>
       </Routes>
+      </Suspense>
     </PageTransition>
   );
 }

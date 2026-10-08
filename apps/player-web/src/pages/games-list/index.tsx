@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import type { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import Seo from "../../components/Seo";
 import { games, type GameMeta } from "../../games";
 import { fetchRatingSummaries, type RatingSummary } from "../../lib/api";

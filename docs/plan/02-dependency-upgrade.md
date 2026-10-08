@@ -62,7 +62,7 @@ Steps:
 Done when: `npm run web:build` and `npm run admin:build` succeed; `dist/sw.js` exists; the app runs in the Browser pane with no console errors.
 
 ## T2.4 React 19.x latest and React Router 8
-Status: todo
+Status: done (2026-10-08). React 19.3 (+ types) and react-router 8.4 in both web apps; react-router-dom removed and all 24 files import from "react-router" (no API changes needed for BrowserRouter, Routes, Route, Link, NavLink, Navigate, Outlet and the hooks). Every page except the home feed is now React.lazy behind one Suspense: main chunk 545 KB to 326 KB (Firebase auth split into its own 122 KB chunk). Note: react-router 8 declares node >=22.22 for tooling; CI uses 24, local 22.14 only warns. Verified: typecheck, both builds, and all 9 routes render in the Browser pane with no JS errors (settings/followers/notifications redirect guests to /login as designed).
 Depends on: T2.3
 Goal: latest React and the single `react-router` package.
 Files: `apps/player-web/src/App.tsx`, every file importing `react-router-dom`, `apps/admin-web/src/**`

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "../context/FirebaseAuthProvider";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { OfflineBanner } from "../components/OfflineBanner";

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { trackShare } from "../../utils/analytics";
 import { type GameMeta } from "../../games";

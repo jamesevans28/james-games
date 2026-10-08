@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, type ReactElement } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router";
 
 type Props = {
   children: ReactElement;

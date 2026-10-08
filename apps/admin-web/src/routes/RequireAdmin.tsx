@@ -1,4 +1,4 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import { LoadingScreen } from "../components/common/LoadingScreen";
 

@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import Seo from "../../components/Seo";
 import GameTile from "../../components/feed/GameTile";
 import { games } from "../../games";
