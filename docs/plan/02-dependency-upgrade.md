@@ -73,7 +73,7 @@ Steps:
 Done when: builds pass; every route in the app renders in the Browser pane (home, games-list, login, a game, leaderboard, profile, settings, followers, notifications).
 
 ## T2.5 Firebase 13 (web) and firebase-admin 14
-Status: todo
+Status: done (2026-10-08) for code; two flows need a manual check. firebase 13.0.0 (player-web, admin-web) and firebase-admin 14.5.0 (backend; requires Node >=22, fine for the nodejs22.x Lambda). No code changes were needed. Verified live: the browser app signs in anonymously and gets an ID token with SDK 13; through the local API, Admin 14 accepts a real anonymous token on signed-in read-only routes (200) and rejects a bad one (401) - using a throwaway anonymous Firebase user that the script then deleted (a first attempt failed at cleanup and left one anonymous user in Firebase Auth, identical to any first-time visitor). MANUAL (James): try username + PIN sign-in and Google sign-in once against `npm run server` (PIN creates a real production account; Google needs your account), or after the next deploy.
 Depends on: T2.4
 Goal: latest Firebase SDKs.
 Files: `apps/player-web/src/lib/firebase.ts`, `context/FirebaseAuthProvider.tsx`, `apps/admin-web/src/lib/firebase.ts`, `apps/backend-api/src/services/firebaseAuthService.ts`, `middleware/authGuards.ts`
