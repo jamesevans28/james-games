@@ -219,8 +219,8 @@ export default class ReflexRingGame extends BasePlatformScene {
 
   private lose(): void {
     if (this.activePowerup) this.expirePowerup();
-    this.cameras.main.shake(250, 0.012);
-    this.cameras.main.flash(120, 255, 90, 78);
+    this.shakeCamera(250, 0.012);
+    this.flashCamera(120, 255, 90, 78);
     this.endRun(this.score);
   }
 

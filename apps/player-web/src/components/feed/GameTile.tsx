@@ -41,8 +41,8 @@ export default function GameTile({ game, badge, eager = false }: GameTileProps) 
           {game.title}
         </h3>
         <p className="text-sm text-ink-2 truncate">by {makersLine(game.makers ?? brand.makers)}</p>
-        <p className="text-sm font-bold text-brand truncate">
-          {best > 0 ? `Your best: ${best.toLocaleString()}` : "Not played yet"}
+        <p className={`text-sm font-bold truncate ${best > 0 ? "text-brand" : "text-ink-3"}`}>
+          {best > 0 ? `Your best: ${best.toLocaleString()}` : "New to you"}
         </p>
       </div>
     </Link>

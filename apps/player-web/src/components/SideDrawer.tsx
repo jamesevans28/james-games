@@ -58,8 +58,8 @@ export default function SideDrawer({
 
       <div
         ref={panelRef}
-        className={`fixed top-0 bottom-0 right-0 w-80 max-w-[85vw] bg-gradient-to-b from-paper via-card to-paper-2 shadow-2xl border-l border-line transition-transform ${
-          open ? "translate-x-0" : "translate-x-full"
+        className={`fixed top-0 bottom-0 right-0 w-80 max-w-[85vw] bg-gradient-to-b from-paper via-card to-paper-2 shadow-2xl border-l border-line transition-[transform,visibility] ${
+          open ? "visible translate-x-0" : "invisible translate-x-full"
         }`}
         role="dialog"
         aria-modal="true"

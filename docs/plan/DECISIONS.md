@@ -46,3 +46,9 @@ Cloudflare Web Analytics, not GA4. It is free and cookieless and collects no per
 - PIN sign-in is throttled in Postgres (`auth_attempts`): 5 failures per username and 20 per hashed IP in 15 minutes, and 5 wrong current PINs per account on change-pin; then 429 with Retry-After. IPs are stored only as SHA-256 hashes, and attempts older than a day are deleted daily. Unknown usernames get the same message and a dummy bcrypt check, so neither the message nor the timing gives away whether a username exists.
 - Express `trust proxy` stays off: on Lambda, serverless-http takes `req.ip` from API Gateway's `sourceIp`, which the client can't forge. Revisit if CloudFront ever sits in front of the API.
 - `DELETE /me` removes the user and the Firebase account. Plays are kept anonymised (`user_id` null), but best scores, stats, friends, stickers and ratings go with the account, so a deleted player disappears from leaderboards. This supersedes the plan's "Deleted player" wording, because removing them is the more private choice.
+
+## 2026-10-09: Contrast and overlays (T7.11, T7.12)
+
+- The UI `--color-brand` is a deeper tomato (`#d23a2e`) so white text on buttons and red text on paper pass 4.5:1. The crayon `--color-tomato` stays `#ff5a4e` for art, canvas and logos. In dark mode the brand stays bright and button text is dark.
+- One overlay at a time (`lib/overlays.ts`): the update prompt, then the install hints. Install hints wait for the 2nd visit, never show on game pages, and stay away for 14 days after "Not now". "Later" on the update prompt lasts the session, because hiding updates for 14 days would strand players on old builds.
+- No sign-up nag banners. The only nudge is the small "Save your progress" link on game over, at most once a day (T7.3).

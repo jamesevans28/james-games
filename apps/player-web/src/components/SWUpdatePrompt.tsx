@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
+import { useOverlaySlot } from "../lib/overlays";
 
 export default function SWUpdatePrompt() {
   const [show, setShow] = useState(false);
@@ -49,7 +50,12 @@ export default function SWUpdatePrompt() {
     setShow(true);
   }, [shouldSuppress, promptedKey]);
 
-  const { needRefresh, updateServiceWorker } = useRegisterSW({
+  // needRefresh is a [value, setter] pair; testing the pair itself was always true,
+  // which showed "New version available" on every first visit (fixed in T7.11).
+  const {
+    needRefresh: [needRefresh],
+    updateServiceWorker,
+  } = useRegisterSW({
     immediate: true,
     onRegisteredSW(_swUrl, registration) {
       // Don't show just because `waiting` exists at startup; that leads to
@@ -114,24 +120,21 @@ export default function SWUpdatePrompt() {
     }, 8000);
 
     try {
-      const maybePromise = updateServiceWorker?.(true);
-      if (maybePromise && typeof maybePromise.then === "function") {
-        void maybePromise
-          .then(() => {
-            if (updatingRef.current) {
-              window.clearTimeout(fallbackReload);
-              window.location.reload();
-            }
-          })
-          .catch((err: unknown) => {
-            console.error("SW update failed", err);
+      void updateServiceWorker(true)
+        .then(() => {
+          if (updatingRef.current) {
             window.clearTimeout(fallbackReload);
-            updatingRef.current = false;
-            setIsUpdating(false);
-            sessionStorage.removeItem("pwa:updateReloading");
-            setShow(false);
-          });
-      }
+            window.location.reload();
+          }
+        })
+        .catch((err: unknown) => {
+          console.error("SW update failed", err);
+          window.clearTimeout(fallbackReload);
+          updatingRef.current = false;
+          setIsUpdating(false);
+          sessionStorage.removeItem("pwa:updateReloading");
+          setShow(false);
+        });
     } catch (err) {
       console.error("SW update invocation error", err);
       window.clearTimeout(fallbackReload);
@@ -141,20 +144,25 @@ export default function SWUpdatePrompt() {
     }
   };
 
-  if (!show && !isUpdating) return null;
+  // The update prompt outranks every other overlay (T7.11).
+  const slot = useOverlaySlot("update", show);
+  if (!slot && !isUpdating) return null;
 
   return (
     <>
-      {show && (
+      {slot && (
         <div className="fixed inset-x-0 bottom-3 mx-auto w-[92%] max-w-md rounded-xl bg-card/95 backdrop-blur px-4 py-3 shadow-card-hover border border-line text-sm z-50">
           <div className="flex items-center justify-between gap-3">
             <span className="text-ink">New version available</span>
             <div className="flex gap-2">
-              <button className="px-3 py-1.5 rounded-md bg-paper-2 text-ink" onClick={closeUpdate}>
+              <button
+                className="min-h-11 rounded-full bg-paper-2 px-4 text-ink"
+                onClick={closeUpdate}
+              >
                 Later
               </button>
               <button
-                className="px-3 py-1.5 rounded-md bg-brand text-on-brand font-bold"
+                className="min-h-11 rounded-full bg-brand px-4 font-bold text-on-brand"
                 onClick={reloadToUpdate}
               >
                 Reload

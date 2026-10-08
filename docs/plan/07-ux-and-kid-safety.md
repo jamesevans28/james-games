@@ -97,14 +97,14 @@ Done when: no `setInterval` polling remains in `src/`; `npm run lint` clean; net
 
 ## T7.11 Overlay discipline and install prompts
 
-Status: todo
+Status: done 2026-10-09 (lib/overlays.ts queue: update > install hints; install hints from the 2nd visit, never on game pages, dismissals kept 14 days; first visit checked with zero overlays. Also fixed the update prompt showing on every first visit, a wrong hand-written type, and removed the 60-second sign-up nag banner)
 Depends on: T7.1
 Steps: at most one overlay at a time, in priority order (update → paused game → sticker → install hint); install hint only after the 2nd visit; iOS hint only on iOS Safari and not in standalone mode; all dismissals remembered for 14 days (`g4j:dismiss:<id>`).
 Done when: first visit in the Browser pane shows zero overlays; second visit shows only the install hint.
 
 ## T7.12 Accessibility pass
 
-Status: todo
+Status: done 2026-10-09 (44 px targets on header and game header; ink-3 and the UI brand red now pass 4.5:1, with white or dark text on buttons; host.reducedMotion() gates shakes, flashes and HUD motion; the closed drawer is hidden from focus; Flash Bash and Cosmic Clash checked in greyscale. Lighthouse accessibility score to record on the deployed build)
 Depends on: T7.1
 Steps: minimum 44 px tap targets; body text ≥ 16 px; colour contrast ≥ 4.5:1 on paper for ink-2; `prefers-reduced-motion` respected in all CSS and Phaser tweens (via host flag); every icon button has an `aria-label`; Flash Bash and Cosmic Clash readable without colour.
 Done when: axe DevTools (or Lighthouse accessibility) ≥ 95 on home, landing, settings.

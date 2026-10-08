@@ -22,7 +22,7 @@ export default function Header() {
           <Link
             to="/"
             onClick={() => setDrawerOpen(false)}
-            className="flex items-center gap-2.5 hover:opacity-90 focus:outline-none transition-opacity group"
+            className="flex min-h-11 items-center gap-2.5 hover:opacity-90 focus:outline-none transition-opacity group"
           >
             <img src={brand.logoMark} alt="" className="w-10 h-10 group-hover:animate-wiggle" />
             <span className="flex flex-col items-start leading-none">
@@ -71,11 +71,11 @@ export default function Header() {
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="w-10 h-10 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-brand/50 flex items-center justify-center bg-paper-2 hover:bg-line transition-colors"
+            className="w-11 h-11 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-brand/50 flex items-center justify-center bg-paper-2 hover:bg-line transition-colors"
             aria-label="Account"
           >
             {isAuthenticated ? (
-              <ProfileAvatar user={user} size={40} borderWidth={2.5} />
+              <ProfileAvatar user={user} size={44} borderWidth={2.5} />
             ) : (
               <svg
                 width="20"

@@ -7,7 +7,6 @@ import SWUpdatePrompt from "./components/SWUpdatePrompt";
 import InstallPWA from "./components/InstallPWA";
 import IOSInstallHint from "./components/IOSInstallHint";
 import SplashScreen from "./components/SplashScreen";
-import AccountUpgradeBanner from "./components/AccountUpgradeBanner";
 import { AuthProvider } from "./context/FirebaseAuthProvider";
 import { GameCatalogProvider } from "./context/GameCatalogProvider";
 import PageTransition from "./components/PageTransition";
@@ -92,7 +91,6 @@ export default function App() {
           <SWUpdatePrompt />
           <InstallPWA />
           <IOSInstallHint />
-          <AccountUpgradeBanner />
           <AppRoutes />
         </BrowserRouter>
       </GameCatalogProvider>

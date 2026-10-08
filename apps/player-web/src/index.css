@@ -23,7 +23,7 @@
   /* Ink (text) */
   --color-ink: #2b2118;
   --color-ink-2: #5c4a3a;
-  --color-ink-3: #8c7866;
+  --color-ink-3: #75624f; /* 5.5:1 on paper (T7.12) */
   --color-edge: #2b2118; /* sticker outlines and hard shadows */
 
   /* Crayon box */
@@ -34,7 +34,9 @@
   --color-grape: #8e6cef;
 
   /* Roles */
-  --color-brand: #ff5a4e;
+  /* A deeper tomato for UI text and buttons: white on it 4.8:1, it on paper 4.5:1 (T7.12).
+     The crayon --color-tomato stays bright for art and the canvas. */
+  --color-brand: #d23a2e;
   --color-accent: #ffc93c;
   --color-on-brand: #ffffff;
   --color-on-accent: #2b2118;
@@ -75,6 +77,7 @@
     --color-sky: #5cb8f7;
     --color-grape: #a185f3;
     --color-brand: #ff6a5f;
+    --color-on-brand: #1f1a15; /* dark text on the bright tomato: 6.2:1 */
     --color-accent: #ffd25a;
   }
 }
