@@ -40,10 +40,16 @@ Status: done (2026-10-09).
 
 ## T5.3 Snapadile
 
-Status: todo (T4.5 already moved it onto `BasePlatformScene` and the HUD; the use-cases, countdown and sprite swap remain)
-Depends on: T5.2
-Steps: same migration recipe. Extract `spawnSchedule(elapsedMs)`, `lives`, `scoreFor(hit)` to use-cases with tests. Stop ripple timers on shutdown. Replace the generated rectangle croc/raft with the Phase 8 AI sprites when available (manifest `cover` and `assets` fields point at the new files; until then keep the current ones). Add a 3-2-1 countdown from the HUD kit.
-Done when: as T5.2.
+Status: done (2026-10-09).
+
+- **Rules.** `useCases/rules.ts` has `spawnSchedule(elapsedMs)`, `scoreFor`, `loseLife`, `MAX_LIVES` and `pickSpawn` on `host.rng`, with 6 tests. Difficulty is now a deterministic function of play time; the old random concurrency bump is gone. One self-rescheduling spawn timer replaces the two `callbackScope` timers, so the lint disable is gone.
+- **Countdown.** A 3-2-1 countdown starts each run. While building it I fixed `Hud.countdown`, which resolved instantly during scene create; it now cancels on shutdown.
+- **Bug found.** Spawn points were duplicated on every restart; fixed.
+- **Not done.** The sprite swap waits for Phase 8.
+- **Smoke test:** countdown, then crocs, game over, and Play again with a fresh countdown in the same game.
+  Depends on: T5.2
+  Steps: same migration recipe. Extract `spawnSchedule(elapsedMs)`, `lives`, `scoreFor(hit)` to use-cases with tests. Stop ripple timers on shutdown. Replace the generated rectangle croc/raft with the Phase 8 AI sprites when available (manifest `cover` and `assets` fields point at the new files; until then keep the current ones). Add a 3-2-1 countdown from the HUD kit.
+  Done when: as T5.2.
 
 ## T5.4 Blocker
 

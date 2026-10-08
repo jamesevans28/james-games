@@ -128,13 +128,19 @@ export class Hud {
     });
   }
 
-  /** "3, 2, 1, Go!" in the middle of the screen; resolves when it's done. */
+  /**
+   * "3, 2, 1, Go!" in the middle of the screen. Resolves when it's done, or early if
+   * the scene shuts down, so check your own run state before acting on it.
+   */
   countdown(from = 3): Promise<void> {
     const { width, height } = this.scene.scale;
     const words = [...Array.from({ length: from }, (_, i) => String(from - i)), "Go!"];
     return new Promise((resolve) => {
+      // Stop (and resolve) if the scene shuts down mid-count, e.g. on Play again.
+      let cancelled = false;
+      this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => (cancelled = true));
       const show = (i: number) => {
-        if (i >= words.length || !this.scene.sys.isActive()) return resolve();
+        if (i >= words.length || cancelled) return resolve();
         const t = this.text(width / 2, height / 2, words[i] ?? "", 96, this.host.colors.sun)
           .setOrigin(0.5)
           .setScale(0.4);
