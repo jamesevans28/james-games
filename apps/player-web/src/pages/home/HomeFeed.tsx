@@ -87,7 +87,8 @@ export default function HomeFeed() {
     const items: FeedGame[] = [];
     for (let i = 0; i < displayCount; i++) {
       const index = (i + cycleOffset) % feedGames.length;
-      items.push(feedGames[index]);
+      const game = feedGames[index];
+      if (game) items.push(game);
     }
     return items;
   }, [feedGames, displayCount, cycleOffset]);
@@ -97,7 +98,7 @@ export default function HomeFeed() {
     const observer = new IntersectionObserver(
       (entries) => {
         const target = entries[0];
-        if (target.isIntersecting && feedGames.length > 0) {
+        if (target?.isIntersecting && feedGames.length > 0) {
           setDisplayCount((prev) => prev + LOAD_MORE_COUNT);
         }
       },

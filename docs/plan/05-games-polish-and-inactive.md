@@ -187,9 +187,15 @@ Status: done (2026-10-09).
 
 ## T5.13 Retire the legacy event bus
 
-Status: todo
-Depends on: T5.12
-Goal: no game uses `utils/gameEvents.ts`; the host is the only channel.
-Steps: delete `utils/gameEvents.ts` and the legacy dispatch in the host; remove the ESLint disables added in T4.1; `GameLanding.tsx` listens to the catalog/query invalidation instead of a window event.
-Also (deferred from T2.2): enable `"noUncheckedIndexedAccess": true` in apps/player-web/tsconfig.json and fix the remaining errors (102 at T2.2 time, 93 of them in game code that Phase 5 rewrites).
-Done when: player-web typechecks with noUncheckedIndexedAccess on; `git grep gameEvents apps` is empty; all 11 active games pass the smoke test; `npm run lint` is clean with no file-level disables in `src/games`.
+Status: done (2026-10-09).
+
+- **Event bus gone.** `utils/gameEvents.ts` and the `utils/bestScore.ts` shim are deleted, along with the legacy mount path in `PlayGame`, the legacy types in the registry, and `GameLanding`'s window listener (it now reloads its leaderboard from a `refreshKey` prop until T7.10).
+- **Inactive games.** Their old code moved to `docs/archive/games/` (not compiled or linted); only their manifests stay, for the break page.
+- **Stricter checks.** `noUncheckedIndexedAccess` is on in player-web; the 24 remaining errors were fixed with guards, not non-null assertions.
+- **Lint.** No file-level disables remain in `src/games`.
+- **Smoke test.** All 11 active games plus Stack Tower mount; a full run, score dialog and Play again went through the new play page.
+  Depends on: T5.12
+  Goal: no game uses `utils/gameEvents.ts`; the host is the only channel.
+  Steps: delete `utils/gameEvents.ts` and the legacy dispatch in the host; remove the ESLint disables added in T4.1; `GameLanding.tsx` listens to the catalog/query invalidation instead of a window event.
+  Also (deferred from T2.2): enable `"noUncheckedIndexedAccess": true` in apps/player-web/tsconfig.json and fix the remaining errors (102 at T2.2 time, 93 of them in game code that Phase 5 rewrites).
+  Done when: player-web typechecks with noUncheckedIndexedAccess on; `git grep gameEvents apps` is empty; all 11 active games pass the smoke test; `npm run lint` is clean with no file-level disables in `src/games`.

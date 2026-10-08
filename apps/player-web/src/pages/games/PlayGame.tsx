@@ -1,23 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { allGames, isSdkModule } from "../../games";
+import { allGames } from "../../games";
 import { createHost } from "../../platform/host";
 import { onMutedChange } from "../../platform/audio";
 import type { GameInstance } from "../../platform/sdk";
 import GameHeader from "./GameHeader";
-import { trackGameStart } from "../../utils/analytics";
 // import NameDialog from "../../components/NameDialog";
 import Seo from "../../components/Seo";
 import GameLanding from "./GameLanding";
 import GameOver from "./GameOver";
-import { onGameOver, dispatchGameStart } from "../../utils/gameEvents";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import RatingPromptModal from "../../components/RatingPromptModal";
 import { fetchRatingSummary, submitRating, type RatingSummary } from "../../lib/api";
 import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { recordGamePlayed } from "../../utils/playHistory";
-import { getBest } from "../../utils/bestScore";
+import { getBest } from "../../platform/storage/bestScore";
 import {
   buildGameJsonLd,
   getGameSeoDescription,
@@ -50,9 +48,8 @@ export default function PlayGame() {
   // SDK games (T4.4): the running instance, so "Play again" restarts instead of remounting.
   const instanceRef = useRef<GameInstance | null>(null);
   const [paused, setPaused] = useState(false);
-  const [sdkGame, setSdkGame] = useState(false);
-  // Both paths record the finished run here: SDK games through the host, legacy
-  // games through the window event. An effect further down reacts with current state.
+  const [runsFinished, setRunsFinished] = useState(0);
+  // The host records the finished run here; an effect further down reacts with current state.
   const [finishedRun, setFinishedRun] = useState<{ score: number; durationMs?: number } | null>(
     null,
   );
@@ -152,26 +149,16 @@ export default function PlayGame() {
         }
         destroyRef.current = null;
       }
-      if (isSdkModule(mod)) {
-        const host = createHost(mod.manifest, {
-          onGameOver: ({ score, durationMs }) => setFinishedRun({ score, durationMs }),
-        });
-        const instance = mod.create(host, containerRef.current);
-        instanceRef.current = instance;
-        setSdkGame(true);
-        destroyRef.current = () => {
-          instance.destroy();
-          instanceRef.current = null;
-        };
-        instance.start();
-      } else {
-        setSdkGame(false);
-        const { destroy } = mod.mount(containerRef.current);
-        destroyRef.current = destroy;
-        // Legacy games: start the window-event timer (the host measures SDK games).
-        dispatchGameStart(meta.id);
-        trackGameStart(meta.id, meta.title);
-      }
+      const host = createHost(mod.manifest, {
+        onGameOver: ({ score, durationMs }) => setFinishedRun({ score, durationMs }),
+      });
+      const instance = mod.create(host, containerRef.current);
+      instanceRef.current = instance;
+      destroyRef.current = () => {
+        instance.destroy();
+        instanceRef.current = null;
+      };
+      instance.start();
       // Record this game as recently played for feed algorithm
       recordGamePlayed(meta.id);
     } catch (e) {
@@ -309,17 +296,9 @@ export default function PlayGame() {
   };
 
   useEffect(() => {
-    if (!meta) return;
-    // Legacy games (TODO T5.13): game over arrives on the window event bus.
-    const off = onGameOver((d) => {
-      if (d.gameId === meta.id) setFinishedRun({ score: d.score, durationMs: d.durationMs });
-    });
-    return () => off?.();
-  }, [meta]);
-
-  useEffect(() => {
     if (!meta || !finishedRun) return;
     setFinishedRun(null);
+    setRunsFinished((n) => n + 1);
     // Keep the game mounted so it's visible in the background
     setLastScore(finishedRun.score);
     setLastDurationMs(finishedRun.durationMs);
@@ -420,7 +399,7 @@ export default function PlayGame() {
       <GameHeader
         title={meta?.title ?? "Unknown Game"}
         leaderboardTo={meta ? `/leaderboard/${meta.id}` : undefined}
-        showMute={sdkGame}
+        showMute={playing}
         onBack={() => {
           if (playing) {
             setShowScore(false);
@@ -449,7 +428,7 @@ export default function PlayGame() {
       )}
       {meta && meta.status !== "inactive" && !error && (
         <div className="landing-panel" data-state={landingState} aria-hidden={playing}>
-          <GameLanding meta={meta} onPlay={() => setPlaying(true)} />
+          <GameLanding meta={meta} onPlay={() => setPlaying(true)} refreshKey={runsFinished} />
         </div>
       )}
 

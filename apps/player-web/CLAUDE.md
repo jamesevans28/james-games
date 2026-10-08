@@ -23,7 +23,7 @@ Check UI in the Browser pane with the `player-web` launch config at a 375×812 v
 | `lib/`        | `api.ts` (backend client, bearer token), `firebase.ts` (SDK init)                                                                                                                          |
 | `games/`      | One folder per game plus `index.ts`, the registry                                                                                                                                          |
 | `game/`       | Phaser-agnostic shared helpers: `ui/dpad.ts`, `ui/onScreenKeyboard.ts`, `words/` dictionary                                                                                                |
-| `utils/`      | Analytics, `gameEvents.ts` (game → React events), `playHistory.ts`, `errorCode.ts`, share links, SEO keywords                                                                              |
+| `utils/`      | Analytics, `playHistory.ts`, `errorCode.ts`, share links, SEO keywords                                                                                                                     |
 | `platform/`   | The Game SDK: `sdk.ts` (contract), `registry.ts`, `host.ts`, `mount.ts`, `scenes/`, `hud/`, `input/`, `audio/`, `storage/`. See its README                                                 |
 | `config/`     | `env.ts` (API origin), `brand.json` + `brand.ts` (every brand string, colour, path)                                                                                                        |
 
@@ -33,8 +33,7 @@ Routes are defined in `src/App.tsx`.
 
 A game is a folder `src/games/<id>/` with a `manifest.ts` (`defineGame`) and an `index.ts` exporting `create(host, el)`. The registry (`src/platform/registry.ts`) picks it up; there is nothing to register by hand. **Read `src/platform/README.md` before touching a game**, and follow `docs/plan/templates/new-game-checklist.md` for a new one.
 
-- **On the SDK.** Reflex Ring (host and mount) and Snapadile (also `BasePlatformScene` and the HUD).
-- **Legacy games.** All the others still export `mount(container)` and report through `utils/gameEvents.ts`. `PlayGame.tsx` supports both paths until Phase 5 migrates the rest (T5.13 removes the legacy path).
+- Every active game is on the SDK (Phase 5). The five inactive games keep only their manifests; their old code is archived in `docs/archive/games/` and is not compiled.
 
 ## Environment variables
 
@@ -55,5 +54,5 @@ CI sets the same names from GitHub repo variables plus `VITE_BUILD_NUMBER`.
 - localStorage keys use the `g4j:` prefix; see `src/utils/storageKeys.ts`.
 - Phaser 4 is the baseline (4.2.1 since T2.7). No v3 pipeline, FX or mask APIs. Group children are a native Set: use `group.getChildren()` (a fresh array, safe to remove while looping). Fill tint is `setTint(c).setTintMode(Phaser.TintModes.FILL)` and `clearTint()` does not reset the mode. `Math.TAU` is 2π. Migration guide: node_modules/phaser/skills/v3-to-v4-migration/SKILL.md.
 - `vite.config.ts` holds the PWA manifest and service-worker caching rules (one config for dev and build; set `VITE_SW_DEV=1` to run the service worker in dev). Never cache an authenticated endpoint (see T1.5).
-- Best scores are `g4j:best:<gameId>` via `src/utils/bestScore.ts` (legacy keys migrate on read).
+- Best scores are `g4j:best:<gameId>` via `src/platform/storage/bestScore.ts`; games read them with `host.best.get()` and the platform saves them.
 - SDK games (T4.4+) expose the running `Phaser.Game` as `window.__g4jGame` in dev. When the Browser pane is hidden (`document.visibilityState === "hidden"`), Phaser's requestAnimationFrame loop never ticks. To test anyway, run `const l = __g4jGame.loop; l.raf.stop(); l.raf.start(l.step.bind(l), true, 16)` in the page to drive it with timers.

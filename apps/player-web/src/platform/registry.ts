@@ -5,16 +5,11 @@
  */
 import type { GameManifest, GameModule, GameStatus } from "./sdk";
 
-/** Pre-SDK games: mount into a container and report via the window event bus. */
-export type LegacyGameModule = { mount: (container: HTMLElement) => { destroy: () => void } };
-export type AnyGameModule = LegacyGameModule | GameModule;
-
-export const isSdkModule = (mod: AnyGameModule): mod is GameModule => "create" in mod;
-
 const manifestModules = import.meta.glob<{ default: GameManifest }>("../games/*/manifest.ts", {
   eager: true,
 });
-const codeLoaders = import.meta.glob<AnyGameModule>("../games/*/index.ts");
+// Inactive games may have no index.ts (their old code is archived); they never load.
+const codeLoaders = import.meta.glob<GameModule>("../games/*/index.ts");
 
 /** Every game, newest update first, including inactive ones. */
 export const allManifests: readonly GameManifest[] = Object.values(manifestModules)
@@ -26,7 +21,7 @@ export function getManifest(id: string): GameManifest | undefined {
 }
 
 /** Loads a game's code on demand. */
-export function loadGame(id: string): Promise<AnyGameModule> {
+export function loadGame(id: string): Promise<GameModule> {
   const loader = codeLoaders[`../games/${id}/index.ts`];
   if (!loader) return Promise.reject(new Error(`unknown game ${id}`));
   return loader();

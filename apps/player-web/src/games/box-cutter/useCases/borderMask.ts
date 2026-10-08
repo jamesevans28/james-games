@@ -73,8 +73,9 @@ export function findNearestBorderCell(
   visited[idx(grid, start.c, start.r)] = 1;
 
   while (qh < qt) {
-    const c = qC[qh];
-    const r = qR[qh];
+    // qh < qt, so both queues hold a value here.
+    const c = qC[qh] ?? 0;
+    const r = qR[qh] ?? 0;
     qh++;
 
     const i = idx(grid, c, r);

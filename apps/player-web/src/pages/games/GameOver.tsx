@@ -34,7 +34,8 @@ function LevelUpModal({ level, onClose }: { level: number; onClose: () => void }
         particle.className = "firework-particle";
         particle.style.left = Math.random() * 100 + "%";
         particle.style.top = Math.random() * 100 + "%";
-        particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        particle.style.backgroundColor =
+          colors[Math.floor(Math.random() * colors.length)] ?? BRAND_COLORS.sun;
         particle.style.animation = `firework ${0.5 + Math.random() * 0.5}s ease-out`;
         document.body.appendChild(particle);
         setTimeout(() => particle.remove(), 1000);

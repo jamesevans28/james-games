@@ -531,12 +531,9 @@ export default class MainScene extends BasePlatformScene {
         // Drawing: extend the line into the new cell.
         const last = this.pathCells[this.pathCells.length - 1];
         if (!last || last.c !== nextCell.c || last.r !== nextCell.r) {
+          const prev = this.pathCells[this.pathCells.length - 1];
           this.pathCells.push(nextCell);
-          rasterizePolyline(
-            this.grid,
-            [this.pathCells[this.pathCells.length - 2], nextCell],
-            this.wallMask,
-          );
+          if (prev) rasterizePolyline(this.grid, [prev, nextCell], this.wallMask);
         }
 
         // Back on any border cell closes the shape.
@@ -792,11 +789,13 @@ export default class MainScene extends BasePlatformScene {
     this.pathGraphics.clear();
     if (this.pathCells.length > 1) {
       const drawPath = (g: Phaser.GameObjects.Graphics) => {
-        const first = cellToWorldCenter(this.grid, this.pathCells[0].c, this.pathCells[0].r);
+        const [head, ...rest] = this.pathCells;
+        if (!head) return;
+        const first = cellToWorldCenter(this.grid, head.c, head.r);
         g.beginPath();
         g.moveTo(Math.round(first.x), Math.round(first.y));
-        for (let i = 1; i < this.pathCells.length; i++) {
-          const p = cellToWorldCenter(this.grid, this.pathCells[i].c, this.pathCells[i].r);
+        for (const cell of rest) {
+          const p = cellToWorldCenter(this.grid, cell.c, cell.r);
           g.lineTo(Math.round(p.x), Math.round(p.y));
         }
         g.strokePath();

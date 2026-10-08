@@ -21,6 +21,7 @@ export default tseslint.config(
       "apps/game-server/**",
       "apps/player-web/public/**",
       "coverage/**",
+      "docs/archive/**",
       "**/*.d.ts",
     ],
   },

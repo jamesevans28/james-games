@@ -8,8 +8,15 @@ export type AvatarDef = { id: number; name: string; src: string; background: str
 
 const BASE = "/brand/avatars";
 
+const DEFAULT_AVATAR: AvatarDef = {
+  id: 1,
+  name: "Cat",
+  src: `${BASE}/cat.svg`,
+  background: "#FFF1C7",
+};
+
 export const AVATARS: readonly AvatarDef[] = [
-  { id: 1, name: "Cat", src: `${BASE}/cat.svg`, background: "#FFF1C7" },
+  DEFAULT_AVATAR,
   { id: 2, name: "Dog", src: `${BASE}/dog.svg`, background: "#DDEFFF" },
   { id: 3, name: "Frog", src: `${BASE}/frog.svg`, background: "#FFE1DE" },
   { id: 4, name: "Bear", src: `${BASE}/bear.svg`, background: "#DDF5E5" },
@@ -23,5 +30,5 @@ export const AVATARS: readonly AvatarDef[] = [
 export function avatarFor(value: unknown): AvatarDef {
   const n = typeof value === "number" ? value : Number(value);
   const index = Number.isInteger(n) && n >= 1 ? (n - 1) % AVATARS.length : 0;
-  return AVATARS[index] ?? AVATARS[0];
+  return AVATARS[index] ?? DEFAULT_AVATAR;
 }
