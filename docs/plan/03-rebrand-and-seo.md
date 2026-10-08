@@ -84,7 +84,11 @@ MANUAL (James) with Claude preparing the exact values:
 Done when: signing in with Google from games4james.com shows "Games4James" on the consent screen and the redirect goes through `auth.games4james.com`.
 
 ## T3.6 Deploy the rebrand and move Search Console
-Status: todo
+Status: blocked (needs T3.5 MANUAL steps, James's OK to change repo variables, and a manual deploy run). Done so far (2026-10-08): step 5's header fix is in `deploy.yml`. Only Vite's hashed bundles (files directly in `dist/assets/`) are `immutable`. Game art in `dist/assets/<game>/` gets `max-age=86400`. `sw.js`, `registerSW.js` and `manifest.webmanifest` are `no-cache`, and `index.html` stays `no-store`.
+Repo variables on 2026-10-08:
+- `CORS_ALLOWED_ORIGINS` still lists the flingo origins. Proposed value: `https://games4james.com,https://admin.games4james.com`. The admin origin is needed by the admin app. Production does not need `localhost`, because local dev uses the local API.
+- `VITE_FIREBASE_AUTH_DOMAIN` is `flingo-fun.firebaseapp.com`. It becomes `auth.games4james.com` once T3.5 step 2 shows Connected.
+- `VITE_API_BASE_URL` is already correct.
 Depends on: T3.2, T3.3, T3.4, T3.5, Phase 9 pipeline or the existing one
 Goal: games4james.com serves the rebranded build; search engines know.
 Steps:
