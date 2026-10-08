@@ -16,6 +16,9 @@ Claude kept this list while working through the phases unattended (started 9 Oct
 
 5. **Analytics (T7.9).** Create a free Cloudflare account. Go to Web Analytics → Add a site → `games4james.com` → "JS snippet", copy the 32-character token, and put it in `apps/player-web/src/config/brand.json` as `analyticsId`. Or send it to Claude and it will do it. Delete the old GA4 property if you like.
 
+6. **Branch protection (T9.2).** GitHub → Settings → Branches → protect `main`: require the `CI / ci` check, require a pull request, no force-push.
+7. **Backups (T9.6).** Create the S3 bucket and policy and add the `BACKUP_BUCKET` repo variable ([docs/runbooks/database-backup.md](../runbooks/database-backup.md)), then run it once and test a restore.
+
 ## Questions (Claude picked a default so work could continue; change it if you disagree)
 
 - **Screen names (T6.7).** Generated names look like `bouncy-otter-42`. Kids can't use "James", "Tilly", "Harvey", "admin" or "official" inside a name, so nobody can pretend to be you. Rude words are filtered with the `obscenity` word list. Is that OK?
