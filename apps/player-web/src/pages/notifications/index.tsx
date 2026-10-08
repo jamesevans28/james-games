@@ -1,19 +1,17 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
-import { fetchFollowNotifications, type FollowNotification } from "../../lib/api";
-import { ProfileAvatar } from "../../components/profile";
+import { Link, useNavigate } from "react-router";
+import { acceptFriendRequest, declineFriendRequest } from "../../lib/api";
+import { OfflineBanner } from "../../components/OfflineBanner";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { markNotificationsAsRead } from "../../hooks/useNotificationsIndicator";
-import { useOnlineStatus } from "../../hooks/useOnlineStatus";
-import { OfflineBanner } from "../../components/OfflineBanner";
-import { errorMessage } from "../../utils/errorCode";
+import { useFriendAction, useFriendRequests } from "../../hooks/useFriends";
+import { friendErrorMessage } from "../../utils/friends";
+import { PlayerRow } from "../followers/PlayerRow";
 
 function timeAgo(iso: string) {
-  if (!iso) return "just now";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "just now";
-  const diff = Date.now() - date.getTime();
-  const minutes = Math.round(diff / 60000);
+  const minutes = Math.round((Date.now() - date.getTime()) / 60000);
   if (minutes < 1) return "just now";
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.round(minutes / 60);
@@ -23,67 +21,37 @@ function timeAgo(iso: string) {
   return date.toLocaleDateString();
 }
 
+/** Notifications (T7.6): friend requests waiting for your yes. */
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<FollowNotification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { isOnline } = useOnlineStatus();
+  const { data, isLoading, error } = useFriendRequests();
+  const { run, busy } = useFriendAction();
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  usePresenceReporter({ status: "home", enabled: true });
+  usePresenceReporter({ status: "home" });
 
+  // Opening the page counts as seeing every request on it.
   useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      setLoading(true);
-      setError(null);
+    if (data) markNotificationsAsRead();
+  }, [data]);
 
-      // Check if offline
-      if (!navigator.onLine) {
-        if (!cancelled) {
-          setError("You're offline. Connect to view notifications.");
-          setLoading(false);
-        }
-        return;
-      }
-
-      try {
-        const res = await fetchFollowNotifications();
-        if (!cancelled) {
-          setNotifications(res.notifications || []);
-          markNotificationsAsRead();
-        }
-      } catch (err) {
-        if (!cancelled) {
-          if (!navigator.onLine) {
-            setError("You're offline. Connect to view notifications.");
-          } else {
-            setError(errorMessage(err, "Failed to load notifications"));
-          }
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    void load();
-    let interval: number | null = null;
-    if (typeof window !== "undefined") {
-      interval = window.setInterval(load, 60000);
+  const act = async (action: () => Promise<unknown>) => {
+    setActionError(null);
+    try {
+      await run(action);
+    } catch (err) {
+      setActionError(friendErrorMessage(err));
     }
-    return () => {
-      cancelled = true;
-      if (interval && typeof window !== "undefined") {
-        window.clearInterval(interval);
-      }
-    };
-  }, [isOnline]);
+  };
+
+  const incoming = data?.incoming ?? [];
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="max-w-xl mx-auto px-4 py-6 space-y-4">
+      <div className="flex items-center justify-between">
         <button
           type="button"
-          className="text-sm text-ink-2 hover:text-brand font-medium"
+          className="min-h-11 text-sm text-ink-2 hover:text-brand font-medium"
           onClick={() => navigate(-1)}
         >
           Back
@@ -91,32 +59,47 @@ export default function NotificationsPage() {
         <h1 className="text-2xl font-extrabold text-ink">Notifications</h1>
         <div className="w-10" />
       </div>
-      {!isOnline && <OfflineBanner className="mb-4" />}
-      {loading && <div className="text-ink-2">Loading…</div>}
-      {error && <div className="text-sm text-grape">{error}</div>}
-      {!loading && !error && notifications.length === 0 && (
-        <p className="text-sm text-ink-2">
-          No notifications yet. Share your follow code to get started!
+      <OfflineBanner />
+      {isLoading && <p className="text-ink-2">Loading…</p>}
+      {error && <p className="text-base text-ink-2">{friendErrorMessage(error)}</p>}
+      <p className="text-sm font-medium text-grape empty:hidden" aria-live="polite">
+        {actionError}
+      </p>
+      {data && incoming.length === 0 && (
+        <p className="text-base text-ink-2">
+          No friend requests right now.{" "}
+          <Link to="/followers" className="font-bold text-brand hover:underline">
+            Share your friend code
+          </Link>{" "}
+          to add friends!
         </p>
       )}
-      <ul className="mt-4 space-y-3">
-        {notifications.map((notification) => (
-          <li
-            key={`${notification.userId}-${notification.createdAt}`}
-            className="flex items-center gap-3 border border-line rounded-2xl p-4 bg-card cursor-pointer hover:border-brand/30 hover:shadow-card-hover transition-all"
-            onClick={() => navigate(`/profile/${notification.userId}`)}
-          >
-            <ProfileAvatar user={{ avatar: notification.avatar ?? 1 }} size={48} />
-            <div className="flex-1">
-              <p className="text-sm text-ink">
-                <span className="font-bold">{notification.screenName ?? "Player"}</span> followed
-                you
-              </p>
-              <p className="text-xs text-ink-2">{timeAgo(notification.createdAt)}</p>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {incoming.map((r) => (
+        <PlayerRow
+          key={r.userId}
+          player={r}
+          detail={`wants to be friends · ${timeAgo(r.createdAt)}`}
+        >
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="btn btn-primary min-h-11"
+              disabled={busy}
+              onClick={() => void act(() => acceptFriendRequest(r.userId))}
+            >
+              Yes!
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline min-h-11"
+              disabled={busy}
+              onClick={() => void act(() => declineFriendRequest(r.userId))}
+            >
+              Not now
+            </button>
+          </div>
+        </PlayerRow>
+      ))}
     </div>
   );
 }

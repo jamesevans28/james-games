@@ -1,369 +1,255 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router";
-import { useCatalog } from "../../context/GameCatalogProvider";
+import { useState } from "react";
+import { Link, useNavigate, useParams } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
+  acceptFriendRequest,
+  blockPlayer,
+  declineFriendRequest,
   fetchUserProfile,
-  followUserApi,
-  unfollowUserApi,
   type ProfileResponse,
 } from "../../lib/api";
+import { queryKeys } from "../../lib/queryClient";
 import { ProfileAvatar } from "../../components/profile";
 import ShareFollowCodeCard from "../../components/ShareFollowCodeCard";
-import { useAuth } from "../../context/FirebaseAuthProvider";
-import { usePresenceReporter } from "../../hooks/usePresenceReporter";
+import Sticker from "../../components/stickers/Sticker";
 import { ExperienceBar } from "../../components/ExperienceBar";
 import Seo from "../../components/Seo";
+import { useAuth } from "../../context/FirebaseAuthProvider";
+import { usePresenceReporter } from "../../hooks/usePresenceReporter";
+import { useFriendAction } from "../../hooks/useFriends";
+import { friendErrorMessage } from "../../utils/friends";
 import { SITE_URL } from "../../utils/seoKeywords";
 import { brand } from "../../config/brand";
-import { errorMessage } from "../../utils/errorCode";
+import ConfirmDialog from "../followers/ConfirmDialog";
 
+/**
+ * A player's profile (T7.6): screen name, avatar, level and stickers. No friend
+ * lists, counts or last-seen. Friends also see when they became friends.
+ */
 export default function ProfilePage() {
-  const { userId } = useParams();
+  const { userId = "" } = useParams();
   const { user } = useAuth();
-  const { getGame } = useCatalog();
-  const [data, setData] = useState<ProfileResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [notFound, setNotFound] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
+  const { run, busy } = useFriendAction();
+  const [confirmBlock, setConfirmBlock] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  usePresenceReporter({ status: "home", enabled: true });
+  usePresenceReporter({ status: "home" });
 
-  useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      setNotFound(false);
+  const { data, isLoading, error } = useQuery({
+    queryKey: [...queryKeys.profile(userId), user?.userId ?? null],
+    queryFn: () => fetchUserProfile(userId),
+    enabled: Boolean(userId),
+  });
 
-      // Check if offline
-      if (!navigator.onLine) {
-        if (!cancelled) {
-          setError("You're offline. Connect to view this profile.");
-          setLoading(false);
-        }
-        return;
-      }
-
-      try {
-        const res = await fetchUserProfile(userId);
-        if (!res) {
-          if (!cancelled) {
-            setNotFound(true);
-            setData(null);
-          }
-          return;
-        }
-        if (!cancelled) setData(res);
-      } catch (err) {
-        const status =
-          err && typeof err === "object" ? (err as { status?: unknown }).status : undefined;
-        if (errorMessage(err, "") === "user_not_found" || status === 404) {
-          setNotFound(true);
-          setData(null);
-        } else if (!navigator.onLine) {
-          setError("You're offline. Connect to view this profile.");
-        } else {
-          setError(errorMessage(err, "Failed to load profile"));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
-
-  const handleFollowToggle = async () => {
-    if (!data || !userId) return;
-    setBusy(true);
+  const act = async (action: () => Promise<unknown>) => {
+    setActionError(null);
     try {
-      if (data.isFollowing) {
-        await unfollowUserApi(userId);
-        setData({
-          ...data,
-          isFollowing: false,
-          followersCount: Math.max(0, data.followersCount - 1),
-        });
-      } else {
-        await followUserApi(userId);
-        setData({ ...data, isFollowing: true, followersCount: data.followersCount + 1 });
-      }
+      await run(action);
     } catch (err) {
-      setError(errorMessage(err, "Unable to update follow state"));
-    } finally {
-      setBusy(false);
+      setActionError(friendErrorMessage(err));
     }
   };
 
-  const recentGames = useMemo(() => {
-    if (!data?.recentGames) return [];
-    return data.recentGames.map((entry) => {
-      const meta = getGame(entry.gameId);
-      return {
-        ...entry,
-        title: meta?.title ?? entry.gameId,
-        thumbnail: meta?.thumbnail ?? brand.logoSquare,
-      };
-    });
-  }, [data?.recentGames, getGame]);
-
-  if (loading) {
-    return <div className="p-4 text-ink-2 font-medium">Loading profile…</div>;
-  }
-  if (notFound) {
+  if (isLoading) return <div className="p-4 text-ink-2 font-medium">Loading profile…</div>;
+  if (error) {
     return (
-      <div className="p-4">
-        <p className="text-lg font-bold text-ink">Player not found.</p>
+      <div className="p-4 text-base text-ink-2">
+        We couldn't load this profile. Check your connection and try again.
+      </div>
+    );
+  }
+  if (!data) {
+    return (
+      <div className="p-4 space-y-2">
+        <p className="text-lg font-bold text-ink">We couldn't find that player.</p>
         <Link to="/" className="text-ink-2 hover:text-brand font-medium">
           ← Back to games
         </Link>
       </div>
     );
   }
-  if (!data) {
-    return <div className="p-4 text-grape font-medium">{error ?? "Failed to load profile."}</div>;
-  }
 
-  const canFollow = !!user && !data.isSelf;
+  const { profile } = data;
+  const canBlock = Boolean(user) && !data.isSelf;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-xl mx-auto px-4 py-6 space-y-6">
       <Seo
-        title={`${data.profile.screenName ?? "Player"} | ${brand.name}`}
-        description={`${data.profile.screenName ?? "Player"}'s scores on ${brand.name}.`}
+        title={`${profile.screenName} | ${brand.name}`}
+        description={`${profile.screenName} on ${brand.name}.`}
         url={`${SITE_URL}/profile/${userId}`}
         canonical={`${SITE_URL}/profile/${userId}`}
         noindex={true}
       />
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          {data.isSelf ? (
-            <Link
-              to="/settings/avatar"
-              className="rounded-full focus:outline-none focus:ring-2 focus:ring-brand/50"
-              aria-label="Edit avatar"
-            >
-              <ProfileAvatar user={{ avatar: data.profile.avatar ?? 1 }} size={72} />
-            </Link>
-          ) : (
-            <ProfileAvatar user={{ avatar: data.profile.avatar ?? 1 }} size={72} />
-          )}
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-extrabold text-ink">
-                {data.profile.screenName ?? "Player"}
-              </h1>
-              {data.isSelf && (
-                <Link
-                  to="/settings"
-                  className="p-1.5 rounded-full border border-line text-ink-2 hover:text-brand hover:border-brand/50 focus:outline-none focus:ring-2 focus:ring-brand/50 transition-colors"
-                  aria-label="Edit screen name"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path
-                      d="M13.5 6.5L17.5 10.5M5 19H9L19 9C19.8284 8.17157 19.8284 6.82843 19 6L18 5C17.1716 4.17157 15.8284 4.17157 15 5L5 15V19Z"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </Link>
-              )}
-            </div>
-            {data.profile.experience &&
-              (data.isSelf ? (
-                <div className="mt-3">
-                  <ExperienceBar
-                    level={data.profile.experience.level}
-                    progress={data.profile.experience.progress}
-                    required={data.profile.experience.required}
-                  />
-                  <p className="text-xs text-ink-2 mt-1 font-medium">
-                    {Math.max(0, Math.round(data.profile.experience.remaining))} XP to level{" "}
-                    {Math.min(100, data.profile.experience.level + 1)}
-                  </p>
-                </div>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-brand bg-brand/10 px-3 py-1.5 rounded-full mt-2 border border-brand/30">
-                  ⭐ Level {data.profile.experience.level}
-                </span>
-              ))}
-          </div>
-        </div>
-        {canFollow && (
-          <button
-            className={`px-5 py-2.5 rounded-full text-sm font-bold border transition-all active:scale-95 ${
-              data.isFollowing
-                ? "border-line text-ink bg-card hover:bg-paper-2"
-                : "border-brand text-on-brand bg-brand shadow-sticker hover:shadow-sticker"
-            }`}
-            disabled={busy}
-            onClick={handleFollowToggle}
+
+      <div className="flex items-center gap-4">
+        {data.isSelf ? (
+          <Link
+            to="/settings/avatar"
+            className="rounded-full focus:outline-none focus:ring-2 focus:ring-brand/50"
+            aria-label="Change avatar"
           >
-            {busy ? "Working…" : data.isFollowing ? "✓ Following" : "Follow this player"}
-          </button>
-        )}
-      </div>
-
-      {data.isSelf && data.profile.userId && (
-        <ShareFollowCodeCard
-          userId={data.profile.userId}
-          screenName={data.profile.screenName}
-          description="Send this link or code to friends so they can follow you instantly."
-        />
-      )}
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          label="Followers"
-          value={data.followersCount}
-          to={data.isSelf ? "/followers?view=followers" : undefined}
-        />
-        <StatCard
-          label="Following"
-          value={data.followingCount}
-          to={data.isSelf ? "/followers?view=following" : undefined}
-        />
-        <StatCard label="Recent games" value={data.recentGames.length} />
-        {(data.profile.currentStreak ?? 0) > 0 ? (
-          <StatCard
-            label="Day Streak"
-            value={<span className="flex items-center gap-1">🔥 {data.profile.currentStreak}</span>}
-          />
+            <ProfileAvatar user={{ avatar: profile.avatar }} size={72} />
+          </Link>
         ) : (
-          <StatCard
-            label="Status"
-            value={data.isSelf ? "This is you" : data.isFollowing ? "Following" : "Not following"}
-          />
+          <ProfileAvatar user={{ avatar: profile.avatar }} size={72} />
         )}
-      </div>
-
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold text-ink">Recent games</h2>
-        </div>
-        {recentGames.length === 0 ? (
-          <p className="text-sm text-ink-2">No recent games to show.</p>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {recentGames.map((entry) => (
-              <div
-                key={entry.gameId}
-                className="border border-line rounded-2xl overflow-hidden bg-card hover:border-brand/50 hover:shadow-card-hover transition-all"
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h1 className="truncate text-2xl font-extrabold text-ink">{profile.screenName}</h1>
+            {data.isSelf && (
+              <Link
+                to="/settings"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink-2 hover:text-brand"
+                aria-label="Change screen name"
               >
-                <div
-                  className="aspect-[4/5] bg-cover bg-center bg-paper-2"
-                  style={{ backgroundImage: `url(${entry.thumbnail})` }}
-                />
-                <div className="p-3">
-                  <div className="text-sm font-bold text-ink">{entry.title}</div>
-                  <div className="text-xs text-ink-2 font-medium">
-                    Best score: {entry.bestScore ?? "—"}
-                  </div>
-                  <div className="text-xs text-ink-3">
-                    Last played:{" "}
-                    {entry.lastPlayedAt ? new Date(entry.lastPlayedAt).toLocaleDateString() : "—"}
-                  </div>
-                </div>
-              </div>
-            ))}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M13.5 6.5L17.5 10.5M5 19H9L19 9C19.8284 8.17157 19.8284 6.82843 19 6L18 5C17.1716 4.17157 15.8284 4.17157 15 5L5 15V19Z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </Link>
+            )}
           </div>
+          {data.isSelf && user?.experience ? (
+            <div className="mt-2">
+              <ExperienceBar
+                level={user.experience.level}
+                progress={user.experience.progress}
+                required={user.experience.required}
+              />
+            </div>
+          ) : (
+            <span className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-ink bg-accent/30 px-3 py-1 rounded-full border border-accent">
+              ⭐ Level {profile.level}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <FriendshipPanel data={data} busy={busy} act={act} />
+      <p className="text-sm font-medium text-grape empty:hidden" aria-live="polite">
+        {actionError}
+      </p>
+
+      <section className="border border-line rounded-2xl bg-card shadow-card p-5">
+        <h2 className="text-lg font-bold text-ink mb-3">Stickers</h2>
+        {data.stickers.length === 0 ? (
+          <p className="text-base text-ink-2">
+            {data.isSelf
+              ? "No stickers yet. Play on 3 different days in a week to collect one!"
+              : "No stickers yet."}
+          </p>
+        ) : (
+          <ul className="flex flex-wrap gap-3">
+            {data.stickers.map((id) => (
+              <li key={id}>
+                <Sticker id={id} size={48} />
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 
-      {!data.isSelf && (
-        <section className="grid md:grid-cols-2 gap-6">
-          <ConnectionsList
-            title="Following"
-            items={data.following}
-            empty="Not following anyone yet."
-          />
-          <ConnectionsList title="Followers" items={data.followers} empty="No followers yet." />
-        </section>
-      )}
-      {data.isSelf && (
-        <section className="border border-line rounded-2xl p-4 bg-card text-sm text-ink-2">
-          Looking for the full list of people you follow? Head to the
-          <Link to="/followers" className="ml-1 text-brand hover:text-brand font-bold">
-            Followers page →
+      {data.isSelf && data.friendCode && (
+        <ShareFollowCodeCard friendCode={data.friendCode}>
+          <Link to="/followers" className="text-sm font-bold text-brand hover:underline">
+            See your friends →
           </Link>
-          to manage follow requests and follow codes.
-        </section>
+        </ShareFollowCodeCard>
+      )}
+
+      {canBlock && (
+        <div className="text-center">
+          <button
+            type="button"
+            className="min-h-11 px-4 text-sm font-bold text-ink-2 hover:text-ink"
+            onClick={() => setConfirmBlock(true)}
+          >
+            Block {profile.screenName}
+          </button>
+        </div>
+      )}
+
+      {confirmBlock && (
+        <ConfirmDialog
+          title={`Block ${profile.screenName}?`}
+          body="You won't see each other, and they can't send you requests. You can unblock them on your Friends page any time."
+          confirmLabel="Block"
+          busy={busy}
+          onCancel={() => setConfirmBlock(false)}
+          onConfirm={() =>
+            void run(() => blockPlayer(profile.userId))
+              .then(() => navigate(user && !user.isAnonymous ? "/followers" : "/"))
+              .catch((err: unknown) => {
+                setConfirmBlock(false);
+                setActionError(friendErrorMessage(err));
+              })
+          }
+        />
       )}
     </div>
   );
 }
 
-function StatCard({ label, value, to }: { label: string; value: React.ReactNode; to?: string }) {
-  if (to) {
-    return (
-      <Link
-        to={to}
-        className="border border-line rounded-2xl p-4 bg-card hover:border-brand/50 hover:shadow-card-hover focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all"
-      >
-        <p className="text-xs uppercase text-ink-2 font-bold">{label}</p>
-        <p className="text-2xl font-extrabold text-ink">{value}</p>
-        <span className="mt-2 text-xs text-brand font-bold inline-flex items-center gap-1">
-          View {label.toLowerCase()}
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path
-              d="M5 12h14M13 5l7 7-7 7"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </span>
-      </Link>
-    );
-  }
-  return (
-    <div className="border border-line rounded-2xl p-4 bg-card">
-      <p className="text-xs uppercase text-ink-2 font-bold">{label}</p>
-      <p className="text-2xl font-extrabold text-ink">{value}</p>
-    </div>
-  );
-}
-
-function ConnectionsList({
-  title,
-  items,
-  empty,
+/** "Friends since…", a pending request, or nothing. Friends are only made by code. */
+function FriendshipPanel({
+  data,
+  busy,
+  act,
 }: {
-  title: string;
-  items: Array<{ userId: string; screenName?: string | null; avatar?: number | null }>;
-  empty: string;
+  data: ProfileResponse;
+  busy: boolean;
+  act: (action: () => Promise<unknown>) => Promise<void>;
 }) {
-  return (
-    <div className="border border-line rounded-2xl bg-card p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-bold text-ink">{title}</h3>
-        <span className="text-xs text-ink-2 font-bold bg-paper-2 px-2 py-1 rounded-full">
-          {items.length}
-        </span>
-      </div>
-      {items.length === 0 ? (
-        <p className="text-sm text-ink-2">{empty}</p>
-      ) : (
-        <ul className="space-y-3">
-          {items.map((item) => (
-            <li key={item.userId} className="flex items-center gap-3">
-              <ProfileAvatar user={{ avatar: item.avatar ?? 1 }} size={44} />
-              <Link
-                to={`/profile/${item.userId}`}
-                className="text-sm font-bold text-ink hover:text-brand"
-              >
-                {item.screenName ?? "Player"}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+  const otherId = data.profile.userId;
+  switch (data.friendship) {
+    case "friends":
+      return (
+        <p className="inline-flex items-center gap-2 rounded-full border border-grass bg-grass/15 px-4 py-2 text-sm font-bold text-ink">
+          Friends
+          {data.friendsSince &&
+            ` since ${new Date(data.friendsSince).toLocaleDateString(undefined, {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}`}
+        </p>
+      );
+    case "request_sent":
+      return <p className="text-base text-ink-2">Friend request sent. Now we wait for a yes!</p>;
+    case "request_received":
+      return (
+        <div className="border border-line rounded-2xl bg-card shadow-card p-4 space-y-3">
+          <p className="text-base font-bold text-ink">
+            {data.profile.screenName} wants to be friends.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="btn btn-primary min-h-11"
+              disabled={busy}
+              onClick={() => void act(() => acceptFriendRequest(otherId))}
+            >
+              Yes!
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline min-h-11"
+              disabled={busy}
+              onClick={() => void act(() => declineFriendRequest(otherId))}
+            >
+              Not now
+            </button>
+          </div>
+        </div>
+      );
+    default:
+      return null;
+  }
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { useAuth } from "../context/FirebaseAuthProvider";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { OfflineBanner } from "../components/OfflineBanner";
@@ -75,9 +75,6 @@ export default function FirebaseLoginPage() {
     if (!/^\d+$/.test(pin)) {
       errors.push("PIN must be numbers only");
     }
-    if (mode === "register" && !screenName) {
-      errors.push("Screen name is required");
-    }
     return errors;
   };
 
@@ -103,7 +100,8 @@ export default function FirebaseLoginPage() {
         await signInWithUsername(username, pin);
       } else {
         // registerWithUsername handles anonymous sign-in internally if needed
-        await registerWithUsername(username, pin, screenName || username);
+        // No screen name typed: keep the generated one. The login username is never shown publicly.
+        await registerWithUsername(username, pin, screenName.trim() || undefined);
       }
       const params = new URLSearchParams(window.location.search);
       const returnTo = params.get("state") || "/";
@@ -207,10 +205,16 @@ export default function FirebaseLoginPage() {
           </div>
         </div>
 
-        {/* PIN recovery is an admin action; see docs/plan T1.1 and T7.8 (parent page). */}
+        {/* PIN recovery is an admin action (James resets it); the parents page explains how. */}
         {mode === "login" && (
-          <p className="mb-5 text-xs text-ink-2">
-            Forgot your PIN? Ask a grown-up to get in touch with James to reset it.
+          <p className="mb-5 text-sm text-ink-2">
+            <Link
+              to="/parents#forgot-pin"
+              className="inline-flex min-h-11 items-center font-bold text-brand underline"
+            >
+              Forgot your PIN?
+            </Link>{" "}
+            A grown-up can ask us to reset it.
           </p>
         )}
 
@@ -264,7 +268,7 @@ export default function FirebaseLoginPage() {
               pattern="[0-9]*"
               maxLength={6}
               className="w-full p-3.5 bg-paper-2 border border-line rounded-2xl placeholder-ink-3 text-ink focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 font-mono text-xl tracking-widest transition-all"
-              placeholder="••••"
+              placeholder="••••••"
               autoComplete={mode === "register" ? "new-password" : "current-password"}
             />
             {triedSubmit && (!pin || pin.length !== 6) && (
@@ -272,23 +276,24 @@ export default function FirebaseLoginPage() {
             )}
             <div className="text-xs text-ink-2 mt-1.5">
               {mode === "register"
-                ? "Pick 4 to 8 numbers you'll remember (not your birthday)."
+                ? "Pick 6 numbers you'll remember (not your birthday)."
                 : "Enter your 6-digit PIN"}
             </div>
           </label>
 
           {mode === "register" && (
             <label className="block">
-              <div className="text-sm font-bold text-ink mb-1.5">Screen Name</div>
+              <div className="text-sm font-bold text-ink mb-1.5">Screen name (optional)</div>
               <input
                 value={screenName}
                 onChange={(e) => setScreenName(e.target.value)}
                 className="w-full p-3.5 bg-paper-2 border border-line rounded-2xl placeholder-ink-3 text-ink focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 transition-all"
-                placeholder="Your display name on leaderboards"
+                placeholder="Your name on leaderboards"
+                maxLength={16}
               />
-              {triedSubmit && !screenName && (
-                <div className="text-grape text-xs mt-1 font-medium">Screen name is required</div>
-              )}
+              <div className="text-xs text-ink-2 mt-1">
+                Leave it blank to keep your fun made-up name. Don&apos;t use your real name.
+              </div>
             </label>
           )}
 
@@ -355,6 +360,27 @@ export default function FirebaseLoginPage() {
             </p>
           </div>
         )}
+
+        <nav
+          aria-label="About us"
+          className="mt-6 pt-4 border-t border-line flex flex-wrap justify-center gap-x-4 text-sm text-ink-2"
+        >
+          <Link to="/about" className="inline-flex min-h-11 items-center underline hover:text-ink">
+            About us
+          </Link>
+          <Link
+            to="/parents"
+            className="inline-flex min-h-11 items-center underline hover:text-ink"
+          >
+            For grown-ups
+          </Link>
+          <Link
+            to="/privacy"
+            className="inline-flex min-h-11 items-center underline hover:text-ink"
+          >
+            Privacy
+          </Link>
+        </nav>
       </div>
     </div>
   );

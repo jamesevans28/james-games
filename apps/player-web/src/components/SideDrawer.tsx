@@ -58,8 +58,8 @@ export default function SideDrawer({
 
       <div
         ref={panelRef}
-        className={`fixed top-0 bottom-0 right-0 w-80 max-w-[85vw] bg-gradient-to-b from-paper via-card to-paper-2 shadow-2xl border-l border-line transition-transform ${
-          open ? "translate-x-0" : "translate-x-full"
+        className={`fixed top-0 bottom-0 right-0 w-80 max-w-[85vw] bg-gradient-to-b from-paper via-card to-paper-2 shadow-2xl border-l border-line transition-[transform,visibility] ${
+          open ? "visible translate-x-0" : "invisible translate-x-full"
         }`}
         role="dialog"
         aria-modal="true"
@@ -89,54 +89,6 @@ export default function SideDrawer({
                   />
                 </svg>
                 <span>Home</span>
-              </Link>
-
-              <Link
-                to="/games-list"
-                className={linkClass}
-                onClick={onClose}
-                role="button"
-                aria-pressed="false"
-              >
-                <svg className="w-5 h-5 text-brand" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <rect
-                    x="3"
-                    y="3"
-                    width="7"
-                    height="7"
-                    rx="1"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  />
-                  <rect
-                    x="14"
-                    y="3"
-                    width="7"
-                    height="7"
-                    rx="1"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  />
-                  <rect
-                    x="3"
-                    y="14"
-                    width="7"
-                    height="7"
-                    rx="1"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  />
-                  <rect
-                    x="14"
-                    y="14"
-                    width="7"
-                    height="7"
-                    rx="1"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  />
-                </svg>
-                <span>All Games</span>
               </Link>
 
               {isAuthenticated && user?.userId && (
@@ -249,7 +201,7 @@ export default function SideDrawer({
                     strokeLinejoin="round"
                   />
                 </svg>
-                <span>Followers</span>
+                <span>Friends</span>
               </Link>
 
               {isAuthenticated && (
@@ -350,12 +302,26 @@ export default function SideDrawer({
               </div>
             )}
 
-            <div className="mt-4 text-[10px] text-ink-3 text-center font-medium">
-              <Link to="/privacy" onClick={onClose} className="underline hover:text-ink">
-                Privacy
-              </Link>
-              {" · "}Build {buildLabel}
-            </div>
+            <nav
+              aria-label="About us"
+              className="mt-3 flex flex-wrap justify-center gap-x-3 text-xs font-semibold text-ink-2"
+            >
+              {[
+                { to: "/about", label: "About us" },
+                { to: "/parents", label: "For grown-ups" },
+                { to: "/privacy", label: "Privacy" },
+              ].map((l) => (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  onClick={onClose}
+                  className="inline-flex min-h-11 items-center underline hover:text-ink"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </nav>
+            <div className="text-[10px] text-ink-3 text-center font-medium">Build {buildLabel}</div>
           </div>
         </div>
       </div>

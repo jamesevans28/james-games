@@ -70,7 +70,7 @@ type AuthContextType = {
   /**
    * Register with username + PIN (upgrade from anonymous).
    * @param username - Unique username (3-20 chars, alphanumeric + underscore)
-   * @param pin - 4-8 digit PIN
+   * @param pin - 6-digit PIN
    * @param screenName - Optional display name (defaults to username)
    */
   registerWithUsername: (
@@ -102,6 +102,12 @@ type AuthContextType = {
    * Sign out and clear all auth state
    */
   signOut: () => Promise<void>;
+  /**
+   * Delete the account for good (DELETE /me, T7.8): the server removes the row and
+   * the Firebase user. Call signOut() next, after leaving any signed-in-only screen
+   * (otherwise its route guard redirects to the login page first).
+   */
+  deleteAccount: () => Promise<void>;
   /**
    * Refresh the user profile from the backend
    */
@@ -755,6 +761,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Delete the account (the server deletes the row and the Firebase user).
+  const handleDeleteAccount = useCallback(async () => {
+    if (!firebaseUser) {
+      throw new Error("Must be signed in to delete your account");
+    }
+    setLoading(true);
+    try {
+      const token = await firebaseUser.getIdToken();
+      const res = await fetch(`${apiBase}/me`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        throw new Error((await readApiError(res)) || "We couldn't delete your account. Try again?");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [firebaseUser, apiBase]);
+
   // Refresh profile from backend
   const handleRefreshProfile = useCallback(async () => {
     if (!firebaseUser) return;
@@ -878,6 +904,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       linkGoogle: handleLinkGoogle,
       linkApple: handleLinkApple,
       signOut: handleSignOut,
+      deleteAccount: handleDeleteAccount,
       refreshProfile: handleRefreshProfile,
       getToken: handleGetToken,
       changePin: handleChangePin,
@@ -899,6 +926,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       handleLinkGoogle,
       handleLinkApple,
       handleSignOut,
+      handleDeleteAccount,
       handleRefreshProfile,
       handleGetToken,
       handleChangePin,

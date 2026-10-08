@@ -4,7 +4,7 @@ Decision: all art is AI-generated, in a consistent style that reads as drawn by 
 
 ## T8.1 Style bible
 
-Status: todo
+Status: done in code 2026-10-09 (STYLE.md + prompts); MANUAL: James generates one test image per category into docs/art/samples/
 Depends on: T3.1
 Goal: one document that makes every generated asset look like it belongs to the same crayon box.
 Files: `docs/art/STYLE.md`, `docs/art/prompts/*.md`
@@ -25,7 +25,7 @@ Steps:
 
 ## T8.2 Generation workflow (two options, pick one)
 
-Status: todo
+Status: done 2026-10-09 (generate.mjs: --dry-run prints prompts; OpenAI Images with IMAGE_API_KEY; decision recorded)
 Depends on: T8.1
 Option A (zero cost, manual): James pastes prompts into ChatGPT/Ideogram/Midjourney, downloads PNGs into `art-inbox/<category>/<name>.png` (gitignored). Claude runs the processing scripts (T8.3).
 Option B (scripted, small cost): `scripts/art/generate.mjs` calls an image API (OpenAI Images, Replicate Flux, Ideogram API) with the prompt files, writing to `art-inbox/`. Needs an API key in `.env.local` (`IMAGE_API_KEY`); typical cost a few cents per image. Only run when James asks; never in CI.
@@ -34,7 +34,7 @@ Done when: `node scripts/art/generate.mjs --dry-run covers` prints 11 prompts.
 
 ## T8.3 Processing scripts
 
-Status: todo
+Status: done 2026-10-09 (remove-bg, process, sheet, cover, sticker, check; tested on a synthetic sample)
 Depends on: T8.1
 Goal: raw generations become consistent game assets with one command.
 Files: `scripts/art/{process,remove-bg,sheet,cover,sticker}.mjs`, root devDeps `sharp`, `@imgly/background-removal-node` (or `rembg` via a documented Python fallback)
@@ -86,7 +86,7 @@ Done when: every active game plays the shared set through the audio kit; total S
 
 ## T8.9 Art README for future sessions
 
-Status: todo
+Status: done 2026-10-09 (docs/art/README.md)
 Depends on: T8.3
 Files: `docs/art/README.md`
 Steps: how to add art for a new game in 6 steps (prompt → generate → inbox → process → manifest → check), with the exact commands.

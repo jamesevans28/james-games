@@ -1,150 +1,77 @@
-import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { buildProfileLink, shareProfileLink } from "../utils/shareProfileLink";
+import { type ReactNode, useEffect, useState } from "react";
+import { shareFriendCode } from "../utils/shareProfileLink";
 
 interface ShareFollowCodeCardProps {
-  userId: string;
-  screenName?: string | null;
+  /** The player's own 6-character friend code. */
+  friendCode: string;
   heading?: string;
   description?: string;
-  defaultExpanded?: boolean;
   children?: ReactNode;
 }
 
+/** Your friend code, big and easy to read out, with Copy and Share (T7.6). */
 export default function ShareFollowCodeCard({
-  userId,
-  screenName,
-  heading = "Share your follow code",
-  description = "Send this link or code to friends so they can follow you instantly.",
-  defaultExpanded = false,
+  friendCode,
+  heading = "Your friend code",
+  description = "Give this code to a friend. When they send a request, you say yes and you're friends!",
   children,
 }: ShareFollowCodeCardProps) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
   const [hint, setHint] = useState<string | null>(null);
-  const profileLink = useMemo(() => buildProfileLink(userId), [userId]);
 
   useEffect(() => {
     if (!hint) return;
-    if (typeof window === "undefined") return;
     const timer = window.setTimeout(() => setHint(null), 2500);
     return () => window.clearTimeout(timer);
   }, [hint]);
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(friendCode);
+      setHint("Code copied!");
+    } catch {
+      setHint(`Your code is ${friendCode}`);
+    }
+  };
+
   const handleShare = async () => {
-    const result = await shareProfileLink({ userId, screenName, isSelf: true });
-    if (result.status === "shared") setHint("Sent via your share sheet");
-    else if (result.status === "copied") setHint("Profile link copied to clipboard");
+    const result = await shareFriendCode(friendCode);
+    if (result.status === "shared") setHint("Sent!");
+    else if (result.status === "copied") setHint("Link copied!");
     else setHint(`Share this link: ${result.url}`);
   };
 
-  const handleCopyCode = async () => {
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(userId);
-        setHint("Follow code copied");
-        return;
-      }
-    } catch (err) {
-      console.warn("copy failed", err);
-    }
-    setHint(`Code: ${userId}`);
-  };
-
-  const handleCopyLink = async () => {
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(profileLink);
-        setHint("Profile link copied");
-        return;
-      }
-    } catch (err) {
-      console.warn("copy link failed", err);
-    }
-    setHint(`Link: ${profileLink}`);
-  };
-
   return (
-    <section className="border border-line rounded-2xl bg-card shadow-card">
-      <button
-        type="button"
-        className="w-full flex items-center justify-between px-5 py-4 text-left"
-        onClick={() => setExpanded((prev) => !prev)}
-        aria-expanded={expanded}
-      >
-        <span className="text-lg font-bold text-ink">{heading}</span>
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          className={`transition-transform text-ink-2 ${expanded ? "rotate-180" : ""}`}
-          aria-hidden
+    <section className="border border-line rounded-2xl bg-card shadow-card p-5">
+      <h2 className="text-lg font-bold text-ink">{heading}</h2>
+      {description && <p className="mt-1 text-sm text-ink-2">{description}</p>}
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <code
+          className="text-2xl font-mono font-bold tracking-[0.2em] px-4 py-2 rounded-xl bg-brand text-on-brand shadow-sticker"
+          aria-label={`Friend code ${friendCode.split("").join(" ")}`}
         >
-          <path
-            d="M6 9l6 6 6-6"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-      {expanded && (
-        <div className="px-5 pb-5">
-          {description && <p className="text-sm text-ink-2">{description}</p>}
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <code className="text-xl font-mono font-bold px-4 py-2 rounded-xl bg-brand text-on-brand shadow-sticker">
-              {userId}
-            </code>
-            <button type="button" className="btn btn-outline text-sm" onClick={handleCopyCode}>
-              Copy code
-            </button>
-            <button type="button" className="btn btn-outline text-sm" onClick={handleCopyLink}>
-              Copy link
-            </button>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold border border-sky/50 text-sky hover:bg-sky/10 transition-colors"
-              onClick={handleShare}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path
-                  d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M16 6l-4-4-4 4"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M12 2v13"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Share link
-            </button>
-          </div>
-          <p className="mt-3 text-sm text-ink-2">
-            Anyone can open{" "}
-            <span className="px-1.5 py-0.5 font-mono text-xs text-brand bg-brand/10 rounded break-all">
-              {profileLink}
-            </span>{" "}
-            to follow you instantly.
-          </p>
-          {children && <div className="mt-4">{children}</div>}
-          {hint && <p className="mt-2 text-xs text-brand font-semibold">{hint}</p>}
-        </div>
-      )}
+          {friendCode || "······"}
+        </code>
+        <button
+          type="button"
+          className="btn btn-outline text-sm min-h-11"
+          onClick={handleCopy}
+          disabled={!friendCode}
+        >
+          Copy
+        </button>
+        <button
+          type="button"
+          className="btn btn-outline text-sm min-h-11"
+          onClick={handleShare}
+          disabled={!friendCode}
+        >
+          Share
+        </button>
+      </div>
+      <p className="mt-2 min-h-5 text-xs text-brand font-semibold" aria-live="polite">
+        {hint}
+      </p>
+      {children && <div className="mt-2">{children}</div>}
     </section>
   );
 }

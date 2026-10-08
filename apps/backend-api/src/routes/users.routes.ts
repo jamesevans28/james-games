@@ -7,6 +7,7 @@ import {
   getPublicProfile,
 } from "../controllers/usersController.js";
 import { recordStreakCheckin, getStreak } from "../controllers/streakController.js";
+import { getMyStickers } from "../controllers/stickersController.js";
 import { requireAuth } from "../middleware/authGuards.js";
 
 const router = Router();
@@ -20,6 +21,7 @@ router.patch("/settings", requireAuth, updateSettings); // { screenName }
 // Streak tracking
 router.get("/streak", requireAuth, getStreak);
 router.post("/streak/checkin", requireAuth, recordStreakCheckin);
+router.get("/stickers", requireAuth, getMyStickers); // weekly stickers, newest first (T7.5)
 
 // Public profile summary
 router.get("/:userId", getPublicProfile);

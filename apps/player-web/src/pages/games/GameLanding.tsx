@@ -1,666 +1,75 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { useAuth } from "../../context/FirebaseAuthProvider";
-import { trackShare } from "../../utils/analytics";
 import { type GameMeta } from "../../games";
-import { brand, makersLine } from "../../config/brand";
-import {
-  getTopScores,
-  fetchRatingSummary,
-  submitRating,
-  type RatingSummary,
-  fetchFollowingActivity,
-  type FollowingActivityEntry,
-  type ScoreEntry,
-} from "../../lib/api";
-import { getUserName } from "../../utils/user";
-import { ProfileAvatar } from "../../components/profile";
-import RatingStars from "../../components/RatingStars";
-import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";
+import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useGameRatings } from "../../hooks/useGameRatings";
+import { useRatingPrompt } from "../../hooks/useRatingPrompt";
+import { PROMPT_AFTER_PLAYS, readRatingPromptState } from "../../lib/ratingPrompt";
+import RatingPromptModal from "../../components/RatingPromptModal";
+import LandingHero from "./landing/LandingHero";
+import HowToPlay from "./landing/HowToPlay";
+import LandingScores from "./landing/LandingScores";
+import LandingRating from "./landing/LandingRating";
 
 type Props = {
   meta: GameMeta;
   onPlay: () => void;
-  /** Bumped by PlayGame after each finished run, so the leaderboard reloads. */
-  refreshKey?: number;
+  /** False while playing and once a run has finished on this visit (no prompt in a replay loop). */
+  canPromptRating?: boolean;
 };
 
-// Global cache for leaderboards to avoid refetching on every load
-const leaderboardCache = new Map<string, { data: ScoreEntry[]; timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-export default function GameLanding({ meta, onPlay, refreshKey = 0 }: Props) {
-  const [top, setTop] = useState<ScoreEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activity, setActivity] = useState<FollowingActivityEntry[]>([]);
-  const [activityLoading, setActivityLoading] = useState(false);
-  const cachedRating = useMemo(() => getCachedRatingSummary(meta.id), [meta.id]);
-  const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(cachedRating);
-  const [ratingLoading, setRatingLoading] = useState(!cachedRating);
-  const [ratingSubmitting, setRatingSubmitting] = useState(false);
-  const [ratingError, setRatingError] = useState<string | null>(null);
-  const [userRating, setUserRating] = useState<number | null>(null);
+/**
+ * A game's landing page (T7.2): cover, title, makers and note, a big Play, how to play,
+ * your best and the top 5, and stars after your 3rd play. Works with the API offline:
+ * everything server-side has an empty state.
+ */
+export default function GameLanding({ meta, onPlay, canPromptRating = false }: Props) {
   const { user } = useAuth();
+  const ratings = useGameRatings(meta.id);
+  // Read on every render: PlayGame re-renders this page after each run.
+  const plays = readRatingPromptState(meta.id).plays;
+  const prompt = useRatingPrompt({
+    gameId: meta.id,
+    enabled: canPromptRating,
+    canRate: Boolean(user),
+    ready: ratings.isReady,
+    alreadyRated: ratings.userRating !== null,
+  });
 
-  const bestKey = useMemo(() => `${meta.id}-best`, [meta.id]);
-  const myBest = useMemo(() => Number(localStorage.getItem(bestKey) || 0), [bestKey]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const loadRating = async () => {
-      setRatingLoading(true);
-      setRatingError(null);
-      try {
-        const summary = await fetchRatingSummary(meta.id);
-        if (cancelled) return;
-        setRatingSummary(summary);
-        setCachedRatingSummary(summary);
-        setUserRating(
-          typeof summary.userRating === "number" && !Number.isNaN(summary.userRating)
-            ? summary.userRating
-            : null,
-        );
-      } catch (err) {
-        console.warn("Failed to load rating", err);
-        if (!cancelled) setRatingError("Unable to load rating right now");
-      } finally {
-        if (!cancelled) setRatingLoading(false);
-      }
-    };
-    void loadRating();
-    return () => {
-      cancelled = true;
-    };
-  }, [meta.id, user?.userId]);
-
-  const handleSubmitRating = async (value: number) => {
-    if (!user) return;
-    setRatingSubmitting(true);
-    setRatingError(null);
-    try {
-      const summary = await submitRating(meta.id, value);
-      setRatingSummary(summary);
-      setCachedRatingSummary(summary);
-      setUserRating(summary.userRating ?? value);
-    } catch (err) {
-      console.error("Failed to submit rating", err);
-      if (err instanceof Error && err.message === "signin_required") {
-        setRatingError("Sign in to rate this game (maybe relog).");
-      } else {
-        setRatingError("Unable to save your rating. Please try again.");
-      }
-    } finally {
-      setRatingSubmitting(false);
-    }
+  const rate = (value: number) => {
+    ratings.rate(value).catch(() => {
+      // shown via ratings.submitError
+    });
   };
 
-  useEffect(() => {
-    if (!user || !meta?.id) {
-      setActivity([]);
-      return;
-    }
-    let cancelled = false;
-    let timeoutId: number | null = null;
-    const load = async () => {
-      try {
-        if (!cancelled) setActivityLoading(true);
-        const res = await fetchFollowingActivity({
-          gameId: meta.id,
-          statuses: ["playing", "game_lobby", "in_score_dialog", "browsing_high_scores"],
-        });
-        if (!cancelled) setActivity(res.activity || []);
-      } catch {
-        // Activity is best-effort: keep showing the last list and retry on the next poll.
-      } finally {
-        if (!cancelled) setActivityLoading(false);
-      }
-      if (!cancelled && typeof window !== "undefined") {
-        timeoutId = window.setTimeout(load, 20000);
-      }
-    };
-    void load();
-    return () => {
-      cancelled = true;
-      if (timeoutId && typeof window !== "undefined") window.clearTimeout(timeoutId);
-    };
-  }, [meta.id, user?.userId]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      const now = Date.now();
-      const cached = leaderboardCache.get(meta.id);
-      if (cached && now - cached.timestamp < CACHE_DURATION) {
-        // Use cached data
-        if (!cancelled) setTop(cached.data);
-        if (!cancelled) setLoading(false);
-        return;
-      }
-
-      try {
-        const rows = await getTopScores(meta.id, 10);
-        if (!cancelled) {
-          setTop(rows);
-          // Cache the result
-          leaderboardCache.set(meta.id, { data: rows, timestamp: now });
-        }
-      } catch (e) {
-        console.error(e);
-        if (!cancelled) setError("Failed to load leaderboard");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    // After a run (refreshKey > 0) a new score may have been posted: skip the cache.
-    if (refreshKey > 0) leaderboardCache.delete(meta.id);
-    void load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [meta.id, refreshKey]);
-
-  function fmtDateShort(iso?: string) {
-    if (!iso) return null;
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return null;
-
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfYesterday = new Date(startOfToday);
-    startOfYesterday.setDate(startOfToday.getDate() - 1);
-
-    if (d >= startOfToday) return "Today";
-    if (d >= startOfYesterday) return "Yesterday";
-
-    const day = String(d.getDate()).padStart(2, "0");
-    const mon = d.toLocaleString(undefined, { month: "short" });
-    const yy = String(d.getFullYear()).slice(-2);
-    return `${day} ${mon} ${yy}`;
-  }
-
-  async function handleShare() {
-    const shareText = `${meta.title} — my best: ${myBest}`;
-    const url = `${window.location.origin}/games/${meta.id}`;
-    try {
-      if (typeof navigator.share === "function") {
-        await navigator.share({ title: meta.title, text: shareText, url });
-        trackShare(meta.id, meta.title, myBest);
-        return;
-      }
-
-      await navigator.clipboard.writeText(`${shareText} ${url}`);
-      trackShare(meta.id, meta.title, myBest);
-    } catch (e) {
-      console.error("share failed", e);
-    }
-  }
-
   return (
-    <div className="min-h-[calc(100vh-64px)] pb-40">
-      <div className="pt-16 px-4 max-w-4xl mx-auto">
-        {/* Hero image */}
-        <div
-          className="aspect-square w-full max-w-md mx-auto bg-cover bg-center rounded-2xl border border-line shadow-card overflow-hidden"
-          style={{ backgroundImage: `url(${meta.thumbnail || brand.logoSquare})` }}
-          title={meta.title}
+    <div className="mx-auto max-w-md px-4 pt-20 pb-16">
+      <LandingHero meta={meta} />
+
+      <button type="button" className="btn btn-primary mt-5 w-full py-4 text-2xl" onClick={onPlay}>
+        Play
+      </button>
+
+      <HowToPlay meta={meta} />
+      <LandingScores gameId={meta.id} />
+
+      {user && (plays >= PROMPT_AFTER_PLAYS || ratings.userRating !== null) && (
+        <LandingRating
+          summary={ratings.summary}
+          userRating={ratings.userRating}
+          submitting={ratings.isSubmitting}
+          error={prompt.open ? null : ratings.submitError}
+          onRate={rate}
         />
-
-        {user && <FollowingNowStrip loading={activityLoading} activity={activity} />}
-
-        <div className="mt-4">
-          <h1 className="text-2xl font-extrabold mb-1 text-ink">{meta.title}</h1>
-          <p className="text-sm font-bold text-ink-2 mb-2">
-            Made by {makersLine(meta.makers ?? brand.makers)}
-          </p>
-          {meta.description && (
-            <p className="text-ink-2 text-sm leading-relaxed">{meta.description}</p>
-          )}
-          {meta.note && (
-            <figure className="mt-4 card p-4 rotate-[-0.6deg]">
-              <figcaption className="text-xs font-extrabold uppercase tracking-wide text-brand">
-                Designer&rsquo;s note{meta.noteBy ? ` from ${meta.noteBy}` : ""}
-              </figcaption>
-              <blockquote className="kid-note mt-1 text-ink">{meta.note}</blockquote>
-            </figure>
-          )}
-          {/* Leaderboard Top 3 + 4-10 */}
-          <LeaderboardSection top={top} loading={loading} error={error} myBest={myBest} />
-
-          <RatingSummaryCard
-            loading={ratingLoading}
-            summary={ratingSummary}
-            user={user}
-            userRating={userRating}
-            error={ratingError}
-            submitting={ratingSubmitting}
-            onRate={handleSubmitRating}
-          />
-
-          {/* metadata list */}
-          <div className="mt-6">
-            <ul className="w-full bg-card text-sm text-ink divide-y divide-line border border-line rounded-2xl overflow-hidden">
-              {meta.createdAt && (
-                <li className="px-4 py-3 flex justify-between">
-                  <span className="font-medium">Created</span>
-                  <span className="text-ink-2">{fmtDateShort(meta.createdAt) ?? "—"}</span>
-                </li>
-              )}
-              {meta.updatedAt && (
-                <li className="px-4 py-3 flex justify-between">
-                  <span className="font-medium">Updated</span>
-                  <span className="text-ink-2">{fmtDateShort(meta.updatedAt) ?? "—"}</span>
-                </li>
-              )}
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* sticky footer with Play + Share */}
-      <div className="fixed left-0 right-0 bottom-0 bg-paper/95 backdrop-blur-xl border-t border-line px-4 py-3">
-        <div className="max-w-4xl mx-auto flex gap-3">
-          <button type="button" className="btn btn-primary flex-1" onClick={onPlay}>
-            Play
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary w-12 h-12 p-0 flex items-center justify-center"
-            onClick={handleShare}
-            aria-label="Share"
-            title="Share"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-5 h-5 text-white"
-            >
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LeaderboardSection({
-  top,
-  loading,
-  error,
-  myBest,
-}: {
-  top: ScoreEntry[];
-  loading: boolean;
-  error: string | null;
-  myBest: number;
-}) {
-  const userName = useMemo(() => (getUserName ? getUserName() : ""), []);
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const goToProfile = (userId?: string) => {
-    if (userId) void navigate(`/profile/${userId}`);
-  };
-
-  // Debugging: log leaderboard inputs so we can trace why nothing renders
-  // (some runtime environments may return unexpected shapes)
-
-  if (loading) return <div className="mt-4 text-ink-2">Loading…</div>;
-  if (error) return <div className="mt-4 text-grape">{error}</div>;
-  if (!top || top.length === 0) return <div className="mt-4 text-ink-2">No scores yet.</div>;
-
-  const first = top[0];
-  const second = top[1];
-  const third = top[2];
-
-  // Find the user's top score within the current leaderboard (first occurrence is the highest)
-  const userMatchName = String(user?.screenName || userName || "").toLowerCase();
-  const userTopRow = top.find((r) => (r?.screenName || "").toLowerCase() === userMatchName);
-
-  // Layout: 2nd - 1st - 3rd (middle taller)
-  return (
-    <div className="mt-4">
-      {/* Top 3 boxes */}
-      <div className="flex items-end gap-3">
-        <TopBox
-          pos={2}
-          row={second}
-          tall={false}
-          medal="silver"
-          isUserBest={
-            !!userTopRow &&
-            second?.score === userTopRow.score &&
-            (second?.screenName || "").toLowerCase() === userMatchName
-          }
-          onSelect={second?.userId ? () => goToProfile(second.userId) : undefined}
-        />
-        <TopBox
-          pos={1}
-          row={first}
-          tall={true}
-          medal="gold"
-          isUserBest={
-            !!userTopRow &&
-            first?.score === userTopRow.score &&
-            (first?.screenName || "").toLowerCase() === userMatchName
-          }
-          onSelect={first?.userId ? () => goToProfile(first.userId) : undefined}
-        />
-        <TopBox
-          pos={3}
-          row={third}
-          tall={false}
-          medal="bronze"
-          isUserBest={
-            !!userTopRow &&
-            third?.score === userTopRow.score &&
-            (third?.screenName || "").toLowerCase() === userMatchName
-          }
-          onSelect={third?.userId ? () => goToProfile(third.userId) : undefined}
-        />
-      </div>
-
-      {/* If visitor is not logged in, show hint about logging in to record scores */}
-      {!user && (
-        <div className="mt-3 p-4 rounded-2xl border border-sun/30 bg-sun/10 text-ink text-sm">
-          To record your scores you need to be logged in.{" "}
-          <Link to="/login" className="underline text-brand font-semibold">
-            Sign in
-          </Link>{" "}
-          or create an account.
-        </div>
       )}
 
-      {/* Positions 4 - 10 */}
-      <div className="mt-4">
-        <ol
-          start={4}
-          className="w-full bg-card divide-y divide-line border border-line rounded-2xl overflow-hidden"
-        >
-          {top.slice(3, 10).map((r, i) => {
-            const rank = 4 + i;
-            const isYou =
-              !!userTopRow &&
-              r?.score === userTopRow.score &&
-              (r?.screenName || "").toLowerCase() === userMatchName;
-            const hasProfile = Boolean(r?.userId);
-            const handleClick = () => {
-              if (r?.userId) goToProfile(r.userId);
-            };
-            return (
-              <li
-                key={`${r?.screenName ?? "anon"}-${rank}`}
-                className={`flex items-center justify-between px-4 py-3 text-sm ${
-                  hasProfile
-                    ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand/50 hover:bg-paper-2"
-                    : ""
-                }`}
-                role={hasProfile ? "button" : undefined}
-                tabIndex={hasProfile ? 0 : undefined}
-                onClick={hasProfile ? handleClick : undefined}
-                onKeyDown={
-                  hasProfile
-                    ? (evt) => {
-                        if (evt.key === "Enter" || evt.key === " ") {
-                          evt.preventDefault();
-                          handleClick();
-                        }
-                      }
-                    : undefined
-                }
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-ink-3 font-mono w-6">#{rank}</span>
-                  <span className="truncate text-ink font-medium">{r?.screenName ?? "—"}</span>
-                  {isYou && (
-                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand/20 text-brand border border-brand/30">
-                      your top score
-                    </span>
-                  )}
-                </div>
-                <span className="font-mono font-bold text-brand">{r?.score ?? 0}</span>
-              </li>
-            );
-          })}
-        </ol>
-      </div>
-
-      {/* If the user is logged in but none of their scores made the top leaderboard,
-            show their personal best so they know what to try to beat. */}
-      {user && !userTopRow && myBest > 0 && (
-        <div className="mt-4 p-4 rounded-2xl border border-line bg-card text-sm text-ink">
-          <div className="font-bold text-ink">Your personal best</div>
-          <div className="mt-2 text-2xl font-bold text-brand">{myBest}</div>
-          <div className="mt-1 text-xs text-ink-2">
-            Keep playing to submit this score to the leaderboards.
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function RatingSummaryCard({
-  loading,
-  summary,
-  user,
-  userRating,
-  error,
-  submitting,
-  onRate,
-}: {
-  loading: boolean;
-  summary: RatingSummary | null;
-  user: ReturnType<typeof useAuth>["user"];
-  userRating: number | null;
-  error: string | null;
-  submitting: boolean;
-  onRate: (value: number) => void;
-}) {
-  const avg = summary?.avgRating ?? 0;
-  const count = summary?.ratingCount ?? 0;
-  return (
-    <div className="mt-6 border border-line rounded-2xl p-5 bg-card">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-ink-2 font-semibold">Overall rating</p>
-          <div className="text-3xl font-extrabold text-ink">{loading ? "—" : avg.toFixed(1)}</div>
-          <p className="text-xs text-ink-2">{count} total ratings</p>
-        </div>
-        <RatingStars value={avg} readOnly size="sm" />
-      </div>
-      <div className="mt-4 border-t border-line pt-4">
-        {user ? (
-          <div>
-            <p className="text-sm font-bold text-ink flex items-center">
-              Your rating
-              {submitting && (
-                <svg
-                  className="ml-2 w-4 h-4 animate-spin text-ink-3"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden
-                >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    opacity="0.25"
-                  />
-                  <path
-                    d="M22 12a10 10 0 00-10-10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              )}
-            </p>
-            <div className="mt-2">
-              <RatingStars
-                value={userRating ?? 0}
-                onSelect={(value) => onRate(value)}
-                readOnly={loading || submitting}
-              />
-            </div>
-            {error && <p className="text-xs text-grape mt-2">{error}</p>}
-          </div>
-        ) : (
-          <p className="text-sm text-ink-2">
-            <Link to="/login" className="text-brand underline font-semibold">
-              Sign in
-            </Link>{" "}
-            to rate this game.
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  playing: "Playing now",
-  game_lobby: "In lobby",
-  browsing_high_scores: "High scores",
-  in_score_dialog: "Sharing score",
-};
-
-function FollowingNowStrip({
-  loading,
-  activity,
-}: {
-  loading: boolean;
-  activity: FollowingActivityEntry[];
-}) {
-  if (loading && !activity.length) {
-    return <div className="mt-4 text-sm text-ink-3">Checking who&apos;s playing…</div>;
-  }
-  if (!activity.length) return null;
-  return (
-    <div className="mt-4">
-      <h3 className="text-sm font-bold text-ink-2 mb-2">Players you follow</h3>
-      <div className="flex gap-4 overflow-x-auto pb-2">
-        {activity.map((entry) => (
-          <Link
-            key={`${entry.targetUserId}-${entry.presence?.updatedAt || "now"}`}
-            to={`/profile/${entry.targetUserId}`}
-            className="flex flex-col items-center min-w-[72px]"
-          >
-            <ProfileAvatar
-              user={{ avatar: entry.targetAvatar ?? 1 }}
-              size={56}
-              borderWidth={2}
-              strokeWidth={2}
-              title={entry.targetScreenName ?? "Player"}
-            />
-            <span className="mt-2 text-xs font-bold text-ink text-center truncate max-w-[80px]">
-              {entry.targetScreenName ?? "Player"}
-            </span>
-            {entry.presence?.status && (
-              <span className="mt-1 text-[11px] text-ink-3 text-center">
-                {STATUS_LABELS[entry.presence.status] || "Online"}
-              </span>
-            )}
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TopBox({
-  pos,
-  row,
-  tall,
-  medal,
-  isUserBest,
-  onSelect,
-}: {
-  pos: 1 | 2 | 3;
-  row?: ScoreEntry;
-  tall: boolean;
-  medal: "gold" | "silver" | "bronze";
-  isUserBest?: boolean;
-  onSelect?: () => void;
-}) {
-  const medalBg =
-    medal === "gold"
-      ? "rgba(255,215,0,0.18)"
-      : medal === "silver"
-        ? "rgba(192,192,192,0.18)"
-        : "rgba(205,127,50,0.18)";
-  const tagBg = medal === "gold" ? "#FFD700" : medal === "silver" ? "#C0C0C0" : "#CD7F32";
-  const tagText = medal === "bronze" ? "text-white" : "text-on-accent";
-  const interactive = typeof onSelect === "function";
-
-  return (
-    <div className="flex-1 min-w-0">
-      <div
-        className={`rounded-2xl border border-line p-3 flex flex-col items-center justify-between ${
-          tall ? "min-h-48" : "min-h-40"
-        } ${
-          interactive
-            ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand hover:border-brand/50"
-            : ""
-        }`}
-        style={{ background: `linear-gradient(to top, ${medalBg} 0%, transparent 60%)` }}
-        role={interactive ? "button" : undefined}
-        tabIndex={interactive ? 0 : undefined}
-        onClick={interactive ? onSelect : undefined}
-        onKeyDown={
-          interactive
-            ? (evt) => {
-                if (evt.key === "Enter" || evt.key === " ") {
-                  evt.preventDefault();
-                  onSelect?.();
-                }
-              }
-            : undefined
-        }
-      >
-        <div className="w-full flex flex-col items-center min-w-0">
-          <div className="text-xs text-ink-3 font-bold">#{pos}</div>
-          <div className="mt-2">
-            <ProfileAvatar
-              user={{ avatar: row?.avatar ?? 1 }}
-              size={tall ? 56 : 44}
-              borderWidth={2}
-              strokeWidth={2}
-              title={row?.screenName ?? "Player"}
-            />
-          </div>
-          <div className="mt-2 text-sm font-bold text-ink truncate max-w-full text-center min-w-0">
-            <span className="truncate block max-w-full">{row?.screenName ?? "—"}</span>
-            {/** show small badge for user's top score */}
-            {isUserBest && (
-              <div className="mt-1 inline-block px-2 py-0.5 text-[10px] font-semibold bg-paper-2 text-ink-2 rounded-full">
-                your top score
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="mt-3 self-stretch flex justify-center">
-          <span
-            className={`px-2 py-1 rounded text-xs font-semibold ${tagText}`}
-            style={{ backgroundColor: tagBg }}
-          >
-            {row?.score ?? 0}
-          </span>
-        </div>
-      </div>
+      <RatingPromptModal
+        open={prompt.open}
+        gameTitle={meta.title}
+        initialRating={ratings.userRating}
+        submitting={ratings.isSubmitting}
+        error={ratings.submitError}
+        onSubmit={rate}
+        onSkip={prompt.dismiss}
+      />
     </div>
   );
 }

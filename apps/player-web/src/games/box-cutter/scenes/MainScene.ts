@@ -285,7 +285,7 @@ export default class MainScene extends BasePlatformScene {
   private onLineHit() {
     this.lives = loseLife(this.lives);
     this.hud.setHearts(this.lives, MAX_LIVES);
-    this.cameras.main.shake(250, 0.01);
+    this.shakeCamera(250, 0.01);
     this.flash(hexToNumber(this.host.colors.tomato));
     this.currentDirection = null;
     this.playerStepCarrySeconds = 0;

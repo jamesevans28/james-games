@@ -67,6 +67,16 @@ export abstract class BasePlatformScene extends Phaser.Scene {
     this.host.haptics.fail();
   }
 
+  /** A camera shake, skipped when the player prefers reduced motion. */
+  protected shakeCamera(durationMs: number, intensity: number): void {
+    if (!this.host.reducedMotion()) this.cameras.main.shake(durationMs, intensity);
+  }
+
+  /** A full-screen colour flash, skipped when the player prefers reduced motion. */
+  protected flashCamera(durationMs: number, r: number, g: number, b: number): void {
+    if (!this.host.reducedMotion()) this.cameras.main.flash(durationMs, r, g, b);
+  }
+
   protected onCleanup(fn: () => void): void {
     this.cleanups.push(fn);
   }

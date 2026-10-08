@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../config/env";
+import { ApiError, apiErrorFrom } from "./apiError";
 const API_BASE = API_BASE_URL;
 
 // Firebase token getter - set by FirebaseAuthProvider
@@ -44,6 +45,10 @@ export type ExperienceSummary = {
   lastUpdated?: string;
 };
 
+/**
+ * What a page reports to usePresenceReporter. Only "online" ever reaches friends
+ * (T7.6); the status itself is not sent.
+ */
 export type PresenceStatus =
   | "looking_for_game"
   | "home"
@@ -53,47 +58,38 @@ export type PresenceStatus =
   | "playing"
   | "in_score_dialog";
 
-export type FollowingActivityEntry = {
+/** A friend (T7.6): accepted both ways. `online` only when they chose to share it. */
+export type Friend = {
   userId: string;
-  targetUserId: string;
-  targetScreenName?: string | null;
-  targetAvatar?: number | null;
-  createdAt?: string;
-  /** Null when they are offline (no presence in the last 2 minutes). */
-  presence?: {
-    status: PresenceStatus;
-    gameId?: string | null;
-    /** From the server's games table. */
-    gameTitle?: string | null;
-    updatedAt: string;
-  } | null;
+  screenName: string;
+  avatar: number;
+  level: number;
+  online: boolean;
+  friendsSince: string;
 };
 
-export type FollowingSummaryEntry = {
+/** A pending friend request, either way. */
+export type FriendRequest = {
   userId: string;
-  screenName?: string | null;
-  avatar?: number | null;
-  targetUserId?: string;
-  targetScreenName?: string | null;
-  targetAvatar?: number | null;
-  createdAt?: string;
-  level?: number | null;
-  presence?: FollowingActivityEntry["presence"];
-  lastOnline?: string | null;
+  screenName: string;
+  avatar: number;
+  level: number;
+  createdAt: string;
 };
 
-export type FollowersSummary = {
-  following: FollowingSummaryEntry[];
-  followers: Array<{
-    userId: string;
-    screenName?: string | null;
-    avatar?: number | null;
-    createdAt: string;
-    level?: number | null;
-  }>;
-  followingCount: number;
-  followersCount: number;
+export type BlockedPlayer = { userId: string; screenName: string; avatar: number };
+
+/** GET /followers/summary: everything the friends page shows. */
+export type FriendsSummary = {
+  /** Your own code, to share. */
+  friendCode: string;
+  friends: Friend[];
+  incoming: FriendRequest[];
+  outgoing: FriendRequest[];
+  blocked: BlockedPlayer[];
 };
+
+export type FriendRequests = { incoming: FriendRequest[]; outgoing: FriendRequest[] };
 
 export type ScoreEntry = {
   userId?: string;
@@ -104,14 +100,7 @@ export type ScoreEntry = {
   level?: number | null;
 };
 
-export type FollowNotification = {
-  userId: string;
-  screenName?: string | null;
-  avatar?: number | null;
-  createdAt: string;
-};
-
-/** Body of mutations that only acknowledge success (follow, unfollow, presence, preferences). */
+/** Body of mutations that only acknowledge success (friends, preferences). */
 export type OkResponse = { ok: boolean };
 
 /** PATCH /users/settings. `screenName` is the name the server actually assigned. */
@@ -142,28 +131,23 @@ export type MeUser = {
 
 export type MeResponse = { user: MeUser | null };
 
-/** GET /users/:id: a public profile (whitelisted fields only) plus follow data. */
+/** How the viewer and a profile's player are connected. */
+export type Friendship = "self" | "friends" | "request_sent" | "request_received" | "none";
+
+/**
+ * GET /users/:id (T7.6): screen name, avatar, level and stickers. No friend lists,
+ * counts or last-seen. 404 when either player has blocked the other.
+ */
 export interface ProfileResponse {
-  profile: {
-    userId: string;
-    screenName?: string | null;
-    avatar?: number | null;
-    experience?: ExperienceSummary | null;
-    currentStreak?: number;
-  };
-  followingCount: number;
-  followersCount: number;
-  following: Array<{ userId: string; screenName?: string | null; avatar?: number | null }>;
-  followers: Array<{ userId: string; screenName?: string | null; avatar?: number | null }>;
-  recentGames: Array<{
-    userId: string;
-    gameId: string;
-    bestScore?: number;
-    lastScore?: number;
-    lastPlayedAt?: string;
-  }>;
+  profile: { userId: string; screenName: string; avatar: number; level: number };
+  /** Sticker ids, newest first (max 20). */
+  stickers: string[];
   isSelf: boolean;
-  isFollowing: boolean;
+  friendship: Friendship;
+  /** Only when you are friends. */
+  friendsSince: string | null;
+  /** Only on your own profile. */
+  friendCode?: string;
 }
 
 function emptySummary(gameId: string): RatingSummary {
@@ -182,7 +166,20 @@ export type ScoreSubmissionResult = {
   /** Present only when the run levelled the player up. */
   newLevel?: number;
   streak?: StreakData & { extended: boolean; isNewStreak: boolean };
+  /** Present only when this run collected the weekly sticker (T7.5). */
+  stickerEarned?: { id: string; kind: "weekly" };
 };
+
+const scoreSavedListeners = new Set<(result: ScoreSubmissionResult) => void>();
+
+/**
+ * Called after every saved run, whoever posted it (main.tsx uses it to refresh
+ * leaderboards, ratings and the profile). Returns an unsubscribe function.
+ */
+export function onScoreSaved(fn: (result: ScoreSubmissionResult) => void): () => void {
+  scoreSavedListeners.add(fn);
+  return () => scoreSavedListeners.delete(fn);
+}
 
 /**
  * Saves a run. The server awards XP from its own game config and counts today's
@@ -202,9 +199,11 @@ export async function postHighScore(args: {
   });
   if (!res.ok) {
     if (res.status === 401) return; // Not authenticated
-    throw new Error(`Failed to submit score: ${res.status}`);
+    throw await apiErrorFrom(res, "Failed to submit score");
   }
-  return (await res.json()) as ScoreSubmissionResult;
+  const result = (await res.json()) as ScoreSubmissionResult;
+  scoreSavedListeners.forEach((fn) => fn(result));
+  return result;
 }
 
 export async function fetchExperienceSummary(): Promise<ExperienceSummary | null> {
@@ -229,24 +228,13 @@ export async function getTopScores(
   }
   const res =
     opts?.scope === "following" ? await fetchWithAuth(url.toString()) : await fetch(url.toString());
-  if (res.status === 401) {
-    throw new Error("signin_required");
-  }
-  if (!res.ok) {
-    throw new Error(`Failed to load leaderboard: ${res.status}`);
-  }
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to load leaderboard");
   return (await res.json()) as ScoreEntry[];
 }
 
 /** The friendly message from a `{ error, code }` body, or a generic one. */
-async function errorFrom(res: Response, fallback: string): Promise<Error> {
-  try {
-    const body = (await res.json()) as { error?: unknown };
-    if (typeof body.error === "string" && body.error) return new Error(body.error);
-  } catch {
-    // not JSON
-  }
-  return new Error(`${fallback}: ${res.status}`);
+async function errorFrom(res: Response, fallback: string): Promise<ApiError> {
+  return apiErrorFrom(res, fallback);
 }
 
 /** PATCH /me/screen-name (T6.7). Returns the name the server stored. */
@@ -304,7 +292,7 @@ export async function fetchRatingSummary(gameId: string): Promise<RatingSummary>
   if (!gameId) throw new Error("gameId required");
   if (!API_BASE) return emptySummary(gameId);
   const res = await fetchWithAuth(`${API_BASE}/ratings/${encodeURIComponent(gameId)}`);
-  if (!res.ok) throw new Error(`Failed to load rating: ${res.status}`);
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to load rating");
   return (await res.json()) as RatingSummary;
 }
 
@@ -315,7 +303,7 @@ export async function fetchRatingSummaries(gameIds: string[]): Promise<RatingSum
   const url = new URL(`${API_BASE}/ratings`);
   url.searchParams.set("ids", ids.join(","));
   const res = await fetchWithAuth(url.toString());
-  if (!res.ok) throw new Error(`Failed to load ratings: ${res.status}`);
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to load ratings");
   const body = (await res.json()) as { summaries?: RatingSummary[] };
   if (!body.summaries) return ids.map((id) => emptySummary(id));
   return body.summaries;
@@ -323,92 +311,101 @@ export async function fetchRatingSummaries(gameIds: string[]): Promise<RatingSum
 
 export async function submitRating(gameId: string, rating: number): Promise<RatingSummary> {
   if (!gameId) throw new Error("gameId required");
-  if (!API_BASE) throw new Error("Rating API unavailable");
+  if (!API_BASE) throw new ApiError(0, "api_unavailable", "Rating API unavailable");
   const res = await fetchWithAuth(`${API_BASE}/ratings/${encodeURIComponent(gameId)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ rating }),
   });
-  if (res.status === 401) throw new Error("signin_required");
-  if (!res.ok) throw new Error(`Failed to submit rating: ${res.status}`);
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to submit rating");
   return (await res.json()) as RatingSummary;
 }
 
-export async function fetchFollowersSummary(): Promise<FollowersSummary> {
-  if (!API_BASE) return { following: [], followers: [], followingCount: 0, followersCount: 0 };
+// ============================================================================
+// Friends (T7.6). Errors are ApiErrors whose message is the server's code
+// (for example "code_not_found"); utils/friends.ts turns them into kind words.
+// ============================================================================
+
+const EMPTY_FRIENDS: FriendsSummary = {
+  friendCode: "",
+  friends: [],
+  incoming: [],
+  outgoing: [],
+  blocked: [],
+};
+
+export async function fetchFriendsSummary(): Promise<FriendsSummary> {
+  if (!API_BASE) return EMPTY_FRIENDS;
   const res = await fetchWithAuth(`${API_BASE}/followers/summary`);
-  if (res.status === 401)
-    return { following: [], followers: [], followingCount: 0, followersCount: 0 };
-  if (!res.ok) throw new Error(`Failed to load followers: ${res.status}`);
-  return (await res.json()) as FollowersSummary;
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to load friends");
+  return (await res.json()) as FriendsSummary;
 }
 
-export async function followUserApi(targetUserId: string): Promise<OkResponse> {
-  if (!API_BASE) return { ok: false };
-  const res = await fetchWithAuth(`${API_BASE}/followers/${encodeURIComponent(targetUserId)}`, {
-    method: "POST",
+export async function fetchFriendRequests(): Promise<FriendRequests> {
+  if (!API_BASE) return { incoming: [], outgoing: [] };
+  const res = await fetchWithAuth(`${API_BASE}/followers/requests`);
+  if (res.status === 401) return { incoming: [], outgoing: [] };
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to load friend requests");
+  return (await res.json()) as FriendRequests;
+}
+
+async function friendsCall<T>(method: string, path: string, body?: unknown): Promise<T> {
+  if (!API_BASE) throw new ApiError(0, "api_unavailable", "api_unavailable");
+  const res = await fetchWithAuth(`${API_BASE}/followers${path}`, {
+    method,
+    ...(body === undefined
+      ? {}
+      : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
   });
-  if (res.status === 401) throw new Error("signin_required");
-  if (!res.ok) throw new Error(`Failed to follow: ${res.status}`);
-  return (await res.json()) as OkResponse;
+  if (!res.ok) throw await apiErrorFrom(res, "Friends request failed");
+  return (await res.json()) as T;
 }
 
-export async function unfollowUserApi(targetUserId: string): Promise<OkResponse> {
-  if (!API_BASE) return { ok: false };
-  const res = await fetchWithAuth(`${API_BASE}/followers/${encodeURIComponent(targetUserId)}`, {
-    method: "DELETE",
-  });
-  if (res.status === 401) throw new Error("signin_required");
-  if (!res.ok) throw new Error(`Failed to unfollow: ${res.status}`);
-  return (await res.json()) as OkResponse;
+/** Sends a request to the player with this code ("friends" when they had already asked you). */
+export function sendFriendRequest(
+  friendCode: string,
+): Promise<{ ok: boolean; status: "pending" | "friends" }> {
+  return friendsCall("POST", "/request", { friendCode });
 }
 
-/** The server derives the game title from `gameId`; it never accepts a title from the client. */
-export async function updatePresenceStatus(payload: {
-  status: PresenceStatus;
-  gameId?: string;
-}): Promise<OkResponse> {
-  if (!API_BASE) return { ok: false };
-  const res = await fetchWithAuth(`${API_BASE}/followers/status`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (res.status === 401) throw new Error("signin_required");
-  if (!res.ok) throw new Error(`Failed to update presence: ${res.status}`);
-  return (await res.json()) as OkResponse;
+export function acceptFriendRequest(userId: string): Promise<OkResponse> {
+  return friendsCall("POST", `/requests/${encodeURIComponent(userId)}/accept`);
 }
 
-export async function fetchFollowingActivity(args: {
-  gameId?: string;
-  statuses?: PresenceStatus[];
-}): Promise<{ activity: FollowingActivityEntry[] }> {
-  if (!API_BASE) return { activity: [] };
-  const url = new URL(`${API_BASE}/followers/activity`);
-  if (args.gameId) url.searchParams.set("gameId", args.gameId);
-  if (args.statuses && args.statuses.length) {
-    url.searchParams.set("status", args.statuses.join(","));
-  }
-  const res = await fetchWithAuth(url.toString());
-  if (res.status === 401) return { activity: [] };
-  if (!res.ok) throw new Error(`Failed to load activity: ${res.status}`);
-  return (await res.json()) as { activity: FollowingActivityEntry[] };
+/** Declines their request, or cancels yours. */
+export function declineFriendRequest(userId: string): Promise<OkResponse> {
+  return friendsCall("DELETE", `/requests/${encodeURIComponent(userId)}`);
 }
 
+export function removeFriend(userId: string): Promise<OkResponse> {
+  return friendsCall("DELETE", `/friends/${encodeURIComponent(userId)}`);
+}
+
+export function blockPlayer(userId: string): Promise<OkResponse> {
+  return friendsCall("POST", `/block/${encodeURIComponent(userId)}`);
+}
+
+export function unblockPlayer(userId: string): Promise<OkResponse> {
+  return friendsCall("DELETE", `/block/${encodeURIComponent(userId)}`);
+}
+
+/**
+ * Tells the server you're online. It stores this only if you switched on
+ * "Show friends when I'm online"; no game or activity is ever sent.
+ */
+export async function reportPresence(): Promise<void> {
+  if (!API_BASE) return;
+  const res = await fetchWithAuth(`${API_BASE}/followers/status`, { method: "POST" });
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to update presence");
+}
+
+/** A public profile, or null when there is no such player (or a block between you). */
 export async function fetchUserProfile(userId: string): Promise<ProfileResponse | null> {
   if (!API_BASE) return null;
   const res = await fetchWithAuth(`${API_BASE}/users/${encodeURIComponent(userId)}`);
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`Failed to load profile: ${res.status}`);
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to load profile");
   return (await res.json()) as ProfileResponse;
-}
-
-export async function fetchFollowNotifications(): Promise<{ notifications: FollowNotification[] }> {
-  if (!API_BASE) return { notifications: [] };
-  const res = await fetchWithAuth(`${API_BASE}/followers/notifications`);
-  if (res.status === 401) return { notifications: [] };
-  if (!res.ok) throw new Error(`Failed to load notifications: ${res.status}`);
-  return (await res.json()) as { notifications: FollowNotification[] };
 }
 
 // ============================================================================
@@ -455,4 +452,20 @@ export async function fetchStreakData(): Promise<StreakData | null> {
   if (res.status === 401) return null;
   if (!res.ok) throw new Error(`Failed to fetch streak: ${res.status}`);
   return (await res.json()) as StreakData;
+}
+
+// ============================================================================
+// Stickers (T7.5)
+// ============================================================================
+
+export type CollectedSticker = { id: string; earnedAt: string };
+
+/** GET /users/stickers: the signed-in player's stickers, newest first. */
+export async function fetchMyStickers(): Promise<CollectedSticker[]> {
+  if (!API_BASE) return [];
+  const res = await fetchWithAuth(`${API_BASE}/users/stickers`);
+  if (res.status === 401) return [];
+  if (!res.ok) throw new Error(`Failed to load stickers: ${res.status}`);
+  const body = (await res.json()) as { stickers?: CollectedSticker[] };
+  return body.stickers ?? [];
 }

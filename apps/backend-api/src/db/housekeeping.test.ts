@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createTestDb } from "../test/db.js";
 import { runHousekeeping } from "./housekeeping.js";
-import { plays, presence, users } from "./schema.js";
+import { authAttempts, plays, presence, users } from "./schema.js";
 
 describe("runHousekeeping", () => {
   it("removes stale presence and idle guests with no plays, nothing else", async () => {
@@ -20,7 +20,15 @@ describe("runHousekeeping", () => {
       { userId: "new-guest", status: "home", updatedAt: now },
     ]);
 
-    expect(await runHousekeeping(db, now)).toEqual({ presenceDeleted: 1, guestsDeleted: 1 });
+    await db.insert(authAttempts).values([
+      { key: "user:old", attemptedAt: old },
+      { key: "user:new", attemptedAt: now },
+    ]);
+    expect(await runHousekeeping(db, now)).toEqual({
+      presenceDeleted: 1,
+      attemptsDeleted: 1,
+      guestsDeleted: 1,
+    });
     const left = await db.select({ id: users.id }).from(users).orderBy(users.id);
     expect(left.map((u) => u.id)).toEqual(["guest-who-played", "new-guest", "old-kid"]);
   });

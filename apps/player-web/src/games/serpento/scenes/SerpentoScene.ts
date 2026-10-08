@@ -112,8 +112,8 @@ export default class SerpentoScene extends BasePlatformScene {
 
     if (outcome === "crashed") {
       this.render();
-      this.cameras.main.shake(250, 0.01);
-      this.cameras.main.flash(120, 255, 50, 50);
+      this.shakeCamera(250, 0.01);
+      this.flashCamera(120, 255, 50, 50);
       this.endRun(this.run.eaten);
       return;
     }

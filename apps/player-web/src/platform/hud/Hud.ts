@@ -116,11 +116,14 @@ export class Hud {
 
   /** A word that pops up and floats away ("+1", "Perfect!"). */
   popup(text: string, x: number, y: number, color: string = this.host.colors.sun): void {
-    const t = this.text(x, y, text, 30, color).setOrigin(0.5).setScale(0.6);
+    const calm = this.host.reducedMotion();
+    const t = this.text(x, y, text, 30, color)
+      .setOrigin(0.5)
+      .setScale(calm ? 1 : 0.6);
     this.scene.tweens.add({
       targets: t,
       scale: 1,
-      y: y - 60,
+      y: calm ? y : y - 60,
       alpha: { from: 1, to: 0 },
       duration: 700,
       ease: "Back.Out",
@@ -143,7 +146,7 @@ export class Hud {
         if (i >= words.length || cancelled) return resolve();
         const t = this.text(width / 2, height / 2, words[i] ?? "", 96, this.host.colors.sun)
           .setOrigin(0.5)
-          .setScale(0.4);
+          .setScale(this.host.reducedMotion() ? 1 : 0.4);
         this.host.audio.beep(i === words.length - 1 ? 880 : 520, 80);
         this.scene.tweens.add({
           targets: t,

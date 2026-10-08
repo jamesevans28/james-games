@@ -1,21 +1,22 @@
 import { eq, sql } from "drizzle-orm";
 import { getDb } from "../db/client.js";
-import { games, presence, users } from "../db/schema.js";
+import { presence, users } from "../db/schema.js";
 
-/** Pure data access for presence rows. Services own the rules. */
+/**
+ * Pure data access for presence rows. Services own the rules (T7.6: only players
+ * who switched on `sharePresence` are stored, and friends see only "online").
+ */
 
 export type Presence = typeof presence.$inferSelect;
 
+/** The only status stored: no game, no activity detail. */
+export const ONLINE_STATUS = "online";
+
 /**
- * Upserts the user's presence with the database clock as `updated_at`. Writes
- * nothing (and returns null) when the user has no row, instead of failing on the
- * foreign key.
+ * Marks the user online now (database clock). Writes nothing and returns null when
+ * the user has no row, instead of failing on the foreign key.
  */
-export async function upsertPresence(
-  userId: string,
-  status: string,
-  gameId: string | null,
-): Promise<Presence | null> {
+export async function upsertOnline(userId: string): Promise<Presence | null> {
   const db = getDb();
   const [row] = await db
     .insert(presence)
@@ -23,8 +24,8 @@ export async function upsertPresence(
       db
         .select({
           userId: users.id,
-          status: sql<string>`${status}::text`.as("status"),
-          gameId: sql<string | null>`${gameId}::text`.as("game_id"),
+          status: sql<string>`${ONLINE_STATUS}::text`.as("status"),
+          gameId: sql<string | null>`null::text`.as("game_id"),
           updatedAt: sql<Date>`now()`.as("updated_at"),
         })
         .from(users)
@@ -32,22 +33,13 @@ export async function upsertPresence(
     )
     .onConflictDoUpdate({
       target: presence.userId,
-      set: {
-        status: sql`excluded.status`,
-        gameId: sql`excluded.game_id`,
-        updatedAt: sql`excluded.updated_at`,
-      },
+      set: { status: sql`excluded.status`, gameId: null, updatedAt: sql`excluded.updated_at` },
     })
     .returning();
   return row ?? null;
 }
 
-/** True when a game with this id exists (any status). */
-export async function gameExists(gameId: string): Promise<boolean> {
-  const [row] = await getDb()
-    .select({ id: games.id })
-    .from(games)
-    .where(eq(games.id, gameId))
-    .limit(1);
-  return Boolean(row);
+/** Forgets the user's presence (sharing switched off). */
+export async function deletePresence(userId: string): Promise<void> {
+  await getDb().delete(presence).where(eq(presence.userId, userId));
 }

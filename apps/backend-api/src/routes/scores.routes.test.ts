@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { and, eq } from "drizzle-orm";
 import { startTestApp, type TestApp } from "../test/app.js";
 import { bestScores, follows, plays, userGameStats, users } from "../db/schema.js";
-import { localDayFor } from "../services/streakRules.js";
+import { localDayFor, localWeekFor } from "../services/streakRules.js";
 import { DEFAULT_EXPERIENCE_LEVELS } from "../data/experienceLevels.js";
 
 // Test games (src/test/db.ts): max 1000, 50 points/second; test-game ×1 active,
@@ -165,7 +165,9 @@ describe("GET /scores/:gameId", () => {
     await submit("lb-pending", { gameId: "test-game", score: 300 });
     await submit("lb-stranger", { gameId: "test-game", score: 400 });
     await api.db.insert(follows).values([
+      // Friends are accepted both ways (T7.6).
       { userId: "lb-viewer", targetUserId: "lb-friend", status: "accepted" },
+      { userId: "lb-friend", targetUserId: "lb-viewer", status: "accepted" },
       { userId: "lb-viewer", targetUserId: "lb-pending", status: "pending" },
     ]);
     // A disabled player's best stays in the table but leaves the boards.
@@ -263,5 +265,78 @@ describe("streak and experience", () => {
       body: { summary: null },
     });
     expect((await api.request("GET", "/experience/summary")).status).toBe(401);
+  });
+});
+
+describe("weekly stickers", () => {
+  /** Noon (player time) on days of this local week other than today. */
+  function otherDaysThisWeek(tzOffsetMinutes: number, count: number): Date[] {
+    const week = localWeekFor(Date.now(), tzOffsetMinutes);
+    const days: Date[] = [];
+    for (let i = 0; i < 7 && days.length < count; i++) {
+      const at = week.startMs + i * 86_400_000 + 12 * 3_600_000;
+      if (localDayFor(at, tzOffsetMinutes) !== week.today) days.push(new Date(at));
+    }
+    return days;
+  }
+
+  async function addPlays(userId: string, when: Date[]) {
+    for (const createdAt of when) {
+      await api.db.insert(plays).values({ userId, gameId: "test-game", score: 10, createdAt });
+    }
+  }
+
+  test("the third different day this week collects the sticker, once", async () => {
+    await api.addUser({ id: "sticky" });
+    await addPlays("sticky", otherDaysThisWeek(0, 2));
+    const week = localWeekFor(Date.now(), 0);
+
+    const first = await submit("sticky", { gameId: "test-game", score: 20 });
+    expect(first.status).toBe(200);
+    expect(first.body.stickerEarned).toEqual({ id: week.stickerId, kind: "weekly" });
+
+    const again = await submit("sticky", { gameId: "test-game", score: 30 });
+    expect(again.status).toBe(200);
+    expect(again.body.stickerEarned).toBeUndefined();
+
+    const list = await api.request("GET", "/users/stickers", { as: "sticky" });
+    expect(list.status).toBe(200);
+    expect(list.body.stickers).toHaveLength(1);
+    expect(list.body.stickers[0]).toMatchObject({ id: week.stickerId });
+    expect(typeof list.body.stickers[0].earnedAt).toBe("string");
+  });
+
+  test("two days, or many plays on one day, are not enough", async () => {
+    await api.addUser({ id: "twice" });
+    await addPlays("twice", otherDaysThisWeek(0, 1));
+    const a = await submit("twice", { gameId: "test-game", score: 20 });
+    const b = await submit("twice", { gameId: "test-game", score: 25 });
+    expect(a.body.stickerEarned).toBeUndefined();
+    expect(b.body.stickerEarned).toBeUndefined();
+    expect((await api.request("GET", "/users/stickers", { as: "twice" })).body).toEqual({
+      stickers: [],
+    });
+  });
+
+  test("days are counted in the player's own time zone", async () => {
+    await api.addUser({ id: "sydney" });
+    await addPlays("sydney", otherDaysThisWeek(660, 2));
+    const res = await submit("sydney", { gameId: "test-game", score: 20, tzOffsetMinutes: 660 });
+    expect(res.body.stickerEarned).toEqual({
+      id: localWeekFor(Date.now(), 660).stickerId,
+      kind: "weekly",
+    });
+  });
+
+  test("plays from last week do not count", async () => {
+    await api.addUser({ id: "lastweek" });
+    const start = localWeekFor(Date.now(), 0).startMs;
+    await addPlays("lastweek", [new Date(start - 86_400_000), new Date(start - 2 * 86_400_000)]);
+    const res = await submit("lastweek", { gameId: "test-game", score: 20 });
+    expect(res.body.stickerEarned).toBeUndefined();
+  });
+
+  test("the sticker list needs sign-in", async () => {
+    expect((await api.request("GET", "/users/stickers")).status).toBe(401);
   });
 });

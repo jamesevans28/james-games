@@ -1,96 +1,67 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useCatalog } from "../../context/GameCatalogProvider";
-import { getTopScores, type ScoreEntry } from "../../lib/api";
 import { getUserName } from "../../utils/user";
 import Seo from "../../components/Seo";
 import { ProfileAvatar } from "../../components/profile";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
-import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import { useLeaderboard, type LeaderboardScope } from "../../hooks/useLeaderboard";
+import { isSigninRequired } from "../../lib/apiError";
+import { readStored, STORAGE_KEYS } from "../../utils/storageKeys";
 import { SITE_URL, shareImageFor } from "../../utils/seoKeywords";
 import { brand } from "../../config/brand";
+
+const TABS: ReadonlyArray<{ id: LeaderboardScope; label: string }> = [
+  { id: "overall", label: "Everyone" },
+  { id: "following", label: "Friends" },
+];
+
+/** Medal rows get a crayon tint; the ring colour uses the same token. */
+const MEDALS = [
+  { row: "bg-sun/15", ring: "var(--color-sun)", label: "1st" },
+  { row: "bg-sky/15", ring: "var(--color-sky)", label: "2nd" },
+  { row: "bg-tomato/10", ring: "var(--color-tomato)", label: "3rd" },
+] as const;
+
+function storedTab(): LeaderboardScope {
+  return readStored("leaderboardTab") === "following" ? "following" : "overall";
+}
 
 export default function LeaderboardPage() {
   const { gameId } = useParams();
   const navigate = useNavigate();
   const { getGame } = useCatalog();
   const meta = useMemo(() => (gameId ? getGame(gameId) : undefined), [gameId, getGame]);
-  const [rows, setRows] = useState<ScoreEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [tabError, setTabError] = useState<string | null>(null);
   const myName = useMemo(() => getUserName() || "", []);
   const { user } = useAuth();
-  const { isOnline } = useOnlineStatus();
-  usePresenceReporter({
-    status: "browsing_leaderboard",
-    gameId: meta?.id,
-    enabled: !!meta,
+  const [activeTab, setActiveTab] = useState<LeaderboardScope>(storedTab);
+  const needsSignIn = activeTab === "following" && !user;
+  const board = useLeaderboard(gameId, {
+    limit: 25,
+    scope: activeTab,
+    viewerId: user?.userId,
+    enabled: !needsSignIn,
   });
+  usePresenceReporter({ status: "browsing_leaderboard", gameId: meta?.id, enabled: !!meta });
 
-  const getStoredTab = () => {
-    if (typeof window === "undefined") return "overall" as const;
-    const stored = window.localStorage.getItem("leaderboard:lastTab");
-    return stored === "following" ? "following" : "overall";
-  };
-
-  const [activeTab, setActiveTab] = useState<"overall" | "following">(() => getStoredTab());
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      if (!gameId) return;
-      setLoading(true);
-      setError(null);
-      setTabError(null);
-
-      // Check if offline before attempting to fetch
-      if (!navigator.onLine) {
-        setRows([]);
-        setLoading(false);
-        setError("You're offline. Connect to the internet to view the leaderboard.");
-        return;
-      }
-
-      const scope = activeTab === "following" ? "following" : undefined;
-      if (scope === "following" && !user) {
-        setRows([]);
-        setLoading(false);
-        setTabError("Sign in to see scores from people you follow.");
-        return;
-      }
-      try {
-        const res = await getTopScores(gameId, 25, { scope });
-        if (!cancelled) setRows(res);
-      } catch (e) {
-        console.error(e);
-        if (scope === "following" && e instanceof Error && e.message === "signin_required") {
-          if (!cancelled) {
-            setRows([]);
-            setTabError("Sign in to see scores from people you follow.");
-          }
-        } else if (!navigator.onLine) {
-          if (!cancelled)
-            setError("You're offline. Connect to the internet to view the leaderboard.");
-        } else {
-          if (!cancelled) setError("Failed to load leaderboard");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [gameId, activeTab, user?.userId, isOnline]);
-
-  function handleTabChange(next: "overall" | "following") {
+  function handleTabChange(next: LeaderboardScope) {
     setActiveTab(next);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("leaderboard:lastTab", next);
+    try {
+      localStorage.setItem(STORAGE_KEYS.leaderboardTab, next);
+    } catch {
+      // storage blocked: the tab just isn't remembered
     }
+  }
+
+  const rows = board.data ?? [];
+  let message: string | null = null;
+  if (needsSignIn || isSigninRequired(board.error)) {
+    message = "Sign in to see scores from people you follow.";
+  } else if (board.fetchStatus === "paused" || (board.isError && rows.length === 0)) {
+    message = "Scores will show up here when you're online.";
+  } else if (board.isSuccess && rows.length === 0) {
+    message = "No scores yet. Yours could be the first!";
   }
 
   return (
@@ -106,43 +77,40 @@ export default function LeaderboardPage() {
         noindex={true}
       />
       <header className="fixed top-0 left-0 right-0 z-50 h-14">
-        <div className="h-full flex items-center justify-between px-3 bg-paper/95 backdrop-blur text-ink border-b border-line">
+        <div className="h-full flex items-center justify-between px-2 bg-paper/95 backdrop-blur text-ink border-b border-line">
           <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center rounded-full px-3 py-1.5 text-ink-2 hover:bg-paper-2 transition-colors"
+            type="button"
+            onClick={() => void navigate(-1)}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink-2 hover:bg-paper-2"
             aria-label="Close leaderboard"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path
                 d="M6 6l12 12M18 6L6 18"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
               />
             </svg>
           </button>
-          <div className="text-center pointer-events-none select-none">
-            <div className="text-lg font-extrabold text-ink">{meta?.title ?? "Game"}</div>
-          </div>
-          <div className="w-[84px]" />
+          <h1 className="font-display text-lg font-extrabold text-ink truncate">
+            {meta?.title ?? "Game"}
+          </h1>
+          <div className="w-11" />
         </div>
       </header>
+
       <div className="pt-16 pb-6 px-4 max-w-xl w-full mx-auto">
-        <div className="flex gap-2 mb-4" role="tablist" aria-label="Leaderboard scope">
-          {(
-            [
-              { id: "overall", label: "Overall" },
-              { id: "following", label: "Following" },
-            ] as const
-          ).map((tab) => (
+        <div className="flex gap-2 mb-4" role="tablist" aria-label="Whose scores">
+          {TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
               role="tab"
               aria-selected={activeTab === tab.id}
-              className={`flex-1 rounded-full border px-3 py-2 text-sm font-bold transition-colors ${
+              className={`flex-1 min-h-11 rounded-full border-2 px-3 text-base font-bold transition-colors ${
                 activeTab === tab.id
-                  ? "bg-brand text-on-brand border-brand shadow-sticker"
+                  ? "bg-brand text-on-brand border-edge shadow-sticker"
                   : "bg-card text-ink-2 border-line hover:bg-paper-2"
               }`}
               onClick={() => handleTabChange(tab.id)}
@@ -151,122 +119,66 @@ export default function LeaderboardPage() {
             </button>
           ))}
         </div>
-        {loading && <div className="text-ink-2">Loading…</div>}
-        {error && <div className="text-grape">{error}</div>}
-        {tabError && <div className="text-sm text-tomato mb-3">{tabError}</div>}
-        {!loading && !error && (
-          <ol className="rounded-2xl overflow-hidden bg-card border border-line">
+
+        {board.isPending && board.fetchStatus === "fetching" && (
+          <p className="text-base text-ink-2">Loading…</p>
+        )}
+        {message && <p className="text-base text-ink-2">{message}</p>}
+
+        {rows.length > 0 && (
+          <ol className="card overflow-hidden p-0">
             {rows.map((r, i) => {
-              const isMe = myName && r.screenName === myName;
-              const medal = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : null;
-              const medalColors: Record<
-                "gold" | "silver" | "bronze",
-                { ring: string; badge: string; text: string }
-              > = {
-                gold: { ring: "#fbbf24", badge: "#f59e0b", text: "#b7791f" },
-                silver: { ring: "#c0c6cf", badge: "#9ca3af", text: "#6b7280" },
-                bronze: { ring: "#d97706", badge: "#92400e", text: "#b45309" },
-              };
-              const avatarSize = medal ? 44 : 28;
-              const hasProfile = Boolean(r.userId);
-              const handleRowClick = () => {
-                if (r.userId) void navigate(`/profile/${r.userId}`);
-              };
-              const baseRowClass =
-                "flex items-center justify-between px-4 py-3 border-b border-line last:border-b-0 " +
-                (isMe
-                  ? "bg-brand/10"
-                  : medal === "gold"
-                    ? "bg-sun/10"
-                    : medal === "silver"
-                      ? "bg-line/20"
-                      : medal === "bronze"
-                        ? "bg-tomato/10"
-                        : "");
-              return (
-                <li
-                  key={`${r.screenName}-${i}`}
-                  className={
-                    baseRowClass +
-                    (hasProfile
-                      ? " cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand/50 hover:bg-paper-2"
-                      : "")
-                  }
-                  role={hasProfile ? "button" : undefined}
-                  tabIndex={hasProfile ? 0 : undefined}
-                  onClick={hasProfile ? handleRowClick : undefined}
-                  onKeyDown={
-                    hasProfile
-                      ? (evt) => {
-                          if (evt.key === "Enter" || evt.key === " ") {
-                            evt.preventDefault();
-                            handleRowClick();
-                          }
-                        }
-                      : undefined
-                  }
-                  aria-label={hasProfile ? `View ${r.screenName}'s profile` : undefined}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-7 text-ink-2 font-mono">{i + 1}.</span>
-                    <div className="relative flex items-center">
-                      <ProfileAvatar
-                        user={{ avatar: r.avatar }}
-                        size={avatarSize}
-                        borderWidth={medal ? 3 : 2}
-                        strokeWidth={medal ? 2 : 1}
-                        borderColor={
-                          medal
-                            ? medalColors[medal].ring
-                            : isMe
-                              ? "var(--color-brand)"
-                              : "var(--color-sky)"
-                        }
-                        title={r.screenName}
-                      />
-                      {medal && (
-                        <span
-                          className="absolute -bottom-1 -right-1 inline-flex items-center justify-center rounded-full text-[10px] font-bold shadow"
-                          style={{
-                            backgroundColor: medalColors[medal].badge,
-                            color: "#fff",
-                            width: 18,
-                            height: 18,
-                            border: "2px solid var(--color-edge)",
-                          }}
-                          aria-label={`${medal} medal`}
-                        >
-                          {medal === "gold" ? "🥇" : medal === "silver" ? "🥈" : "🥉"}
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <span
-                        className={
-                          "font-bold truncate max-w-[210px] md:max-w-[260px] " +
-                          (isMe ? "text-brand" : medal ? "" : "text-ink")
-                        }
-                        style={!isMe && medal ? { color: medalColors[medal].text } : undefined}
-                        title={r.screenName}
-                      >
-                        {r.screenName}
-                      </span>
-                      {typeof r.level === "number" && (
-                        <div className="text-[11px] text-ink-2">Level {r.level}</div>
-                      )}
-                    </div>
-                  </div>
-                  <div
-                    className={
-                      "text-right font-mono font-bold " + (isMe ? "text-brand" : "text-ink")
+              const isMe = Boolean(myName) && r.screenName === myName;
+              const medal = MEDALS[i];
+              const content = (
+                <>
+                  <span className="w-7 text-base font-extrabold text-ink-3">{i + 1}</span>
+                  <ProfileAvatar
+                    user={{ avatar: r.avatar }}
+                    size={medal ? 44 : 32}
+                    borderWidth={medal ? 3 : 2}
+                    strokeWidth={medal ? 2 : 1}
+                    borderColor={
+                      medal ? medal.ring : isMe ? "var(--color-brand)" : "var(--color-line)"
                     }
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={`block truncate text-base font-bold ${isMe ? "text-brand" : "text-ink"}`}
+                    >
+                      {r.screenName}
+                      {medal && <span className="sr-only"> ({medal.label})</span>}
+                    </span>
+                    {typeof r.level === "number" && (
+                      <span className="block text-sm text-ink-2">Level {r.level}</span>
+                    )}
+                  </span>
+                  <span
+                    className={`font-mono text-base font-extrabold ${isMe ? "text-brand" : "text-ink"}`}
                   >
-                    {r.score}
-                  </div>
+                    {r.score.toLocaleString()}
+                  </span>
+                </>
+              );
+              const rowClass = `flex min-h-14 items-center gap-3 px-4 py-2 border-b border-line last:border-b-0 ${
+                isMe ? "bg-brand/10" : (medal?.row ?? "")
+              }`;
+              return (
+                <li key={`${i}-${r.screenName}`}>
+                  {r.userId ? (
+                    <button
+                      type="button"
+                      className={`${rowClass} w-full text-left hover:bg-paper-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand`}
+                      onClick={() => void navigate(`/profile/${r.userId}`)}
+                    >
+                      {content}
+                    </button>
+                  ) : (
+                    <div className={rowClass}>{content}</div>
+                  )}
                 </li>
               );
             })}
-            {rows.length === 0 && <div className="px-4 py-6 text-ink-2">No scores yet.</div>}
           </ol>
         )}
       </div>

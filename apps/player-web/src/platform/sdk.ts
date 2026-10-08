@@ -101,6 +101,11 @@ export type GameHost = {
   fonts: typeof BRAND_FONTS;
   colors: typeof BRAND_COLORS;
   isPaused(): boolean;
+  /**
+   * The player asked for less motion (OS setting). Skip camera shakes, flashes and
+   * big zooms; BasePlatformScene's shakeCamera/flashCamera already do (T7.12).
+   */
+  reducedMotion(): boolean;
 };
 
 /** A running game, controlled by the platform. */

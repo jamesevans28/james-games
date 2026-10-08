@@ -442,7 +442,7 @@ export default class PaddlePopScene extends BasePlatformScene {
     }
     if (!this.splitWarned && now >= this.nextSplitAt - SPLIT_WARNING_MS) {
       this.splitWarned = true;
-      this.cameras.main.shake(SPLIT_WARNING_MS, 0.006);
+      this.shakeCamera(SPLIT_WARNING_MS, 0.006);
     }
     if (now >= this.nextSplitAt) {
       this.nextSplitAt += SPLIT_INTERVAL_MS;
@@ -565,7 +565,7 @@ export default class PaddlePopScene extends BasePlatformScene {
           this.addScore(disc.value);
           this.hud.popup(`+${disc.value}`, disc.img.x, disc.img.y - 30);
           this.host.audio.play("score");
-          this.cameras.main.shake(70, 0.008);
+          this.shakeCamera(70, 0.008);
         }
       }
     }

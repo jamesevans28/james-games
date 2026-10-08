@@ -33,6 +33,7 @@ export async function createScore(req: Request, res: Response) {
       ...(result.newLevel !== undefined ? { newLevel: result.newLevel } : {}),
       summary: result.summary,
       streak: result.streak,
+      ...(result.stickerEarned ? { stickerEarned: result.stickerEarned } : {}),
     });
   } catch (e) {
     if (e instanceof ScoreRejected) {

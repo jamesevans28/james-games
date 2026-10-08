@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="rocket sticker">
+<!-- Placeholder weekly sticker until the Phase 8 art (T8.x). -->
+<circle cx="50" cy="50" r="45" fill="#FFFFFF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M44 74q6 14 12 0z" fill="#FFC93C" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M36 58l-10 12l14-2zM64 58l10 12l-14-2z" fill="#FF5A4E" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M50 16q18 16 14 54h-28q-4-38 14-54z" fill="#8E6CEF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="50" cy="42" r="8" fill="#3FA9F5" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M46 40q2-3 5-3" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M40 60h20" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M20 24l2 5l5 2l-5 2l-2 5l-2-5l-5-2l5-2z" fill="#FFC93C" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M80 30l1.5 3.5l3.5 1.5l-3.5 1.5l-1.5 3.5l-1.5-3.5l-3.5-1.5l3.5-1.5z" fill="#FFC93C" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

@@ -69,13 +69,12 @@ const sitemapUrls = [
     changefreq: "monthly",
     priority: "0.3",
   },
-  // Games list page
-  {
-    loc: `${domain}/games-list`,
+  ...["/about", "/parents"].map((page) => ({
+    loc: `${domain}${page}`,
     lastmod: now,
-    changefreq: "weekly",
-    priority: "0.9",
-  },
+    changefreq: "monthly",
+    priority: "0.4",
+  })),
   // Individual game pages
   ...publicGames.map((game) => ({
     loc: `${domain}/games/${game.id}`,
@@ -223,7 +222,7 @@ ${jsonForScript(jsonLd)}
   await fs.promises.writeFile(path.join(staticGamesDir, `${game.id}.html`), gameHtml, "utf8");
 }
 
-// games-index.html is retired (T1.9/T3.4): the SPA's /games-list is the listing page.
+// games-index.html is retired (T1.9/T3.4): the home page (/) is the game listing (T7.1).
 await fs.promises.rm(path.join(publicDir, "games-index.html"), { force: true });
 
 console.log(`Generated ${publicGames.length} static game pages`);

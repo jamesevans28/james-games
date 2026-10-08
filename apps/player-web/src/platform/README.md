@@ -92,6 +92,7 @@ export default class StackScene extends BasePlatformScene {
 | `fonts`                                          | `display`, `body`, `note` font stacks for Phaser text                                                                                                                                                                   |
 | `colors`                                         | `paper`, `ink`, `tomato`, `sun`, `grass`, `sky`, `grape` as **CSS hex strings** (`"#FF5A4E"`). Use them as-is for text colours. For Graphics fills and strokes convert with `hexToNumber()` from `platform/hud/format`. |
 | `isPaused()`                                     | true while the platform has the run paused                                                                                                                                                                              |
+| `reducedMotion()`                                | true when the player asked for less motion; skip shakes, flashes and big zooms (`BasePlatformScene.shakeCamera`/`flashCamera` already do)                                                                               |
 
 In a scene, `this.host` (BasePlatformScene) or `getHost(this)` (from `mount.ts`) returns it. The host lives in the game registry, so it isn't available in the constructor or in field initialisers.
 

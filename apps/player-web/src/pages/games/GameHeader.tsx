@@ -25,7 +25,7 @@ export default function GameHeader({
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-2 hover:bg-line hover:border-brand/50 transition-colors px-3 py-1.5 text-ink"
+            className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-2 hover:bg-line hover:border-brand/50 transition-colors min-h-11 min-w-11 justify-center px-3 py-1.5 text-ink"
             aria-label="Back"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -41,7 +41,7 @@ export default function GameHeader({
         ) : (
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-2 hover:bg-line hover:border-brand/50 transition-colors px-3 py-1.5 text-ink"
+            className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-2 hover:bg-line hover:border-brand/50 transition-colors min-h-11 min-w-11 justify-center px-3 py-1.5 text-ink"
             aria-label="Back to games"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -63,12 +63,12 @@ export default function GameHeader({
 
         <div className="flex items-center gap-2">
           {showMute && (
-            <MuteButton className="inline-flex items-center rounded-full border border-line bg-paper-2 hover:bg-line hover:border-brand/50 transition-colors px-3 py-1.5 text-ink" />
+            <MuteButton className="inline-flex items-center rounded-full border border-line bg-paper-2 hover:bg-line hover:border-brand/50 transition-colors min-h-11 min-w-11 justify-center px-3 py-1.5 text-ink" />
           )}
           {leaderboardTo && (
             <Link
               to={leaderboardTo}
-              className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-2 hover:bg-line hover:border-brand/50 transition-colors px-3 py-1.5 text-ink"
+              className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-2 hover:bg-line hover:border-brand/50 transition-colors min-h-11 min-w-11 justify-center px-3 py-1.5 text-ink"
               aria-label="Open leaderboard"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">

@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { eq, like } from "drizzle-orm";
 import { startTestApp, type TestApp } from "../test/app.js";
 import { getUserById } from "../repos/usersRepo.js";
 import * as firebase from "../services/firebaseAuthService.js";
+import { authAttempts, bestScores, follows, plays, userStickers } from "../db/schema.js";
 
 // Firebase Admin is faked: the harness verifies tokens, these stand in for the rest.
 vi.mock("../services/firebaseAuthService.js", async (importOriginal) => {
@@ -23,7 +25,11 @@ describe("/auth/firebase routes", () => {
     api = await startTestApp();
   });
   afterAll(() => api.close());
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    // Every request comes from 127.0.0.1, so start each test with a clean throttle.
+    await api.db.delete(authAttempts);
+  });
 
   it("register-anonymous creates the row once with a generated screen name", async () => {
     expect((await api.request("POST", "/auth/firebase/register-anonymous")).status).toBe(401);
@@ -124,7 +130,7 @@ describe("/auth/firebase routes", () => {
     const unknown = await api.request("POST", "/auth/firebase/login-username", {
       body: { username: "nobody_here", pin: "432100" },
     });
-    expect(wrong).toEqual({ status: 401, body: { error: "Invalid username or PIN" } });
+    expect(wrong).toEqual({ status: 401, body: { error: "That username and PIN don't match" } });
     expect(unknown).toEqual(wrong);
 
     // Usernames are case-insensitive.
@@ -253,5 +259,177 @@ describe("/auth/firebase routes", () => {
       email: "grownup@example.com",
       emailVerified: true,
     });
+  });
+
+  it("login-username: 5 wrong PINs in 15 minutes, then 429 (even with the right PIN)", async () => {
+    await api.request("POST", "/auth/firebase/register-username", {
+      as: "lock-kid",
+      body: { username: "lock_kid", pin: "246800", screenName: "Lock Kid" },
+    });
+    const login = (pin: string, username = "lock_kid") =>
+      fetch(`${api.base}/auth/firebase/login-username`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ username, pin }),
+      });
+
+    // A success wipes earlier failures for the username.
+    for (let i = 0; i < 4; i++) expect((await login("000000")).status).toBe(401);
+    expect((await login("246800")).status).toBe(200);
+
+    for (let i = 0; i < 5; i++) expect((await login("000000", "LOCK_KID")).status).toBe(401);
+    const blocked = await login("246800");
+    expect(blocked.status).toBe(429);
+    const retryAfter = Number(blocked.headers.get("retry-after"));
+    expect(retryAfter).toBeGreaterThan(14 * 60);
+    expect(retryAfter).toBeLessThanOrEqual(15 * 60);
+    expect(await blocked.json()).toMatchObject({ code: "too_many_attempts", retryAfter });
+
+    // The attempts live in Postgres; the IP is only ever a hash.
+    const rows = await api.db.select().from(authAttempts);
+    expect(rows.filter((r) => r.key === "user:lock_kid" && !r.ok)).toHaveLength(4 + 5);
+    expect(rows.filter((r) => r.key === "user:lock_kid" && r.ok)).toHaveLength(1);
+    expect(rows.some((r) => r.key.includes("127.0.0.1") || r.key.includes("::1"))).toBe(false);
+    expect(rows.some((r) => /^ip:[0-9a-f]{64}$/.test(r.key))).toBe(true);
+
+    // An admin PIN reset lifts the lockout straight away.
+    await api.addUser({ id: "reset-boss", admin: true });
+    const reset = await api.request("POST", "/auth/firebase/admin/reset-pin", {
+      as: "reset-boss",
+      body: { userId: "lock-kid", newPin: "864200" },
+    });
+    expect(reset.status).toBe(200);
+    expect((await login("864200")).status).toBe(200);
+  });
+
+  it("an unknown username locks the same way, so a 429 says nothing about who exists", async () => {
+    const tries = [];
+    for (let i = 0; i < 6; i++) {
+      tries.push(
+        await api.request("POST", "/auth/firebase/login-username", {
+          body: { username: "ghost_kid", pin: "123456" },
+        }),
+      );
+    }
+    expect(tries.slice(0, 5).every((t) => t.status === 401)).toBe(true);
+    expect(tries[5]).toMatchObject({ status: 429, body: { code: "too_many_attempts" } });
+  });
+
+  it("the count survives a cold start: it is read from the database, not memory", async () => {
+    await api.request("POST", "/auth/firebase/register-username", {
+      as: "cold-kid",
+      body: { username: "cold_kid", pin: "135790", screenName: "Cold Kid" },
+    });
+    // Failures recorded by another Lambda container a few minutes ago.
+    const at = new Date(Date.now() - 3 * 60 * 1000);
+    await api.db
+      .insert(authAttempts)
+      .values(
+        Array.from({ length: 5 }, () => ({ key: "user:cold_kid", ok: false, attemptedAt: at })),
+      );
+    const res = await api.request("POST", "/auth/firebase/login-username", {
+      body: { username: "cold_kid", pin: "135790" },
+    });
+    expect(res.status).toBe(429);
+    expect(res.body.retryAfter).toBeGreaterThan(11 * 60);
+    expect(res.body.retryAfter).toBeLessThanOrEqual(12 * 60);
+
+    // Once those failures are older than 15 minutes, the right PIN works again.
+    await api.db
+      .update(authAttempts)
+      .set({ attemptedAt: new Date(Date.now() - 16 * 60 * 1000) })
+      .where(eq(authAttempts.key, "user:cold_kid"));
+    const later = await api.request("POST", "/auth/firebase/login-username", {
+      body: { username: "cold_kid", pin: "135790" },
+    });
+    expect(later.status).toBe(200);
+  });
+
+  it("20 failures from one IP block every username from that IP", async () => {
+    await api.request("POST", "/auth/firebase/register-username", {
+      as: "ip-kid",
+      body: { username: "ip_kid", pin: "112233", screenName: "Ip Kid" },
+    });
+    for (let i = 0; i < 20; i++) {
+      const res = await api.request("POST", "/auth/firebase/login-username", {
+        body: { username: `guess_${i}`, pin: "000000" },
+      });
+      expect(res.status).toBe(401);
+    }
+    const res = await api.request("POST", "/auth/firebase/login-username", {
+      body: { username: "ip_kid", pin: "112233" },
+    });
+    expect(res.status).toBe(429);
+  });
+
+  it("change-pin: 5 wrong current PINs, then 429", async () => {
+    await api.request("POST", "/auth/firebase/register-username", {
+      as: "pin-lock",
+      body: { username: "pin_lock", pin: "102030", screenName: "Pin Lock" },
+    });
+    for (let i = 0; i < 5; i++) {
+      const res = await api.request("POST", "/auth/firebase/change-pin", {
+        as: "pin-lock",
+        body: { currentPin: "999999", newPin: "405060" },
+      });
+      expect(res.status).toBe(401);
+    }
+    const res = await api.request("POST", "/auth/firebase/change-pin", {
+      as: "pin-lock",
+      body: { currentPin: "102030", newPin: "405060" },
+    });
+    expect(res.status).toBe(429);
+    const bad = await api.request("POST", "/auth/firebase/change-pin", {
+      as: "pin-lock",
+      body: { currentPin: "102030", newPin: "1234" },
+    });
+    expect(bad).toMatchObject({ status: 400, body: { error: "New PIN must be 6 digits" } });
+  });
+
+  it("DELETE /me removes the account, keeps plays anonymised, and deletes the Firebase user", async () => {
+    expect((await api.request("DELETE", "/me")).status).toBe(401);
+    await api.request("POST", "/auth/firebase/register-username", {
+      as: "bye-kid",
+      body: { username: "bye_kid", pin: "121212", screenName: "Bye Kid" },
+    });
+    await api.addUser({ id: "pal" });
+    const [play] = await api.db
+      .insert(plays)
+      .values({ userId: "bye-kid", gameId: "test-game", score: 42 })
+      .returning();
+    await api.db
+      .insert(bestScores)
+      .values({ userId: "bye-kid", gameId: "test-game", score: 42, playId: play!.id });
+    await api.db.insert(follows).values({ userId: "pal", targetUserId: "bye-kid" });
+    await api.db.insert(userStickers).values({ userId: "bye-kid", stickerId: "week-2026-41" });
+    await api.db.insert(authAttempts).values({ key: "user:bye_kid", ok: false });
+
+    const res = await api.request("DELETE", "/me", { as: "bye-kid" });
+    expect(res).toEqual({ status: 200, body: { ok: true } });
+    expect(firebase.deleteFirebaseUser).toHaveBeenCalledWith("bye-kid");
+
+    expect(await getUserById("bye-kid")).toBeNull();
+    const [kept] = await api.db.select().from(plays).where(eq(plays.id, play!.id));
+    expect(kept).toMatchObject({ userId: null, score: 42 });
+    expect(
+      await api.db.select().from(bestScores).where(eq(bestScores.gameId, "test-game")),
+    ).toEqual([]);
+    expect(await api.db.select().from(follows).where(eq(follows.userId, "pal"))).toEqual([]);
+    expect(
+      await api.db.select().from(userStickers).where(eq(userStickers.userId, "bye-kid")),
+    ).toEqual([]);
+    expect(
+      await api.db.select().from(authAttempts).where(like(authAttempts.key, "user:bye_kid")),
+    ).toEqual([]);
+    expect(await getUserById("pal")).not.toBeNull();
+  });
+
+  it("DELETE /me keeps everything when Firebase can't delete the user", async () => {
+    await api.addUser({ id: "stay-kid" });
+    vi.mocked(firebase.deleteFirebaseUser).mockRejectedValueOnce(new Error("firebase down"));
+    const res = await api.request("DELETE", "/me", { as: "stay-kid" });
+    expect(res.status).toBe(500);
+    expect(JSON.stringify(res.body)).not.toContain("firebase down");
+    expect(await getUserById("stay-kid")).not.toBeNull();
   });
 });

@@ -4,6 +4,8 @@ import { useAuth } from "../../context/FirebaseAuthProvider";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { OfflineBanner } from "../../components/OfflineBanner";
 import { errorMessage } from "../../utils/errorCode";
+import DeleteAccountSection from "./DeleteAccountSection";
+import FriendsPrivacySection from "./FriendsPrivacySection";
 
 export default function SettingsScreen() {
   const {
@@ -365,6 +367,9 @@ export default function SettingsScreen() {
         )}
       </div>
 
+      {/* Friends & privacy (T7.6) */}
+      <FriendsPrivacySection />
+
       {/* Email Section */}
       <div className="p-5 bg-card rounded-2xl border border-line mb-6">
         <h2 className="text-lg font-bold mb-4 text-ink">Email Address</h2>
@@ -477,7 +482,7 @@ export default function SettingsScreen() {
                   value={newPin}
                   onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   className="w-full bg-paper-2 border border-line rounded-xl px-4 py-3 text-sm text-ink placeholder-ink-3 focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 transition-all"
-                  placeholder="4-8 digits"
+                  placeholder="6 digits"
                   maxLength={6}
                 />
               </div>
@@ -598,6 +603,8 @@ export default function SettingsScreen() {
           Link a social account to sign in more easily and access your account from any device.
         </p>
       </div>
+
+      <DeleteAccountSection />
     </div>
   );
 }

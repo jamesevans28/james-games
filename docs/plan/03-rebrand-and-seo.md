@@ -113,6 +113,6 @@ Repo variables on 2026-10-08:
 1. GitHub repo vars: `VITE_API_BASE_URL=https://api.games4james.com`, `CORS_ALLOWED_ORIGINS=https://games4james.com,http://localhost:3000`, `VITE_FIREBASE_AUTH_DOMAIN=auth.games4james.com`.
 2. Merge to `main`; pipeline deploys web, admin and API.
 3. MANUAL (James): Google Search Console: add property `games4james.com` (DNS verification), submit `https://games4james.com/sitemap.xml`. If the old flingo.fun property still exists, there's nothing to redirect (domain lapsed); just let it expire.
-4. MANUAL (James): GA4 → Admin → Data streams → update the stream URL to games4james.com (or complete T7.9 first and skip this).
+4. ~~MANUAL (James): GA4 stream URL~~ Skipped: T7.9 replaced GA4 with Cloudflare Web Analytics.
 5. Check `https://games4james.com` headers: `index.html` is `no-store`, hashed assets are `immutable`.
    Done when: `curl -s https://games4james.com | grep -c flingo` is 0; Search Console shows the sitemap accepted; the Google sign-in screen shows Games4James.

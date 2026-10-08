@@ -4,7 +4,7 @@ Make the app pleasant for a six-year-old and defensible to a parent. Everything 
 
 ## T7.1 Home becomes the grid; the feed goes
 
-Status: todo
+Status: done 2026-10-09 (checked on the local stack: 11 tiles, two columns, no horizontal scroll at 375 px; Lighthouse to run on the deployed build)
 Depends on: T3.1, T4.8
 Files: `pages/home/HomeFeed.tsx`, `pages/games-list/index.tsx`, `components/feed/GameTile.tsx`, `hooks/useFeedAlgorithmV2.ts`, `App.tsx`
 Steps:
@@ -17,7 +17,7 @@ Steps:
 
 ## T7.2 Game landing simplification
 
-Status: todo
+Status: done 2026-10-09
 Depends on: T7.1
 Files: `pages/games/GameLanding.tsx`
 Steps: order: cover, title + makers + designer's note, big Play, "How to play" (controls + objective from the manifest, always visible), your best / top 5, rating stars (only after 3 plays), nothing else. Remove created/updated dates and the "Following now" strip (presence becomes opt-in in T7.6). Split into `useGameRatings`, `useLeaderboard` (TanStack Query, T7.10) and small components.
@@ -25,7 +25,7 @@ Done when: file under 250 lines; landing renders with the API offline (graceful 
 
 ## T7.3 Game over that motivates
 
-Status: todo
+Status: done 2026-10-09 (checked: one-tap Play again, "New best!", XP bar, save nudge once per day)
 Depends on: T1.10, T4.4
 Files: `pages/games/GameOver.tsx` → split into `GameOverDialog`, `XpBar`, `LevelUpBurst`, `useRunSubmission`
 Steps: show score, "New best!" with confetti (CSS, reduced-motion aware) when beaten, previous best otherwise; XP bar from the submission response; "Play again" is the primary button and restarts via the host immediately; no rating prompt here, no sign-in nag (one small "Save your progress" link for guests, shown at most once per day).
@@ -33,7 +33,7 @@ Done when: Play Again is one tap with no intermediate dialog; guests see the nag
 
 ## T7.4 Rating prompt timing
 
-Status: todo
+Status: done 2026-10-09 (checked: no prompt during replays; the stars appear on the landing after 3 plays)
 Depends on: T7.3
 Files: `components/RatingPromptModal.tsx`, `pages/games/PlayGame.tsx` rating state machine → `hooks/useRatingPrompt.ts`
 Steps: prompt only on the landing page after the 3rd play of that game and at most once per game per 30 days; never on Play Again or Close. Pure helper with tests.
@@ -41,7 +41,7 @@ Done when: tests pass; the prompt never appears during a replay loop in the Brow
 
 ## T7.5 Streaks become stickers
 
-Status: todo
+Status: done 2026-10-09 (weekly stickers; profile shows the sticker shelf)
 Depends on: T6.3
 Files: `components/StreakCelebration.tsx`, backend `streakService.ts`
 Steps: keep the daily streak count internally; replace the celebration with a weekly "sticker" (collected when you play on 3 different days in a week); remove loss-framed copy and the "LEGENDARY 365 days" ladder; show stickers on the profile. (Sticker art from Phase 8.)
@@ -49,7 +49,7 @@ Done when: no copy mentions losing a streak; `StreakCelebration.tsx` is under 15
 
 ## T7.6 Friends-only social, presence opt-in
 
-Status: todo
+Status: done 2026-10-09
 Depends on: T6.3
 Files: `followersService.ts`, `followersController.ts`, `pages/followers/index.tsx`, `hooks/usePresenceReporter.ts`, `pages/profile/[userId].tsx`, settings
 Steps:
@@ -62,7 +62,7 @@ Steps:
 
 ## T7.7 Auth and PIN hardening in the UI
 
-Status: todo
+Status: done 2026-10-09 (checked: 6th wrong PIN → 429, still locked after a server restart)
 Depends on: T1.1, T6.3
 Files: `pages/firebase-login.tsx`, backend `firebaseAuthService.ts` rate limiting
 Steps: 6-digit PIN for every account (no 4-digit path: full reset, no old accounts); server-side throttling stored in Postgres (per user and per IP, sliding window); lockout messages that don't reveal whether a username exists; "Forgot PIN" goes to the parent page instructions (James resets from admin).
@@ -70,7 +70,7 @@ Done when: tests for the throttle; brute-force script against local server gets 
 
 ## T7.8 Privacy, parent and about pages
 
-Status: todo
+Status: done 2026-10-09 (checked: pages render; delete removes the row and the Firebase user)
 Depends on: T3.3
 Files: `pages/about.tsx`, `pages/privacy.tsx`, `pages/parents.tsx` (new), footer/drawer links
 Steps:
@@ -83,28 +83,28 @@ Steps:
 
 ## T7.9 Analytics decision and implementation
 
-Status: todo
+Status: done in code 2026-10-09 (Cloudflare Web Analytics; MANUAL: James creates the Cloudflare site token and puts it in `brand.json` `analyticsId`)
 Depends on: T3.1
 Steps: choose between (a) GA4 with `allow_google_signals: false`, `allow_ad_personalization_signals: false`, IP anonymisation (default in GA4) and consent-free config, or (b) Cloudflare Web Analytics (free, cookieless, no personal data; needs the site proxied through Cloudflare or the JS snippet with a token). Pick (b) if James is willing to add the snippet; otherwise (a). Load via `brand.analyticsId`, never inline in `index.html`. Record in `DECISIONS.md`.
 Done when: the chosen tool reports page views and the `game_start`/`game_over` events; no third-party cookies are set (check in the Browser pane).
 
 ## T7.10 Server-state layer
 
-Status: todo
+Status: done 2026-10-09 (no setInterval polling left in src/)
 Depends on: T7.2
 Steps: `@tanstack/react-query` for games config, leaderboards, ratings, friends, stickers, profile; a single `ApiError`; invalidate on submission; remove the hand-rolled caches (`GameLanding` module map, `ratingCache.ts`, catalog cache) and the three polling loops.
 Done when: no `setInterval` polling remains in `src/`; `npm run lint` clean; network tab shows one request per resource per screen.
 
 ## T7.11 Overlay discipline and install prompts
 
-Status: todo
+Status: done 2026-10-09 (lib/overlays.ts queue: update > install hints; install hints from the 2nd visit, never on game pages, dismissals kept 14 days; first visit checked with zero overlays. Also fixed the update prompt showing on every first visit, a wrong hand-written type, and removed the 60-second sign-up nag banner)
 Depends on: T7.1
 Steps: at most one overlay at a time, in priority order (update → paused game → sticker → install hint); install hint only after the 2nd visit; iOS hint only on iOS Safari and not in standalone mode; all dismissals remembered for 14 days (`g4j:dismiss:<id>`).
 Done when: first visit in the Browser pane shows zero overlays; second visit shows only the install hint.
 
 ## T7.12 Accessibility pass
 
-Status: todo
+Status: done 2026-10-09 (44 px targets on header and game header; ink-3 and the UI brand red now pass 4.5:1, with white or dark text on buttons; host.reducedMotion() gates shakes, flashes and HUD motion; the closed drawer is hidden from focus; Flash Bash and Cosmic Clash checked in greyscale. Lighthouse accessibility score to record on the deployed build)
 Depends on: T7.1
 Steps: minimum 44 px tap targets; body text ≥ 16 px; colour contrast ≥ 4.5:1 on paper for ink-2; `prefers-reduced-motion` respected in all CSS and Phaser tweens (via host flag); every icon button has an `aria-label`; Flash Bash and Cosmic Clash readable without colour.
 Done when: axe DevTools (or Lighthouse accessibility) ≥ 95 on home, landing, settings.

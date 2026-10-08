@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="sun sticker">
+<!-- Placeholder weekly sticker until the Phase 8 art (T8.x). -->
+<circle cx="50" cy="50" r="45" fill="#FFFFFF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M50 14v10M50 76v10M14 50h10M76 50h10M24.5 24.5l7 7M68.5 68.5l7 7M75.5 24.5l-7 7M31.5 68.5l-7 7" stroke="#FF5A4E" stroke-width="5" stroke-linecap="round"/>
+<circle cx="50" cy="50" r="20" fill="#FFC93C" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="43" cy="47" r="3.2" fill="#2B2118"/><circle cx="57" cy="47" r="3.2" fill="#2B2118"/><circle cx="44" cy="46" r="1" fill="#fff"/><circle cx="58" cy="46" r="1" fill="#fff"/>
+<circle cx="38" cy="54" r="3.2" fill="#FF8F87" opacity=".7"/><circle cx="62" cy="54" r="3.2" fill="#FF8F87" opacity=".7"/>
+<path d="M43 55q7 7 14 0" fill="none" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

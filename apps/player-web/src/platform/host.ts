@@ -78,6 +78,8 @@ export function createHost(manifest: GameManifest, options: HostOptions): Platfo
     rng: (seed) => mulberry32(seed ?? randomSeed()),
     safeArea: readSafeArea,
     isPaused: () => pausedAt !== null,
+    reducedMotion: () =>
+      typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches,
 
     beginRun() {
       runStartedAt = now();

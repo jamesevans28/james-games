@@ -1,415 +1,217 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import {
-  fetchFollowersSummary,
-  followUserApi,
-  unfollowUserApi,
-  type FollowersSummary,
-  type PresenceStatus,
+  acceptFriendRequest,
+  blockPlayer,
+  declineFriendRequest,
+  removeFriend,
+  unblockPlayer,
 } from "../../lib/api";
-import { games } from "../../games";
-import { ProfileAvatar } from "../../components/profile";
-import { usePresenceReporter } from "../../hooks/usePresenceReporter";
-import { useAuth } from "../../context/FirebaseAuthProvider";
 import ShareFollowCodeCard from "../../components/ShareFollowCodeCard";
-import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { OfflineBanner } from "../../components/OfflineBanner";
-import { errorMessage } from "../../utils/errorCode";
+import { usePresenceReporter } from "../../hooks/usePresenceReporter";
+import { useFriendAction, useFriendsSummary } from "../../hooks/useFriends";
+import { friendErrorMessage } from "../../utils/friends";
+import AddFriendForm from "./AddFriendForm";
+import ConfirmDialog from "./ConfirmDialog";
+import { PlayerRow, Section } from "./PlayerRow";
 
-const STATUS_LABELS: Record<PresenceStatus, string> = {
-  looking_for_game: "Online",
-  home: "Online",
-  browsing_high_scores: "High scores",
-  browsing_leaderboard: "Leaderboards",
-  game_lobby: "In lobby",
-  playing: "Playing",
-  in_score_dialog: "Sharing score",
-};
+type Pending = { kind: "remove" | "block"; userId: string; name: string };
 
-function formatLastOnline(timestamp?: string | null) {
-  if (!timestamp) return null;
-  const date = new Date(timestamp);
-  if (Number.isNaN(date.getTime())) return null;
-  const diffMs = Date.now() - date.getTime();
-  if (diffMs < 60 * 1000) return "Last online moments ago";
-  const minutes = Math.floor(diffMs / 60000);
-  if (minutes < 60) return `Last online ${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `Last online ${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `Last online ${days}d ago`;
-}
-
-export default function FollowersPage() {
-  const [data, setData] = useState<FollowersSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [actionUser, setActionUser] = useState<string | null>(null);
-  const [codeInput, setCodeInput] = useState("");
-  const [manualMessage, setManualMessage] = useState<string | null>(null);
-  const [manualStatus, setManualStatus] = useState<"success" | "error" | null>(null);
-  const [manualBusy, setManualBusy] = useState(false);
-  const [confirmUnfollow, setConfirmUnfollow] = useState<{ userId: string; name: string } | null>(
-    null,
-  );
-  const { user } = useAuth();
-  const { isOnline } = useOnlineStatus();
+/**
+ * Friends (T7.6): your code, add by code, requests, friends (with "online" only when
+ * they share it), requests you sent, and the players you blocked.
+ */
+export default function FriendsPage() {
+  const { data, isLoading, error } = useFriendsSummary();
+  const { run, busy } = useFriendAction();
   const [searchParams, setSearchParams] = useSearchParams();
-  const anchor = searchParams.get("view") === "followers" ? "followers" : "following";
+  const [pending, setPending] = useState<Pending | null>(null);
+  const [openRow, setOpenRow] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  usePresenceReporter({ status: "home", enabled: true });
+  usePresenceReporter({ status: "home" });
 
-  const refresh = useCallback(async () => {
-    setError(null);
-    setLoading(true);
-
-    // Check if offline
-    if (!navigator.onLine) {
-      setError("You're offline. Connect to view followers.");
-      setLoading(false);
-      return;
-    }
-
+  const act = async (action: () => Promise<unknown>) => {
+    setActionError(null);
     try {
-      const summary = await fetchFollowersSummary();
-      setData(summary);
+      await run(action);
+      setPending(null);
+      setOpenRow(null);
     } catch (err) {
-      if (!navigator.onLine) {
-        setError("You're offline. Connect to view followers.");
-      } else {
-        setError(errorMessage(err, "Failed to load followers"));
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!user?.userId) {
-      setData(null);
-      setLoading(false);
-      return;
-    }
-    void refresh();
-  }, [user?.userId, refresh]);
-
-  useEffect(() => {
-    if (!manualMessage) return;
-    if (typeof window === "undefined") return;
-    const timer = window.setTimeout(() => {
-      setManualMessage(null);
-      setManualStatus(null);
-    }, 2500);
-    return () => window.clearTimeout(timer);
-  }, [manualMessage]);
-
-  const gamesById = useMemo(() => {
-    const map = new Map<string, string>();
-    games.forEach((game) => map.set(game.id, game.title));
-    return map;
-  }, []);
-
-  const describePresence = useCallback(
-    (
-      presence?: {
-        status?: PresenceStatus;
-        gameTitle?: string | null;
-        gameId?: string | null;
-      } | null,
-    ) => {
-      if (!presence?.status) return null;
-      const base = STATUS_LABELS[presence.status] || "Online";
-      const shouldShowGame = ["game_lobby", "playing", "in_score_dialog"].includes(presence.status);
-      const gameName =
-        presence.gameTitle ||
-        (presence.gameId ? gamesById.get(presence.gameId) || presence.gameId : null);
-      if (shouldShowGame && gameName) {
-        return `${base} · ${gameName}`;
-      }
-      return base;
-    },
-    [gamesById],
-  );
-
-  const handleUnfollow = async (userId: string) => {
-    setActionUser(userId);
-    try {
-      await unfollowUserApi(userId);
-      setConfirmUnfollow(null);
-      await refresh();
-    } catch (err) {
-      setError(errorMessage(err, "Unable to unfollow right now"));
-    } finally {
-      setActionUser(null);
+      setActionError(friendErrorMessage(err));
     }
   };
 
-  const handleFollowBack = async (userId: string) => {
-    setActionUser(userId);
-    try {
-      await followUserApi(userId);
-      await refresh();
-    } catch (err) {
-      setError(errorMessage(err, "Unable to follow right now"));
-    } finally {
-      setActionUser(null);
-    }
-  };
-
-  const handleFollowByCode = async () => {
-    const target = codeInput.trim();
-    if (!target) {
-      setManualStatus("error");
-      setManualMessage("Enter a follow code first");
-      return;
-    }
-    setManualBusy(true);
-    setManualMessage(null);
-    setManualStatus(null);
-    try {
-      await followUserApi(target);
-      setManualMessage("Followed! They'll appear once they follow you back.");
-      setManualStatus("success");
-      setCodeInput("");
-      await refresh();
-    } catch (err) {
-      setManualMessage(errorMessage(err, "Unable to follow that code"));
-      setManualStatus("error");
-    } finally {
-      setManualBusy(false);
-    }
-  };
-
-  const followingIds = useMemo(() => {
-    return new Set(data?.following.map((edge) => edge.targetUserId) ?? []);
-  }, [data?.following]);
-
-  const handleTabChange = (tab: "following" | "followers") => {
-    if (tab === "followers") {
-      setSearchParams({ view: "followers" });
-    } else {
-      setSearchParams({});
-    }
-  };
-
-  const renderFollowing = () => {
-    if (!data) return null;
-    if (data.following.length === 0) {
-      return <p className="text-sm text-ink-2">You&apos;re not following anyone yet.</p>;
-    }
-    return (
-      <ul className="space-y-3">
-        {data.following.map((edge) => {
-          const presenceText = describePresence(edge.presence);
-          const levelText = edge.level ? `Level ${edge.level}` : null;
-          const lastOnline = formatLastOnline(edge.lastOnline ?? edge.presence?.updatedAt);
-          const displayName = edge.targetScreenName ?? edge.screenName ?? "Player";
-          const avatar = edge.targetAvatar ?? edge.avatar ?? 1;
-          const profileId = edge.targetUserId ?? edge.userId;
-          return (
-            <li
-              key={`${profileId}-${edge.createdAt}`}
-              className="flex items-center justify-between border border-line rounded-2xl p-4 hover:border-brand/30 transition-colors bg-card"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <ProfileAvatar user={{ avatar }} size={48} />
-                <div className="min-w-0">
-                  <Link
-                    to={`/profile/${profileId}`}
-                    className="text-sm font-bold text-ink truncate block hover:text-brand"
-                  >
-                    {displayName}
-                  </Link>
-                  {presenceText && (
-                    <div className="text-xs text-brand font-medium">{presenceText}</div>
-                  )}
-                  {(levelText || lastOnline) && (
-                    <div className="text-xs text-ink-3 flex flex-wrap gap-2 mt-0.5">
-                      {levelText && <span>{levelText}</span>}
-                      {lastOnline && <span>{lastOnline}</span>}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <button
-                className="w-8 h-8 flex items-center justify-center text-grape hover:bg-grape/10 rounded-full transition-colors"
-                onClick={() => setConfirmUnfollow({ userId: profileId, name: displayName })}
-                disabled={actionUser === profileId}
-                aria-label={`Unfollow ${displayName}`}
-                title="Unfollow"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    );
-  };
-
-  const renderFollowers = () => {
-    if (!data) return null;
-    if (data.followers.length === 0) {
-      return <p className="text-sm text-ink-2">No one is following you yet.</p>;
-    }
-    return (
-      <ul className="space-y-3">
-        {data.followers.map((edge) => {
-          const isFollowing = followingIds.has(edge.userId);
-          return (
-            <li
-              key={`${edge.userId}-${edge.createdAt}`}
-              className="flex items-center justify-between border border-line rounded-2xl p-4 hover:border-brand/30 transition-colors bg-card"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <ProfileAvatar user={{ avatar: edge.avatar ?? 1 }} size={48} />
-                <div className="min-w-0">
-                  <Link
-                    to={`/profile/${edge.userId}`}
-                    className="text-sm font-bold text-ink truncate block hover:text-brand"
-                  >
-                    {edge.screenName ?? "Player"}
-                  </Link>
-                </div>
-              </div>
-              {isFollowing ? (
-                <span className="text-xs text-ink-2 font-medium">Following</span>
-              ) : (
-                <button
-                  className="text-xs font-bold text-brand border border-brand/50 rounded-full px-4 py-1.5 hover:bg-brand/10 transition-colors"
-                  onClick={() => handleFollowBack(edge.userId)}
-                  disabled={actionUser === edge.userId}
-                >
-                  {actionUser === edge.userId ? "Following" : "Follow back"}
-                </button>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    );
+  const confirm = () => {
+    if (!pending) return;
+    const { kind, userId } = pending;
+    void act(() => (kind === "remove" ? removeFriend(userId) : blockPlayer(userId)));
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
+    <div className="max-w-xl mx-auto px-4 py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold text-ink">Followers</h1>
-        <Link to="/" className="text-sm text-ink-2 font-medium hover:text-brand">
+        <h1 className="text-2xl font-extrabold text-ink">Friends</h1>
+        <Link to="/" className="text-sm text-ink-2 font-medium hover:text-brand py-3">
           Back to games
         </Link>
       </div>
-      {!isOnline && <OfflineBanner className="mt-4" />}
-      {loading && <div className="mt-4 text-ink-2">Loading...</div>}
-      {error && !loading && <div className="mt-4 text-sm text-grape">{error}</div>}
-      {user?.userId && (
-        <div className="mt-6">
-          <ShareFollowCodeCard
-            userId={user.userId}
-            screenName={user.screenName}
-            description="Send your code or personal link so people can follow you without searching. The same code is always visible on your Profile page."
-          >
-            <div>
-              <label className="text-sm font-bold text-ink" htmlFor="follow-code-input">
-                Follow someone by code
-              </label>
-              <p className="text-xs text-ink-2 mb-2">
-                Paste the code they shared with you and we&apos;ll follow them instantly.
-              </p>
-              <div className="flex flex-col gap-3 md:flex-row">
-                <input
-                  id="follow-code-input"
-                  type="text"
-                  className="flex-1 bg-paper-2 border border-line rounded-full px-4 py-2 text-sm text-ink placeholder-ink-3 focus:border-brand/50 focus:ring-2 focus:ring-brand/30 focus:outline-none transition-colors"
-                  placeholder="e.g. user_123abc"
-                  value={codeInput}
-                  onChange={(e) => setCodeInput(e.target.value)}
-                  autoComplete="off"
-                />
+      <OfflineBanner />
+      {isLoading && <p className="text-ink-2">Loading…</p>}
+      {error && !data && (
+        <p className="text-base text-ink-2">
+          {friendErrorMessage(error, "Couldn't load friends.")}
+        </p>
+      )}
+      <p className="text-sm font-medium text-grape empty:hidden" aria-live="polite">
+        {actionError}
+      </p>
+
+      {data && data.incoming.length > 0 && (
+        <Section title="Friend requests">
+          {data.incoming.map((r) => (
+            <PlayerRow key={r.userId} player={r} detail={`Level ${r.level}`}>
+              <div className="flex gap-2">
                 <button
                   type="button"
-                  className="btn btn-primary disabled:opacity-60"
-                  onClick={handleFollowByCode}
-                  disabled={manualBusy}
+                  className="btn btn-primary min-h-11"
+                  disabled={busy}
+                  onClick={() => void act(() => acceptFriendRequest(r.userId))}
                 >
-                  {manualBusy ? "Following…" : "Follow"}
+                  Yes!
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline min-h-11"
+                  disabled={busy}
+                  onClick={() => void act(() => declineFriendRequest(r.userId))}
+                >
+                  Not now
+                </button>
+                <button
+                  type="button"
+                  className="ml-auto min-h-11 px-3 text-sm font-bold text-ink-2 hover:text-ink"
+                  onClick={() =>
+                    setPending({ kind: "block", userId: r.userId, name: r.screenName })
+                  }
+                >
+                  Block
                 </button>
               </div>
-              {manualMessage && (
-                <p
-                  className={`mt-2 text-xs font-medium ${
-                    manualStatus === "error" ? "text-grape" : "text-brand"
-                  }`}
-                >
-                  {manualMessage}
-                </p>
-              )}
-            </div>
-          </ShareFollowCodeCard>
-        </div>
+            </PlayerRow>
+          ))}
+        </Section>
       )}
-      {!loading && data && (
-        <section className="mt-6 border border-line rounded-2xl bg-card p-5 shadow-card">
-          <div className="flex gap-2 bg-paper-2 rounded-full p-1">
-            {[
-              { id: "following" as const, label: `Following (${data.followingCount})` },
-              { id: "followers" as const, label: `Followers (${data.followersCount})` },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                className={`flex-1 px-4 py-2 text-sm font-bold rounded-full transition ${
-                  anchor === tab.id ? "bg-card text-brand shadow-card" : "text-ink-2"
-                }`}
-                onClick={() => handleTabChange(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-          <div className="mt-4" aria-live="polite">
-            {anchor === "followers" ? renderFollowers() : renderFollowing()}
-          </div>
-        </section>
-      )}
-      {confirmUnfollow && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-scrim/80 backdrop-blur-sm"
-            onClick={() => setConfirmUnfollow(null)}
-          />
-          <div className="relative bg-card rounded-3xl p-6 max-w-sm mx-4 shadow-card-hover border border-line">
-            <h3 className="text-lg font-bold text-ink mb-2">Unfollow {confirmUnfollow.name}?</h3>
-            <p className="text-sm text-ink-2 mb-4">
-              Are you sure you want to unfollow this player? You can follow them again anytime.
+
+      {data && (
+        <Section title="Your friends">
+          {data.friends.length === 0 ? (
+            <p className="text-base text-ink-2">
+              No friends yet. Swap friend codes with someone you know!
             </p>
-            <div className="flex gap-3">
+          ) : (
+            data.friends.map((f) => (
+              <PlayerRow
+                key={f.userId}
+                player={f}
+                linkToProfile
+                online={f.online}
+                detail={`Level ${f.level}`}
+                options={{
+                  open: openRow === f.userId,
+                  onToggle: () => setOpenRow(openRow === f.userId ? null : f.userId),
+                }}
+              >
+                {openRow === f.userId && (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-outline min-h-11"
+                      onClick={() =>
+                        setPending({ kind: "remove", userId: f.userId, name: f.screenName })
+                      }
+                    >
+                      Remove friend
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline min-h-11"
+                      onClick={() =>
+                        setPending({ kind: "block", userId: f.userId, name: f.screenName })
+                      }
+                    >
+                      Block
+                    </button>
+                  </div>
+                )}
+              </PlayerRow>
+            ))
+          )}
+        </Section>
+      )}
+
+      {data && (
+        <AddFriendForm
+          initialCode={searchParams.get("code") ?? ""}
+          run={run}
+          onSent={() => setSearchParams({}, { replace: true })}
+        />
+      )}
+
+      {data && <ShareFollowCodeCard friendCode={data.friendCode} />}
+
+      {data && data.outgoing.length > 0 && (
+        <Section title="Waiting for a yes">
+          {data.outgoing.map((r) => (
+            <PlayerRow key={r.userId} player={r} detail="Request sent">
               <button
                 type="button"
-                className="flex-1 btn btn-outline"
-                onClick={() => setConfirmUnfollow(null)}
+                className="btn btn-outline min-h-11"
+                disabled={busy}
+                onClick={() => void act(() => declineFriendRequest(r.userId))}
               >
-                Cancel
+                Cancel request
               </button>
+            </PlayerRow>
+          ))}
+        </Section>
+      )}
+
+      {data && data.blocked.length > 0 && (
+        <Section title="Blocked">
+          <p className="text-sm text-ink-2">
+            You and these players can't see each other or send requests.
+          </p>
+          {data.blocked.map((b) => (
+            <PlayerRow key={b.userId} player={b}>
               <button
                 type="button"
-                className="flex-1 px-4 py-2 rounded-full text-sm font-bold bg-grape text-white shadow-sticker hover:bg-grape/80 transition-colors"
-                onClick={() => handleUnfollow(confirmUnfollow.userId)}
-                disabled={actionUser === confirmUnfollow.userId}
+                className="btn btn-outline min-h-11"
+                disabled={busy}
+                onClick={() => void act(() => unblockPlayer(b.userId))}
               >
-                {actionUser === confirmUnfollow.userId ? "Unfollowing..." : "Unfollow"}
+                Unblock
               </button>
-            </div>
-          </div>
-        </div>
+            </PlayerRow>
+          ))}
+        </Section>
+      )}
+
+      {pending && (
+        <ConfirmDialog
+          title={pending.kind === "remove" ? `Remove ${pending.name}?` : `Block ${pending.name}?`}
+          body={
+            pending.kind === "remove"
+              ? "You won't be friends any more. You can always swap codes again later."
+              : "You won't see each other, and they can't send you requests. You can unblock them on this page any time."
+          }
+          confirmLabel={pending.kind === "remove" ? "Remove" : "Block"}
+          cancelLabel={pending.kind === "remove" ? "Keep friend" : "Cancel"}
+          busy={busy}
+          onConfirm={confirm}
+          onCancel={() => setPending(null)}
+        />
       )}
     </div>
   );

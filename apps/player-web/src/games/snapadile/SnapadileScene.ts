@@ -237,7 +237,7 @@ export default class SnapadileScene extends BasePlatformScene {
     this.hud.setHearts(this.lives, MAX_LIVES);
 
     // Camera shake for feedback (match ReflexRing feel)
-    this.cameras.main.shake(250, 0.01);
+    this.shakeCamera(250, 0.01);
     this.host.audio.play("miss");
     this.host.haptics.tap();
     this.spawnRipple(this.center.x, this.center.y, 0xff7777);

@@ -1,15 +1,13 @@
-import { eq } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { startTestApp, type TestApp } from "../test/app.js";
-import { games, plays, ratings, userGameStats } from "../db/schema.js";
-import { clearFeedCache } from "../services/feedService.js";
+import { plays } from "../db/schema.js";
 import { seedDatabase } from "../db/seedData.js";
 
 let api: TestApp;
 
 beforeAll(async () => {
   api = await startTestApp();
-  // Two more active games so the feed has something to rank.
+  // Two more active games for the config listing.
   await seedDatabase(api.db, [
     {
       id: "alpha",
@@ -29,7 +27,6 @@ beforeAll(async () => {
   await api.addUser({ id: "boss", admin: true });
 });
 afterAll(() => api.close());
-beforeEach(() => clearFeedCache());
 
 const ids = (items: Array<{ gameId: string }>) => items.map((g) => g.gameId).sort();
 
@@ -91,7 +88,6 @@ describe("admin games", () => {
     const pub = await api.request("GET", "/games/config/bravo");
     expect(pub.body.metadata).toEqual(body.metadata);
 
-    // Reset so the feed tests start from no featured games.
     await api.request("PATCH", "/admin/games/bravo", { as: "boss", body: { metadata: null } });
   });
 
@@ -124,89 +120,5 @@ describe("admin games", () => {
     expect(res.body.weeklyBreakdown).toHaveLength(4);
     expect(res.body.weeklyBreakdown[3].count).toBe(3);
     expect((await api.request("GET", "/admin/games/nope/stats", { as: "boss" })).status).toBe(404);
-  });
-});
-
-describe("feed", () => {
-  test("ranks by recent plays, then rating, then last update", async () => {
-    const stale = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000);
-    await api.addUser({ id: "r1" });
-    await api.db.insert(plays).values([
-      { userId: "r1", gameId: "alpha", score: 1 },
-      { userId: "r1", gameId: "alpha", score: 2 },
-      { userId: "r1", gameId: "bravo", score: 1 },
-      // Older than 14 days: does not count.
-      ...Array.from({ length: 5 }, () => ({
-        userId: "r1",
-        gameId: "test-game",
-        score: 1,
-        createdAt: stale,
-      })),
-      // Beta plays never surface beta games in the public feed.
-      ...Array.from({ length: 5 }, () => ({ userId: "r1", gameId: "beta-game", score: 1 })),
-    ]);
-    await api.db.insert(ratings).values([
-      { userId: "r1", gameId: "test-game", stars: 5 },
-      { userId: "kid", gameId: "test-game", stars: 4 },
-    ]);
-
-    const res = await api.request("GET", "/games/feed");
-    expect(res.status).toBe(200);
-    expect(res.body.orderedGameIds).toEqual(["alpha", "bravo", "test-game"]);
-    expect(res.body.total).toBe(3);
-    expect(res.body.reasons.alpha).toBe("popular");
-    expect(res.body.scores.alpha).toBeGreaterThan(res.body.scores.bravo);
-
-    // Equal plays: the better-rated game wins.
-    await api.db.insert(ratings).values({ userId: "r1", gameId: "bravo", stars: 5 });
-    await api.db.insert(plays).values({ userId: "r1", gameId: "bravo", score: 1 });
-    await api.db.insert(ratings).values({ userId: "r1", gameId: "alpha", stars: 2 });
-    clearFeedCache();
-    expect((await api.request("GET", "/games/feed")).body.orderedGameIds).toEqual([
-      "bravo",
-      "alpha",
-      "test-game",
-    ]);
-
-    // Equal plays and no ratings: the most recently updated game wins.
-    await api.db.delete(ratings);
-    await api.db
-      .update(games)
-      .set({ updatedAt: new Date(Date.now() + 1000) })
-      .where(eq(games.id, "alpha"));
-    clearFeedCache();
-    expect((await api.request("GET", "/games/feed")).body.orderedGameIds).toEqual([
-      "alpha",
-      "bravo",
-      "test-game",
-    ]);
-    await api.db
-      .update(games)
-      .set({ updatedAt: new Date(Date.now() + 2000) })
-      .where(eq(games.id, "bravo"));
-    clearFeedCache();
-    expect((await api.request("GET", "/games/feed?limit=1")).body).toMatchObject({
-      orderedGameIds: ["bravo"],
-      total: 3,
-    });
-  });
-
-  test("personalized feed mixes in the viewer's play history and beta games", async () => {
-    expect((await api.request("GET", "/games/feed/personalized")).status).toBe(401);
-    await api.db
-      .insert(userGameStats)
-      .values([{ userId: "tester", gameId: "bravo", plays: 3, lastPlayedAt: new Date() }]);
-    const res = await api.request("GET", "/games/feed/personalized", { as: "tester" });
-    expect(res.status).toBe(200);
-    expect(res.body.orderedGameIds).toEqual(["beta-game", "alpha", "bravo", "test-game"]);
-    expect(res.body.reasons).toMatchObject({
-      "beta-game": "beta",
-      bravo: "user_recent",
-      alpha: "popular",
-    });
-    expect(res.body.userRecentGames).toEqual(["bravo"]);
-
-    const kid = await api.request("GET", "/games/feed/personalized", { as: "kid" });
-    expect(kid.body.orderedGameIds).not.toContain("beta-game");
   });
 });

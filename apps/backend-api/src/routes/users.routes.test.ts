@@ -114,34 +114,19 @@ describe("/users routes", () => {
       pinHash: "hash-value",
     });
     await api.addUser({ id: "fan-1", screenName: "Fan One", avatar: 3 });
-    await api.db.insert(follows).values({ userId: "fan-1", targetUserId: "pub-1" });
+    await api.db
+      .insert(follows)
+      .values({ userId: "fan-1", targetUserId: "pub-1", status: "pending" });
 
+    // T7.6: screen name, avatar, level and stickers; no friend lists, counts or dates.
     const anon = await api.request("GET", "/users/pub-1");
     expect(anon.status).toBe(200);
-    expect(Object.keys(anon.body.profile).sort()).toEqual([
-      "avatar",
-      "createdAt",
-      "currentStreak",
-      "experience",
-      "longestStreak",
-      "screenName",
-      "userId",
-    ]);
-    expect(anon.body.profile).toMatchObject({
-      userId: "pub-1",
-      screenName: "Public Pat",
-      avatar: 2,
-      currentStreak: 4,
-      longestStreak: 6,
-    });
-    expect(anon.body).toMatchObject({
-      followingCount: 0,
-      followersCount: 1,
-      following: [],
-      followers: [{ userId: "fan-1", screenName: "Fan One", avatar: 3 }],
-      recentGames: [],
+    expect(anon.body).toEqual({
+      profile: { userId: "pub-1", screenName: "Public Pat", avatar: 2, level: 1 },
+      stickers: [],
       isSelf: false,
-      isFollowing: false,
+      friendship: "none",
+      friendsSince: null,
     });
     const json = JSON.stringify(anon.body);
     for (const secret of [
@@ -158,10 +143,12 @@ describe("/users routes", () => {
       expect(json, `leaked ${secret}`).not.toContain(secret);
     }
 
+    // A pending edge is a request, not a friendship.
     const asFan = await api.request("GET", "/users/pub-1", { as: "fan-1" });
-    expect(asFan.body).toMatchObject({ isSelf: false, isFollowing: true });
+    expect(asFan.body).toMatchObject({ isSelf: false, friendship: "request_sent" });
     const asSelf = await api.request("GET", "/users/pub-1", { as: "pub-1" });
-    expect(asSelf.body).toMatchObject({ isSelf: true, isFollowing: false });
+    expect(asSelf.body).toMatchObject({ isSelf: true, friendship: "self" });
+    expect(asSelf.body.friendCode).toMatch(/^[2-9A-H]{6}$/);
 
     expect((await api.request("GET", "/users/nobody")).status).toBe(404);
   });

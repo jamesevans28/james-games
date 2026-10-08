@@ -16,6 +16,7 @@
     "test": "vitest run --project player-web --root ../.."
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.104.1",
     "firebase": "^13.0.0",
     "phaser": "^4.2.1",
     "react": "^19.3.0",
