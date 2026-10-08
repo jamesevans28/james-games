@@ -23,7 +23,7 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 
 | Prefix           | Routes                                                                                                                                                                    |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/me`            | GET current user, PATCH screen-name                                                                                                                                       |
+| `/me`            | GET current user, PATCH screen-name, DELETE (account)                                                                                                                                       |
 | `/auth/firebase` | register-anonymous, register-username, login-username, me (same as `/me`), link-provider, change-pin, add-email, check-email-verified, admin/reset-pin                    |
 | `/users`         | GET screen-name/check, POST screen-name, POST preferences, PATCH settings, GET streak, POST streak/checkin, GET :userId                                                   |
 | `/scores`        | GET :gameId (leaderboard), POST / (submit, auth)                                                                                                                          |

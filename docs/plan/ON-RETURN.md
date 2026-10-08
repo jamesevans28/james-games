@@ -23,3 +23,7 @@ Claude kept this list while working through the phases unattended (started 9 Oct
 
 - **Screen names (T6.7).** Generated names look like `bouncy-otter-42`. Kids can't use "James", "Tilly", "Harvey", "admin" or "official" inside a name, so nobody can pretend to be you. Rude words are filtered with the `obscenity` word list. Is that OK?
 - **Daily clean-up (T6.9).** Guest accounts that never finished a game are deleted after 90 days without a visit. Is that OK?
+- **Contact email.** The privacy and parents pages use `hello@games4james.com` (`brand.json` `contactEmail`). Does that inbox exist? If not, set one up (for example forwarding through your domain registrar or Route 53 + SES), or tell Claude which address to use.
+- **Deleted accounts.** They disappear from leaderboards entirely rather than showing as "Deleted player". Is that OK?
+- **Weekly stickers.** The weekly sticker needs 3 different days in one week (Monday to Sunday, the player's local time). It replaces the old streak celebration, and the day count still runs quietly. Is that OK?
+

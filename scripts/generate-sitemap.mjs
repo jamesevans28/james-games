@@ -69,13 +69,12 @@ const sitemapUrls = [
     changefreq: "monthly",
     priority: "0.3",
   },
-  // Games list page
-  {
-    loc: `${domain}/games-list`,
+  ...["/about", "/parents"].map((page) => ({
+    loc: `${domain}${page}`,
     lastmod: now,
-    changefreq: "weekly",
-    priority: "0.9",
-  },
+    changefreq: "monthly",
+    priority: "0.4",
+  })),
   // Individual game pages
   ...publicGames.map((game) => ({
     loc: `${domain}/games/${game.id}`,

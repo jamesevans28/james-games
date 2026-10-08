@@ -40,3 +40,9 @@ Decisions already made. Add new ones with a date. Do not reopen without James as
 ## 2026-10-09: Analytics (T7.9)
 
 Cloudflare Web Analytics, not GA4. It is free and cookieless and collects no personal data, which is right for a kids' site and the App Store Kids category, and needs no consent banner. The beacon goes in production builds only, through `brand.analyticsId` (the site token) and the brand-html Vite plugin, never inline. Cloudflare has no custom events, so game plays are counted first-party in the `plays` table (admin dashboard); `utils/analytics.ts` keeps the SDK's event calls as dev-only logs. GA4 (`G-8EJGYV0500`) is no longer loaded.
+
+## 2026-10-09: Sign-in throttling and account deletion (T7.7, T7.8)
+
+- PIN sign-in is throttled in Postgres (`auth_attempts`): 5 failures per username and 20 per hashed IP in 15 minutes, and 5 wrong current PINs per account on change-pin; then 429 with Retry-After. IPs are stored only as SHA-256 hashes, and attempts older than a day are deleted daily. Unknown usernames get the same message and a dummy bcrypt check, so neither the message nor the timing gives away whether a username exists.
+- Express `trust proxy` stays off: on Lambda, serverless-http takes `req.ip` from API Gateway's `sourceIp`, which the client can't forge. Revisit if CloudFront ever sits in front of the API.
+- `DELETE /me` removes the user and the Firebase account. Plays are kept anonymised (`user_id` null), but best scores, stats, friends, stickers and ratings go with the account, so a deleted player disappears from leaderboards. This supersedes the plan's "Deleted player" wording, because removing them is the more private choice.
