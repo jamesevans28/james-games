@@ -56,7 +56,7 @@ Done when: play offline on the simulator, reconnect, see the score on the leader
 
 ## T10.5 Haptics, status bar, back button, keep-awake
 
-Status: todo
+Status: done in code 2026-10-09 (new-best haptic, keep-awake while a run is live (Wake Lock on the web too), back-button stack: game over → close, running → pause, paused → leave; exit only from home; status bar from capacitor.config); MANUAL: feel it on a device
 Depends on: T10.2
 Steps: haptic tick on perfect/best; status bar colour from brand; Android hardware back = pause/close dialog, never exit mid-game without confirm; keep the screen awake during play (`@capacitor-community/keep-awake`).
 Done when: checked on both platforms.

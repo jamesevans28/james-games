@@ -23,6 +23,7 @@ import {
 } from "../../utils/seoKeywords";
 import { brand } from "../../config/brand";
 import { adapters } from "../../platform/adapters";
+import { useBackHandler } from "../../platform/backButton";
 
 export default function PlayGame() {
   const { gameId } = useParams();
@@ -207,6 +208,28 @@ export default function PlayGame() {
       }
     };
   }, [playing, meta, mountGame]);
+
+  // Keep the screen on while a run is actually being played (T10.5).
+  const running = playing && !paused && !showScore;
+  useEffect(() => {
+    if (!running) return;
+    adapters.app.keepAwake(true);
+    return () => adapters.app.keepAwake(false);
+  }, [running]);
+
+  // Android back (T10.5): game over → close it; running → pause (the Paused screen is
+  // the "are you sure?"); paused → leave the game for the landing page.
+  useBackHandler(playing, () => {
+    if (showScore) {
+      handleCloseScore();
+    } else if (!paused) {
+      instanceRef.current?.pause();
+      setPaused(true);
+    } else {
+      handleCloseScore();
+      setPaused(false);
+    }
+  });
 
   const landingState = playing ? "hidden" : "visible";
 

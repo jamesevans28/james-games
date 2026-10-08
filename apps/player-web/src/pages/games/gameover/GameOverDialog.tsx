@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { adapters } from "../../../platform/adapters";
 import { useAuth } from "../../../context/FirebaseAuthProvider";
 import { cheerFor } from "../../../utils/cheer";
 import StreakCelebration from "../../../components/StreakCelebration";
@@ -52,6 +53,11 @@ function GameOverPanel({
     }),
   );
   const { status, result, error } = useRunSubmission({ gameId, score, durationMs });
+  // A little buzz for a new best (T10.5); haptics are a no-op where unsupported.
+  const newBest = Boolean(result?.newBest);
+  useEffect(() => {
+    if (newBest) adapters.haptics.success();
+  }, [newBest]);
   const cheer = cheerFor(score, previousBest);
 
   useEffect(() => {

@@ -6,7 +6,9 @@
  * synchronously, so we load every key into memory before the first render and
  * write through to Preferences in the background.
  */
+import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
+import { KeepAwake } from "@capacitor-community/keep-awake";
 import { Capacitor } from "@capacitor/core";
 import { Clipboard } from "@capacitor/clipboard";
 import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
@@ -96,6 +98,12 @@ export async function createNativeAdapters(): Promise<Adapters> {
       isNative: true,
       platform,
       openUrl: (url) => void Browser.open({ url }),
+      keepAwake: (on) => void (on ? KeepAwake.keepAwake() : KeepAwake.allowSleep()),
+      onBackButton(handler) {
+        const listener = App.addListener("backButton", handler);
+        return () => void listener.then((l) => l.remove());
+      },
+      exitApp: () => void App.exitApp(),
     },
   };
 }

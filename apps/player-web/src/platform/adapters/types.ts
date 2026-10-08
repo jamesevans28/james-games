@@ -32,6 +32,12 @@ export type AppAdapter = {
   platform: "web" | "ios" | "android";
   /** Opens an external page (new tab on the web, the in-app browser natively). */
   openUrl(url: string): void;
+  /** Keep the screen on while a game runs (Wake Lock on the web, keep-awake natively). */
+  keepAwake(on: boolean): void;
+  /** The Android hardware back button. Returns an unsubscribe function (no-op on the web). */
+  onBackButton(handler: () => void): () => void;
+  /** Leave the app (Android only; a no-op elsewhere). */
+  exitApp(): void;
 };
 
 export type Adapters = {

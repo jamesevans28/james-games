@@ -80,8 +80,37 @@ export const webAdapters: Adapters = {
     openUrl(url) {
       window.open(url, "_blank", "noopener,noreferrer");
     },
+    keepAwake(on) {
+      void setWakeLock(on);
+    },
+    onBackButton: () => () => {},
+    exitApp() {},
   },
 };
+
+type WakeLockSentinelLike = { release(): Promise<void> };
+let wakeLock: WakeLockSentinelLike | null = null;
+
+/** Screen Wake Lock where the browser has it (Chrome, Safari 16.4+); otherwise nothing. */
+async function setWakeLock(on: boolean): Promise<void> {
+  try {
+    if (on && !wakeLock) {
+      const api = (
+        navigator as Navigator & {
+          wakeLock?: { request(type: "screen"): Promise<WakeLockSentinelLike> };
+        }
+      ).wakeLock;
+      wakeLock = (await api?.request("screen")) ?? null;
+    } else if (!on && wakeLock) {
+      const lock = wakeLock;
+      wakeLock = null;
+      await lock.release();
+    }
+  } catch {
+    // Not allowed right now (tab hidden, low battery): the screen may dim.
+    wakeLock = null;
+  }
+}
 
 function vibrate(pattern: number | number[]) {
   try {
