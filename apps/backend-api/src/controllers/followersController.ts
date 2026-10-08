@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import type { Request, Response } from "express";
 import {
   followUser,
@@ -11,9 +12,10 @@ import {
   listFollowers,
 } from "../services/followersService.js";
 import { sendServerError } from "../lib/http.js";
+import { errorInfo } from "../lib/errors.js";
 
 export async function getFollowersSummary(req: Request, res: Response) {
-  const userId = req.user?.userId as string | undefined;
+  const userId = req.user?.userId;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   try {
     const [followingRaw, followersRaw, followingCount, followersCount] = await Promise.all([
@@ -42,48 +44,49 @@ export async function getFollowersSummary(req: Request, res: Response) {
       level: edge.followerExperience?.level ?? null,
     }));
     res.json({ following, followers, followingCount, followersCount });
-  } catch (err: any) {
+  } catch (err) {
     sendServerError(res, "followers_request_failed", err);
   }
 }
 
 export async function getFollowingList(req: Request, res: Response) {
-  const userId = req.user?.userId as string | undefined;
+  const userId = req.user?.userId;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   try {
     const rows = await listFollowingWithPresence(userId);
     res.json({ following: rows });
-  } catch (err: any) {
+  } catch (err) {
     sendServerError(res, "followers_request_failed", err);
   }
 }
 
 export async function getFollowersList(req: Request, res: Response) {
-  const userId = req.user?.userId as string | undefined;
+  const userId = req.user?.userId;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   try {
     const rows = await listFollowersWithPresence(userId);
     res.json({ followers: rows });
-  } catch (err: any) {
+  } catch (err) {
     sendServerError(res, "followers_request_failed", err);
   }
 }
 
 export async function followUserHandler(req: Request, res: Response) {
-  const userId = req.user?.userId as string | undefined;
+  const userId = req.user?.userId;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   const targetUserId = String((req.params as any).targetUserId);
   try {
     await followUser(userId, targetUserId);
     res.json({ ok: true });
-  } catch (err: any) {
-    if (err?.code === "CONFLICT" || err?.message === "already_following") {
+  } catch (err) {
+    const { code, message } = errorInfo(err);
+    if (code === "CONFLICT" || message === "already_following") {
       return res.status(409).json({ error: "already_following" });
     }
-    if (err?.message === "user_not_found") {
+    if (message === "user_not_found") {
       return res.status(404).json({ error: "user_not_found" });
     }
-    if (err?.message === "cannot_follow_self") {
+    if (message === "cannot_follow_self") {
       return res.status(400).json({ error: "cannot_follow_self" });
     }
     sendServerError(res, "followers_request_failed", err);
@@ -91,19 +94,19 @@ export async function followUserHandler(req: Request, res: Response) {
 }
 
 export async function unfollowUserHandler(req: Request, res: Response) {
-  const userId = req.user?.userId as string | undefined;
+  const userId = req.user?.userId;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   const targetUserId = String((req.params as any).targetUserId);
   try {
     await unfollowUser(userId, targetUserId);
     res.json({ ok: true });
-  } catch (err: any) {
+  } catch (err) {
     sendServerError(res, "followers_request_failed", err);
   }
 }
 
 export async function updatePresenceHandler(req: Request, res: Response) {
-  const userId = req.user?.userId as string | undefined;
+  const userId = req.user?.userId;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   const { status, gameId, gameTitle } = (req.body || {}) as {
     status?: string;
@@ -118,13 +121,13 @@ export async function updatePresenceHandler(req: Request, res: Response) {
       gameTitle,
     });
     res.json({ ok: true });
-  } catch (err: any) {
+  } catch (err) {
     sendServerError(res, "followers_request_failed", err);
   }
 }
 
 export async function getFollowingActivity(req: Request, res: Response) {
-  const userId = req.user?.userId as string | undefined;
+  const userId = req.user?.userId;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   const gameId = (req.query as any)?.gameId ? String((req.query as any).gameId) : undefined;
   const statusFilter = ((req.query as any)?.status || "")
@@ -138,24 +141,24 @@ export async function getFollowingActivity(req: Request, res: Response) {
       ? rows.filter((row) => row.presence && statusFilter.includes(row.presence.status))
       : rows;
     res.json({ activity: filtered });
-  } catch (err: any) {
+  } catch (err) {
     sendServerError(res, "followers_request_failed", err);
   }
 }
 
 export async function getFollowingIdsHandler(req: Request, res: Response) {
-  const userId = req.user?.userId as string | undefined;
+  const userId = req.user?.userId;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   try {
     const ids = await getFollowingIds(userId);
     res.json({ userIds: ids });
-  } catch (err: any) {
+  } catch (err) {
     sendServerError(res, "followers_request_failed", err);
   }
 }
 
 export async function getFollowNotifications(req: Request, res: Response) {
-  const userId = req.user?.userId as string | undefined;
+  const userId = req.user?.userId;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   try {
     const followers = await listFollowers(userId);
@@ -169,7 +172,7 @@ export async function getFollowNotifications(req: Request, res: Response) {
       .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))
       .slice(0, 100);
     res.json({ notifications });
-  } catch (err: any) {
+  } catch (err) {
     sendServerError(res, "followers_request_failed", err);
   }
 }

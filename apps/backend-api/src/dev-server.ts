@@ -7,7 +7,6 @@ import { log } from "./lib/log.js";
 
 const port = Number(process.env.PORT || config.port || 8787);
 app.listen(port, () => {
-  // eslint-disable-next-line no-console
   log.info("server_listening", { port, url: `http://localhost:${port}` });
 });
 

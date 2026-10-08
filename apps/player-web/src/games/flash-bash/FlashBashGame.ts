@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/unbound-method, no-empty, no-restricted-imports -- TODO T5.11: legacy game code, cleaned when it moves onto the Game SDK */
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { getBest, setBest } from "../../utils/bestScore";
@@ -111,8 +112,8 @@ export default class FlashBashGame extends Phaser.Scene {
       quantity: 2,
       blendMode: "ADD",
       frequency: -1,
-    }) as unknown as Phaser.GameObjects.Particles.ParticleEmitter;
-    if ((this.timerSparkEmitter as any).setDepth) (this.timerSparkEmitter as any).setDepth(6);
+    });
+    if (this.timerSparkEmitter.setDepth) this.timerSparkEmitter.setDepth(6);
 
     // Create buttons (larger and placed left/right)
     this.createButtons();
@@ -148,12 +149,11 @@ export default class FlashBashGame extends Phaser.Scene {
       blendMode: "ADD",
       alpha: { start: 0.9, end: 0.2 },
     });
-    if (this.starEmitter && (this.starEmitter as any).setDepth)
-      (this.starEmitter as any).setDepth(-500);
+    if (this.starEmitter && this.starEmitter.setDepth) this.starEmitter.setDepth(-500);
 
     // Prefill the screen with stars so it's populated immediately
     try {
-      const mgr = this.starEmitter as any; // ParticleEmitterManager
+      const mgr = this.starEmitter; // ParticleEmitterManager
       const prefill = Math.max(120, Math.floor((w * h) / 6000));
       for (let i = 0; i < prefill; i++) {
         const rx = Math.random() * w;
@@ -222,7 +222,7 @@ export default class FlashBashGame extends Phaser.Scene {
         0,
         0,
         this.shapeAssignments[i].shape,
-        this.shapeAssignments[i].color
+        this.shapeAssignments[i].color,
       );
       // scale shapes to fit larger buttons
       const baseScale = (radius / 30) * 0.8; // slightly smaller to fit within the circle
@@ -285,30 +285,34 @@ export default class FlashBashGame extends Phaser.Scene {
         graphics.strokePath();
         break;
       case "star":
-        graphics.fillPoints(toVectors([
-          { x: 0, y: -30 },
-          { x: 10, y: -10 },
-          { x: 30, y: -10 },
-          { x: 15, y: 5 },
-          { x: 20, y: 30 },
-          { x: 0, y: 15 },
-          { x: -20, y: 30 },
-          { x: -15, y: 5 },
-          { x: -30, y: -10 },
-          { x: -10, y: -10 },
-        ]));
-        graphics.strokePoints(toVectors([
-          { x: 0, y: -30 },
-          { x: 10, y: -10 },
-          { x: 30, y: -10 },
-          { x: 15, y: 5 },
-          { x: 20, y: 30 },
-          { x: 0, y: 15 },
-          { x: -20, y: 30 },
-          { x: -15, y: 5 },
-          { x: -30, y: -10 },
-          { x: -10, y: -10 },
-        ]));
+        graphics.fillPoints(
+          toVectors([
+            { x: 0, y: -30 },
+            { x: 10, y: -10 },
+            { x: 30, y: -10 },
+            { x: 15, y: 5 },
+            { x: 20, y: 30 },
+            { x: 0, y: 15 },
+            { x: -20, y: 30 },
+            { x: -15, y: 5 },
+            { x: -30, y: -10 },
+            { x: -10, y: -10 },
+          ]),
+        );
+        graphics.strokePoints(
+          toVectors([
+            { x: 0, y: -30 },
+            { x: 10, y: -10 },
+            { x: 30, y: -10 },
+            { x: 15, y: 5 },
+            { x: 20, y: 30 },
+            { x: 0, y: 15 },
+            { x: -20, y: 30 },
+            { x: -15, y: 5 },
+            { x: -30, y: -10 },
+            { x: -10, y: -10 },
+          ]),
+        );
         break;
       case "diamond":
         graphics.beginPath();
@@ -394,7 +398,7 @@ export default class FlashBashGame extends Phaser.Scene {
       CENTER_X,
       CENTER_Y,
       this.shapeAssignments[index].shape,
-      this.shapeAssignments[index].color
+      this.shapeAssignments[index].color,
     );
     // Add bounce animation
     shape.setDepth(10);
@@ -430,8 +434,8 @@ export default class FlashBashGame extends Phaser.Scene {
             const leftX = this.timerBar.x - displayWidth / 2;
             const rightX = this.timerBar.x + displayWidth / 2;
             const edgeY = this.timerBar.y;
-            (this.timerSparkEmitter as any).explode(2, leftX, edgeY);
-            (this.timerSparkEmitter as any).explode(2, rightX, edgeY);
+            this.timerSparkEmitter.explode(2, leftX, edgeY);
+            this.timerSparkEmitter.explode(2, rightX, edgeY);
           } catch {}
           this.lastSparkleTime = now;
         }
@@ -556,12 +560,12 @@ export default class FlashBashGame extends Phaser.Scene {
         shape.setScale(targetScale * 0.2);
         this.playPop();
         // Two-stage pop: overshoot then settle (shortened)
-        this.tweens.add({ targets: shape, alpha: 1, duration: 80, ease: "Cubic.easeOut" as any });
+        this.tweens.add({ targets: shape, alpha: 1, duration: 80, ease: "Cubic.easeOut" });
         this.tweens.add({
           targets: shape,
           scale: targetScale * 1.12,
           duration: 100,
-          ease: "Back.Out" as any,
+          ease: "Back.Out",
           yoyo: false,
         });
         this.tweens.add({
@@ -569,7 +573,7 @@ export default class FlashBashGame extends Phaser.Scene {
           scale: targetScale,
           duration: 100,
           delay: 100,
-          ease: "Cubic.easeOut" as any,
+          ease: "Cubic.easeOut",
         });
       });
     });
@@ -608,7 +612,7 @@ export default class FlashBashGame extends Phaser.Scene {
     });
     // particle burst
     try {
-      (this.timerSparkEmitter as any)?.explode(50, CENTER_X, CENTER_Y);
+      this.timerSparkEmitter?.explode(50, CENTER_X, CENTER_Y);
     } catch {}
   }
 

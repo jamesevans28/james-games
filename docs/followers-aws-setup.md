@@ -14,13 +14,14 @@ This document explains how to provision the AWS resources needed for the followe
 ## DynamoDB Tables
 
 ### 1. `games4james-follows`
-| Field | Type | Notes |
-| --- | --- | --- |
-| `userId` | PK (string) | The follower (who is following someone).
-| `targetUserId` | SK (string) | The followed account.
-| `targetScreenName` | string | Snapshot for list rendering.
-| `targetAvatar` | number | Snapshot of avatar.
-| `createdAt` | string (ISO) | Timestamp of follow action.
+
+| Field              | Type         | Notes                                    |
+| ------------------ | ------------ | ---------------------------------------- |
+| `userId`           | PK (string)  | The follower (who is following someone). |
+| `targetUserId`     | SK (string)  | The followed account.                    |
+| `targetScreenName` | string       | Snapshot for list rendering.             |
+| `targetAvatar`     | number       | Snapshot of avatar.                      |
+| `createdAt`        | string (ISO) | Timestamp of follow action.              |
 
 - **GSI1** `FollowedBy`: `PK=targetUserId`, `SK=userId` to quickly list followers of a user.
 - Provisioned or on-demand is fine; expect small, evenly distributed traffic.
@@ -35,14 +36,15 @@ aws dynamodb create-table \
 ```
 
 ### 2. `games4james-presence`
-| Field | Type | Notes |
-| --- | --- | --- |
-| `userId` | PK (string) |
-| `status` | string | Enum: `home`, `game_lobby`, `playing`, `high_scores`, etc.
-| `gameId` | string (optional) | Current game context.
-| `context` | string | Human-readable string (e.g., `"Ready Steady Shoot"`).
-| `updatedAt` | string | ISO timestamp.
-| `expiresAt` | number | **TTL attribute** (epoch seconds). Records auto-expire after ~2 minutes of inactivity.
+
+| Field       | Type              | Notes                                                                                  |
+| ----------- | ----------------- | -------------------------------------------------------------------------------------- |
+| `userId`    | PK (string)       |
+| `status`    | string            | Enum: `home`, `game_lobby`, `playing`, `high_scores`, etc.                             |
+| `gameId`    | string (optional) | Current game context.                                                                  |
+| `context`   | string            | Human-readable string (e.g., `"Ready Steady Shoot"`).                                  |
+| `updatedAt` | string            | ISO timestamp.                                                                         |
+| `expiresAt` | number            | **TTL attribute** (epoch seconds). Records auto-expire after ~2 minutes of inactivity. |
 
 ```bash
 aws dynamodb create-table \
@@ -61,16 +63,17 @@ aws dynamodb update-time-to-live \
 ```
 
 ### 3. `games4james-userGameStats`
+
 Stores each user’s best score and last-played timestamp per game for the profile page.
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `userId` | PK |
-| `gameId` | SK |
-| `bestScore` | number |
-| `lastScore` | number |
+| Field          | Type   | Notes                                           |
+| -------------- | ------ | ----------------------------------------------- |
+| `userId`       | PK     |
+| `gameId`       | SK     |
+| `bestScore`    | number |
+| `lastScore`    | number |
 | `lastPlayedAt` | string |
-| `recentKey` | string | `${lastPlayedAt}#${gameId}` for sorting in GSI.
+| `recentKey`    | string | `${lastPlayedAt}#${gameId}` for sorting in GSI. |
 
 - **GSI1** `GameStatsByGame`: `PK=gameId`, `SK=userId` for future “show everyone playing this game” views.
 - **GSI2** `UserRecentGames`: `PK=userId`, `SK=recentKey` so we can fetch the latest games for a profile without scanning the table.
@@ -91,6 +94,7 @@ aws dynamodb create-table \
 ```
 
 ## IAM Policy Snippet
+
 Attach to the Lambda role that runs the Express API.
 
 ```json
@@ -121,6 +125,7 @@ Attach to the Lambda role that runs the Express API.
 ```
 
 ## Environment Variables / Config
+
 Update `/app/src/config/index.ts` (done in code) with:
 
 ```
@@ -132,6 +137,7 @@ TABLE_USER_GAME_STATS=games4james-userGameStats
 Populate these in all environments (development `.env`, Lambda env vars, etc.).
 
 ## Deployment Steps
+
 1. **Create tables** using CLI or AWS Console (see commands above).
 2. **Update IAM** role with the policy snippet.
 3. **Set env vars** for the API service (`TABLE_FOLLOWS`, `TABLE_PRESENCE`, `TABLE_USER_GAME_STATS`).
@@ -139,12 +145,14 @@ Populate these in all environments (development `.env`, Lambda env vars, etc.).
 5. **Invalidate CloudFront**/redeploy frontend so UI can call the new endpoints.
 
 ## Operational Considerations
+
 - Presence updates every 30 seconds; Dynamo TTL cleans stale records automatically. If you prefer faster cleanup, schedule a Lambda to delete expired rows.
 - Follower lists use eventual consistency. If you need strictly consistent UI after a follow/unfollow, re-fetch using `ConsistentRead` on `games4james-follows` (code already does this).
 - User-game stats update whenever a new score posts. If you import historical scores, run the provided migration script to seed stats (to be added).
 - Monitor table usage with CloudWatch metrics; convert to provisioned capacity with autoscaling if needed.
 
 ## Outstanding Questions / Considerations
+
 - **Regions:** Are all environments staying in `ap-southeast-2`, or do you need multi-region tables?
 - **Retention:** Should we purge follower relationships for dormant accounts after X days?
 - **Status granularity:** Do we need additional statuses (e.g., `matchmaking`)? Let me know so we can adapt the enum.

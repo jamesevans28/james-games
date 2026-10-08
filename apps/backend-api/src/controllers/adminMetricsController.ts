@@ -6,7 +6,7 @@ export async function dashboard(req: Request, res: Response) {
   try {
     const metrics = await getDashboardMetrics();
     res.json(metrics);
-  } catch (err: any) {
+  } catch (err) {
     sendServerError(res, "admin_dashboard_metrics_failed", err);
   }
 }

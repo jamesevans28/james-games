@@ -42,29 +42,29 @@ export function GameDrawer({ gameId, onClose }: { gameId: string | null; onClose
 
   const updateMutation = useMutation({
     mutationFn: (payload: Partial<GameConfig>) => {
-      if (!gameId) return Promise.reject("missing-game");
+      if (!gameId) return Promise.reject(new Error("missing-game"));
       return adminApi.updateGame(gameId, payload);
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-games"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-games"] });
       queryClient.setQueryData(["admin-game", gameId], data);
     },
   });
 
   if (!gameId) return null;
   const game = gameQuery.data;
-  const stats = statsQuery.data as GameStats | null | undefined;
+  const stats = statsQuery.data;
 
-  const handleChange = (field: keyof GameConfig, value: any) => {
+  const handleChange = (field: keyof GameConfig, value: GameConfig[keyof GameConfig]) => {
     setDraft((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSave = async () => {
     setMetadataError(null);
-    let metadata: Record<string, any> | null = null;
+    let metadata: Record<string, unknown> | null;
     try {
-      metadata = metadataText ? JSON.parse(metadataText) : null;
-    } catch (err: any) {
+      metadata = metadataText ? (JSON.parse(metadataText) as Record<string, unknown>) : null;
+    } catch {
       setMetadataError("Metadata must be valid JSON");
       return;
     }

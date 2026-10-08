@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import {
   BatchGetCommand,
   DynamoDBDocumentClient,
@@ -43,9 +44,7 @@ export async function upsertRating(args: { gameId: string; userId: string; ratin
   const now = new Date().toISOString();
   const ratingKey = { gameId: args.gameId, userId: args.userId };
 
-  const existing = await ddb.send(
-    new GetCommand({ TableName: ratingsTable, Key: ratingKey })
-  );
+  const existing = await ddb.send(new GetCommand({ TableName: ratingsTable, Key: ratingKey }));
   const previousRating = Number(existing.Item?.rating ?? 0) || null;
   const createdAt = existing.Item?.createdAt || now;
 
@@ -59,7 +58,7 @@ export async function upsertRating(args: { gameId: string; userId: string; ratin
         createdAt,
         updatedAt: now,
       },
-    })
+    }),
   );
 
   const delta = args.rating - (previousRating ?? 0);
@@ -77,7 +76,7 @@ export async function upsertRating(args: { gameId: string; userId: string; ratin
         ":now": now,
       },
       ReturnValues: "ALL_NEW",
-    })
+    }),
   );
 
   const summary = normalizeSummary(summaryResult.Attributes, args.gameId);
@@ -85,9 +84,7 @@ export async function upsertRating(args: { gameId: string; userId: string; ratin
 }
 
 export async function getRatingSummary(gameId: string): Promise<RatingSummary> {
-  const res = await ddb.send(
-    new GetCommand({ TableName: ratingSummaryTable, Key: { gameId } })
-  );
+  const res = await ddb.send(new GetCommand({ TableName: ratingSummaryTable, Key: { gameId } }));
   if (!res.Item) {
     return { gameId, ratingCount: 0, avgRating: 0 };
   }
@@ -107,7 +104,7 @@ export async function getRatingSummaries(gameIds: string[]): Promise<RatingSumma
             Keys: chunk.map((gameId) => ({ gameId })),
           },
         },
-      })
+      }),
     );
     const items = res.Responses?.[ratingSummaryTable] || [];
     items.forEach((item: any) => summaries.push(normalizeSummary(item, item.gameId)));
@@ -122,8 +119,6 @@ export async function getRatingSummaries(gameIds: string[]): Promise<RatingSumma
 }
 
 export async function getUserRating(gameId: string, userId: string) {
-  const res = await ddb.send(
-    new GetCommand({ TableName: ratingsTable, Key: { gameId, userId } })
-  );
+  const res = await ddb.send(new GetCommand({ TableName: ratingsTable, Key: { gameId, userId } }));
   return res.Item ? Number(res.Item.rating) : null;
 }

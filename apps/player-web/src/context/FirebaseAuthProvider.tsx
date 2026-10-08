@@ -76,7 +76,7 @@ type AuthContextType = {
   registerWithUsername: (
     username: string,
     pin: string,
-    screenName?: string
+    screenName?: string,
   ) => Promise<RegisterUsernameResult>;
   /**
    * Sign in with existing username + PIN
@@ -175,6 +175,55 @@ function readCachedSession(maxAgeMs: number = 24 * 60 * 60 * 1000): AuthUser | n
   }
 }
 
+// Response bodies from the backend's /auth/firebase/* routes
+// (apps/backend-api/src/controllers/firebaseAuthController.ts).
+type FirebaseMeResponse = {
+  userId: string;
+  screenName?: string | null;
+  username?: string | null;
+  email?: string | null;
+  emailVerified?: boolean;
+  avatar?: number | null;
+  experience?: ExperienceSummary | null;
+  betaTester?: boolean;
+  admin?: boolean;
+  accountType?: AccountType;
+  providers?: string[];
+};
+
+type RegisterAnonymousResponse = {
+  ok: boolean;
+  userId: string;
+  screenName?: string | null;
+  accountType?: AccountType;
+  isNew?: boolean;
+};
+
+type RegisterUsernameResponse = {
+  ok: boolean;
+  customToken?: string;
+  screenName?: string;
+  accountType?: AccountType;
+};
+
+type LoginUsernameResponse = {
+  ok: boolean;
+  customToken: string;
+  userId: string;
+  screenName?: string | null;
+  accountType?: AccountType;
+};
+
+/** The `error` string from a failed API response body, if there is one. */
+async function readApiError(res: Response): Promise<string | undefined> {
+  const body: unknown = await res.json().catch(() => ({}));
+  if (body && typeof body === "object") {
+    const error = (body as { error?: unknown }).error;
+    if (typeof error === "string") return error;
+  }
+  return undefined;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -211,7 +260,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           throw new Error("Failed to fetch profile");
         }
-        const data = await res.json();
+        const data = (await res.json()) as FirebaseMeResponse;
         const authUser: AuthUser = {
           userId: data.userId,
           screenName: data.screenName,
@@ -232,7 +281,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
     },
-    [apiBase]
+    [apiBase],
   );
 
   // Register anonymous user with our backend
@@ -250,7 +299,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!res.ok) {
           throw new Error("Failed to register anonymous user");
         }
-        const data = await res.json();
+        const data = (await res.json()) as RegisterAnonymousResponse;
         const authUser: AuthUser = {
           userId: data.userId,
           screenName: data.screenName,
@@ -264,14 +313,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
     },
-    [apiBase]
+    [apiBase],
   );
 
   // Handle Firebase auth state changes
   useEffect(() => {
     if (initRef.current) return;
     initRef.current = true;
-
 
     // Initialize Firebase
     initializeFirebase();
@@ -283,7 +331,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Wait for Firebase Auth to be ready, then process
-    (async () => {
+    void (async () => {
       try {
         const currentUser = await waitForAuthReady();
 
@@ -349,7 +397,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("FirebaseAuthProvider: initialization error", errorCode(err));
         // Still mark as ready so app doesn't hang
         setFirebaseReady(true);
-      } finally {
       }
     })();
 
@@ -468,10 +515,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }),
         });
         if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body?.error || "Registration failed");
+          throw new Error((await readApiError(res)) || "Registration failed");
         }
-        const data = await res.json();
+        const data = (await res.json()) as RegisterUsernameResponse;
 
         // Sign in with the custom token to get updated claims
         if (data.customToken) {
@@ -496,7 +542,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       }
     },
-    [firebaseUser, apiBase, fetchProfile]
+    [firebaseUser, apiBase, fetchProfile],
   );
 
   // Sign in with username + PIN
@@ -512,10 +558,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           body: JSON.stringify({ username, pin }),
         });
         if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body?.error || "Sign in failed");
+          throw new Error((await readApiError(res)) || "Sign in failed");
         }
-        const data = await res.json();
+        const data = (await res.json()) as LoginUsernameResponse;
 
         // Sign in with the custom token
         const credential = await signInWithToken(data.customToken);
@@ -543,7 +588,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       }
     },
-    [apiBase, fetchProfile]
+    [apiBase, fetchProfile],
   );
 
   // Sign in with Google
@@ -713,7 +758,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     },
-    [user, firebaseUser, fetchProfile]
+    [user, firebaseUser, fetchProfile],
   );
 
   // Sign out
@@ -766,11 +811,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ currentPin, newPin }),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || "Failed to change PIN");
+        throw new Error((await readApiError(res)) || "Failed to change PIN");
       }
     },
-    [firebaseUser, apiBase]
+    [firebaseUser, apiBase],
   );
 
   // Add email to account
@@ -789,8 +833,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email }),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || "Failed to add email");
+        throw new Error((await readApiError(res)) || "Failed to add email");
       }
       // Refresh profile to get updated email
       const profile = await fetchProfile(firebaseUser);
@@ -799,7 +842,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         persistSession(profile);
       }
     },
-    [firebaseUser, apiBase, fetchProfile]
+    [firebaseUser, apiBase, fetchProfile],
   );
 
   // Send verification email
@@ -883,7 +926,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       handleSendVerificationEmail,
       handleCheckEmailVerified,
       handleEnsureSession,
-    ]
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

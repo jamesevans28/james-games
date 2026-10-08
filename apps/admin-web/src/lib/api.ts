@@ -6,8 +6,8 @@ type RequestOptions = RequestInit & { skipJson?: boolean };
 
 export class ApiError extends Error {
   status: number;
-  body: any;
-  constructor(status: number, message: string, body?: any) {
+  body: unknown;
+  constructor(status: number, message: string, body?: unknown) {
     super(message);
     this.status = status;
     this.body = body;
@@ -34,11 +34,11 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   });
 
   if (!res.ok) {
-    let body: any;
+    let body: { error?: string } | undefined;
     try {
-      body = await res.json();
-    } catch (err) {
-      /* swallow */
+      body = (await res.json()) as { error?: string };
+    } catch {
+      // non-JSON error body: fall back to the status text
     }
     throw new ApiError(res.status, body?.error || res.statusText, body);
   }
@@ -83,7 +83,7 @@ export type GameConfig = {
   thumbnail?: string | null;
   xpMultiplier?: number;
   betaOnly?: boolean;
-  metadata?: Record<string, any> | null;
+  metadata?: Record<string, unknown> | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 };
@@ -145,7 +145,7 @@ export const adminApi = {
       betaTester?: boolean;
       admin?: boolean;
       username?: string;
-    }
+    },
   ) =>
     request<AdminUserDetail>(`/admin/users/${userId}`, {
       method: "POST",
@@ -175,10 +175,10 @@ export const adminApi = {
 };
 
 export function normalizeAccount(
-  payload: { user?: AdminAccount } | AdminAccount | null | undefined
+  payload: { user?: AdminAccount } | AdminAccount | null | undefined,
 ) {
   if (!payload) return null;
-  const account = (payload as any).user ?? payload;
+  const account = "user" in payload ? payload.user : (payload as AdminAccount);
   if (!account?.userId) return null;
-  return account as AdminAccount;
+  return account;
 }

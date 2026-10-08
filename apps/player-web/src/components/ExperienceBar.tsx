@@ -8,21 +8,16 @@ export type ExperienceBarProps = {
   incomingXp?: number;
 };
 
-export function ExperienceBar({
-  level,
-  progress,
-  required,
-  incomingXp,
-}: ExperienceBarProps) {
+export function ExperienceBar({ level, progress, required, incomingXp }: ExperienceBarProps) {
   const safeRequired = Math.max(1, required || 1);
   const [fillPercent, setFillPercent] = useState(() =>
-    Math.min(100, (progress / safeRequired) * 100)
+    Math.min(100, (progress / safeRequired) * 100),
   );
   const [celebrate, setCelebrate] = useState(false);
 
   const clampedPercent = useMemo(
     () => Math.min(100, (progress / safeRequired) * 100),
-    [progress, safeRequired]
+    [progress, safeRequired],
   );
 
   useEffect(() => {
@@ -56,19 +51,16 @@ export function ExperienceBar({
             width: `${fillPercent}%`,
             backgroundImage:
               "repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 8px, transparent 8px, transparent 16px)",
-            background: "linear-gradient(90deg, var(--color-sun) 0%, var(--color-tomato) 50%, var(--color-grape) 100%)",
-            boxShadow: celebrate
-              ? "0 2px 0 0 var(--color-edge)"
-              : "none",
+            background:
+              "linear-gradient(90deg, var(--color-sun) 0%, var(--color-tomato) 50%, var(--color-grape) 100%)",
+            boxShadow: celebrate ? "0 2px 0 0 var(--color-edge)" : "none",
           }}
         />
         <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-white via-transparent to-white pointer-events-none" />
       </div>
       <div className="flex items-center justify-between text-xs text-ink font-medium">
         <span>Level {level}</span>
-        {pendingText && (
-          <span className="text-brand font-bold animate-bounce">{pendingText}</span>
-        )}
+        {pendingText && <span className="text-brand font-bold animate-bounce">{pendingText}</span>}
       </div>
     </div>
   );

@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- TODO T6.4: one-off DynamoDB script, deleted after the Postgres migration */
 // Migration script: copy legacy scores into the new scores table shape.
 // Usage: run with tsx in the app/ folder, ensuring AWS credentials and env are set.
 // Example:
 //   SCORES_TABLE=games4james-scores SCORE_GSI_NAME=GameScoresByScore tsx scripts/migrate-scores.ts
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const process: any;
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
@@ -55,7 +55,7 @@ async function main() {
   let scanned = 0;
   do {
     const result = await ddb.send(
-      new ScanCommand({ TableName: LEGACY_TABLE, ExclusiveStartKey: lastKey, Limit: 100 })
+      new ScanCommand({ TableName: LEGACY_TABLE, ExclusiveStartKey: lastKey, Limit: 100 }),
     );
     const items = result.Items || [];
     for (const row of items) {
@@ -76,7 +76,7 @@ async function main() {
     lastKey = result.LastEvaluatedKey;
   } while (lastKey);
   console.log(
-    `Done. Scanned ${scanned} rows. Migrated ${moved} rows.` + (dryRun ? " (dry-run)" : "")
+    `Done. Scanned ${scanned} rows. Migrated ${moved} rows.` + (dryRun ? " (dry-run)" : ""),
   );
 }
 

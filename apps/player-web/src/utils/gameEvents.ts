@@ -69,8 +69,8 @@ export function onGameOver(handler: (detail: GameOverDetail) => void) {
     const ce = ev as CustomEvent<GameOverDetail>;
     if (ce?.detail) handler(ce.detail);
   };
-  window.addEventListener(EVENT_NAME, listener as EventListener, { passive: true } as any);
-  return () => window.removeEventListener(EVENT_NAME, listener as EventListener);
+  window.addEventListener(EVENT_NAME, listener, { passive: true });
+  return () => window.removeEventListener(EVENT_NAME, listener);
 }
 
 export function onGameStart(handler: (detail: { gameId: string }) => void) {
@@ -79,6 +79,6 @@ export function onGameStart(handler: (detail: { gameId: string }) => void) {
     const ce = ev as CustomEvent<{ gameId: string }>;
     if (ce?.detail) handler(ce.detail);
   };
-  window.addEventListener(START_EVENT_NAME, listener as EventListener, { passive: true } as any);
-  return () => window.removeEventListener(START_EVENT_NAME, listener as EventListener);
+  window.addEventListener(START_EVENT_NAME, listener, { passive: true });
+  return () => window.removeEventListener(START_EVENT_NAME, listener);
 }

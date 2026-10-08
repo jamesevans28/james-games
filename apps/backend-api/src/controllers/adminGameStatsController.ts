@@ -8,7 +8,7 @@ export async function show(req: Request, res: Response) {
   try {
     const stats = await getGameStats(gameId);
     res.json(stats);
-  } catch (err: any) {
+  } catch (err) {
     sendServerError(res, "admin_game_stats_failed", err);
   }
 }

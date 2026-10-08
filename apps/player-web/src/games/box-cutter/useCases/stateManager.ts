@@ -9,7 +9,7 @@ import {
 
 export function createInitialState(
   playBounds: Bounds,
-  config: GameConfig = DEFAULT_CONFIG
+  config: GameConfig = DEFAULT_CONFIG,
 ): GameState {
   const enemyBall: EnemyBall = {
     x: playBounds.x + playBounds.width / 2,

@@ -14,9 +14,9 @@ Console route (about five minutes):
 
 1. AWS console → CloudFront → **Functions** → **Create function**. Name `g4j-bot-rewrite`, runtime **cloudfront-js-2.0**.
 2. Paste the contents of `infra/cloudfront/bot-rewrite.js` into the editor → **Save changes**.
-3. **Test** tab: event type *Viewer request*, URL path `/games/snapadile`, add header `user-agent: Twitterbot/1.0` → **Test function**. The output URI should be `/static-games/snapadile.html`.
+3. **Test** tab: event type _Viewer request_, URL path `/games/snapadile`, add header `user-agent: Twitterbot/1.0` → **Test function**. The output URI should be `/static-games/snapadile.html`.
 4. **Publish** tab → **Publish function**.
-5. Same page → **Add association**: distribution = the games4james.com distribution (its id is the `WEB_CLOUDFRONT_DISTRIBUTION_ID` repo variable), event type **Viewer request**, cache behaviour **Default (\*)** → **Add association**. Wait for the distribution to show *Deployed*.
+5. Same page → **Add association**: distribution = the games4james.com distribution (its id is the `WEB_CLOUDFRONT_DISTRIBUTION_ID` repo variable), event type **Viewer request**, cache behaviour **Default (\*)** → **Add association**. Wait for the distribution to show _Deployed_.
 
 Or with the AWS CLI (Claude can run these if you approve `aws` commands):
 

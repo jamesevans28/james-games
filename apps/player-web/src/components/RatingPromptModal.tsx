@@ -41,9 +41,7 @@ export default function RatingPromptModal({
       <div className="absolute inset-0 bg-scrim/80 backdrop-blur-sm" onClick={onSkip} />
       <div className="relative w-full max-w-md mx-4 rounded-3xl bg-card border border-line shadow-card-hover p-6">
         <div className="text-center">
-          <p className="text-sm uppercase tracking-wide text-ink-2 font-semibold">
-            Rate this game
-          </p>
+          <p className="text-sm uppercase tracking-wide text-ink-2 font-semibold">Rate this game</p>
           <h3 className="text-2xl font-bold text-ink mt-1">{gameTitle}</h3>
         </div>
 

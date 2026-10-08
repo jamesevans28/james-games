@@ -1,9 +1,9 @@
 // Clean server entry (refactored)
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
 import express from "express";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
 import cors from "cors";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
 import routes from "./routes/index.js";
 import { attachUser } from "./middleware/authGuards.js";
 import { errorHandler } from "./lib/http.js";

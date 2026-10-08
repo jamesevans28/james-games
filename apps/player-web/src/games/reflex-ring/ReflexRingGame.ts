@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-imports -- TODO T4.4/T5.2: legacy game code, cleaned when it moves onto the Game SDK */
 // (Removed duplicate power-up system methods and properties)
 import Phaser from "phaser";
 import { trackGameStart } from "../../utils/analytics";
@@ -222,13 +223,13 @@ export default class ReflexRingGame extends Phaser.Scene {
       count: number,
       alpha: number,
       depth: number,
-      scaleRange: [number, number]
+      scaleRange: [number, number],
     ) => {
       for (let i = 0; i < count; i++) {
         const sprite = this.add.sprite(
           Phaser.Math.Between(0, width),
           Phaser.Math.Between(0, height),
-          key
+          key,
         );
         sprite.setAlpha(alpha);
         // Keep minimal scaling for variety - these are small 32x32 SVGs
@@ -326,7 +327,7 @@ export default class ReflexRingGame extends Phaser.Scene {
   }
 
   private attachDomPointerHandler(): void {
-    this.parentEl = this.game.canvas.parentElement as HTMLElement | null;
+    this.parentEl = this.game.canvas.parentElement;
     this.domPointerHandler = (ev: PointerEvent) => {
       if (ev.target instanceof HTMLCanvasElement) return;
       if (this.gameOver) return;
@@ -512,13 +513,13 @@ export default class ReflexRingGame extends Phaser.Scene {
       this.centerX,
       this.centerY,
       this.centerX + Math.cos(start) * this.radius,
-      this.centerY + Math.sin(start) * this.radius
+      this.centerY + Math.sin(start) * this.radius,
     );
     this.wedgeGraphics.lineBetween(
       this.centerX,
       this.centerY,
       this.centerX + Math.cos(end) * this.radius,
-      this.centerY + Math.sin(end) * this.radius
+      this.centerY + Math.sin(end) * this.radius,
     );
     this.wedgeGraphics.strokePath();
   }
@@ -599,7 +600,7 @@ export default class ReflexRingGame extends Phaser.Scene {
       this.scale.width,
       this.scale.height,
       0x000000,
-      0.55
+      0.55,
     );
     const t1 = this.add
       .text(this.centerX, this.centerY - 20, "Game Over", {

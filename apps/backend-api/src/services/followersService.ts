@@ -1,4 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 
 import {
   DynamoDBDocumentClient,
@@ -13,6 +13,7 @@ import { config } from "../config/index.js";
 import { getUser } from "./dynamoService.js";
 import { buildSummary, type ExperienceSummary } from "./experienceService.js";
 import { log } from "../lib/log.js";
+import { isConditionalCheckFailed } from "../lib/errors.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 const FOLLOWED_BY_INDEX = config.tables.followsByTargetIndex || "FollowedBy";
@@ -73,10 +74,10 @@ export async function followUser(userId: string, targetUserId: string) {
           createdAt: now,
         },
         ConditionExpression: "attribute_not_exists(userId) AND attribute_not_exists(targetUserId)",
-      })
+      }),
     );
-  } catch (err: any) {
-    if (err?.name === "ConditionalCheckFailedException") {
+  } catch (err) {
+    if (isConditionalCheckFailed(err)) {
       throw Object.assign(new Error("already_following"), { code: "CONFLICT" });
     }
     throw err;
@@ -90,7 +91,7 @@ export async function unfollowUser(userId: string, targetUserId: string) {
     new DeleteCommand({
       TableName: config.tables.follows,
       Key: { userId, targetUserId },
-    })
+    }),
   );
   return { ok: true };
 }
@@ -102,7 +103,7 @@ export async function listFollowing(userId: string): Promise<FollowEdge[]> {
       TableName: config.tables.follows,
       KeyConditionExpression: "userId = :u",
       ExpressionAttributeValues: { ":u": userId },
-    })
+    }),
   );
   return (res.Items || []) as FollowEdge[];
 }
@@ -115,7 +116,7 @@ export async function listFollowers(userId: string): Promise<FollowEdge[]> {
       IndexName: FOLLOWED_BY_INDEX,
       KeyConditionExpression: "targetUserId = :t",
       ExpressionAttributeValues: { ":t": userId },
-    })
+    }),
   );
   return (res.Items || []) as FollowEdge[];
 }
@@ -126,7 +127,7 @@ export async function isFollowing(userId: string, targetUserId: string): Promise
     new GetCommand({
       TableName: config.tables.follows,
       Key: { userId, targetUserId },
-    })
+    }),
   );
   return !!res.Item;
 }
@@ -139,7 +140,7 @@ export async function countFollowing(userId: string) {
       KeyConditionExpression: "userId = :u",
       ExpressionAttributeValues: { ":u": userId },
       Select: "COUNT",
-    })
+    }),
   );
   return res.Count || 0;
 }
@@ -153,7 +154,7 @@ export async function countFollowers(userId: string) {
       KeyConditionExpression: "targetUserId = :t",
       ExpressionAttributeValues: { ":t": userId },
       Select: "COUNT",
-    })
+    }),
   );
   return res.Count || 0;
 }
@@ -174,7 +175,7 @@ export async function updatePresence(userId: string, payload: PresenceUpdatePayl
         updatedAt: iso,
         expiresAt,
       },
-    })
+    }),
   );
   return { ok: true };
 }
@@ -185,13 +186,13 @@ export async function getPresence(userId: string): Promise<PresenceRecord | null
     new GetCommand({
       TableName: config.tables.presence,
       Key: { userId },
-    })
+    }),
   );
   return (res.Item as PresenceRecord) || null;
 }
 
 export async function getPresenceForUsers(
-  userIds: string[]
+  userIds: string[],
 ): Promise<Record<string, PresenceRecord>> {
   if (!config.tables.presence || userIds.length === 0) return {};
   const unique = Array.from(new Set(userIds));
@@ -206,7 +207,7 @@ export async function getPresenceForUsers(
             Keys: batch.map((userId) => ({ userId })),
           },
         },
-      })
+      }),
     );
     const rows = res.Responses?.[config.tables.presence] || [];
     rows.forEach((item) => {
@@ -238,7 +239,7 @@ async function buildProfileMap(userIds: string[]) {
         log.warn("follow_profile_fetch_failed", undefined, err);
         return null;
       }
-    })
+    }),
   );
   return pairs.reduce<Record<string, any>>((acc, pair) => {
     if (!pair) return acc;
@@ -249,7 +250,7 @@ async function buildProfileMap(userIds: string[]) {
 
 export async function listFollowingWithPresence(
   userId: string,
-  opts: { gameId?: string } = {}
+  opts: { gameId?: string } = {},
 ): Promise<FollowingEdgeWithExtras[]> {
   const edges = await listFollowing(userId);
   if (!edges.length) return [];
@@ -272,7 +273,7 @@ export async function listFollowingWithPresence(
 }
 
 export async function listFollowersWithPresence(
-  targetUserId: string
+  targetUserId: string,
 ): Promise<FollowerEdgeWithExtras[]> {
   const edges = await listFollowers(targetUserId);
   if (!edges.length) return [];

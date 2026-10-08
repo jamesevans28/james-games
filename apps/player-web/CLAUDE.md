@@ -14,18 +14,18 @@ Check UI in the Browser pane with the `player-web` launch config at a 375×812 v
 
 ## Folder map (`src/`)
 
-| Folder | What lives there |
-|---|---|
-| `pages/` | Route screens: `home/HomeFeed`, `games-list`, `games/` (PlayGame, GameLanding, GameOver, GameHeader), `leaderboard`, `profile`, `settings`, `followers`, `notifications`, `firebase-login` |
-| `components/` | Shared UI: layout (Header, RootLayout), SideDrawer, overlays (Splash, Install, SW update, Streak), `feed/GameTile` |
-| `context/` | `FirebaseAuthProvider.tsx`: auth state, profile, all auth flows |
-| `hooks/` | Feed ordering (`useFeedAlgorithmV2`), catalog, presence, online status |
-| `lib/` | `api.ts` (backend client, bearer token), `firebase.ts` (SDK init) |
-| `games/` | One folder per game plus `index.ts`, the registry |
-| `game/` | Phaser-agnostic shared helpers: `ui/dpad.ts`, `ui/onScreenKeyboard.ts`, `words/` dictionary |
-| `utils/` | Analytics, `gameEvents.ts` (game → React events), `playHistory.ts`, `errorCode.ts`, share links, SEO keywords |
-| `platform/` | Arrives in Phase 4: the Game SDK (host, mount, base scene, HUD/input/audio kits) |
-| `config/` | `env.ts` (API origin), `brand.json` + `brand.ts` (every brand string, colour, path) |
+| Folder        | What lives there                                                                                                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pages/`      | Route screens: `home/HomeFeed`, `games-list`, `games/` (PlayGame, GameLanding, GameOver, GameHeader), `leaderboard`, `profile`, `settings`, `followers`, `notifications`, `firebase-login` |
+| `components/` | Shared UI: layout (Header, RootLayout), SideDrawer, overlays (Splash, Install, SW update, Streak), `feed/GameTile`                                                                         |
+| `context/`    | `FirebaseAuthProvider.tsx`: auth state, profile, all auth flows                                                                                                                            |
+| `hooks/`      | Feed ordering (`useFeedAlgorithmV2`), catalog, presence, online status                                                                                                                     |
+| `lib/`        | `api.ts` (backend client, bearer token), `firebase.ts` (SDK init)                                                                                                                          |
+| `games/`      | One folder per game plus `index.ts`, the registry                                                                                                                                          |
+| `game/`       | Phaser-agnostic shared helpers: `ui/dpad.ts`, `ui/onScreenKeyboard.ts`, `words/` dictionary                                                                                                |
+| `utils/`      | Analytics, `gameEvents.ts` (game → React events), `playHistory.ts`, `errorCode.ts`, share links, SEO keywords                                                                              |
+| `platform/`   | Arrives in Phase 4: the Game SDK (host, mount, base scene, HUD/input/audio kits)                                                                                                           |
+| `config/`     | `env.ts` (API origin), `brand.json` + `brand.ts` (every brand string, colour, path)                                                                                                        |
 
 Routes are defined in `src/App.tsx`.
 
@@ -42,11 +42,11 @@ Phase 4 replaces this with `manifest.ts` + `create(host, el)`. New games after P
 
 Copy `.env.example` to `.env.local` (gitignored). Never commit values.
 
-| Variable | Meaning |
-|---|---|
-| `VITE_API_BASE_URL` | Backend origin. Local `http://localhost:8787`, prod `https://api.games4james.com` |
-| `VITE_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_STORAGE_BUCKET`, `_MESSAGING_SENDER_ID`, `_APP_ID` | Firebase web app config (project `flingo-fun`) |
-| `VITE_FIREBASE_MEASUREMENT_ID` | Optional analytics id |
+| Variable                                                                                                     | Meaning                                                                           |
+| ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| `VITE_API_BASE_URL`                                                                                          | Backend origin. Local `http://localhost:8787`, prod `https://api.games4james.com` |
+| `VITE_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_STORAGE_BUCKET`, `_MESSAGING_SENDER_ID`, `_APP_ID` | Firebase web app config (project `flingo-fun`)                                    |
+| `VITE_FIREBASE_MEASUREMENT_ID`                                                                               | Optional analytics id                                                             |
 
 CI sets the same names from GitHub repo variables plus `VITE_BUILD_NUMBER`.
 

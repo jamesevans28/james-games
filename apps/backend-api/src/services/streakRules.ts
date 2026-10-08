@@ -1,6 +1,10 @@
 /** Pure streak rules. The calendar day always comes from the server clock. */
 
-export type StreakState = { currentStreak: number; longestStreak: number; lastLoginDate: string | null };
+export type StreakState = {
+  currentStreak: number;
+  longestStreak: number;
+  lastLoginDate: string | null;
+};
 
 const MAX_TZ_OFFSET_MINUTES = 14 * 60;
 

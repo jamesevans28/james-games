@@ -1,4 +1,4 @@
-import { test } from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import { toPublicProfile } from "./publicProfile.js";
 
@@ -23,13 +23,27 @@ const full = {
 
 test("returns exactly the whitelisted keys", () => {
   assert.deepEqual(Object.keys(toPublicProfile(full)).sort(), [
-    "avatar", "createdAt", "currentStreak", "experience", "longestStreak", "screenName", "userId",
+    "avatar",
+    "createdAt",
+    "currentStreak",
+    "experience",
+    "longestStreak",
+    "screenName",
+    "userId",
   ]);
 });
 
 test("strips email, admin, preferences, last login and PIN data", () => {
   const json = JSON.stringify(toPublicProfile(full));
-  for (const secret of ["kid@example.com", "admin", "preferences", "lastLoginDate", "2026-01-05", "pinHash", "betaTester"]) {
+  for (const secret of [
+    "kid@example.com",
+    "admin",
+    "preferences",
+    "lastLoginDate",
+    "2026-01-05",
+    "pinHash",
+    "betaTester",
+  ]) {
     assert.ok(!json.includes(secret), `leaked ${secret}`);
   }
 });
@@ -44,7 +58,12 @@ test("keeps the fields the profile page needs", () => {
 
 test("fills safe defaults for a sparse row", () => {
   assert.deepEqual(toPublicProfile({ userId: "uid-2" }), {
-    userId: "uid-2", screenName: null, avatar: null, createdAt: null,
-    experience: null, currentStreak: 0, longestStreak: 0,
+    userId: "uid-2",
+    screenName: null,
+    avatar: null,
+    createdAt: null,
+    experience: null,
+    currentStreak: 0,
+    longestStreak: 0,
   });
 });

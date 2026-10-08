@@ -1,15 +1,15 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/authGuards.js";
 import {
-	followUserHandler,
-	unfollowUserHandler,
-	getFollowersSummary,
-	getFollowingList,
-	getFollowersList,
-	updatePresenceHandler,
-	getFollowingActivity,
-	getFollowingIdsHandler,
-	getFollowNotifications,
+  followUserHandler,
+  unfollowUserHandler,
+  getFollowersSummary,
+  getFollowingList,
+  getFollowersList,
+  updatePresenceHandler,
+  getFollowingActivity,
+  getFollowingIdsHandler,
+  getFollowNotifications,
 } from "../controllers/followersController.js";
 
 const router = Router();

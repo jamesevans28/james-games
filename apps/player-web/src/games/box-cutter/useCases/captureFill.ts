@@ -10,7 +10,7 @@ export function applyCapture(
   grid: Grid,
   filled: Uint8Array,
   wall: Uint8Array,
-  enemyCell: Cell
+  enemyCell: Cell,
 ): CaptureResult {
   const reachable = new Uint8Array(filled.length);
 

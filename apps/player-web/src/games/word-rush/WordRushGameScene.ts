@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/require-await, no-restricted-imports -- TODO T5.12: legacy game code, cleaned when it moves onto the Game SDK */
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { getRandomCategory, getRandomWord, type Category } from "./data";
@@ -249,7 +250,7 @@ export default class WordRushGameScene extends Phaser.Scene {
       PLAY_WIDTH,
       PLAY_HEIGHT,
       0x000000,
-      0.7
+      0.7,
     );
 
     // Confirmation box
@@ -280,7 +281,7 @@ export default class WordRushGameScene extends Phaser.Scene {
           color: "#cbd5e0",
           align: "center",
           wordWrap: { width: boxWidth - 40 },
-        }
+        },
       )
       .setOrigin(0.5);
 
@@ -369,7 +370,7 @@ export default class WordRushGameScene extends Phaser.Scene {
       PLAY_WIDTH,
       PLAY_HEIGHT,
       0x000000,
-      0.7
+      0.7,
     );
 
     // Confirmation box
@@ -400,7 +401,7 @@ export default class WordRushGameScene extends Phaser.Scene {
           color: "#cbd5e0",
           align: "center",
           wordWrap: { width: boxWidth - 40 },
-        }
+        },
       )
       .setOrigin(0.5);
 
@@ -506,7 +507,7 @@ export default class WordRushGameScene extends Phaser.Scene {
 
     // Find all tiles with this letter
     const tilesToReveal = this.tiles.filter(
-      (tile) => tile.letter === randomLetter && !tile.revealed
+      (tile) => tile.letter === randomLetter && !tile.revealed,
     );
 
     // Reveal them with animation
@@ -629,7 +630,7 @@ export default class WordRushGameScene extends Phaser.Scene {
     x: number,
     y: number,
     letter: string,
-    size: number
+    size: number,
   ): Phaser.GameObjects.Container {
     const container = this.add.container(x, y);
 

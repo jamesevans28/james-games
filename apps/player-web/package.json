@@ -13,7 +13,7 @@
     "generate-sitemap": "cd ../.. && node scripts/generate-sitemap.mjs",
     "generate-seo": "cd ../.. && node scripts/generate-sitemap.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
-    "test": "tsx --test \"src/**/*.test.ts\""
+    "test": "vitest run --project player-web --root ../.."
   },
   "dependencies": {
     "firebase": "^13.0.0",

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import type { Request, Response } from "express";
 import { putScoreWithUser, getTopScoresHydrated } from "../services/scoresService.js";
 import { getFollowingIds } from "../services/followersService.js";
@@ -46,7 +47,7 @@ export async function createScore(req: Request, res: Response) {
         const result = await applyExperienceToUser(userId, xp);
         awardedXp = result.awarded;
         summary = result.summary;
-      } catch (err: any) {
+      } catch (err) {
         // The score is saved; an XP failure must not lose it.
         log.warn("xp_award_failed", { gameId: valid.gameId }, err);
       }
@@ -60,7 +61,7 @@ export async function createScore(req: Request, res: Response) {
       awardedXp,
       summary,
     });
-  } catch (e: any) {
+  } catch (e) {
     if (e instanceof ScoreRejected) {
       log.warn("score_rejected", { code: e.code });
       return res.status(400).json({ error: e.code });
@@ -78,7 +79,7 @@ export async function listScores(req: Request, res: Response) {
     const scope = String((req.query as any)?.scope || "");
     let includeUserIds: string[] | undefined;
     if (scope === "following") {
-      const userId = req.user?.userId as string | undefined;
+      const userId = req.user?.userId;
       if (!userId) return res.status(401).json({ error: "unauthorized" });
       const followingIds = await getFollowingIds(userId);
       const allow = new Set<string>(followingIds);
@@ -87,7 +88,7 @@ export async function listScores(req: Request, res: Response) {
     }
     const rows = await getTopScoresHydrated(gameId, limit, { includeUserIds });
     res.json(rows);
-  } catch (e: any) {
+  } catch (e) {
     sendServerError(res, "scores_list_failed", e);
   }
 }

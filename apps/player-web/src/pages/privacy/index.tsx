@@ -18,8 +18,8 @@ export default function PrivacyPage() {
       />
       <h1 className="text-3xl font-extrabold mb-2">Privacy</h1>
       <p className="text-ink-2 mb-6">
-        {brand.name} is a family project by {makersLine()}. This is the short version; a fuller
-        page for parents is on its way.
+        {brand.name} is a family project by {makersLine()}. This is the short version; a fuller page
+        for parents is on its way.
       </p>
 
       <section className="card p-5 mb-4">
@@ -50,8 +50,8 @@ export default function PrivacyPage() {
       <section className="card p-5 mb-6">
         <h2 className="text-lg font-extrabold mb-2">Visit counts</h2>
         <p className="text-sm">
-          We use Google Analytics to count visits and see which games get played, so we know what
-          to make next.
+          We use Google Analytics to count visits and see which games get played, so we know what to
+          make next.
         </p>
       </section>
 

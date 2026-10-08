@@ -109,6 +109,57 @@ export type FollowNotification = {
   createdAt: string;
 };
 
+/** Body of mutations that only acknowledge success (follow, unfollow, presence, preferences). */
+export type OkResponse = { ok: boolean };
+
+/** PATCH /users/settings. `screenName` is the name the server actually assigned. */
+export type UpdateSettingsResponse = { ok: boolean; screenName?: string };
+
+/** The signed-in user's own profile, from GET /me. */
+export type MeUser = {
+  userId: string;
+  email: string | null;
+  emailProvided: boolean;
+  screenName?: string | null;
+  avatar?: number | null;
+  preferences?: Record<string, unknown>;
+  validated?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  experience?: ExperienceSummary | null;
+  betaTester?: boolean;
+  admin?: boolean;
+  currentStreak?: number;
+  longestStreak?: number;
+  lastLoginDate?: string | null;
+};
+
+export type MeResponse = { user: MeUser | null };
+
+/** GET /users/:id: a public profile (whitelisted fields only) plus follow data. */
+export interface ProfileResponse {
+  profile: {
+    userId: string;
+    screenName?: string | null;
+    avatar?: number | null;
+    experience?: ExperienceSummary | null;
+    currentStreak?: number;
+  };
+  followingCount: number;
+  followersCount: number;
+  following: Array<{ userId: string; screenName?: string | null; avatar?: number | null }>;
+  followers: Array<{ userId: string; screenName?: string | null; avatar?: number | null }>;
+  recentGames: Array<{
+    userId: string;
+    gameId: string;
+    bestScore?: number;
+    lastScore?: number;
+    lastPlayedAt?: string;
+  }>;
+  isSelf: boolean;
+  isFollowing: boolean;
+}
+
 function emptySummary(gameId: string): RatingSummary {
   return { gameId, avgRating: 0, ratingCount: 0 };
 }
@@ -153,7 +204,7 @@ export async function fetchExperienceSummary(): Promise<ExperienceSummary | null
 export async function getTopScores(
   gameId: string,
   limit = 10,
-  opts?: { scope?: "overall" | "following" }
+  opts?: { scope?: "overall" | "following" },
 ): Promise<ScoreEntry[]> {
   if (!API_BASE) return [];
   const url = new URL(`${API_BASE}/scores/${encodeURIComponent(gameId)}`);
@@ -173,35 +224,40 @@ export async function getTopScores(
 }
 
 // Update user settings (currently only screenName). Returns { ok, screenName }.
-export async function updateSettings(data: { screenName: string }) {
-  if (!API_BASE) return { ok: false } as any;
+export async function updateSettings(data: {
+  screenName: string;
+}): Promise<UpdateSettingsResponse> {
+  if (!API_BASE) return { ok: false };
   const res = await fetchWithAuth(`${API_BASE}/users/settings`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`Failed to update settings: ${res.status}`);
-  return res.json();
+  return (await res.json()) as UpdateSettingsResponse;
 }
 
 // Fetch current user profile including screenName.
-export async function fetchMe() {
+export async function fetchMe(): Promise<MeResponse> {
   if (!API_BASE) return { user: null };
   const res = await fetchWithAuth(`${API_BASE}/me`);
   if (!res.ok) throw new Error(`Failed to load profile: ${res.status}`);
-  return res.json();
+  return (await res.json()) as MeResponse;
 }
 
 // Update user preferences (e.g., avatar). Body can include { avatar: number } or { preferences: {...} }
-export async function updatePreferences(data: Record<string, any>) {
-  if (!API_BASE) return { ok: false } as any;
+export async function updatePreferences(data: {
+  avatar?: number;
+  preferences?: Record<string, unknown>;
+}): Promise<OkResponse> {
+  if (!API_BASE) return { ok: false };
   const res = await fetchWithAuth(`${API_BASE}/users/preferences`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`Failed to update preferences: ${res.status}`);
-  return res.json();
+  return (await res.json()) as OkResponse;
 }
 
 export async function fetchRatingSummary(gameId: string): Promise<RatingSummary> {
@@ -247,32 +303,32 @@ export async function fetchFollowersSummary(): Promise<FollowersSummary> {
   return (await res.json()) as FollowersSummary;
 }
 
-export async function followUserApi(targetUserId: string) {
-  if (!API_BASE) return { ok: false } as any;
+export async function followUserApi(targetUserId: string): Promise<OkResponse> {
+  if (!API_BASE) return { ok: false };
   const res = await fetchWithAuth(`${API_BASE}/followers/${encodeURIComponent(targetUserId)}`, {
     method: "POST",
   });
   if (res.status === 401) throw new Error("signin_required");
   if (!res.ok) throw new Error(`Failed to follow: ${res.status}`);
-  return res.json();
+  return (await res.json()) as OkResponse;
 }
 
-export async function unfollowUserApi(targetUserId: string) {
-  if (!API_BASE) return { ok: false } as any;
+export async function unfollowUserApi(targetUserId: string): Promise<OkResponse> {
+  if (!API_BASE) return { ok: false };
   const res = await fetchWithAuth(`${API_BASE}/followers/${encodeURIComponent(targetUserId)}`, {
     method: "DELETE",
   });
   if (res.status === 401) throw new Error("signin_required");
   if (!res.ok) throw new Error(`Failed to unfollow: ${res.status}`);
-  return res.json();
+  return (await res.json()) as OkResponse;
 }
 
 export async function updatePresenceStatus(payload: {
   status: PresenceStatus;
   gameId?: string;
   gameTitle?: string;
-}) {
-  if (!API_BASE) return { ok: false } as any;
+}): Promise<OkResponse> {
+  if (!API_BASE) return { ok: false };
   const res = await fetchWithAuth(`${API_BASE}/followers/status`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -280,7 +336,7 @@ export async function updatePresenceStatus(payload: {
   });
   if (res.status === 401) throw new Error("signin_required");
   if (!res.ok) throw new Error(`Failed to update presence: ${res.status}`);
-  return res.json();
+  return (await res.json()) as OkResponse;
 }
 
 export async function fetchFollowingActivity(args: {
@@ -299,12 +355,12 @@ export async function fetchFollowingActivity(args: {
   return (await res.json()) as { activity: FollowingActivityEntry[] };
 }
 
-export async function fetchUserProfile(userId: string) {
+export async function fetchUserProfile(userId: string): Promise<ProfileResponse | null> {
   if (!API_BASE) return null;
   const res = await fetchWithAuth(`${API_BASE}/users/${encodeURIComponent(userId)}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Failed to load profile: ${res.status}`);
-  return res.json();
+  return (await res.json()) as ProfileResponse;
 }
 
 export async function fetchFollowNotifications(): Promise<{ notifications: FollowNotification[] }> {

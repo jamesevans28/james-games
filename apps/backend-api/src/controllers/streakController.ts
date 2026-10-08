@@ -10,7 +10,7 @@ import { sendServerError } from "../lib/http.js";
  * The server decides the date; any client-sent todayDate is ignored.
  */
 export async function recordStreakCheckin(req: Request, res: Response) {
-  const userId = req.user?.userId as string | undefined;
+  const userId = req.user?.userId;
   if (!userId) {
     return res.status(401).json({ error: "unauthorized" });
   }
@@ -25,7 +25,7 @@ export async function recordStreakCheckin(req: Request, res: Response) {
       extended: result.extended,
       isNewStreak: result.isNewStreak,
     });
-  } catch (e: any) {
+  } catch (e) {
     log.error("streak_checkin_failed", undefined, e);
     res.status(500).json({ error: "server_error" });
   }
@@ -36,7 +36,7 @@ export async function recordStreakCheckin(req: Request, res: Response) {
  * GET /users/streak
  */
 export async function getStreak(req: Request, res: Response) {
-  const userId = req.user?.userId as string | undefined;
+  const userId = req.user?.userId;
   if (!userId) {
     return res.status(401).json({ error: "unauthorized" });
   }
@@ -48,7 +48,7 @@ export async function getStreak(req: Request, res: Response) {
       longestStreak: streak.longestStreak,
       lastLoginDate: streak.lastLoginDate,
     });
-  } catch (e: any) {
+  } catch (e) {
     log.error("streak_get_failed", undefined, e);
     sendServerError(res, "streak_get_failed", e);
   }

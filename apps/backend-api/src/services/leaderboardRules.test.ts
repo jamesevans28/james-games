@@ -1,4 +1,4 @@
-import { test } from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import { bestPerUser } from "./leaderboardRules.js";
 
@@ -11,11 +11,21 @@ test("keeps one best row per friend and ignores strangers", () => {
     { userId: "friend", score: 80, createdAt: "2026-01-03" },
     { userId: "me", score: 60, createdAt: "2026-01-01" },
   ];
-  assert.deepEqual(bestPerUser(rows, [], allowed).map((r) => [r.userId, r.score]), [["friend", 80], ["me", 60]]);
+  assert.deepEqual(
+    bestPerUser(rows, [], allowed).map((r) => [r.userId, r.score]),
+    [
+      ["friend", 80],
+      ["me", 60],
+    ],
+  );
 });
 
 test("includes a friend who is outside the global top list via their stats row", () => {
-  const out = bestPerUser([], [{ userId: "far-friend", bestScore: 12, lastPlayedAt: "2026-02-01" }], allowed);
+  const out = bestPerUser(
+    [],
+    [{ userId: "far-friend", bestScore: 12, lastPlayedAt: "2026-02-01" }],
+    allowed,
+  );
   assert.deepEqual(out, [{ userId: "far-friend", score: 12, createdAt: "2026-02-01" }]);
 });
 
@@ -30,5 +40,8 @@ test("ties go to whoever got there first", () => {
     { userId: "friend", score: 10, createdAt: "2026-01-05" },
     { userId: "me", score: 10, createdAt: "2026-01-01" },
   ];
-  assert.deepEqual(bestPerUser(rows, [], allowed).map((r) => r.userId), ["me", "friend"]);
+  assert.deepEqual(
+    bestPerUser(rows, [], allowed).map((r) => r.userId),
+    ["me", "friend"],
+  );
 });

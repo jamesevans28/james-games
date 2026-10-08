@@ -98,7 +98,7 @@ async function fetchFeedOrder(params: {
       return null;
     }
 
-    return await response.json();
+    return (await response.json()) as FeedApiResponse;
   } catch (err) {
     console.error("Failed to fetch feed:", err);
     return null;
@@ -112,7 +112,7 @@ async function fetchFeedOrder(params: {
 function computeInstantFeed(
   games: GameCatalogEntry[],
   ratings: Record<string, RatingSummary>,
-  isBetaTester: boolean
+  isBetaTester: boolean,
 ): FeedGame[] {
   const now = Date.now();
   const dayMs = 24 * 60 * 60 * 1000;
@@ -285,7 +285,7 @@ export function useFeedAlgorithm({ games, ratings, isBetaTester }: FeedAlgorithm
   // Compute instant feed (synchronous, no blocking)
   const instantFeed = useMemo(
     () => computeInstantFeed(games, ratings, isBetaTester),
-    [games, ratings, isBetaTester]
+    [games, ratings, isBetaTester],
   );
 
   // Lock initial games when we show them (fallback after timeout)
@@ -341,7 +341,7 @@ export function useFeedAlgorithm({ games, ratings, isBetaTester }: FeedAlgorithm
     }
 
     if (games.length > 0) {
-      loadBackendOrder();
+      void loadBackendOrder();
     }
 
     return () => {
@@ -417,7 +417,7 @@ export function useInfiniteFeed(feedGames: FeedGame[]) {
       }
       return result;
     },
-    [feedGames]
+    [feedGames],
   );
 
   return {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import type { Request, Response } from "express";
 import { DynamoDBDocumentClient, ScanCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoClient } from "../config/aws.js";
@@ -5,8 +6,6 @@ import { config } from "../config/index.js";
 import { listGameConfigs, type GameConfigRecord } from "../services/gamesConfigService.js";
 import { log } from "../lib/log.js";
 import { getUser } from "../services/dynamoService.js";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
@@ -30,14 +29,7 @@ const ddb = DynamoDBDocumentClient.from(dynamoClient);
  */
 
 type FeedReason =
-  | "featured"
-  | "campaign"
-  | "user_recent"
-  | "beta"
-  | "updated"
-  | "new"
-  | "rated"
-  | "popular";
+  "featured" | "campaign" | "user_recent" | "beta" | "updated" | "new" | "rated" | "popular";
 
 interface GameScoreResult {
   gameId: string;
@@ -95,7 +87,7 @@ async function getRatingData(): Promise<
       new ScanCommand({
         TableName: config.tables.ratingSummary,
         ProjectionExpression: "gameId, ratingSum, ratingCount, updatedAt",
-      })
+      }),
     );
 
     ((result.Items || []) as RatingSummaryItem[]).forEach((item) => {
@@ -129,7 +121,7 @@ async function getUserRecentGames(userId: string): Promise<string[]> {
         ProjectionExpression: "gameId, lastPlayedAt",
         ScanIndexForward: false, // Most recent first
         Limit: 20,
-      })
+      }),
     );
 
     return ((result.Items || []) as UserGameStatItem[])
@@ -370,7 +362,8 @@ export async function getPersonalizedFeed(req: Request, res: Response) {
 
   try {
     const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
-    const clientRecentParam = String(req.query.clientRecentGames || "");
+    const rawRecent = req.query.clientRecentGames;
+    const clientRecentParam = typeof rawRecent === "string" ? rawRecent : "";
 
     // Get all data from DB. betaTester lives on the user row, not in the auth token.
     const [gameConfigs, ratings, dbRecentGames, profile] = await Promise.all([

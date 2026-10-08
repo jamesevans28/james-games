@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/unbound-method, no-restricted-imports -- TODO T5.7: legacy game code, cleaned when it moves onto the Game SDK */
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 
@@ -78,7 +79,7 @@ export default class CosmicClashGame extends Phaser.Scene {
       GAME_HEIGHT / 2,
       GAME_WIDTH,
       GAME_HEIGHT,
-      "star"
+      "star",
     );
     this.stars.setTileScale(0.5, 0.5);
 
@@ -161,7 +162,7 @@ export default class CosmicClashGame extends Phaser.Scene {
     const targetX = Phaser.Math.Clamp(
       this.player.x + direction * TAP_NUDGE_DISTANCE,
       40,
-      GAME_WIDTH - 40
+      GAME_WIDTH - 40,
     );
     this.player.x = targetX;
   }
@@ -319,7 +320,7 @@ export default class CosmicClashGame extends Phaser.Scene {
         sprite.x = Phaser.Math.Clamp(
           sprite.x + moveAmount * this.alienDirection,
           40,
-          GAME_WIDTH - 40
+          GAME_WIDTH - 40,
         );
 
         if (sprite.y >= PLANET_SURFACE_Y) {
@@ -332,7 +333,7 @@ export default class CosmicClashGame extends Phaser.Scene {
         sprite.x = Phaser.Math.Clamp(
           sprite.x + moveAmount * this.alienDirection,
           40,
-          GAME_WIDTH - 40
+          GAME_WIDTH - 40,
         );
       });
     }
@@ -352,7 +353,7 @@ export default class CosmicClashGame extends Phaser.Scene {
           bulletSprite.x,
           bulletSprite.y,
           alienSprite.x,
-          alienSprite.y
+          alienSprite.y,
         );
 
         if (distance < 30) {
@@ -395,7 +396,7 @@ export default class CosmicClashGame extends Phaser.Scene {
         this.player.x,
         this.player.y,
         powerUp.sprite.x,
-        powerUp.sprite.y
+        powerUp.sprite.y,
       );
 
       if (distance < 40) {
@@ -415,7 +416,7 @@ export default class CosmicClashGame extends Phaser.Scene {
         this.player.x,
         this.player.y,
         bulletSprite.x,
-        bulletSprite.y
+        bulletSprite.y,
       );
 
       if (distance < 35) {
@@ -463,8 +464,8 @@ export default class CosmicClashGame extends Phaser.Scene {
       type === "rapidFire"
         ? "powerup-rapid"
         : type === "doubleBullet"
-        ? "powerup-double"
-        : "powerup-shield";
+          ? "powerup-double"
+          : "powerup-shield";
     const sprite = this.add.sprite(x, y, texture);
     sprite.setScale(0.6);
     this.powerUps.push({ sprite, type });
@@ -525,7 +526,7 @@ export default class CosmicClashGame extends Phaser.Scene {
   private spawnExplosion(
     x: number,
     y: number,
-    options: { radius?: number; duration?: number; color?: number } = {}
+    options: { radius?: number; duration?: number; color?: number } = {},
   ) {
     const { radius = 24, duration = 220, color = 0xffc107 } = options;
     const circle = this.add.circle(x, y, Math.max(radius * 0.3, 6), color, 0.9);
@@ -683,7 +684,7 @@ export default class CosmicClashGame extends Phaser.Scene {
       this.player.x = Phaser.Math.Clamp(
         this.player.x + this.pointerHoldDirection * HOLD_MOVE_SPEED * deltaSeconds,
         40,
-        GAME_WIDTH - 40
+        GAME_WIDTH - 40,
       );
     }
 

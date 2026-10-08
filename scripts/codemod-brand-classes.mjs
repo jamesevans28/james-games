@@ -18,7 +18,19 @@ const files = execFileSync("git", ["ls-files", "apps/player-web/src", "apps/admi
   .filter((f) => /\.(tsx?|jsx?)$/.test(f));
 
 const TEXTISH = new Set(["text", "placeholder", "fill", "stroke", "caret", "decoration"]);
-const LINEISH = new Set(["border", "border-t", "border-b", "border-l", "border-r", "border-x", "border-y", "divide", "ring", "outline", "ring-offset"]);
+const LINEISH = new Set([
+  "border",
+  "border-t",
+  "border-b",
+  "border-l",
+  "border-r",
+  "border-x",
+  "border-y",
+  "divide",
+  "ring",
+  "outline",
+  "ring-offset",
+]);
 
 /** @returns {{ token: string, keepOpacity: boolean } | null} */
 function mapColor(utility, family, name, opacity) {
@@ -38,7 +50,14 @@ function mapColor(utility, family, name, opacity) {
     return { token: "ink-3", keepOpacity: true };
   }
   if (family === "neon") {
-    const map = { lime: "brand", pink: "grape", blue: "sky", yellow: "sun", orange: "tomato", purple: "grape" };
+    const map = {
+      lime: "brand",
+      pink: "grape",
+      blue: "sky",
+      yellow: "sun",
+      orange: "tomato",
+      purple: "grape",
+    };
     return map[name] ? { token: map[name], keepOpacity: true } : null;
   }
   if (family === "candy") {

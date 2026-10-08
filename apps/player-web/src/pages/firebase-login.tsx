@@ -4,6 +4,7 @@ import { useAuth } from "../context/FirebaseAuthProvider";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { brand } from "../config/brand";
+import { errorMessage } from "../utils/errorCode";
 
 type AuthMode = "login" | "register";
 
@@ -56,7 +57,7 @@ export default function FirebaseLoginPage() {
   if (user && !user.isAnonymous) {
     const params = new URLSearchParams(window.location.search);
     const returnTo = params.get("state") || "/";
-    navigate(returnTo, { replace: true });
+    void navigate(returnTo, { replace: true });
     return null;
   }
 
@@ -106,12 +107,12 @@ export default function FirebaseLoginPage() {
       }
       const params = new URLSearchParams(window.location.search);
       const returnTo = params.get("state") || "/";
-      navigate(returnTo, { replace: true });
-    } catch (err: any) {
+      void navigate(returnTo, { replace: true });
+    } catch (err) {
       if (!navigator.onLine) {
         setError("You're offline. Connect to the internet to sign in.");
       } else {
-        setError(err?.message || "Authentication failed");
+        setError(errorMessage(err, "Authentication failed"));
       }
     }
   };
@@ -127,12 +128,12 @@ export default function FirebaseLoginPage() {
       await signInWithGoogle();
       const params = new URLSearchParams(window.location.search);
       const returnTo = params.get("state") || "/";
-      navigate(returnTo, { replace: true });
-    } catch (err: any) {
+      void navigate(returnTo, { replace: true });
+    } catch (err) {
       if (!navigator.onLine) {
         setError("You're offline. Connect to the internet to sign in.");
       } else {
-        setError(err?.message || "Google sign in failed");
+        setError(errorMessage(err, "Google sign in failed"));
       }
     }
   };
@@ -148,12 +149,12 @@ export default function FirebaseLoginPage() {
       await signInWithApple();
       const params = new URLSearchParams(window.location.search);
       const returnTo = params.get("state") || "/";
-      navigate(returnTo, { replace: true });
-    } catch (err: any) {
+      void navigate(returnTo, { replace: true });
+    } catch (err) {
       if (!navigator.onLine) {
         setError("You're offline. Connect to the internet to sign in.");
       } else {
-        setError(err?.message || "Apple sign in failed");
+        setError(errorMessage(err, "Apple sign in failed"));
       }
     }
   };
@@ -186,9 +187,7 @@ export default function FirebaseLoginPage() {
                 setError(null);
               }}
               className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
-                mode === "login"
-                  ? "bg-card shadow-card text-brand"
-                  : "text-ink-2 hover:text-ink"
+                mode === "login" ? "bg-card shadow-card text-brand" : "text-ink-2 hover:text-ink"
               }`}
             >
               Sign in
@@ -200,9 +199,7 @@ export default function FirebaseLoginPage() {
                 setError(null);
               }}
               className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
-                mode === "register"
-                  ? "bg-card shadow-card text-brand"
-                  : "text-ink-2 hover:text-ink"
+                mode === "register" ? "bg-card shadow-card text-brand" : "text-ink-2 hover:text-ink"
               }`}
             >
               Create account
@@ -292,9 +289,7 @@ export default function FirebaseLoginPage() {
                 placeholder="Your display name on leaderboards"
               />
               {triedSubmit && !screenName && (
-                <div className="text-grape text-xs mt-1 font-medium">
-                  Screen name is required
-                </div>
+                <div className="text-grape text-xs mt-1 font-medium">Screen name is required</div>
               )}
             </label>
           )}

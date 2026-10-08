@@ -32,50 +32,50 @@ function AppRoutes() {
   return (
     <PageTransition>
       <Suspense fallback={null}>
-      <Routes location={location}>
-        <Route element={<RootLayout />}>
-          <Route path="/" element={<HomeFeed />} />
-          <Route path="/games-list" element={<GamesList />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<LoginPage />} />
-          <Route
-            path="/settings"
-            element={
-              <RequireRegistered>
-                <SettingsScreen />
-              </RequireRegistered>
-            }
-          />
-          <Route
-            path="/settings/avatar"
-            element={
-              <RequireRegistered>
-                <AvatarSelect />
-              </RequireRegistered>
-            }
-          />
-          <Route
-            path="/followers"
-            element={
-              <RequireRegistered>
-                <FollowersPage />
-              </RequireRegistered>
-            }
-          />
-          <Route
-            path="/notifications"
-            element={
-              <RequireRegistered>
-                <NotificationsPage />
-              </RequireRegistered>
-            }
-          />
-          <Route path="/profile/:userId" element={<ProfilePage />} />
-          <Route path="/games/:gameId" element={<PlayGame />} />
-          <Route path="/leaderboard/:gameId" element={<LeaderboardPage />} />
-        </Route>
-      </Routes>
+        <Routes location={location}>
+          <Route element={<RootLayout />}>
+            <Route path="/" element={<HomeFeed />} />
+            <Route path="/games-list" element={<GamesList />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<LoginPage />} />
+            <Route
+              path="/settings"
+              element={
+                <RequireRegistered>
+                  <SettingsScreen />
+                </RequireRegistered>
+              }
+            />
+            <Route
+              path="/settings/avatar"
+              element={
+                <RequireRegistered>
+                  <AvatarSelect />
+                </RequireRegistered>
+              }
+            />
+            <Route
+              path="/followers"
+              element={
+                <RequireRegistered>
+                  <FollowersPage />
+                </RequireRegistered>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <RequireRegistered>
+                  <NotificationsPage />
+                </RequireRegistered>
+              }
+            />
+            <Route path="/profile/:userId" element={<ProfilePage />} />
+            <Route path="/games/:gameId" element={<PlayGame />} />
+            <Route path="/leaderboard/:gameId" element={<LeaderboardPage />} />
+          </Route>
+        </Routes>
       </Suspense>
     </PageTransition>
   );
@@ -85,15 +85,15 @@ export default function App() {
   return (
     <AuthProvider>
       <GameCatalogProvider>
-      <BrowserRouter>
-        <SplashScreen />
-        <SWUpdatePrompt />
-        <InstallPWA />
-        <IOSInstallHint />
-        <AccountUpgradeBanner />
-        <StreakCelebration />
-        <AppRoutes />
-      </BrowserRouter>
+        <BrowserRouter>
+          <SplashScreen />
+          <SWUpdatePrompt />
+          <InstallPWA />
+          <IOSInstallHint />
+          <AccountUpgradeBanner />
+          <StreakCelebration />
+          <AppRoutes />
+        </BrowserRouter>
       </GameCatalogProvider>
     </AuthProvider>
   );

@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 // Firebase Authentication Service
 // Handles token verification, custom token creation for username+PIN, and user management
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 
 import { initializeApp, cert, getApps, type App } from "firebase-admin/app";
 import { getAuth, Auth, type DecodedIdToken } from "firebase-admin/auth";
 import bcrypt from "bcryptjs";
+import { errorInfo } from "../lib/errors.js";
 
 // Initialize Firebase Admin SDK
 let firebaseApp: App;
@@ -26,7 +27,7 @@ function getFirebaseApp(): App {
 
   if (!projectId || !clientEmail || !privateKey) {
     throw new Error(
-      "Firebase configuration missing. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY"
+      "Firebase configuration missing. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY",
     );
   }
 
@@ -86,8 +87,8 @@ export async function getFirebaseUser(uid: string): Promise<FirebaseUser | null>
       providerId: userRecord.providerData?.[0]?.providerId,
       isAnonymous: userRecord.providerData?.length === 0,
     };
-  } catch (e: any) {
-    if (e.code === "auth/user-not-found") return null;
+  } catch (e) {
+    if (errorInfo(e).code === "auth/user-not-found") return null;
     throw e;
   }
 }
@@ -103,7 +104,7 @@ export async function getFirebaseUser(uid: string): Promise<FirebaseUser | null>
  */
 export async function createCustomToken(
   uid: string,
-  claims?: Record<string, any>
+  claims?: Record<string, any>,
 ): Promise<string> {
   const auth = getFirebaseAuth();
   return await auth.createCustomToken(uid, claims);

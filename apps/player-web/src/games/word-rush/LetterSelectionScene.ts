@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment -- TODO T5.12: legacy game code, cleaned when it moves onto the Game SDK */
 import Phaser from "phaser";
 
 const PLAY_WIDTH = 540;
@@ -147,7 +148,7 @@ export default class LetterSelectionScene extends Phaser.Scene {
     x: number,
     y: number,
     letter: string,
-    isVowel: boolean
+    isVowel: boolean,
   ): Phaser.GameObjects.Container {
     const container = this.add.container(x, y);
 

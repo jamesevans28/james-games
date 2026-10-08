@@ -12,15 +12,7 @@ export const SITE_TAGLINE = brand.tagline;
 
 // Game categories (drive the JSON-LD genre)
 export type GameCategory =
-  | "reflex"
-  | "puzzle"
-  | "word"
-  | "arcade"
-  | "sports"
-  | "memory"
-  | "action"
-  | "casual"
-  | "strategy";
+  "reflex" | "puzzle" | "word" | "arcade" | "sports" | "memory" | "action" | "casual" | "strategy";
 
 // Per-game SEO metadata
 export type GameSeoMeta = {
@@ -70,8 +62,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
   "ho-ho-home-delivery": {
     category: "arcade",
     ageRating: "kids",
-    shortDescription:
-      "Help Santa drop presents down the chimneys. A free Christmas game, no ads.",
+    shortDescription: "Help Santa drop presents down the chimneys. A free Christmas game, no ads.",
   },
   "ready-steady-shoot": {
     category: "sports",
@@ -232,14 +223,13 @@ function getContentRating(ageRating: "everyone" | "kids" | "teens"): string {
  * Build JSON-LD for the game collection (homepage)
  */
 export function buildGameCollectionJsonLd(
-  games: Array<{ id: string; title: string; thumbnail?: string }>
+  games: Array<{ id: string; title: string; thumbnail?: string }>,
 ): Record<string, unknown> {
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: `Games on ${brand.name}`,
-    description:
-      `Little games made by ${makersLine()}. Free, no ads, no download.`,
+    description: `Little games made by ${makersLine()}. Free, no ads, no download.`,
     numberOfItems: games.length,
     itemListElement: games.slice(0, 20).map((game, index) => ({
       "@type": "ListItem",

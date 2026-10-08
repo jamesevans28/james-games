@@ -37,7 +37,7 @@ export default function AvatarSelectPage() {
         setSaving(false);
       }
     },
-    [refreshProfile, saving]
+    [refreshProfile, saving],
   );
 
   // Cleanup any pending toast timer on unmount
@@ -65,33 +65,33 @@ export default function AvatarSelectPage() {
 
       <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
         {AVATARS.map(({ id, name }) => {
-            const isSelected = selected === id;
-            return (
-              <button
-                key={id}
-                onClick={() => handleSelect(id)}
-                className={`p-0 relative rounded-full focus:outline-none ${
-                  isSelected ? "ring-4 ring-brand" : ""
-                }`}
-                aria-pressed={isSelected}
-                aria-label={name}
-                disabled={saving}
-                style={{ width: 72, height: 72 }}
-              >
-                <ProfileAvatar
-                  user={{ avatar: id }}
-                  size={72}
-                  borderWidth={3}
-                  borderColor={isSelected ? "var(--color-brand)" : "var(--color-edge)"}
-                />
-                {isSelected && (
-                  <span className="absolute -top-1 -right-1 bg-brand text-on-brand rounded-full px-1 text-xs shadow-sticker font-bold">
-                    ✓
-                  </span>
-                )}
-              </button>
-            );
-          })}
+          const isSelected = selected === id;
+          return (
+            <button
+              key={id}
+              onClick={() => handleSelect(id)}
+              className={`p-0 relative rounded-full focus:outline-none ${
+                isSelected ? "ring-4 ring-brand" : ""
+              }`}
+              aria-pressed={isSelected}
+              aria-label={name}
+              disabled={saving}
+              style={{ width: 72, height: 72 }}
+            >
+              <ProfileAvatar
+                user={{ avatar: id }}
+                size={72}
+                borderWidth={3}
+                borderColor={isSelected ? "var(--color-brand)" : "var(--color-edge)"}
+              />
+              {isSelected && (
+                <span className="absolute -top-1 -right-1 bg-brand text-on-brand rounded-full px-1 text-xs shadow-sticker font-bold">
+                  ✓
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

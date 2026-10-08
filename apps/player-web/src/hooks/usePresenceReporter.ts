@@ -26,9 +26,8 @@ export function usePresenceReporter(args: {
           gameId: args.gameId,
           gameTitle: args.gameTitle,
         });
-      } catch (err: any) {
-        if (import.meta.env.DEV) {
-        }
+      } catch {
+        // Presence is best-effort: the next heartbeat tries again.
       } finally {
         if (!cancelled) {
           timeoutId = window.setTimeout(send, HEARTBEAT_MS);
@@ -36,7 +35,7 @@ export function usePresenceReporter(args: {
       }
     };
 
-    send();
+    void send();
     return () => {
       cancelled = true;
       if (timeoutId) window.clearTimeout(timeoutId);

@@ -24,14 +24,12 @@ export default function Header() {
             onClick={() => setDrawerOpen(false)}
             className="flex items-center gap-2.5 hover:opacity-90 focus:outline-none transition-opacity group"
           >
-            <img
-              src={brand.logoMark}
-              alt=""
-              className="w-10 h-10 group-hover:animate-wiggle"
-            />
+            <img src={brand.logoMark} alt="" className="w-10 h-10 group-hover:animate-wiggle" />
             <span className="flex flex-col items-start leading-none">
               <Wordmark className="h-7 sm:h-8" />
-              <span className="mt-0.5 pl-1 text-[11px] font-bold text-ink-2">by {makersLine()}</span>
+              <span className="mt-0.5 pl-1 text-[11px] font-bold text-ink-2">
+                by {makersLine()}
+              </span>
             </span>
           </Link>
         </div>
@@ -41,7 +39,7 @@ export default function Header() {
               type="button"
               onClick={() => {
                 markRead();
-                navigate("/notifications");
+                void navigate("/notifications");
               }}
               className="relative w-10 h-10 rounded-full bg-paper-2 flex items-center justify-center text-ink-2 hover:bg-line hover:text-brand focus:outline-none focus:ring-2 focus:ring-brand/50 transition-colors"
               aria-label="Notifications"

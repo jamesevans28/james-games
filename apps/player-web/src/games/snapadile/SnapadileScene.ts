@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/unbound-method, no-empty, no-restricted-imports -- TODO T4.5/T5.3: legacy game code, cleaned when it moves onto the Game SDK */
 import { dispatchGameOver } from "../../utils/gameEvents";
 import Phaser from "phaser";
 import { getBest, setBest } from "../../utils/bestScore";
@@ -162,7 +163,7 @@ export default class SnapadileScene extends Phaser.Scene {
     // Tap to retreat (destroy) and score
     croc.setInteractive({ useHandCursor: true });
     croc.on("pointerdown", (pointer: Phaser.Input.Pointer) =>
-      this.hitCroc(croc, pointer.worldX, pointer.worldY)
+      this.hitCroc(croc, pointer.worldX, pointer.worldY),
     );
 
     // Subtle wiggle without rotating whole sprite (avoids spinning)
@@ -208,7 +209,7 @@ export default class SnapadileScene extends Phaser.Scene {
 
     const away = new Phaser.Math.Vector2(
       croc.x - this.center.x,
-      croc.y - this.center.y
+      croc.y - this.center.y,
     ).normalize();
     const retreatSpeed = croc.speed * 1.4;
     croc.setVelocity(away.x * retreatSpeed, away.y * retreatSpeed);
@@ -304,7 +305,7 @@ export default class SnapadileScene extends Phaser.Scene {
           fontSize: "36px",
           color: "#ffffff",
           align: "center",
-        }
+        },
       )
       .setOrigin(0.5)
       .setDepth(20);

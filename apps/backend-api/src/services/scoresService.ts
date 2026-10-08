@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import { DynamoDBDocumentClient, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
@@ -75,7 +76,7 @@ export async function putScoreWithUser(args: {
     new PutCommand({
       TableName: config.tables.scores,
       Item: item,
-    })
+    }),
   );
   if (args.userId) {
     recordUserGameSession(args.userId, args.gameId, args.score).catch((err) => {
@@ -96,7 +97,7 @@ export async function putScoreWithUser(args: {
 export async function getTopScoresHydrated(
   gameId: string,
   limit = 10,
-  opts?: { includeUserIds?: string[] }
+  opts?: { includeUserIds?: string[] },
 ): Promise<PublicScoreRow[]> {
   const fetchLimit = Math.max(limit * 5, 100);
   const result = await ddb.send(
@@ -107,7 +108,7 @@ export async function getTopScoresHydrated(
       ExpressionAttributeValues: { ":g": gameId },
       ScanIndexForward: false, // descending by score (if GSI sort key is score)
       Limit: fetchLimit,
-    })
+    }),
   );
   const items = (result.Items || []) as RawScoreItem[];
   items.sort(compareScores);
@@ -126,7 +127,7 @@ export async function getTopScoresHydrated(
           score: b.score,
           createdAt: b.createdAt,
           userId: b.userId,
-        }
+        },
     );
   } else {
     sliced = items.slice(0, limit);
@@ -142,7 +143,7 @@ export async function getTopScoresHydrated(
       } catch {
         // ignore individual failures
       }
-    })
+    }),
   );
   return sliced.map((row) => {
     const profile = row.userId ? userProfiles[row.userId] : null;
@@ -152,8 +153,8 @@ export async function getTopScoresHydrated(
       typeof profile?.avatar === "number"
         ? profile.avatar
         : typeof row.avatarSnapshot === "number"
-        ? row.avatarSnapshot
-        : 1;
+          ? row.avatarSnapshot
+          : 1;
     return {
       userId: row.userId,
       screenName,
@@ -164,4 +165,3 @@ export async function getTopScoresHydrated(
     };
   });
 }
-

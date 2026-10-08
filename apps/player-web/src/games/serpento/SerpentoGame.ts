@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method, no-restricted-imports -- TODO T5.10: legacy game code, cleaned when it moves onto the Game SDK */
 import Phaser from "phaser";
 import { trackGameStart } from "../../utils/analytics";
 import { dispatchGameOver } from "../../utils/gameEvents";
@@ -138,7 +139,7 @@ export default class SerpentoGame extends Phaser.Scene {
         this.gridOffsetX + x * GRID_SIZE,
         this.gridOffsetY,
         this.gridOffsetX + x * GRID_SIZE,
-        this.gridOffsetY + gridHeight
+        this.gridOffsetY + gridHeight,
       );
     }
     for (let y = 0; y <= GRID_ROWS; y++) {
@@ -146,7 +147,7 @@ export default class SerpentoGame extends Phaser.Scene {
         this.gridOffsetX,
         this.gridOffsetY + y * GRID_SIZE,
         this.gridOffsetX + gridWidth,
-        this.gridOffsetY + y * GRID_SIZE
+        this.gridOffsetY + y * GRID_SIZE,
       );
     }
     gridGraphics.setDepth(0);
@@ -431,7 +432,7 @@ export default class SerpentoGame extends Phaser.Scene {
         screenY + 1,
         GRID_SIZE - 2,
         GRID_SIZE - 2,
-        3
+        3,
       );
     }
 

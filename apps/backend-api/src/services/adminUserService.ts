@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import { DynamoDBDocumentClient, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { Buffer } from "node:buffer";
 import { dynamoClient } from "../config/aws.js";
@@ -64,7 +65,7 @@ export async function listUsers(opts: { limit?: number; cursor?: string; search?
         ExclusiveStartKey: exclusiveStartKey,
         ProjectionExpression: projection,
         ExpressionAttributeNames: { "#id": "userId" },
-      })
+      }),
     );
     const pageItems = (resp.Items || []).map((item) => normalizeUser(item as any));
     if (opts.search) {
@@ -77,7 +78,7 @@ export async function listUsers(opts: { limit?: number; cursor?: string; search?
             (user.screenName ?? "").toLowerCase().includes(query) ||
             (user.email ?? "").toLowerCase().includes(query)
           );
-        })
+        }),
       );
     } else {
       items = pageItems;
@@ -113,7 +114,7 @@ export async function updateAdminUser(
     username?: string;
     betaTester?: boolean;
     admin?: boolean;
-  }
+  },
 ) {
   // Note: Password management is now handled through Firebase Auth.
   // Admin can only update DynamoDB metadata (betaTester, admin flags).
@@ -160,8 +161,8 @@ export async function updateAdminUser(
           UpdateExpression: "SET " + sets.join(", "),
           ExpressionAttributeValues: values,
           ConditionExpression: "attribute_exists(userId)",
-        })
-      )
+        }),
+      ),
     );
   }
 

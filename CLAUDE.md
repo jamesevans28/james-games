@@ -33,9 +33,10 @@ npm run dev                 # player web on http://localhost:3000
 npm run server              # backend API on http://localhost:8787
 npm run admin:dev           # admin on http://localhost:3100
 npm run web:build           # production build of player web
-npm run lint                # (Phase 4) eslint across workspaces
-npm run typecheck           # (Phase 1) tsc --noEmit across workspaces
-npm test                    # (Phase 4) vitest
+npm run lint                # ESLint (one root eslint.config.mjs); 0 errors required
+npm run format              # Prettier; `format:check` must pass
+npm run typecheck           # tsc --noEmit across workspaces
+npm test                    # Vitest, all projects (root vitest.config.ts); test:coverage for coverage
 ```
 
 The Browser pane launch config is `.claude/launch.json` (`player-web`). Use a 375×812 viewport when checking UI.
@@ -51,6 +52,8 @@ The Browser pane launch config is `.claude/launch.json` (`player-web`). Use a 37
 - **Kid safety is the default.** Social features are friends-only, screen names are filtered, nothing public without an opt-in.
 - **Tests for pure logic** (`*.test.ts` next to the file, Vitest). UI is checked manually in the Browser pane.
 - TypeScript strict, no `any` in new code, no `@ts-ignore` without a comment explaining why.
+- Lint must pass with 0 errors. Legacy files carry a file-level `eslint-disable … -- TODO T5.x/T6.x` header; remove it when you migrate that file, never add new ones. Games may not import `utils/gameEvents` or touch `localStorage`/`window.location` (use the host).
+- Test files use `import { test, expect } from "vitest"`; stub globals with `vi.stubGlobal`.
 - Commit messages: `type(scope): T<phase>.<n> short description`. End with the attribution line the session provides.
 
 ## Things that are deliberately gone or changing

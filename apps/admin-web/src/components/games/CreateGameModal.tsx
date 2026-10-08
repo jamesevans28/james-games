@@ -21,7 +21,7 @@ export function CreateGameModal({ open, onClose }: { open: boolean; onClose: () 
         betaOnly: false,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-games"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-games"] });
       setGameId("");
       setTitle("");
       onClose();

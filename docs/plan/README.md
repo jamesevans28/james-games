@@ -24,20 +24,20 @@
 
 ## Phase index and status
 
-| Phase | File | Purpose | Status |
-|---|---|---|---|
-| 0 | [00-ai-dev-setup.md](00-ai-dev-setup.md) | Claude/AI development setup: instructions, scripts, docs cleanup | done (2026-10-08) |
-| 1 | [01-security-and-hygiene.md](01-security-and-hygiene.md) | Close the P0 security holes, fix known bugs, delete dead code, typecheck gate | done (2026-10-08) |
-| 2 | [02-dependency-upgrade.md](02-dependency-upgrade.md) | Node 24, latest of everything, Phaser 4, Express 5, Vite 8, Tailwind 4.3 | done (2026-10-08; MANUAL: install Node 24 locally, try PIN + Google sign-in once) |
-| 3 | [03-rebrand-and-seo.md](03-rebrand-and-seo.md) | Games4James brand, domain, Firebase auth domain, icons, SEO, prerender | in-progress (T3.1–T3.4 done; MANUAL: attach CloudFront Function, T3.5 Firebase/Google/Apple console steps) |
-| 4 | [04-game-sdk-lint-tests.md](04-game-sdk-lint-tests.md) | Game SDK, manifests, base scene, HUD/input/audio kits, ESLint, Vitest | todo |
-| 5 | [05-games-polish-and-inactive.md](05-games-polish-and-inactive.md) | Inactive flag for cut games, migrate and polish the keepers | todo |
-| 6 | [06-sql-data-layer-supabase.md](06-sql-data-layer-supabase.md) | Supabase Postgres + Drizzle, migrate from DynamoDB, server-side scoring | todo |
-| 7 | [07-ux-and-kid-safety.md](07-ux-and-kid-safety.md) | Home grid, game-over, screen names, friends-only social, privacy/parent pages | todo |
-| 8 | [08-art-pipeline-ai.md](08-art-pipeline-ai.md) | AI-generated "kids art" style bible, prompts, covers, sprites, avatars, sounds | todo |
-| 9 | [09-cicd.md](09-cicd.md) | Gated, path-filtered pipelines; auto-deploy web, admin, API, DB migrations | todo |
-| 10 | [10-capacitor.md](10-capacitor.md) | Capacitor groundwork, native auth, store accounts, first builds | todo |
-| 11 | [11-features-and-growth.md](11-features-and-growth.md) | Credits, remix mode, daily challenge, stickers, share cards, new games | todo |
+| Phase | File                                                               | Purpose                                                                        | Status                                                                                                     |
+| ----- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| 0     | [00-ai-dev-setup.md](00-ai-dev-setup.md)                           | Claude/AI development setup: instructions, scripts, docs cleanup               | done (2026-10-08)                                                                                          |
+| 1     | [01-security-and-hygiene.md](01-security-and-hygiene.md)           | Close the P0 security holes, fix known bugs, delete dead code, typecheck gate  | done (2026-10-08)                                                                                          |
+| 2     | [02-dependency-upgrade.md](02-dependency-upgrade.md)               | Node 24, latest of everything, Phaser 4, Express 5, Vite 8, Tailwind 4.3       | done (2026-10-08; MANUAL: install Node 24 locally, try PIN + Google sign-in once)                          |
+| 3     | [03-rebrand-and-seo.md](03-rebrand-and-seo.md)                     | Games4James brand, domain, Firebase auth domain, icons, SEO, prerender         | in-progress (T3.1–T3.4 done; MANUAL: attach CloudFront Function, T3.5 Firebase/Google/Apple console steps) |
+| 4     | [04-game-sdk-lint-tests.md](04-game-sdk-lint-tests.md)             | Game SDK, manifests, base scene, HUD/input/audio kits, ESLint, Vitest          | in-progress (T4.1–T4.2 done)                                                                               |
+| 5     | [05-games-polish-and-inactive.md](05-games-polish-and-inactive.md) | Inactive flag for cut games, migrate and polish the keepers                    | todo                                                                                                       |
+| 6     | [06-sql-data-layer-supabase.md](06-sql-data-layer-supabase.md)     | Supabase Postgres + Drizzle, migrate from DynamoDB, server-side scoring        | todo                                                                                                       |
+| 7     | [07-ux-and-kid-safety.md](07-ux-and-kid-safety.md)                 | Home grid, game-over, screen names, friends-only social, privacy/parent pages  | todo                                                                                                       |
+| 8     | [08-art-pipeline-ai.md](08-art-pipeline-ai.md)                     | AI-generated "kids art" style bible, prompts, covers, sprites, avatars, sounds | todo                                                                                                       |
+| 9     | [09-cicd.md](09-cicd.md)                                           | Gated, path-filtered pipelines; auto-deploy web, admin, API, DB migrations     | todo                                                                                                       |
+| 10    | [10-capacitor.md](10-capacitor.md)                                 | Capacitor groundwork, native auth, store accounts, first builds                | todo                                                                                                       |
+| 11    | [11-features-and-growth.md](11-features-and-growth.md)             | Credits, remix mode, daily challenge, stickers, share cards, new games         | todo                                                                                                       |
 
 Status values: `todo`, `in-progress`, `done`, `blocked (reason)`.
 

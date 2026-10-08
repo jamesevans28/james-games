@@ -57,13 +57,13 @@ export default function PlayGame() {
   const [pendingRatingTrigger, setPendingRatingTrigger] = useState(false);
   const [ratingPromptOpen, setRatingPromptOpen] = useState(false);
   const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(() =>
-    meta ? getCachedRatingSummary(meta.id) : null
+    meta ? getCachedRatingSummary(meta.id) : null,
   );
   const [ratingLoading, setRatingLoading] = useState(false);
   const [ratingSubmitting, setRatingSubmitting] = useState(false);
   const [ratingError, setRatingError] = useState<string | null>(null);
   const [pendingPromptAction, setPendingPromptAction] = useState<"none" | "playAgain" | "close">(
-    "none"
+    "none",
   );
   const [userRating, setUserRating] = useState<number | null>(null);
   useEffect(() => {
@@ -73,10 +73,10 @@ export default function PlayGame() {
   const presenceStatus = showScore
     ? "in_score_dialog"
     : playing
-    ? "playing"
-    : meta
-    ? "game_lobby"
-    : "looking_for_game";
+      ? "playing"
+      : meta
+        ? "game_lobby"
+        : "looking_for_game";
   usePresenceReporter({
     status: presenceStatus,
     gameId: meta?.id,
@@ -95,7 +95,7 @@ export default function PlayGame() {
     setUserRating(
       typeof cached?.userRating === "number" && !Number.isNaN(cached.userRating)
         ? cached.userRating
-        : null
+        : null,
     );
   }, [meta]);
 
@@ -134,7 +134,9 @@ export default function PlayGame() {
       if (destroyRef.current) {
         try {
           destroyRef.current();
-        } catch {}
+        } catch {
+          // the game is already torn down or never finished mounting: ignore
+        }
         destroyRef.current = null;
       }
       const { destroy } = mod.mount(containerRef.current);
@@ -209,7 +211,7 @@ export default function PlayGame() {
         setRatingLoading(false);
       }
     },
-    [meta, user, userRating, ratingSummary?.userRating, completePromptFlow]
+    [meta, user, userRating, ratingSummary?.userRating, completePromptFlow],
   );
 
   const handleRatingSkip = useCallback(() => {
@@ -230,9 +232,9 @@ export default function PlayGame() {
         setUserRating(summary.userRating ?? value);
         setRatingPromptOpen(false);
         completePromptFlow();
-      } catch (err: any) {
+      } catch (err) {
         console.error("Failed to submit rating", err);
-        if (err?.message === "signin_required") {
+        if (err instanceof Error && err.message === "signin_required") {
           setRatingError("Please sign in to rate this game.");
         } else {
           setRatingError("Unable to save your rating. Please try again later.");
@@ -241,7 +243,7 @@ export default function PlayGame() {
         setRatingSubmitting(false);
       }
     },
-    [meta, completePromptFlow]
+    [meta, completePromptFlow],
   );
 
   const handleCloseScore = () => {
@@ -249,7 +251,9 @@ export default function PlayGame() {
     if (destroyRef.current) {
       try {
         destroyRef.current();
-      } catch {}
+      } catch {
+        // the game is already torn down or never finished mounting: ignore
+      }
       destroyRef.current = null;
     }
     setPlaying(false);
@@ -300,13 +304,15 @@ export default function PlayGame() {
       if (!playing || canceled) return;
       await mountGame();
     };
-    doMount();
+    void doMount();
     return () => {
       canceled = true;
       if (destroyRef.current) {
         try {
           destroyRef.current();
-        } catch {}
+        } catch {
+          // the game is already torn down or never finished mounting: ignore
+        }
         destroyRef.current = null;
       }
     };
@@ -334,19 +340,14 @@ export default function PlayGame() {
   }, [meta, ratingSummary]);
 
   const seoDescription = useMemo(() => {
-    if (!meta)
-      return brand.description;
+    if (!meta) return brand.description;
     return getGameSeoDescription(meta.id, meta.description);
   }, [meta]);
 
   return (
     <div className="min-h-screen bg-paper text-ink flex flex-col">
       <Seo
-        title={
-          meta
-            ? `${meta.title} | ${brand.name}`
-            : `${brand.name} | ${brand.tagline}`
-        }
+        title={meta ? `${meta.title} | ${brand.name}` : `${brand.name} | ${brand.tagline}`}
         description={seoDescription}
         url={`${SITE_URL}/games/${meta?.id ?? ""}`}
         canonical={`${SITE_URL}/games/${meta?.id ?? ""}`}
@@ -369,7 +370,7 @@ export default function PlayGame() {
             setPlaying(false);
             return;
           }
-          navigate("/");
+          void navigate("/");
         }}
       />
 
@@ -401,11 +402,7 @@ export default function PlayGame() {
         {mounting && playing && (
           <div className="absolute inset-0 flex items-center justify-center bg-paper/90 z-[1000]">
             <div className="flex flex-col items-center">
-              <img
-                src={brand.logoMark}
-                alt="Loading"
-                className="w-24 h-24 animate-glow-pulse"
-              />
+              <img src={brand.logoMark} alt="Loading" className="w-24 h-24 animate-glow-pulse" />
               <div className="mt-4 text-brand font-bold tracking-[0.35em] text-sm">LOADING</div>
             </div>
           </div>

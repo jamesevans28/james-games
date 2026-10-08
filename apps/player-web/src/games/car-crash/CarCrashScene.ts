@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/unbound-method, no-empty, no-restricted-imports -- TODO: inactive game (T5.1); clean these up if it is reworked and re-activated */
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { getBest, setBest } from "../../utils/bestScore";
@@ -99,7 +100,7 @@ export default class CarCrashScene extends Phaser.Scene {
       height / 2,
       width - this.roadRightX,
       height,
-      0x2e7d32
+      0x2e7d32,
     );
 
     // Road background
@@ -137,7 +138,7 @@ export default class CarCrashScene extends Phaser.Scene {
       this.player.body.setSize(
         this.player.displayWidth * HITBOX_SCALE_X,
         this.player.displayHeight * HITBOX_SCALE_Y,
-        true
+        true,
       );
     }
 
@@ -195,7 +196,7 @@ export default class CarCrashScene extends Phaser.Scene {
       // Decay step interval slightly (speed up) each tick
       this.stepIntervalMs = Math.max(
         STEP_INTERVAL_MIN_MS,
-        this.stepIntervalMs * STEP_DECAY_PER_TICK
+        this.stepIntervalMs * STEP_DECAY_PER_TICK,
       );
     }
   }
@@ -331,18 +332,18 @@ export default class CarCrashScene extends Phaser.Scene {
       c.setSize(BTN_RADIUS * 2, BTN_RADIUS * 2);
       c.setInteractive(new Phaser.Geom.Circle(0, 0, BTN_RADIUS), Phaser.Geom.Circle.Contains);
       c.on("pointerdown", () => {
-        (bg as Phaser.GameObjects.Arc).setFillStyle(0xffffff, 0.25);
+        bg.setFillStyle(0xffffff, 0.25);
         handler();
       });
-      c.on("pointerup", () => (bg as Phaser.GameObjects.Arc).setFillStyle(0xffffff, 0.12));
-      c.on("pointerout", () => (bg as Phaser.GameObjects.Arc).setFillStyle(0xffffff, 0.12));
+      c.on("pointerup", () => bg.setFillStyle(0xffffff, 0.12));
+      c.on("pointerout", () => bg.setFillStyle(0xffffff, 0.12));
       return c;
     };
 
     const pad = 24;
     makeBtn(pad + BTN_RADIUS, height - (pad + BTN_RADIUS), "uiLeft", () => this.moveLeft());
     makeBtn(width - (pad + BTN_RADIUS), height - (pad + BTN_RADIUS), "uiRight", () =>
-      this.moveRight()
+      this.moveRight(),
     );
 
     // Large invisible hit zones for easier taps: left/right halves of the screen

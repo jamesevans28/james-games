@@ -4,7 +4,10 @@ import { log } from "./log.js";
 /** Status for an error: an explicit 4xx status, a known code, or 500. */
 export function statusFor(err: unknown): number {
   const e = (err && typeof err === "object" ? err : {}) as {
-    status?: unknown; statusCode?: unknown; code?: unknown; type?: unknown;
+    status?: unknown;
+    statusCode?: unknown;
+    code?: unknown;
+    type?: unknown;
   };
   const explicit = Number(e.status ?? e.statusCode);
   if (Number.isInteger(explicit) && explicit >= 400 && explicit < 500) return explicit;

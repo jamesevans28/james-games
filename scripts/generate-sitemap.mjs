@@ -15,7 +15,7 @@ const gamesIndex = path.join(root, "apps/player-web/src/games/index.ts");
 const seoKeywordsPath = path.join(root, "apps/player-web/src/utils/seoKeywords.ts");
 const publicDir = path.join(root, "apps/player-web/public");
 const brandJson = JSON.parse(
-  fs.readFileSync(path.join(root, "apps/player-web/src/config/brand.json"), "utf8")
+  fs.readFileSync(path.join(root, "apps/player-web/src/config/brand.json"), "utf8"),
 );
 
 await fs.promises.mkdir(publicDir, { recursive: true });
@@ -68,7 +68,7 @@ for (let i = 1; i < gameBlocks.length; i++) {
 // The regex parse is fragile: fail loudly if it missed a registry entry.
 if (gameEntries.length === 0 || gameEntries.length !== registryCount) {
   throw new Error(
-    `Parsed ${gameEntries.length} games but the registry has ${registryCount} load() entries`
+    `Parsed ${gameEntries.length} games but the registry has ${registryCount} load() entries`,
   );
 }
 const publicGames = gameEntries.filter((g) => !g.hidden);
@@ -78,7 +78,9 @@ console.log(`Found ${gameEntries.length} games, ${publicGames.length} public`);
 const seoMeta = {};
 {
   const seoSrc = await fs.promises.readFile(seoKeywordsPath, "utf8");
-  const block = seoSrc.match(/GAME_SEO_META:\s*Record<string,\s*GameSeoMeta>\s*=\s*\{([\s\S]*?)\n\};/);
+  const block = seoSrc.match(
+    /GAME_SEO_META:\s*Record<string,\s*GameSeoMeta>\s*=\s*\{([\s\S]*?)\n\};/,
+  );
   if (!block) throw new Error("GAME_SEO_META not found in seoKeywords.ts");
   // Keys are either quoted ("word-stack") or bare (snapadile).
   const entry = /^ {2}(?:"([a-z0-9-]+)"|([a-z0-9]+)): \{[\s\S]*?shortDescription:\s*"([^"]+)"/gm;
@@ -139,7 +141,7 @@ ${sitemapUrls
     <lastmod>${u.lastmod}</lastmod>
     <changefreq>${u.changefreq}</changefreq>
     <priority>${u.priority}</priority>
-  </url>`
+  </url>`,
   )
   .join("\n")}
 </urlset>`;
@@ -188,7 +190,7 @@ const gameMeta = publicGames.map((game) => ({
 await fs.promises.writeFile(
   path.join(publicDir, "game-meta.json"),
   JSON.stringify(gameMeta, null, 2),
-  "utf8"
+  "utf8",
 );
 console.log("Generated game-meta.json");
 
@@ -220,7 +222,12 @@ for (const game of publicGames) {
     gamePlatform: ["Web Browser", "Mobile Browser", "PWA"],
     applicationCategory: "Game",
     operatingSystem: "Any",
-    offers: { "@type": "Offer", price: "0", priceCurrency: "AUD", availability: "https://schema.org/InStock" },
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "AUD",
+      availability: "https://schema.org/InStock",
+    },
     author: brandJson.makers.map((name) => ({ "@type": "Person", name })),
     publisher: { "@type": "Organization", name: brandJson.name, url: `${domain}/` },
     datePublished: game.createdAt,
@@ -279,4 +286,6 @@ ${jsonForScript(jsonLd)}
 await fs.promises.rm(path.join(publicDir, "games-index.html"), { force: true });
 
 console.log(`Generated ${publicGames.length} static game pages`);
-console.log(`SEO generation complete: sitemap.xml (${sitemapUrls.length} URLs), robots.txt, game-meta.json, static-games/`);
+console.log(
+  `SEO generation complete: sitemap.xml (${sitemapUrls.length} URLs), robots.txt, game-meta.json, static-games/`,
+);

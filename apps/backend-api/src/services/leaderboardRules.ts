@@ -14,7 +14,11 @@ export function compareScores(a: ScoreLike, b: ScoreLike): number {
  * global top list) and per-user stats rows (best score per user and game).
  * Either source may be missing a user, so the best of both wins.
  */
-export function bestPerUser(rows: ScoreLike[], stats: StatLike[], allowed: Set<string>): ScoreLike[] {
+export function bestPerUser(
+  rows: ScoreLike[],
+  stats: StatLike[],
+  allowed: Set<string>,
+): ScoreLike[] {
   const best = new Map<string, ScoreLike>();
   const consider = (candidate: ScoreLike) => {
     if (!candidate.userId || !allowed.has(candidate.userId)) return;

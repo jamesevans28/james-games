@@ -15,7 +15,7 @@ export function setUserName(name: string) {
 }
 
 export function ensureUserName(): string | null {
-  let n = getUserName();
+  const n = getUserName();
   if (!n) return null;
   return n;
 }

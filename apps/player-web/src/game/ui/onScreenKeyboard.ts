@@ -26,7 +26,7 @@ const STROKE = 0x565758;
 
 export function createOnScreenKeyboard(
   scene: Phaser.Scene,
-  options: CreateOnScreenKeyboardOptions
+  options: CreateOnScreenKeyboardOptions,
 ): OnScreenKeyboardInstance {
   const {
     centerX,
@@ -60,7 +60,7 @@ export function createOnScreenKeyboard(
   if (specialRow.length > 0) rows.push(specialRow);
 
   const maxRowKeys = Math.max(
-    ...rows.map((r) => r.filter((k) => k.length === 1).length).concat([10])
+    ...rows.map((r) => r.filter((k) => k.length === 1).length).concat([10]),
   );
 
   const totalSpacing = (maxRowKeys - 1) * keySpacing;
@@ -72,7 +72,7 @@ export function createOnScreenKeyboard(
   };
 
   const setKeyBgFill = (keyContainer: Phaser.GameObjects.Container, fill: number) => {
-    const bg = keyContainer.getAt(0) as Phaser.GameObjects.Rectangle;
+    const bg = keyContainer.getAt<Phaser.GameObjects.Rectangle>(0);
     bg.setFillStyle(fill);
   };
 

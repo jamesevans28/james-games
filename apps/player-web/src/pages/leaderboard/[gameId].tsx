@@ -64,9 +64,9 @@ export default function LeaderboardPage() {
       try {
         const res = await getTopScores(gameId, 25, { scope });
         if (!cancelled) setRows(res);
-      } catch (e: any) {
+      } catch (e) {
         console.error(e);
-        if (scope === "following" && e?.message === "signin_required") {
+        if (scope === "following" && e instanceof Error && e.message === "signin_required") {
           if (!cancelled) {
             setRows([]);
             setTabError("Sign in to see scores from people you follow.");
@@ -81,7 +81,7 @@ export default function LeaderboardPage() {
         if (!cancelled) setLoading(false);
       }
     };
-    load();
+    void load();
     return () => {
       cancelled = true;
     };
@@ -97,15 +97,9 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-paper text-ink flex flex-col">
       <Seo
-        title={
-          meta
-            ? `${meta.title} leaderboard | ${brand.name}`
-            : `Leaderboard | ${brand.name}`
-        }
+        title={meta ? `${meta.title} leaderboard | ${brand.name}` : `Leaderboard | ${brand.name}`}
         description={
-          meta
-            ? `Top scores for ${meta.title} on ${brand.name}.`
-            : `Top scores on ${brand.name}.`
+          meta ? `Top scores for ${meta.title} on ${brand.name}.` : `Top scores on ${brand.name}.`
         }
         url={`${SITE_URL}/leaderboard/${meta?.id ?? ""}`}
         canonical={`${SITE_URL}/leaderboard/${meta?.id ?? ""}`}
@@ -174,19 +168,19 @@ export default function LeaderboardPage() {
               const avatarSize = medal ? 44 : 28;
               const hasProfile = Boolean(r.userId);
               const handleRowClick = () => {
-                if (r.userId) navigate(`/profile/${r.userId}`);
+                if (r.userId) void navigate(`/profile/${r.userId}`);
               };
               const baseRowClass =
                 "flex items-center justify-between px-4 py-3 border-b border-line last:border-b-0 " +
                 (isMe
                   ? "bg-brand/10"
                   : medal === "gold"
-                  ? "bg-sun/10"
-                  : medal === "silver"
-                  ? "bg-line/20"
-                  : medal === "bronze"
-                  ? "bg-tomato/10"
-                  : "");
+                    ? "bg-sun/10"
+                    : medal === "silver"
+                      ? "bg-line/20"
+                      : medal === "bronze"
+                        ? "bg-tomato/10"
+                        : "");
               return (
                 <li
                   key={`${r.screenName}-${i}`}
@@ -219,7 +213,13 @@ export default function LeaderboardPage() {
                         size={avatarSize}
                         borderWidth={medal ? 3 : 2}
                         strokeWidth={medal ? 2 : 1}
-                        borderColor={medal ? medalColors[medal].ring : isMe ? "var(--color-brand)" : "var(--color-sky)"}
+                        borderColor={
+                          medal
+                            ? medalColors[medal].ring
+                            : isMe
+                              ? "var(--color-brand)"
+                              : "var(--color-sky)"
+                        }
                         title={r.screenName}
                       />
                       {medal && (
@@ -242,11 +242,7 @@ export default function LeaderboardPage() {
                       <span
                         className={
                           "font-bold truncate max-w-[210px] md:max-w-[260px] " +
-                          (isMe
-                            ? "text-brand"
-                            : medal
-                            ? ""
-                            : "text-ink")
+                          (isMe ? "text-brand" : medal ? "" : "text-ink")
                         }
                         style={!isMe && medal ? { color: medalColors[medal].text } : undefined}
                         title={r.screenName}
@@ -260,8 +256,7 @@ export default function LeaderboardPage() {
                   </div>
                   <div
                     className={
-                      "text-right font-mono font-bold " +
-                      (isMe ? "text-brand" : "text-ink")
+                      "text-right font-mono font-bold " + (isMe ? "text-brand" : "text-ink")
                     }
                   >
                     {r.score}

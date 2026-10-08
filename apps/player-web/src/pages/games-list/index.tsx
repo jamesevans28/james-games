@@ -51,7 +51,7 @@ export default function GamesList() {
         console.warn("Failed to load ratings", err);
       }
     };
-    loadRatings();
+    void loadRatings();
     const interval = setInterval(loadRatings, 5 * 60 * 1000);
     return () => {
       cancelled = true;

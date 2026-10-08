@@ -7,7 +7,11 @@
  * unavailable (private mode, blocked site data).
  */
 const keyFor = (gameId: string) => `g4j:best:${gameId}`;
-const legacyKeys = (gameId: string) => [`${gameId}-best`, `${gameId}-best-score`, `best_score_${gameId}`];
+const legacyKeys = (gameId: string) => [
+  `${gameId}-best`,
+  `${gameId}-best-score`,
+  `best_score_${gameId}`,
+];
 
 function storage(): Storage | null {
   try {
