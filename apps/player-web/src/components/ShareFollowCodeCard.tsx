@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useState } from "react";
+import { adapters } from "../platform/adapters";
 import { shareFriendCode } from "../utils/shareProfileLink";
 
 interface ShareFollowCodeCardProps {
@@ -25,12 +26,8 @@ export default function ShareFollowCodeCard({
   }, [hint]);
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(friendCode);
-      setHint("Code copied!");
-    } catch {
-      setHint(`Your code is ${friendCode}`);
-    }
+    if (await adapters.share.copy(friendCode)) setHint("Code copied!");
+    else setHint(`Your code is ${friendCode}`);
   };
 
   const handleShare = async () => {

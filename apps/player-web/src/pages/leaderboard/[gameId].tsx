@@ -8,6 +8,7 @@ import { useAuth } from "../../context/FirebaseAuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { useLeaderboard, type LeaderboardScope } from "../../hooks/useLeaderboard";
 import { isSigninRequired } from "../../lib/apiError";
+import { adapters } from "../../platform/adapters";
 import { readStored, STORAGE_KEYS } from "../../utils/storageKeys";
 import { SITE_URL, shareImageFor } from "../../utils/seoKeywords";
 import { brand } from "../../config/brand";
@@ -47,11 +48,7 @@ export default function LeaderboardPage() {
 
   function handleTabChange(next: LeaderboardScope) {
     setActiveTab(next);
-    try {
-      localStorage.setItem(STORAGE_KEYS.leaderboardTab, next);
-    } catch {
-      // storage blocked: the tab just isn't remembered
-    }
+    adapters.storage.set(STORAGE_KEYS.leaderboardTab, next);
   }
 
   const rows = board.data ?? [];

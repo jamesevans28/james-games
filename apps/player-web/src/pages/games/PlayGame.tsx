@@ -22,6 +22,7 @@ import {
   SITE_URL,
 } from "../../utils/seoKeywords";
 import { brand } from "../../config/brand";
+import { adapters } from "../../platform/adapters";
 
 export default function PlayGame() {
   const { gameId } = useParams();
@@ -118,7 +119,7 @@ export default function PlayGame() {
     } catch (e) {
       console.error(e);
       // Check if it's a network error
-      if (!navigator.onLine) {
+      if (!adapters.network.isOnline()) {
         setError("You're offline. Connect to the internet to load this game.");
       } else {
         setError("Failed to load game. Please check your connection and try again.");

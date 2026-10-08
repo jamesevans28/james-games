@@ -1,38 +1,30 @@
 import { useState, useEffect, useCallback } from "react";
+import { adapters } from "../platform/adapters";
 
 /**
  * Hook to detect online/offline status with event listeners.
  * Returns { isOnline, checkConnection }
  *
- * Note: navigator.onLine can have false positives (reports online when behind captive portal)
+ * Note: the browser's online flag can have false positives (reports online when behind captive portal)
  * but accurately reports when definitely offline.
  */
 export function useOnlineStatus() {
-  const [isOnline, setIsOnline] = useState(() =>
-    typeof navigator !== "undefined" ? navigator.onLine : true,
-  );
+  const [isOnline, setIsOnline] = useState(() => adapters.network.isOnline());
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+    const unsubscribe = adapters.network.onChange(setIsOnline);
 
     // Check initial state
-    setIsOnline(navigator.onLine);
+    setIsOnline(adapters.network.isOnline());
 
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
+    return unsubscribe;
   }, []);
 
   // Optionally do a real connectivity check
   const checkConnection = useCallback(async (): Promise<boolean> => {
-    if (!navigator.onLine) return false;
+    if (!adapters.network.isOnline()) return false;
 
     // Try a small fetch to verify actual connectivity
     try {
@@ -60,5 +52,5 @@ export function useOnlineStatus() {
  * Can be used outside of React components.
  */
 export function isOnline(): boolean {
-  return typeof navigator !== "undefined" ? navigator.onLine : true;
+  return adapters.network.isOnline();
 }

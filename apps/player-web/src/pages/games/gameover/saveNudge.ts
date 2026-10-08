@@ -1,3 +1,4 @@
+import { adapters } from "../../../platform/adapters";
 import { STORAGE_KEYS } from "../../../utils/storageKeys";
 
 /**
@@ -22,19 +23,12 @@ export function shouldShowSaveNudge({
 
 /** Reads the last-shown time. Never throws: storage can be missing or blocked. */
 export function readSaveNudgeShownAt(): number | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.saveNudgeShownAt);
-    const n = raw === null ? NaN : Number(raw);
-    return Number.isFinite(n) ? n : null;
-  } catch {
-    return null;
-  }
+  const raw = adapters.storage.get(STORAGE_KEYS.saveNudgeShownAt);
+  const n = raw === null ? NaN : Number(raw);
+  return Number.isFinite(n) ? n : null;
 }
 
 export function markSaveNudgeShown(now: number): void {
-  try {
-    localStorage.setItem(STORAGE_KEYS.saveNudgeShownAt, String(now));
-  } catch {
-    // storage blocked or full: the link may show again today, which is harmless
-  }
+  // If storage is blocked or full the link may show again today, which is harmless.
+  adapters.storage.set(STORAGE_KEYS.saveNudgeShownAt, String(now));
 }

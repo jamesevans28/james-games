@@ -4,6 +4,7 @@ import { useAuth } from "../context/FirebaseAuthProvider";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { brand } from "../config/brand";
+import { adapters } from "../platform/adapters";
 import { errorMessage } from "../utils/errorCode";
 
 type AuthMode = "login" | "register";
@@ -84,7 +85,7 @@ export default function FirebaseLoginPage() {
     setError(null);
 
     // Check if offline
-    if (!navigator.onLine) {
+    if (!adapters.network.isOnline()) {
       setError("You're offline. Connect to the internet to sign in.");
       return;
     }
@@ -107,7 +108,7 @@ export default function FirebaseLoginPage() {
       const returnTo = params.get("state") || "/";
       void navigate(returnTo, { replace: true });
     } catch (err) {
-      if (!navigator.onLine) {
+      if (!adapters.network.isOnline()) {
         setError("You're offline. Connect to the internet to sign in.");
       } else {
         setError(errorMessage(err, "Authentication failed"));
@@ -118,7 +119,7 @@ export default function FirebaseLoginPage() {
   const handleGoogleSignIn = async () => {
     setError(null);
     // Check if offline
-    if (!navigator.onLine) {
+    if (!adapters.network.isOnline()) {
       setError("You're offline. Connect to the internet to sign in.");
       return;
     }
@@ -128,7 +129,7 @@ export default function FirebaseLoginPage() {
       const returnTo = params.get("state") || "/";
       void navigate(returnTo, { replace: true });
     } catch (err) {
-      if (!navigator.onLine) {
+      if (!adapters.network.isOnline()) {
         setError("You're offline. Connect to the internet to sign in.");
       } else {
         setError(errorMessage(err, "Google sign in failed"));
@@ -139,7 +140,7 @@ export default function FirebaseLoginPage() {
   const handleAppleSignIn = async () => {
     setError(null);
     // Check if offline
-    if (!navigator.onLine) {
+    if (!adapters.network.isOnline()) {
       setError("You're offline. Connect to the internet to sign in.");
       return;
     }
@@ -149,7 +150,7 @@ export default function FirebaseLoginPage() {
       const returnTo = params.get("state") || "/";
       void navigate(returnTo, { replace: true });
     } catch (err) {
-      if (!navigator.onLine) {
+      if (!adapters.network.isOnline()) {
         setError("You're offline. Connect to the internet to sign in.");
       } else {
         setError(errorMessage(err, "Apple sign in failed"));

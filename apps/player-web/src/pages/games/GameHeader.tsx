@@ -19,8 +19,8 @@ export default function GameHeader({
   onBack,
 }: Props) {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-14">
-      <div className="h-full flex items-center justify-between px-3 bg-paper/95 backdrop-blur-xl text-ink border-b border-line">
+    <header className="fixed top-0 left-0 right-0 z-50 pt-safe bg-paper/95">
+      <div className="h-14 flex items-center justify-between px-3 bg-paper/95 backdrop-blur-xl text-ink border-b border-line">
         {onBack ? (
           <button
             type="button"

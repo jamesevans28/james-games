@@ -7,6 +7,7 @@ import SWUpdatePrompt from "./components/SWUpdatePrompt";
 import InstallPWA from "./components/InstallPWA";
 import IOSInstallHint from "./components/IOSInstallHint";
 import SplashScreen from "./components/SplashScreen";
+import { adapters } from "./platform/adapters";
 import { AuthProvider } from "./context/FirebaseAuthProvider";
 import { GameCatalogProvider } from "./context/GameCatalogProvider";
 import PageTransition from "./components/PageTransition";
@@ -89,10 +90,15 @@ export default function App() {
     <AuthProvider>
       <GameCatalogProvider>
         <BrowserRouter>
-          <SplashScreen />
-          <SWUpdatePrompt />
-          <InstallPWA />
-          <IOSInstallHint />
+          {/* Inside the native apps: no service worker, no install hints, native splash (T10.2). */}
+          {!adapters.app.isNative && (
+            <>
+              <SplashScreen />
+              <SWUpdatePrompt />
+              <InstallPWA />
+              <IOSInstallHint />
+            </>
+          )}
           <AppRoutes />
         </BrowserRouter>
       </GameCatalogProvider>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { brand, makersLine } from "../config/brand";
+import { adapters } from "../platform/adapters";
 import Wordmark from "./brand/Wordmark";
 
 function isStandalone(): boolean {
@@ -15,10 +16,10 @@ export default function SplashScreen() {
 
   useEffect(() => {
     // Only show on installed PWA open, and only once per page load
-    const hasShown = sessionStorage.getItem("splash-shown");
+    const hasShown = adapters.session.get("splash-shown");
     if (!hasShown && isStandalone()) {
       setShow(true);
-      sessionStorage.setItem("splash-shown", "1");
+      adapters.session.set("splash-shown", "1");
       const t = setTimeout(() => setShow(false), 1200);
       return () => clearTimeout(t);
     }

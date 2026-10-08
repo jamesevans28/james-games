@@ -217,7 +217,8 @@
 }
 
 :root {
-  --header-h: 64px;
+  /* Header height plus the notch / status bar inside the native apps (T10.2). */
+  --header-h: calc(64px + env(safe-area-inset-top, 0px));
   --btn-radius: 9999px;
 }
 
@@ -319,6 +320,14 @@
 }
 
 /* Alternative: pin the game area using fixed positioning under the header */
+/* Safe areas (notches, home indicator) in the native apps and installed PWAs. */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 .game-stage {
   position: fixed;
   top: var(--header-h);

@@ -25,7 +25,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
   }
 
   return {
-    base: "./",
+    // Absolute asset URLs work for deep links on the web and for capacitor://localhost (T10.2).
+    base: "/",
     logLevel: isBuild ? "warn" : "info",
     server: { port: 3000 },
     plugins: [

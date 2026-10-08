@@ -6,7 +6,7 @@ Costs: Apple Developer Program US$99/year (MANUAL, James decides when); Google P
 
 ## T10.1 Platform adapters in the SDK
 
-Status: todo
+Status: done 2026-10-09 (platform/adapters: storage, session, network, share, haptics, app; web + Capacitor; the grep in Done-when is empty)
 Depends on: T4.4
 Goal: every native-sensitive capability goes through an adapter with a web implementation now and a Capacitor implementation later.
 Files: `apps/player-web/src/platform/adapters/{storage,network,share,haptics,analytics,auth,app}.ts`, `platform/host.ts`, `context/FirebaseAuthProvider.tsx`
@@ -20,7 +20,7 @@ Steps:
 
 ## T10.2 Capacitor project scaffold
 
-Status: todo
+Status: done in code 2026-10-09 (Capacitor 8.5.2, ios/ and android/ generated, icons and splash from scripts/generate-app-assets.mjs, base "/", no SW or install hints natively, safe areas); MANUAL: install Xcode and Android Studio, then `npx cap run ios` / `android` to check (this Mac has neither)
 Depends on: T10.1, T3.2 (icons)
 Files: `apps/player-web/capacitor.config.ts`, `apps/player-web/ios/`, `apps/player-web/android/`, `.gitignore` updates, `package.json` scripts
 Steps:

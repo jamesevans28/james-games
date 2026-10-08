@@ -1,4 +1,5 @@
 import { brand } from "../config/brand";
+import { adapters } from "../platform/adapters";
 
 /**
  * Sharing a friend code (T7.6). The link opens the Friends page with the code
@@ -28,21 +29,12 @@ export async function shareFriendCode(friendCode: string): Promise<ShareResult> 
     text: `Add me as a friend on ${brand.name}! My friend code is ${friendCode}.`,
     url,
   };
-  try {
-    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-      await navigator.share(shareData);
-      return { status: "shared", url };
-    }
-  } catch {
-    // Cancelled or not allowed: fall back to copying.
-  }
-  try {
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(url);
-      return { status: "copied", url };
-    }
-  } catch {
-    // Clipboard blocked: show the link instead.
+  const result = await adapters.share.share(shareData);
+  if (result === "shared") return { status: "shared", url };
+  // "copied": no share sheet, so the adapter copied the link. A closed sheet
+  // ("cancelled") still falls back to copying; if the clipboard is blocked, show the link.
+  if (result === "copied" || (result === "cancelled" && (await adapters.share.copy(url)))) {
+    return { status: "copied", url };
   }
   return { status: "link", url };
 }

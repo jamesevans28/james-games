@@ -5,6 +5,7 @@
  * inside the game page, so app-level hints stay off game routes.
  */
 import { useEffect, useSyncExternalStore } from "react";
+import { adapters } from "../platform/adapters";
 
 export type OverlayId = "update" | "install" | "ios-install";
 
@@ -34,20 +35,13 @@ export function isStillDismissed(dismissedAt: number | null, now: number): boole
 const dismissKey = (id: OverlayId) => `g4j:dismiss:${id}`;
 
 export function readDismissedAt(id: OverlayId): number | null {
-  try {
-    const raw = localStorage.getItem(dismissKey(id));
-    return raw === null ? null : Number(raw);
-  } catch {
-    return null;
-  }
+  const raw = adapters.storage.get(dismissKey(id));
+  return raw === null ? null : Number(raw);
 }
 
 export function dismissOverlay(id: OverlayId, now = Date.now()): void {
-  try {
-    localStorage.setItem(dismissKey(id), String(now));
-  } catch {
-    // Storage blocked: the hint may come back next visit.
-  }
+  // If storage is blocked the hint may come back next visit.
+  adapters.storage.set(dismissKey(id), String(now));
 }
 
 const VISITS_KEY = "g4j:visits";
@@ -55,15 +49,11 @@ const VISIT_COUNTED_KEY = "g4j:visitCounted";
 
 /** Counts this browser session once and returns the visit number (1 = first visit). */
 export function countVisit(): number {
-  try {
-    const seen = Number(localStorage.getItem(VISITS_KEY)) || 0;
-    if (sessionStorage.getItem(VISIT_COUNTED_KEY) === "1") return seen;
-    sessionStorage.setItem(VISIT_COUNTED_KEY, "1");
-    localStorage.setItem(VISITS_KEY, String(seen + 1));
-    return seen + 1;
-  } catch {
-    return 1;
-  }
+  const seen = Number(adapters.storage.get(VISITS_KEY)) || 0;
+  if (adapters.session.get(VISIT_COUNTED_KEY) === "1") return seen;
+  adapters.session.set(VISIT_COUNTED_KEY, "1");
+  adapters.storage.set(VISITS_KEY, String(seen + 1));
+  return seen + 1;
 }
 
 // --- the shared slot ---------------------------------------------------------

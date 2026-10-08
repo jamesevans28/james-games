@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { adapters } from "../platform/adapters";
 import { STORAGE_KEYS, readStored } from "../utils/storageKeys";
 import { useFriendRequests } from "./useFriends";
 
@@ -9,11 +10,8 @@ export function getNotificationsLastSeen(): number {
 }
 
 export function markNotificationsAsRead(timestamp = Date.now()) {
-  try {
-    localStorage.setItem(STORAGE_KEYS.notificationsSeenAt, String(timestamp));
-  } catch {
-    // Storage blocked: the dot just comes back next time.
-  }
+  // If storage is blocked the dot just comes back next time.
+  adapters.storage.set(STORAGE_KEYS.notificationsSeenAt, String(timestamp));
 }
 
 /** True when a request is newer than the last time Notifications was opened. */
