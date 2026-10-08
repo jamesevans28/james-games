@@ -1,0 +1,111 @@
+name: Deploy player web
+
+# Manual until relaunch (T13.4 uncomments the push trigger). Production keeps the
+# old build until then (DECISIONS 2026-10-09).
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   paths: ["apps/player-web/**", "scripts/**", "package.json", "package-lock.json"]
+
+permissions:
+  id-token: write # GitHub OIDC → AWS
+  contents: read
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  WEB_S3_BUCKET: ${{ vars.WEB_S3_BUCKET }}
+  WEB_CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.WEB_CLOUDFRONT_DISTRIBUTION_ID }}
+
+jobs:
+  gate:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build player web
+        run: npm run web:build
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_BUILD_NUMBER: ${{ github.run_number }}
+          VITE_GIT_SHA: ${{ github.sha }}
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync to S3
+        run: aws s3 sync ./apps/player-web/dist "s3://$WEB_S3_BUCKET" --delete --follow-symlinks
+
+      # Cache headers (T3.6). Only Vite's hashed bundles sit directly in dist/assets/;
+      # subfolders there are game art copied from public/assets/ with stable names,
+      # so they must not be immutable or art updates never reach players.
+      - name: Cache-Control for static assets
+        run: |
+          if [ -d "apps/player-web/dist/assets" ]; then
+            aws s3 cp ./apps/player-web/dist/assets "s3://$WEB_S3_BUCKET/assets" \
+              --recursive --exclude "*/*" \
+              --metadata-directive REPLACE \
+              --cache-control "public, max-age=31536000, immutable"
+            aws s3 cp ./apps/player-web/dist/assets "s3://$WEB_S3_BUCKET/assets" \
+              --recursive --exclude "*" --include "*/*" \
+              --metadata-directive REPLACE \
+              --cache-control "public, max-age=86400"
+          fi
+
+      # HTML entry points and the service worker must always be revalidated,
+      # otherwise phones keep running an old build.
+      - name: Cache-Control for index.html, manifest and service worker
+        run: |
+          for f in sw.js registerSW.js; do
+            if [ -f "apps/player-web/dist/$f" ]; then
+              aws s3 cp "./apps/player-web/dist/$f" "s3://$WEB_S3_BUCKET/$f" \
+                --metadata-directive REPLACE \
+                --cache-control "no-cache, max-age=0, must-revalidate" \
+                --content-type text/javascript
+            fi
+          done
+          aws s3 cp ./apps/player-web/dist/manifest.webmanifest "s3://$WEB_S3_BUCKET/manifest.webmanifest" \
+            --metadata-directive REPLACE \
+            --cache-control "no-cache, max-age=0, must-revalidate" \
+            --content-type application/manifest+json
+          aws s3 cp "s3://$WEB_S3_BUCKET/index.html" "s3://$WEB_S3_BUCKET/index.html" \
+            --metadata-directive REPLACE \
+            --cache-control "no-store, no-cache, must-revalidate, max-age=0" \
+            --content-type text/html
+
+      # Hashed bundles never need invalidating; only the stable-named entry files do
+      # (keeps well inside CloudFront's 1,000 free invalidation paths a month).
+      - name: Invalidate CloudFront
+        if: ${{ env.WEB_CLOUDFRONT_DISTRIBUTION_ID != '' }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$WEB_CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/" "/index.html" "/manifest.webmanifest" "/sw.js" "/registerSW.js" \
+              "/sitemap.xml" "/robots.txt" "/game-meta.json" "/static-games/*"

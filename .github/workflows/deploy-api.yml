@@ -1,0 +1,102 @@
+name: Deploy API
+
+# Manual until relaunch (T13.4 uncomments the push trigger). Order: gates →
+# database migrations → seed games from the manifests → Lambda code → config (T9.1, T9.4).
+on:
+  workflow_dispatch:
+    inputs:
+      migrate_only:
+        description: "Only run database migrations and the seed (no Lambda deploy)"
+        type: boolean
+        default: false
+  # push:
+  #   branches: [main]
+  #   paths: ["apps/backend-api/**", "apps/player-web/src/games/**/manifest.ts", "apps/player-web/public/game-meta.json", "package.json", "package-lock.json"]
+
+permissions:
+  id-token: write # GitHub OIDC → AWS
+  contents: read
+
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false # never cancel a half-applied migration
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
+
+jobs:
+  gate:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Migrate database
+        run: npm run db:migrate -w apps/backend-api
+        env:
+          DATABASE_URL_MIGRATIONS: ${{ secrets.DATABASE_URL_MIGRATIONS }}
+
+      - name: Seed games and XP levels
+        run: npm run db:seed -w apps/backend-api
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Bundle the Lambda
+        if: ${{ !inputs.migrate_only }}
+        run: npm run bundle -w apps/backend-api
+
+      - name: Configure AWS credentials (OIDC)
+        if: ${{ !inputs.migrate_only }}
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy Lambda code
+        if: ${{ !inputs.migrate_only }}
+        working-directory: apps/backend-api
+        run: |
+          aws lambda update-function-code \
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --zip-file fileb://bundle.zip
+          aws lambda wait function-updated --function-name "$LAMBDA_FUNCTION_NAME"
+
+      # Node 24 runtime, 512 MB and 10 s: firebase-admin cold starts are slow on 128 MB / 3 s.
+      - name: Update Lambda configuration
+        if: ${{ !inputs.migrate_only }}
+        run: |
+          aws lambda update-function-configuration \
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --runtime nodejs24.x \
+            --handler lambda.handler \
+            --memory-size 512 \
+            --timeout 10 \
+            --environment '{
+              "Variables": {
+                "NODE_OPTIONS": "--enable-source-maps",
+                "DATABASE_URL": "'"${{ secrets.DATABASE_URL }}"'",
+                "FIREBASE_PROJECT_ID": "'"${{ secrets.FIREBASE_PROJECT_ID }}"'",
+                "FIREBASE_CLIENT_EMAIL": "'"${{ secrets.FIREBASE_CLIENT_EMAIL }}"'",
+                "FIREBASE_PRIVATE_KEY": "'"${{ secrets.FIREBASE_PRIVATE_KEY }}"'",
+                "CORS_ALLOWED_ORIGINS": "'"${{ vars.CORS_ALLOWED_ORIGINS }}"'"
+              }
+            }'
+          aws lambda wait function-updated --function-name "$LAMBDA_FUNCTION_NAME"
+
+      - name: Smoke test
+        if: ${{ !inputs.migrate_only && vars.VITE_API_BASE_URL != '' }}
+        run: curl -fsS "${{ vars.VITE_API_BASE_URL }}/games/config" > /dev/null

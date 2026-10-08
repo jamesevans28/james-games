@@ -13,7 +13,8 @@
     "db:migrate": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/migrate.ts",
     "db:seed": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/seed.ts",
     "db:ping": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/ping.ts",
-    "db:housekeeping": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/housekeeping.run.ts"
+    "db:housekeeping": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/housekeeping.run.ts",
+    "bundle": "node scripts/bundle.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1147.0",
@@ -34,6 +35,7 @@
     "@types/node": "^24.19.1",
     "dotenv": "^18.0.6",
     "drizzle-kit": "^0.31.11",
+    "esbuild": "^0.28.2",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   }
