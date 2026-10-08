@@ -20,7 +20,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
   // silently call localhost or nothing at all. (CI sets it from repo variables.)
   if (isBuild && !env.VITE_API_BASE_URL) {
     throw new Error(
-      "VITE_API_BASE_URL must be set for production builds (see apps/player-web/.env.example)."
+      "VITE_API_BASE_URL must be set for production builds (see apps/player-web/.env.example).",
     );
   }
 
@@ -43,7 +43,12 @@ export default defineConfig(({ command, mode }): UserConfig => {
           // Dev precaches nothing; production precaches the app shell and game assets.
           globPatterns: isBuild ? ["**/*.{js,css,html,ico,png,svg,mp3,ogg,ttf,woff2}"] : [],
           // Manifest icons and the share image are fetched on demand, not precached.
-          globIgnores: ["**/brand/icon-512*.png", "**/brand/og-*.png", "**/brand/screenshot-*", "**/static-games/**"],
+          globIgnores: [
+            "**/brand/icon-512*.png",
+            "**/brand/og-*.png",
+            "**/brand/screenshot-*",
+            "**/static-games/**",
+          ],
           maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
           runtimeCaching: [
             // Workbox serialises these functions into sw.js, so they must not reference
@@ -70,7 +75,8 @@ export default defineConfig(({ command, mode }): UserConfig => {
             {
               // Everything else on the API, including every authenticated route: never cached.
               urlPattern: ({ url }) =>
-                url.origin === "https://api.games4james.com" || url.origin === "http://localhost:8787",
+                url.origin === "https://api.games4james.com" ||
+                url.origin === "http://localhost:8787",
               handler: "NetworkOnly",
             },
             {
@@ -115,8 +121,20 @@ export default defineConfig(({ command, mode }): UserConfig => {
           ],
           // Captured in the Browser pane at 375×812 @2x (T3.3). Retake after big UI changes.
           screenshots: [
-            { src: "/brand/screenshot-home.jpg", sizes: "750x1624", type: "image/jpeg", form_factor: "narrow", label: "The games feed" },
-            { src: "/brand/screenshot-games.jpg", sizes: "750x1624", type: "image/jpeg", form_factor: "narrow", label: "Every game" },
+            {
+              src: "/brand/screenshot-home.jpg",
+              sizes: "750x1624",
+              type: "image/jpeg",
+              form_factor: "narrow",
+              label: "The games feed",
+            },
+            {
+              src: "/brand/screenshot-games.jpg",
+              sizes: "750x1624",
+              type: "image/jpeg",
+              form_factor: "narrow",
+              label: "Every game",
+            },
           ],
         },
       }),

@@ -3,6 +3,7 @@ import { fetchMe, updateSettings } from "../../lib/api";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { OfflineBanner } from "../../components/OfflineBanner";
+import { errorMessage } from "../../utils/errorCode";
 
 export default function SettingsScreen() {
   const {
@@ -48,16 +49,16 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         const data = await fetchMe();
-        const u = data?.user;
+        const u = data.user;
         const sn = u?.screenName || "";
         if (!cancelled) {
           setScreenName(sn);
           setInitial(sn);
         }
-      } catch (e) {
+      } catch {
         // ignore for now
       }
     })();
@@ -84,11 +85,11 @@ export default function SettingsScreen() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2500);
       await refreshProfile();
-    } catch (e: any) {
+    } catch (e) {
       if (!navigator.onLine) {
         setError("You're offline. Connect to save changes.");
       } else {
-        setError(e?.message || "Failed to update");
+        setError(errorMessage(e, "Failed to update"));
       }
     } finally {
       setSaving(false);
@@ -105,11 +106,11 @@ export default function SettingsScreen() {
     try {
       await linkGoogle();
       await refreshProfile();
-    } catch (e: any) {
+    } catch (e) {
       if (!navigator.onLine) {
         setLinkError("You're offline. Connect to link accounts.");
       } else {
-        setLinkError(e?.message || "Failed to link Google account");
+        setLinkError(errorMessage(e, "Failed to link Google account"));
       }
     } finally {
       setLinkingProvider(null);
@@ -126,8 +127,8 @@ export default function SettingsScreen() {
     try {
       await linkApple();
       await refreshProfile();
-    } catch (e: any) {
-      setLinkError(e?.message || "Failed to link Apple account");
+    } catch (e) {
+      setLinkError(errorMessage(e, "Failed to link Apple account"));
     } finally {
       setLinkingProvider(null);
     }
@@ -157,11 +158,11 @@ export default function SettingsScreen() {
         // Ignore if verification email fails - user can resend manually
       }
       setEmail("");
-    } catch (e: any) {
+    } catch (e) {
       if (!navigator.onLine) {
         setEmailError("You're offline. Connect to add email.");
       } else {
-        setEmailError(e?.message || "Failed to add email");
+        setEmailError(errorMessage(e, "Failed to add email"));
       }
     } finally {
       setAddingEmail(false);
@@ -179,11 +180,11 @@ export default function SettingsScreen() {
     try {
       await sendVerificationEmail();
       setEmailSuccess("Verification email sent! Check your inbox.");
-    } catch (e: any) {
+    } catch (e) {
       if (!navigator.onLine) {
         setEmailError("You're offline. Connect to send verification email.");
       } else {
-        setEmailError(e?.message || "Failed to send verification email");
+        setEmailError(errorMessage(e, "Failed to send verification email"));
       }
     } finally {
       setSendingVerification(false);
@@ -204,14 +205,14 @@ export default function SettingsScreen() {
         setEmailSuccess("Email verified successfully!");
       } else {
         setEmailError(
-          "Email not yet verified. Please check your inbox and click the verification link."
+          "Email not yet verified. Please check your inbox and click the verification link.",
         );
       }
-    } catch (e: any) {
+    } catch (e) {
       if (!navigator.onLine) {
         setEmailError("You're offline. Connect to check verification status.");
       } else {
-        setEmailError(e?.message || "Failed to check verification status");
+        setEmailError(errorMessage(e, "Failed to check verification status"));
       }
     } finally {
       setCheckingVerification(false);
@@ -247,11 +248,11 @@ export default function SettingsScreen() {
       setConfirmPin("");
       setShowPinChange(false);
       setTimeout(() => setPinSuccess(false), 3000);
-    } catch (e: any) {
+    } catch (e) {
       if (!navigator.onLine) {
         setPinError("You're offline. Connect to change PIN.");
       } else {
-        setPinError(e?.message || "Failed to change PIN");
+        setPinError(errorMessage(e, "Failed to change PIN"));
       }
     } finally {
       setChangingPin(false);
@@ -318,8 +319,8 @@ export default function SettingsScreen() {
               isAnonymous
                 ? "bg-sun/20 text-ink border border-sun/50"
                 : isUsernamePin
-                ? "bg-sky/20 text-sky border border-sky/30"
-                : "bg-brand/20 text-brand border border-brand/30"
+                  ? "bg-sky/20 text-sky border border-sky/30"
+                  : "bg-brand/20 text-brand border border-brand/30"
             }`}
           >
             {isAnonymous ? "Guest" : isUsernamePin ? "Username + PIN" : "Linked Account"}
@@ -387,9 +388,7 @@ export default function SettingsScreen() {
           </div>
         ) : (
           <form onSubmit={handleAddEmail} className="space-y-3">
-            <p className="text-sm text-ink-2">
-              Add an email address to help recover your account.
-            </p>
+            <p className="text-sm text-ink-2">Add an email address to help recover your account.</p>
             <div className="flex gap-2">
               <input
                 type="email"
@@ -454,9 +453,7 @@ export default function SettingsScreen() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold text-ink mb-2">
-                  Confirm new PIN
-                </label>
+                <label className="block text-sm font-bold text-ink mb-2">Confirm new PIN</label>
                 <input
                   type="password"
                   inputMode="numeric"

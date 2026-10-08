@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { games } from "../../games";
+import { allGames, isSdkModule } from "../../games";
+import { createHost } from "../../platform/host";
+import { onMutedChange } from "../../platform/audio";
+import type { GameInstance } from "../../platform/sdk";
 import GameHeader from "./GameHeader";
 import { trackGameStart } from "../../utils/analytics";
 // import NameDialog from "../../components/NameDialog";
@@ -40,10 +43,20 @@ export default function PlayGame() {
   const navigate = useNavigate();
   // Deliberately the bundled registry, not the live catalog: the mount effect depends
   // on `meta`, so a new object when catalog data arrives would remount a running game.
-  const meta = useMemo(() => games.find((g) => g.id === gameId), [gameId]);
+  const meta = useMemo(() => allGames.find((g) => g.id === gameId), [gameId]);
   const { user, ensureSession } = useAuth();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const destroyRef = useRef<null | (() => void)>(null);
+  // SDK games (T4.4): the running instance, so "Play again" restarts instead of remounting.
+  const instanceRef = useRef<GameInstance | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [sdkGame, setSdkGame] = useState(false);
+  // Both paths record the finished run here: SDK games through the host, legacy
+  // games through the window event. An effect further down reacts with current state.
+  const [finishedRun, setFinishedRun] = useState<{ score: number; durationMs?: number } | null>(
+    null,
+  );
+
   const mountingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -57,13 +70,13 @@ export default function PlayGame() {
   const [pendingRatingTrigger, setPendingRatingTrigger] = useState(false);
   const [ratingPromptOpen, setRatingPromptOpen] = useState(false);
   const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(() =>
-    meta ? getCachedRatingSummary(meta.id) : null
+    meta ? getCachedRatingSummary(meta.id) : null,
   );
   const [ratingLoading, setRatingLoading] = useState(false);
   const [ratingSubmitting, setRatingSubmitting] = useState(false);
   const [ratingError, setRatingError] = useState<string | null>(null);
   const [pendingPromptAction, setPendingPromptAction] = useState<"none" | "playAgain" | "close">(
-    "none"
+    "none",
   );
   const [userRating, setUserRating] = useState<number | null>(null);
   useEffect(() => {
@@ -73,10 +86,10 @@ export default function PlayGame() {
   const presenceStatus = showScore
     ? "in_score_dialog"
     : playing
-    ? "playing"
-    : meta
-    ? "game_lobby"
-    : "looking_for_game";
+      ? "playing"
+      : meta
+        ? "game_lobby"
+        : "looking_for_game";
   usePresenceReporter({
     status: presenceStatus,
     gameId: meta?.id,
@@ -95,7 +108,7 @@ export default function PlayGame() {
     setUserRating(
       typeof cached?.userRating === "number" && !Number.isNaN(cached.userRating)
         ? cached.userRating
-        : null
+        : null,
     );
   }, [meta]);
 
@@ -134,14 +147,31 @@ export default function PlayGame() {
       if (destroyRef.current) {
         try {
           destroyRef.current();
-        } catch {}
+        } catch {
+          // the game is already torn down or never finished mounting: ignore
+        }
         destroyRef.current = null;
       }
-      const { destroy } = mod.mount(containerRef.current);
-      destroyRef.current = destroy;
-      // Dispatch game start event to begin timing
-      dispatchGameStart(meta.id);
-      trackGameStart(meta.id, meta.title);
+      if (isSdkModule(mod)) {
+        const host = createHost(mod.manifest, {
+          onGameOver: ({ score, durationMs }) => setFinishedRun({ score, durationMs }),
+        });
+        const instance = mod.create(host, containerRef.current);
+        instanceRef.current = instance;
+        setSdkGame(true);
+        destroyRef.current = () => {
+          instance.destroy();
+          instanceRef.current = null;
+        };
+        instance.start();
+      } else {
+        setSdkGame(false);
+        const { destroy } = mod.mount(containerRef.current);
+        destroyRef.current = destroy;
+        // Legacy games: start the window-event timer (the host measures SDK games).
+        dispatchGameStart(meta.id);
+        trackGameStart(meta.id, meta.title);
+      }
       // Record this game as recently played for feed algorithm
       recordGamePlayed(meta.id);
     } catch (e) {
@@ -209,7 +239,7 @@ export default function PlayGame() {
         setRatingLoading(false);
       }
     },
-    [meta, user, userRating, ratingSummary?.userRating, completePromptFlow]
+    [meta, user, userRating, ratingSummary?.userRating, completePromptFlow],
   );
 
   const handleRatingSkip = useCallback(() => {
@@ -230,9 +260,9 @@ export default function PlayGame() {
         setUserRating(summary.userRating ?? value);
         setRatingPromptOpen(false);
         completePromptFlow();
-      } catch (err: any) {
+      } catch (err) {
         console.error("Failed to submit rating", err);
-        if (err?.message === "signin_required") {
+        if (err instanceof Error && err.message === "signin_required") {
           setRatingError("Please sign in to rate this game.");
         } else {
           setRatingError("Unable to save your rating. Please try again later.");
@@ -241,7 +271,7 @@ export default function PlayGame() {
         setRatingSubmitting(false);
       }
     },
-    [meta, completePromptFlow]
+    [meta, completePromptFlow],
   );
 
   const handleCloseScore = () => {
@@ -249,7 +279,9 @@ export default function PlayGame() {
     if (destroyRef.current) {
       try {
         destroyRef.current();
-      } catch {}
+      } catch {
+        // the game is already torn down or never finished mounting: ignore
+      }
       destroyRef.current = null;
     }
     setPlaying(false);
@@ -267,32 +299,64 @@ export default function PlayGame() {
       return;
     }
     setPlaying(true);
+    if (instanceRef.current) {
+      // Same Phaser game, fresh run: no new WebGL context, no reload.
+      instanceRef.current.restart();
+      recordGamePlayed(meta?.id ?? "");
+      return;
+    }
     void mountGame();
   };
 
   useEffect(() => {
     if (!meta) return;
-    // Listen for game over and show score dialog over the running game
+    // Legacy games (TODO T5.13): game over arrives on the window event bus.
     const off = onGameOver((d) => {
-      if (!meta || d.gameId !== meta.id) return;
-      // Keep the game mounted so it's visible in the background
-      setLastScore(d.score);
-      setLastDurationMs(d.durationMs);
-      setShowScore(true);
-      if (user) {
-        const count = incrementPlayCounter(meta.id);
-        if (count > 0 && count % RATING_PROMPT_INTERVAL === 0) {
-          const alreadyRated =
-            typeof (userRating ?? ratingSummary?.userRating) === "number" &&
-            !Number.isNaN(userRating ?? ratingSummary?.userRating);
-          if (!alreadyRated) {
-            setPendingRatingTrigger(true);
-          }
-        }
-      }
+      if (d.gameId === meta.id) setFinishedRun({ score: d.score, durationMs: d.durationMs });
     });
     return () => off?.();
-  }, [meta, user, userRating, ratingSummary?.userRating]);
+  }, [meta]);
+
+  useEffect(() => {
+    if (!meta || !finishedRun) return;
+    setFinishedRun(null);
+    // Keep the game mounted so it's visible in the background
+    setLastScore(finishedRun.score);
+    setLastDurationMs(finishedRun.durationMs);
+    setShowScore(true);
+    if (user) {
+      const count = incrementPlayCounter(meta.id);
+      if (count > 0 && count % RATING_PROMPT_INTERVAL === 0) {
+        const alreadyRated =
+          typeof (userRating ?? ratingSummary?.userRating) === "number" &&
+          !Number.isNaN(userRating ?? ratingSummary?.userRating);
+        if (!alreadyRated) {
+          setPendingRatingTrigger(true);
+        }
+      }
+    }
+  }, [finishedRun, meta, user, userRating, ratingSummary?.userRating]);
+
+  // Hiding the tab pauses an SDK game; the player resumes from the Paused overlay.
+  useEffect(() => {
+    if (!playing) return;
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden" && instanceRef.current && !showScore) {
+        instanceRef.current.pause();
+        setPaused(true);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [playing, showScore]);
+
+  // The header's sound toggle reaches the running game's Phaser sound too.
+  useEffect(() => onMutedChange((m) => instanceRef.current?.setMuted(m)), []);
+
+  const handleResume = () => {
+    instanceRef.current?.resume();
+    setPaused(false);
+  };
 
   useEffect(() => {
     let canceled = false;
@@ -300,13 +364,15 @@ export default function PlayGame() {
       if (!playing || canceled) return;
       await mountGame();
     };
-    doMount();
+    void doMount();
     return () => {
       canceled = true;
       if (destroyRef.current) {
         try {
           destroyRef.current();
-        } catch {}
+        } catch {
+          // the game is already torn down or never finished mounting: ignore
+        }
         destroyRef.current = null;
       }
     };
@@ -334,19 +400,14 @@ export default function PlayGame() {
   }, [meta, ratingSummary]);
 
   const seoDescription = useMemo(() => {
-    if (!meta)
-      return brand.description;
+    if (!meta) return brand.description;
     return getGameSeoDescription(meta.id, meta.description);
   }, [meta]);
 
   return (
     <div className="min-h-screen bg-paper text-ink flex flex-col">
       <Seo
-        title={
-          meta
-            ? `${meta.title} | ${brand.name}`
-            : `${brand.name} | ${brand.tagline}`
-        }
+        title={meta ? `${meta.title} | ${brand.name}` : `${brand.name} | ${brand.tagline}`}
         description={seoDescription}
         url={`${SITE_URL}/games/${meta?.id ?? ""}`}
         canonical={`${SITE_URL}/games/${meta?.id ?? ""}`}
@@ -359,6 +420,7 @@ export default function PlayGame() {
       <GameHeader
         title={meta?.title ?? "Unknown Game"}
         leaderboardTo={meta ? `/leaderboard/${meta.id}` : undefined}
+        showMute={sdkGame}
         onBack={() => {
           if (playing) {
             setShowScore(false);
@@ -369,12 +431,23 @@ export default function PlayGame() {
             setPlaying(false);
             return;
           }
-          navigate("/");
+          void navigate("/");
         }}
       />
 
       {error && <div className="p-4 text-grape">{error}</div>}
-      {meta && !error && (
+      {meta?.status === "inactive" && (
+        <div className="max-w-md mx-auto px-6 pt-24 pb-10 text-center">
+          <h1 className="font-display text-3xl font-extrabold text-ink">{meta.title}</h1>
+          <p className="kid-note mt-3 text-ink-2">
+            This game is taking a break while we make it better. Try another one!
+          </p>
+          <button type="button" className="btn btn-primary mt-6" onClick={() => void navigate("/")}>
+            See all the games
+          </button>
+        </div>
+      )}
+      {meta && meta.status !== "inactive" && !error && (
         <div className="landing-panel" data-state={landingState} aria-hidden={playing}>
           <GameLanding meta={meta} onPlay={() => setPlaying(true)} />
         </div>
@@ -398,14 +471,24 @@ export default function PlayGame() {
           id="game-container"
           className="relative w-full h-full overflow-hidden bg-paper"
         />
+        {paused && playing && !showScore && (
+          <button
+            type="button"
+            onClick={handleResume}
+            className="absolute inset-0 z-[1001] flex flex-col items-center justify-center gap-4 bg-scrim/60"
+          >
+            <span className="card px-8 py-6 text-center">
+              <span className="block font-display text-3xl font-extrabold text-ink">Paused</span>
+              <span className="mt-1 block text-sm font-semibold text-ink-2">
+                Tap to keep playing
+              </span>
+            </span>
+          </button>
+        )}
         {mounting && playing && (
           <div className="absolute inset-0 flex items-center justify-center bg-paper/90 z-[1000]">
             <div className="flex flex-col items-center">
-              <img
-                src={brand.logoMark}
-                alt="Loading"
-                className="w-24 h-24 animate-glow-pulse"
-              />
+              <img src={brand.logoMark} alt="Loading" className="w-24 h-24 animate-glow-pulse" />
               <div className="mt-4 text-brand font-bold tracking-[0.35em] text-sm">LOADING</div>
             </div>
           </div>

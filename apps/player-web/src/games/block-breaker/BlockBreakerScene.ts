@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method, no-restricted-imports -- TODO: inactive game (T5.1); clean these up if it is reworked and re-activated */
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { trackGameStart } from "../../utils/analytics";
@@ -46,7 +47,7 @@ export default class BlockBreakerScene extends Phaser.Scene {
       this.paddle.x = Phaser.Math.Clamp(
         pointer.x,
         PADDLE_WIDTH / 2,
-        this.scale.width - PADDLE_WIDTH / 2
+        this.scale.width - PADDLE_WIDTH / 2,
       );
     });
 
@@ -65,7 +66,7 @@ export default class BlockBreakerScene extends Phaser.Scene {
       PADDLE_Y,
       PADDLE_WIDTH,
       PADDLE_HEIGHT,
-      0xffffff
+      0xffffff,
     );
     this.physics.add.existing(this.paddle, true);
   }
@@ -75,7 +76,7 @@ export default class BlockBreakerScene extends Phaser.Scene {
       this.scale.width / 2,
       PADDLE_Y - PADDLE_HEIGHT,
       BALL_RADIUS,
-      0xffffff
+      0xffffff,
     );
     this.physics.add.existing(this.ball);
     const ballBody = this.ball.body as Phaser.Physics.Arcade.Body;
@@ -108,8 +109,10 @@ export default class BlockBreakerScene extends Phaser.Scene {
   }
 
   private hitPaddle(ball: ArcadeCollidable, paddle: ArcadeCollidable) {
-    const ballBody = (ball as Phaser.Types.Physics.Arcade.GameObjectWithBody).body as Phaser.Physics.Arcade.Body;
-    const paddleBody = (paddle as Phaser.Types.Physics.Arcade.GameObjectWithBody).body as Phaser.Physics.Arcade.Body;
+    const ballBody = (ball as Phaser.Types.Physics.Arcade.GameObjectWithBody)
+      .body as Phaser.Physics.Arcade.Body;
+    const paddleBody = (paddle as Phaser.Types.Physics.Arcade.GameObjectWithBody)
+      .body as Phaser.Physics.Arcade.Body;
     const diff = ballBody.x - paddleBody.x;
     const newVelX = diff * 10;
     ballBody.setVelocityX(newVelX);

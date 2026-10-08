@@ -59,7 +59,6 @@ export default function SWUpdatePrompt() {
       void registration;
     },
     onRegisterError(error: unknown) {
-      // eslint-disable-next-line no-console
       console.error("SW registration error:", error);
     },
   });
@@ -151,10 +150,7 @@ export default function SWUpdatePrompt() {
           <div className="flex items-center justify-between gap-3">
             <span className="text-ink">New version available</span>
             <div className="flex gap-2">
-              <button
-                className="px-3 py-1.5 rounded-md bg-paper-2 text-ink"
-                onClick={closeUpdate}
-              >
+              <button className="px-3 py-1.5 rounded-md bg-paper-2 text-ink" onClick={closeUpdate}>
                 Later
               </button>
               <button

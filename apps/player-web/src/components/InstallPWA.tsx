@@ -14,7 +14,8 @@ export default function InstallPWA() {
     // detect installed mode (Chrome/Android)
     const isStandalone = window.matchMedia?.("(display-mode: standalone)").matches;
     // detect installed on iOS Safari
-    const isIOSStandalone = (window as any).navigator?.standalone === true;
+    const isIOSStandalone =
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
     if (isStandalone || isIOSStandalone) setInstalled(true);
 
     const onBeforeInstall = (e: Event) => {

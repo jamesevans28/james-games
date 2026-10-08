@@ -25,19 +25,19 @@ Run `npm install` once at the repository root.
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Player web dev server on http://localhost:3000 |
-| `npm run server` | Backend API on http://localhost:8787 |
-| `npm run admin:dev` | Admin console on http://localhost:3100 |
-| `npm run web:build` | Regenerate SEO files and build player web to `apps/player-web/dist` |
-| `npm run admin:build` | Build admin to `apps/admin-web/dist` |
-| `npm run backend:build` | Compile the API to `apps/backend-api/dist` |
-| `npm run build` | All three builds |
-| `npm run typecheck` | `tsc --noEmit` in every workspace |
-| `npm run lint` | ESLint in every workspace (configured in plan Phase 4) |
-| `npm test` | Vitest in every workspace (configured in plan Phase 4) |
-| `npm run web:generate-seo` | Regenerate sitemap and static game pages |
+| Command                    | What it does                                                        |
+| -------------------------- | ------------------------------------------------------------------- |
+| `npm run dev`              | Player web dev server on http://localhost:3000                      |
+| `npm run server`           | Backend API on http://localhost:8787                                |
+| `npm run admin:dev`        | Admin console on http://localhost:3100                              |
+| `npm run web:build`        | Regenerate SEO files and build player web to `apps/player-web/dist` |
+| `npm run admin:build`      | Build admin to `apps/admin-web/dist`                                |
+| `npm run backend:build`    | Compile the API to `apps/backend-api/dist`                          |
+| `npm run build`            | All three builds                                                    |
+| `npm run typecheck`        | `tsc --noEmit` in every workspace                                   |
+| `npm run lint`             | ESLint across the repo (root `eslint.config.mjs`)                   |
+| `npm test`                 | Vitest, all workspaces (root `vitest.config.ts`)                    |
+| `npm run web:generate-seo` | Regenerate sitemap and static game pages                            |
 
 ## Deployment
 

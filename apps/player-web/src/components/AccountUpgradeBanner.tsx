@@ -59,7 +59,7 @@ export default function AccountUpgradeBanner() {
 
   function handleCreateAccount() {
     localStorage.setItem(REMINDER_KEY, String(Date.now()));
-    navigate("/login");
+    void navigate("/login");
   }
 
   if (dismissed || !visible) return null;

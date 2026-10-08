@@ -22,14 +22,14 @@ export function AdminLayout() {
       <div
         className={clsx(
           "fixed inset-0 z-40 bg-black/60 transition-opacity lg:hidden",
-          drawerOpen ? "opacity-100" : "pointer-events-none opacity-0"
+          drawerOpen ? "opacity-100" : "pointer-events-none opacity-0",
         )}
         onClick={() => setDrawerOpen(false)}
       />
       <div
         className={clsx(
           "fixed inset-y-0 left-0 z-50 w-72 transform bg-slate-950 text-white shadow-2xl transition-transform lg:hidden",
-          drawerOpen ? "translate-x-0" : "-translate-x-full"
+          drawerOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <Sidebar onNavigate={() => setDrawerOpen(false)} />

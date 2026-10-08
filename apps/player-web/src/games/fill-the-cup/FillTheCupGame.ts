@@ -1,3 +1,4 @@
+/* eslint-disable no-empty, no-restricted-imports -- TODO: inactive game (T5.1); clean these up if it is reworked and re-activated */
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { getBest, setBest } from "../../utils/bestScore";
@@ -111,7 +112,7 @@ export default class FillTheCupGame extends Phaser.Scene {
       this.tapY - bodyH / 2,
       bodyW,
       bodyH,
-      14
+      14,
     );
 
     // Vertical neck into nozzle (darker gray)
@@ -134,7 +135,7 @@ export default class FillTheCupGame extends Phaser.Scene {
       this.tapY - bodyH / 2,
       bodyW,
       bodyH,
-      14
+      14,
     );
     tapG.strokeRoundedRect(this.tapX - 26 - tapOffset, this.tapY - 30, 22, 60, 10);
     tapG.strokeRoundedRect(this.tapX - 8 - tapOffset, this.tapY - 18, nozzleW, nozzleH, 12);
@@ -212,7 +213,7 @@ export default class FillTheCupGame extends Phaser.Scene {
     const targetWidth = Phaser.Math.Linear(
       BASE_TARGET_BAND,
       MIN_TARGET_BAND,
-      Phaser.Math.Clamp(difficulty, 0, 1)
+      Phaser.Math.Clamp(difficulty, 0, 1),
     );
     // Ensure band never goes above the cup rim
     const maxCenter = 1.0 - targetWidth / 2;

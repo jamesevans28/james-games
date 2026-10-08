@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import {
   DynamoDBDocumentClient,
   GetCommand,
@@ -74,7 +75,7 @@ export async function listGameConfigs(opts: { limit?: number; cursor?: string })
       TableName: config.tables.gameConfigs,
       Limit: limit,
       ExclusiveStartKey: decodeCursor(opts.cursor),
-    })
+    }),
   );
   return {
     items: (resp.Items || [])
@@ -89,7 +90,7 @@ export async function getGameConfig(gameId: string) {
     new GetCommand({
       TableName: config.tables.gameConfigs,
       Key: { gameId },
-    })
+    }),
   );
   return normalize(resp.Item as any);
 }
@@ -115,7 +116,7 @@ export async function createGameConfig(input: GameConfigRecord) {
       TableName: config.tables.gameConfigs,
       Item: item,
       ConditionExpression: "attribute_not_exists(gameId)",
-    })
+    }),
   );
   return normalize(item) as GameConfigRecord;
 }
@@ -147,7 +148,7 @@ export async function updateGameConfig(gameId: string, patch: Partial<GameConfig
       ExpressionAttributeValues: values,
       ExpressionAttributeNames: Object.keys(names).length ? names : undefined,
       ConditionExpression: "attribute_exists(gameId)",
-    })
+    }),
   );
 
   return (await getGameConfig(gameId)) as GameConfigRecord;

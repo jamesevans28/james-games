@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import { DynamoDBDocumentClient, GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
 import { clampTzOffset, localDayFor, nextStreak } from "./streakRules.js";
+import { isConditionalCheckFailed } from "../lib/errors.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
@@ -21,7 +23,7 @@ export async function getStreakData(userId: string): Promise<StreakData> {
       TableName: config.tables.users,
       Key: { userId },
       ProjectionExpression: "currentStreak, longestStreak, lastLoginDate, streakUpdatedAt",
-    })
+    }),
   );
 
   const item = result.Item || {};
@@ -41,7 +43,7 @@ export async function getStreakData(userId: string): Promise<StreakData> {
 export async function recordDailyLogin(
   userId: string,
   tzOffsetMinutes: unknown,
-  nowMs: number = Date.now()
+  nowMs: number = Date.now(),
 ): Promise<{ streak: StreakData; extended: boolean; isNewStreak: boolean }> {
   const today = localDayFor(nowMs, clampTzOffset(tzOffsetMinutes));
   const current = await getStreakData(userId);
@@ -67,10 +69,10 @@ export async function recordDailyLogin(
           ":u": now,
           ...(current.streakUpdatedAt ? { ":prev": current.streakUpdatedAt } : {}),
         },
-      })
+      }),
     );
-  } catch (err: any) {
-    if (err?.name !== "ConditionalCheckFailedException") throw err;
+  } catch (err) {
+    if (!isConditionalCheckFailed(err)) throw err;
     // Another check-in won the race; report the stored state without changes.
     return { streak: await getStreakData(userId), extended: false, isNewStreak: false };
   }

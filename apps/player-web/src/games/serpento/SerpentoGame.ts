@@ -1,7 +1,9 @@
+/* eslint-disable no-restricted-imports -- TODO T5.10: legacy game code, cleaned when it moves onto the Game SDK */
 import Phaser from "phaser";
 import { trackGameStart } from "../../utils/analytics";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { getBest, setBest } from "../../utils/bestScore";
+import { dpad, OPPOSITE, swipe, type Direction4 } from "../../platform/input";
 
 const GAME_ID = "serpento";
 const GRID_SIZE = 30; // Size of each grid cell in pixels
@@ -33,11 +35,6 @@ export default class SerpentoGame extends Phaser.Scene {
   private foodSprite!: Phaser.GameObjects.Sprite;
   private scoreText!: Phaser.GameObjects.Text;
   private bestText!: Phaser.GameObjects.Text;
-
-  private leftButton!: Phaser.GameObjects.Container;
-  private rightButton!: Phaser.GameObjects.Container;
-  private leftButtonBg?: Phaser.GameObjects.Arc;
-  private rightButtonBg?: Phaser.GameObjects.Arc;
 
   constructor() {
     super("SerpentoGame");
@@ -89,9 +86,8 @@ export default class SerpentoGame extends Phaser.Scene {
     // UI
     this.createUI(width, height);
 
-    // Controls
-    this.createControls(width, height);
-    this.registerGlobalControls();
+    // Controls: swipe anywhere, or the d-pad under the board; arrows/WASD on desktop.
+    this.createControls();
 
     // Start movement timer
     this.startMoveTimer();
@@ -100,7 +96,6 @@ export default class SerpentoGame extends Phaser.Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.moveTimer?.remove();
-      this.input.off("pointerdown", this.handleScreenTap, this);
     });
   }
 
@@ -138,7 +133,7 @@ export default class SerpentoGame extends Phaser.Scene {
         this.gridOffsetX + x * GRID_SIZE,
         this.gridOffsetY,
         this.gridOffsetX + x * GRID_SIZE,
-        this.gridOffsetY + gridHeight
+        this.gridOffsetY + gridHeight,
       );
     }
     for (let y = 0; y <= GRID_ROWS; y++) {
@@ -146,7 +141,7 @@ export default class SerpentoGame extends Phaser.Scene {
         this.gridOffsetX,
         this.gridOffsetY + y * GRID_SIZE,
         this.gridOffsetX + gridWidth,
-        this.gridOffsetY + y * GRID_SIZE
+        this.gridOffsetY + y * GRID_SIZE,
       );
     }
     gridGraphics.setDepth(0);
@@ -178,110 +173,29 @@ export default class SerpentoGame extends Phaser.Scene {
       .setDepth(10);
   }
 
-  private createControls(width: number, height: number): void {
-    const buttonY = height - 80;
-    const buttonSize = 70;
-    const spacing = 100;
-
-    // Left button
-    const leftX = width / 2 - spacing;
-    this.leftButton = this.add.container(leftX, buttonY).setDepth(10);
-
-    const leftBg = this.add.circle(0, 0, buttonSize / 2, 0x8fbc4b, 1);
-    leftBg.setStrokeStyle(4, 0x6b9c3d);
-
-    const leftArrow = this.add.graphics();
-    leftArrow.fillStyle(0xffffff, 1);
-    leftArrow.fillTriangle(-15, 0, 15, -12, 15, 12);
-
-    this.leftButton.add([leftBg, leftArrow]);
-    this.leftButtonBg = leftBg;
-    this.leftButton.setSize(buttonSize, buttonSize);
-    this.leftButton.setInteractive({ useHandCursor: true });
-
-    this.leftButton.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      pointer.event?.stopPropagation?.();
-      this.handleDirectionInput("left");
+  private createControls(): void {
+    swipe(this, { onSwipe: (dir) => this.steer(dir) });
+    dpad(this, {
+      centerX: this.scale.width / 2,
+      bottomPadding: 16,
+      buttonSize: 56,
+      spacing: 60,
+      alpha: 0.95,
+      mode: "sticky",
+      keyboard: false, // swipe() already maps the arrow keys
+      onDirectionChange: (dir) => {
+        if (dir) this.steer(dir);
+      },
+      enabled: () => !this.gameOver,
     });
-
-    // Right button
-    const rightX = width / 2 + spacing;
-    this.rightButton = this.add.container(rightX, buttonY).setDepth(10);
-
-    const rightBg = this.add.circle(0, 0, buttonSize / 2, 0x8fbc4b, 1);
-    rightBg.setStrokeStyle(4, 0x6b9c3d);
-
-    const rightArrow = this.add.graphics();
-    rightArrow.fillStyle(0xffffff, 1);
-    rightArrow.fillTriangle(15, 0, -15, -12, -15, 12);
-
-    this.rightButton.add([rightBg, rightArrow]);
-    this.rightButtonBg = rightBg;
-    this.rightButton.setSize(buttonSize, buttonSize);
-    this.rightButton.setInteractive({ useHandCursor: true });
-
-    this.rightButton.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-      pointer.event?.stopPropagation?.();
-      this.handleDirectionInput("right");
-    });
-
-    // Keyboard controls
-    this.input.keyboard?.on("keydown-LEFT", () => this.handleDirectionInput("left"));
-    this.input.keyboard?.on("keydown-RIGHT", () => this.handleDirectionInput("right"));
-    this.input.keyboard?.on("keydown-A", () => this.handleDirectionInput("left"));
-    this.input.keyboard?.on("keydown-D", () => this.handleDirectionInput("right"));
   }
 
-  private registerGlobalControls(): void {
-    this.input.on("pointerdown", this.handleScreenTap, this);
-  }
-
-  private handleScreenTap(pointer: Phaser.Input.Pointer): void {
+  /** Turn to face `dir`, but never straight back into the snake's own neck. */
+  private steer(dir: Direction4): void {
     if (this.gameOver) return;
-    const midpoint = this.scale.width / 2;
-    if (pointer.x <= midpoint) {
-      this.handleDirectionInput("left");
-    } else {
-      this.handleDirectionInput("right");
-    }
-  }
-
-  private handleDirectionInput(direction: "left" | "right"): void {
-    if (this.gameOver) return;
-    if (direction === "left") {
-      this.turnLeft();
-      this.pulseButton(this.leftButtonBg);
-    } else {
-      this.turnRight();
-      this.pulseButton(this.rightButtonBg);
-    }
-  }
-
-  private pulseButton(target?: Phaser.GameObjects.Arc): void {
-    if (!target) return;
-    this.tweens.add({
-      targets: target,
-      scaleX: 0.9,
-      scaleY: 0.9,
-      duration: 80,
-      yoyo: true,
-    });
-  }
-
-  private turnLeft(): void {
-    const current = this.direction;
-    if (current === "UP") this.nextDirection = "LEFT";
-    else if (current === "LEFT") this.nextDirection = "DOWN";
-    else if (current === "DOWN") this.nextDirection = "RIGHT";
-    else if (current === "RIGHT") this.nextDirection = "UP";
-  }
-
-  private turnRight(): void {
-    const current = this.direction;
-    if (current === "UP") this.nextDirection = "RIGHT";
-    else if (current === "RIGHT") this.nextDirection = "DOWN";
-    else if (current === "DOWN") this.nextDirection = "LEFT";
-    else if (current === "LEFT") this.nextDirection = "UP";
+    const current = this.direction.toLowerCase() as Direction4;
+    if (dir === OPPOSITE[current]) return;
+    this.nextDirection = dir.toUpperCase() as Direction;
   }
 
   private startMoveTimer(): void {
@@ -431,7 +345,7 @@ export default class SerpentoGame extends Phaser.Scene {
         screenY + 1,
         GRID_SIZE - 2,
         GRID_SIZE - 2,
-        3
+        3,
       );
     }
 

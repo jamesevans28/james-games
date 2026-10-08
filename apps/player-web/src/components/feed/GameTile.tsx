@@ -13,7 +13,6 @@ type GameTileProps = {
   onShare?: (game: GameMeta) => void;
 };
 
-
 export default function GameTile({ game, rating, badge, onShare }: GameTileProps) {
   const navigate = useNavigate();
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
@@ -88,7 +87,7 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
   }, [game, onShare]);
 
   const handlePlayClick = () => {
-    navigate(`/games/${game.id}`);
+    void navigate(`/games/${game.id}`);
   };
 
   const dateLabel = formatDateLabel();
@@ -207,9 +206,7 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
           {!descriptionExpanded ? (
             <p className="text-sm text-ink-2 line-clamp-1">
               {game.description || "Tap to play this game!"}{" "}
-              <span className="text-brand group-hover:text-sky transition-colors">
-                more
-              </span>
+              <span className="text-brand group-hover:text-sky transition-colors">more</span>
             </p>
           ) : (
             <div className="space-y-3">

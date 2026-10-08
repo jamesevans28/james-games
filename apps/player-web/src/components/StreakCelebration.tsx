@@ -283,7 +283,7 @@ export default function StreakCelebration() {
     if (!initialized || !firebaseUser || !user) return;
     if (user.isAnonymous) return; // Don't track streaks for anonymous users
 
-    performCheckin();
+    void performCheckin();
   }, [initialized, firebaseUser, user, performCheckin]);
 
   const handleClose = useCallback(() => {
@@ -307,7 +307,7 @@ export default function StreakCelebration() {
 
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(15)].map((_, i) => (
+        {Array.from({ length: 15 }, (_, i) => (
           <div
             key={i}
             className="absolute animate-float"
@@ -363,15 +363,11 @@ export default function StreakCelebration() {
 
           {/* Longest streak info */}
           {streakData.longestStreak > streakData.currentStreak && (
-            <p className="text-sm text-ink-3 mb-4">
-              Your best: {streakData.longestStreak} days
-            </p>
+            <p className="text-sm text-ink-3 mb-4">Your best: {streakData.longestStreak} days</p>
           )}
           {streakData.longestStreak === streakData.currentStreak &&
             streakData.currentStreak >= 3 && (
-              <p className="text-sm text-brand font-bold mb-4 animate-pulse">
-                New personal best!
-              </p>
+              <p className="text-sm text-brand font-bold mb-4 animate-pulse">New personal best!</p>
             )}
 
           {/* Close button */}

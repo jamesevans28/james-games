@@ -19,7 +19,10 @@ export function getLastPlayedGames(): string[] {
 export function recordGamePlayed(gameId: string): void {
   try {
     const current = getLastPlayedGames().filter((id) => id !== gameId);
-    localStorage.setItem(LAST_PLAYED_KEY, JSON.stringify([gameId, ...current].slice(0, MAX_LAST_PLAYED)));
+    localStorage.setItem(
+      LAST_PLAYED_KEY,
+      JSON.stringify([gameId, ...current].slice(0, MAX_LAST_PLAYED)),
+    );
   } catch {
     // localStorage not available
   }

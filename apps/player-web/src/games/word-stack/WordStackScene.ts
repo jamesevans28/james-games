@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/require-await, no-restricted-imports -- TODO T5.9: legacy game code, cleaned when it moves onto the Game SDK */
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import {
   createOnScreenKeyboard,
   type OnScreenKeyboardInstance,
-} from "../../game/ui/onScreenKeyboard";
+} from "../../platform/input/onScreenKeyboard";
 import { getFiveLetterWordSet } from "../../game/words/dictionary";
 import { SCRABBLE_LETTER_SCORES, scoreScrabbleWord } from "../../game/words/scrabble";
 
@@ -616,7 +617,7 @@ export default class WordStackScene extends Phaser.Scene {
 
       const unconstrainedCandidates = CONSONANTS.filter((l) => !exclude.has(l));
       const c = pickRandom(
-        constrainedCandidates.length > 0 ? constrainedCandidates : unconstrainedCandidates
+        constrainedCandidates.length > 0 ? constrainedCandidates : unconstrainedCandidates,
       );
 
       exclude.add(c);
@@ -636,7 +637,7 @@ export default class WordStackScene extends Phaser.Scene {
     const createOfferTile = (
       offer: { type: OfferedLetterType; letter: string },
       x: number,
-      y: number
+      y: number,
     ) => {
       const container = this.add.container(x, y);
       const fill = offer.type === "vowel" ? 0x34d399 : 0x60a5fa;
@@ -799,7 +800,7 @@ export default class WordStackScene extends Phaser.Scene {
 
     const unconstrainedCandidates = pool.filter((l) => !exclude.has(l));
     offered.letter = pickRandom(
-      constrainedCandidates.length > 0 ? constrainedCandidates : unconstrainedCandidates
+      constrainedCandidates.length > 0 ? constrainedCandidates : unconstrainedCandidates,
     );
     offered.text.setText(offered.letter);
     offered.scoreText.setText(String(SCRABBLE_LETTER_SCORES[offered.letter] ?? 0));

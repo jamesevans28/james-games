@@ -14,7 +14,7 @@ export function UsersPage() {
 
   const queryKey = useMemo(
     () => ["admin-users", currentCursor, debouncedSearch],
-    [currentCursor, debouncedSearch]
+    [currentCursor, debouncedSearch],
   );
 
   const usersQuery = useQuery<PaginatedResponse<AdminUserSummary>>({

@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import type { Request, Response } from "express";
-import { config } from "../config/index.js";
 import userService from "../services/userService.js";
 import {
   countFollowers,
@@ -11,20 +11,18 @@ import {
 import { getRecentGamesForUser } from "../services/userGameStatsService.js";
 import { toPublicProfile } from "../services/publicProfile.js";
 import { sendServerError } from "../lib/http.js";
+import { errorInfo } from "../lib/errors.js";
 
 export async function me(req: Request, res: Response) {
   if (!req.user?.userId) return res.json({ user: null });
   try {
-    const userId = (req as any).user.userId as string;
+    const userId = req.user.userId;
     const profile = await userService.getProfile(userId);
     res.json({
       user: {
         userId,
-        email: (profile?.email ?? (req as any).user?.email) || null,
-        emailProvided:
-          profile?.emailProvided ??
-          (req as any).user?.emailProvided ??
-          false,
+        email: (profile?.email ?? req.user?.email) || null,
+        emailProvided: profile?.emailProvided ?? false,
         screenName: profile.screenName,
         avatar: profile.avatar,
         preferences: profile.preferences,
@@ -40,7 +38,7 @@ export async function me(req: Request, res: Response) {
         lastLoginDate: profile.lastLoginDate,
       },
     });
-  } catch (e: any) {
+  } catch (e) {
     sendServerError(res, "users_request_failed", e);
   }
 }
@@ -56,8 +54,8 @@ export async function changeScreenName(req: Request, res: Response) {
   try {
     const assigned = await userService.changeScreenName(userId, screenName.trim());
     res.json({ ok: true, screenName: assigned });
-  } catch (e: any) {
-    res.status(400).json({ error: e?.message || "unable to update screen name" });
+  } catch (e) {
+    res.status(400).json({ error: errorInfo(e).message || "unable to update screen name" });
   }
 }
 
@@ -66,15 +64,15 @@ export async function updatePreferences(req: Request, res: Response) {
   try {
     await userService.updatePreferencesForUser(userId, req.body || {});
     res.json({ ok: true });
-  } catch (e: any) {
-    res.status(400).json({ error: e?.message || "update failed" });
+  } catch (e) {
+    res.status(400).json({ error: errorInfo(e).message || "update failed" });
   }
 }
 
 // Unified user settings update endpoint (currently only supports screenName).
 // PATCH /users/settings { screenName: string }
 export async function updateSettings(req: Request, res: Response) {
-  const userId = req.user?.userId as string | undefined;
+  const userId = req.user?.userId;
   if (!userId) return res.status(401).json({ error: "unauthorized" });
   const { screenName } = (req.body || {}) as { screenName?: string };
   if (!screenName || screenName.trim().length < 2) {
@@ -83,8 +81,8 @@ export async function updateSettings(req: Request, res: Response) {
   try {
     const assigned = await userService.changeScreenName(userId, screenName.trim());
     res.json({ ok: true, screenName: assigned });
-  } catch (e: any) {
-    res.status(400).json({ error: e?.message || "update failed" });
+  } catch (e) {
+    res.status(400).json({ error: errorInfo(e).message || "update failed" });
   }
 }
 
@@ -104,7 +102,7 @@ export async function getPublicProfile(req: Request, res: Response) {
         listFollowers(targetUserId),
         getRecentGamesForUser(targetUserId, 10),
       ]);
-    const viewerId = req.user?.userId as string | undefined;
+    const viewerId = req.user?.userId;
     let viewerFollows = false;
     if (viewerId && viewerId !== targetUserId) {
       viewerFollows = await isFollowing(viewerId, targetUserId);
@@ -130,7 +128,7 @@ export async function getPublicProfile(req: Request, res: Response) {
       isSelf: viewerId === targetUserId,
       isFollowing: viewerFollows,
     });
-  } catch (err: any) {
+  } catch (err) {
     sendServerError(res, "users_request_failed", err);
   }
 }

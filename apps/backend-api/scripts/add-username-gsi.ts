@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- TODO T6.4: one-off DynamoDB script, deleted after the Postgres migration */
 /**
  * Script to add username-index GSI to the users table
  * This GSI is required for username+PIN login to work
@@ -53,7 +54,7 @@ async function addUsernameGSI() {
             },
           },
         ],
-      })
+      }),
     );
 
     console.log("✅ GSI creation initiated! It may take a few minutes to become active.");

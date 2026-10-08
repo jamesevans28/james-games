@@ -8,7 +8,8 @@ export function LoginPage() {
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const redirectPath = (location.state as any)?.from?.pathname || "/users";
+  const redirectPath =
+    (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || "/users";
 
   if (!loading && user) {
     return <Navigate to={redirectPath} replace />;
@@ -19,9 +20,11 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await signInWithGoogle();
-      navigate(redirectPath, { replace: true });
-    } catch (err: any) {
-      setError(err?.message || "Sign in failed. Make sure you have admin access.");
+      await navigate(redirectPath, { replace: true });
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Sign in failed. Make sure you have admin access.",
+      );
     } finally {
       setSubmitting(false);
     }

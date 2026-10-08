@@ -19,11 +19,6 @@
       "Bash(git add *)",
       "Bash(git commit *)"
     ],
-    "ask": [
-      "Bash(git push *)",
-      "Bash(aws *)",
-      "Bash(supabase *)",
-      "Bash(npx supabase *)"
-    ]
+    "ask": ["Bash(git push *)", "Bash(aws *)", "Bash(supabase *)", "Bash(npx supabase *)"]
   }
 }

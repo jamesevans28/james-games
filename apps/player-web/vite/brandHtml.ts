@@ -51,7 +51,9 @@ function analytics(id: string): string {
 export function brandHtml(analyticsId: string | undefined): Plugin {
   const values: Record<string, string> = {
     ...Object.fromEntries(
-      Object.entries(brand).filter((entry): entry is [string, string] => typeof entry[1] === "string")
+      Object.entries(brand).filter(
+        (entry): entry is [string, string] => typeof entry[1] === "string",
+      ),
     ),
     makersLine: makersLine(brand.makers),
   };

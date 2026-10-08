@@ -14,6 +14,7 @@ import { useAuth } from "../../context/FirebaseAuthProvider";
 import ShareFollowCodeCard from "../../components/ShareFollowCodeCard";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { OfflineBanner } from "../../components/OfflineBanner";
+import { errorMessage } from "../../utils/errorCode";
 
 const STATUS_LABELS: Record<PresenceStatus, string> = {
   looking_for_game: "Online",
@@ -49,7 +50,7 @@ export default function FollowersPage() {
   const [manualStatus, setManualStatus] = useState<"success" | "error" | null>(null);
   const [manualBusy, setManualBusy] = useState(false);
   const [confirmUnfollow, setConfirmUnfollow] = useState<{ userId: string; name: string } | null>(
-    null
+    null,
   );
   const { user } = useAuth();
   const { isOnline } = useOnlineStatus();
@@ -72,11 +73,11 @@ export default function FollowersPage() {
     try {
       const summary = await fetchFollowersSummary();
       setData(summary);
-    } catch (err: any) {
+    } catch (err) {
       if (!navigator.onLine) {
         setError("You're offline. Connect to view followers.");
       } else {
-        setError(err?.message || "Failed to load followers");
+        setError(errorMessage(err, "Failed to load followers"));
       }
     } finally {
       setLoading(false);
@@ -121,7 +122,7 @@ export default function FollowersPage() {
       }
       return base;
     },
-    [gamesById]
+    [gamesById],
   );
 
   const handleUnfollow = async (userId: string) => {
@@ -130,8 +131,8 @@ export default function FollowersPage() {
       await unfollowUserApi(userId);
       setConfirmUnfollow(null);
       await refresh();
-    } catch (err: any) {
-      setError(err?.message || "Unable to unfollow right now");
+    } catch (err) {
+      setError(errorMessage(err, "Unable to unfollow right now"));
     } finally {
       setActionUser(null);
     }
@@ -142,8 +143,8 @@ export default function FollowersPage() {
     try {
       await followUserApi(userId);
       await refresh();
-    } catch (err: any) {
-      setError(err?.message || "Unable to follow right now");
+    } catch (err) {
+      setError(errorMessage(err, "Unable to follow right now"));
     } finally {
       setActionUser(null);
     }
@@ -165,8 +166,8 @@ export default function FollowersPage() {
       setManualStatus("success");
       setCodeInput("");
       await refresh();
-    } catch (err: any) {
-      setManualMessage(err?.message || "Unable to follow that code");
+    } catch (err) {
+      setManualMessage(errorMessage(err, "Unable to follow that code"));
       setManualStatus("error");
     } finally {
       setManualBusy(false);
@@ -196,8 +197,8 @@ export default function FollowersPage() {
           const presenceText = describePresence(edge.presence);
           const levelText = edge.level ? `Level ${edge.level}` : null;
           const lastOnline = formatLastOnline(edge.lastOnline ?? edge.presence?.updatedAt);
-          const displayName = edge.targetScreenName ?? (edge as any).screenName ?? "Player";
-          const avatar = edge.targetAvatar ?? (edge as any).avatar ?? 1;
+          const displayName = edge.targetScreenName ?? edge.screenName ?? "Player";
+          const avatar = edge.targetAvatar ?? edge.avatar ?? 1;
           const profileId = edge.targetUserId ?? edge.userId;
           return (
             <li
@@ -360,9 +361,7 @@ export default function FollowersPage() {
                 key={tab.id}
                 type="button"
                 className={`flex-1 px-4 py-2 text-sm font-bold rounded-full transition ${
-                  anchor === tab.id
-                    ? "bg-card text-brand shadow-card"
-                    : "text-ink-2"
+                  anchor === tab.id ? "bg-card text-brand shadow-card" : "text-ink-2"
                 }`}
                 onClick={() => handleTabChange(tab.id)}
               >
@@ -382,9 +381,7 @@ export default function FollowersPage() {
             onClick={() => setConfirmUnfollow(null)}
           />
           <div className="relative bg-card rounded-3xl p-6 max-w-sm mx-4 shadow-card-hover border border-line">
-            <h3 className="text-lg font-bold text-ink mb-2">
-              Unfollow {confirmUnfollow.name}?
-            </h3>
+            <h3 className="text-lg font-bold text-ink mb-2">Unfollow {confirmUnfollow.name}?</h3>
             <p className="text-sm text-ink-2 mb-4">
               Are you sure you want to unfollow this player? You can follow them again anytime.
             </p>

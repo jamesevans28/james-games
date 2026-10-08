@@ -18,16 +18,16 @@ The backend remains on AWS Lambda + DynamoDB. Firebase is used only for authenti
 
 Goal: the Google and Apple sign-in screens say **Games4James**, and the sign-in redirect goes through `auth.games4james.com` rather than `flingo-fun.firebaseapp.com`. Nothing here needs a secret in the repo.
 
-| Setting | Value |
-|---|---|
-| Firebase project | `flingo-fun` |
-| Site origin | `https://games4james.com` |
-| Custom auth domain | `auth.games4james.com` |
-| OAuth handler URL | `https://auth.games4james.com/__/auth/handler` |
-| App name on consent screen | `Games4James` |
-| App logo | `apps/player-web/public/brand/icon-512.png` (upload the file) |
-| Home page | `https://games4james.com` |
-| Privacy policy | `https://games4james.com/privacy` (placeholder page, live after the next deploy) |
+| Setting                    | Value                                                                            |
+| -------------------------- | -------------------------------------------------------------------------------- |
+| Firebase project           | `flingo-fun`                                                                     |
+| Site origin                | `https://games4james.com`                                                        |
+| Custom auth domain         | `auth.games4james.com`                                                           |
+| OAuth handler URL          | `https://auth.games4james.com/__/auth/handler`                                   |
+| App name on consent screen | `Games4James`                                                                    |
+| App logo                   | `apps/player-web/public/brand/icon-512.png` (upload the file)                    |
+| Home page                  | `https://games4james.com`                                                        |
+| Privacy policy             | `https://games4james.com/privacy` (placeholder page, live after the next deploy) |
 
 ### 1. Authorised domains (2 minutes)
 
@@ -54,8 +54,8 @@ Firebase only serves its sign-in helper pages (`/__/auth/...`) from Hosting, so 
 
 [Google Cloud console](https://console.cloud.google.com/) → pick project `flingo-fun` → **APIs & Services**.
 
-1. **OAuth consent screen** (or *Google Auth Platform → Branding*): app name `Games4James`, user support email (yours), logo `icon-512.png`, home page `https://games4james.com`, privacy policy `https://games4james.com/privacy`, authorised domain `games4james.com`. Save.
-2. **Credentials** → the OAuth 2.0 client named *Web client (auto created by Google Service)*:
+1. **OAuth consent screen** (or _Google Auth Platform → Branding_): app name `Games4James`, user support email (yours), logo `icon-512.png`, home page `https://games4james.com`, privacy policy `https://games4james.com/privacy`, authorised domain `games4james.com`. Save.
+2. **Credentials** → the OAuth 2.0 client named _Web client (auto created by Google Service)_:
    - Authorised JavaScript origins: add `https://games4james.com` and `https://auth.games4james.com`.
    - Authorised redirect URIs: add `https://auth.games4james.com/__/auth/handler`. Keep the existing `flingo-fun.firebaseapp.com` one.
    - Save.

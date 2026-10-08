@@ -2,8 +2,9 @@
  * Generate sitemap.xml, robots.txt, game-meta.json and one static HTML page per
  * game (served to link-preview bots by infra/cloudfront/bot-rewrite.js).
  *
- * Brand values come from apps/player-web/src/config/brand.json. Game metadata is
- * regex-parsed from the registry until Phase 4 gives every game a manifest.
+ * Brand values come from apps/player-web/src/config/brand.json; games come from
+ * public/game-meta.json, written from the manifests by scripts/export-manifests.mts
+ * (run that first; `npm run generate-seo -w apps/player-web` does both).
  *
  * Run: npm run generate-seo -w apps/player-web   (also runs before `vite build`)
  */
@@ -11,11 +12,9 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const gamesIndex = path.join(root, "apps/player-web/src/games/index.ts");
-const seoKeywordsPath = path.join(root, "apps/player-web/src/utils/seoKeywords.ts");
 const publicDir = path.join(root, "apps/player-web/public");
 const brandJson = JSON.parse(
-  fs.readFileSync(path.join(root, "apps/player-web/src/config/brand.json"), "utf8")
+  fs.readFileSync(path.join(root, "apps/player-web/src/config/brand.json"), "utf8"),
 );
 
 await fs.promises.mkdir(publicDir, { recursive: true });
@@ -34,60 +33,24 @@ const jsonForScript = (data) => JSON.stringify(data, null, 2).replace(/</g, "\\u
 const makersLine = (makers) =>
   makers.length <= 1 ? makers.join("") : `${makers.slice(0, -1).join(", ")} & ${makers.at(-1)}`;
 
-// Parse games registry
-const src = await fs.promises.readFile(gamesIndex, "utf8");
-
-const gameEntries = [];
-const gameBlocks = src.split(/\{\s*id:\s*"/);
-const registryCount = (src.match(/^\s*load:\s*async/gm) || []).length;
-
-for (let i = 1; i < gameBlocks.length; i++) {
-  const block = gameBlocks[i];
-  const idMatch = block.match(/^([^"]+)"/);
-  if (!idMatch) continue;
-
-  const id = idMatch[1];
-  const titleMatch = block.match(/title:\s*"([^"]+)"/);
-  const descMatch = block.match(/description:\s*"([^"]+)"/);
-  const createdMatch = block.match(/createdAt:\s*"([^"]+)"/);
-  const updatedMatch = block.match(/updatedAt:\s*"([^"]+)"/);
-  const thumbnailMatch = block.match(/thumbnail:\s*"([^"]+)"/);
-  const hidden = /betaOnly:\s*true/.test(block) || /status:\s*"inactive"/.test(block);
-
-  gameEntries.push({
-    id,
-    hidden,
-    title: titleMatch ? titleMatch[1] : id,
-    description: descMatch ? descMatch[1] : "",
-    createdAt: createdMatch ? createdMatch[1] : now,
-    updatedAt: updatedMatch ? updatedMatch[1] : createdMatch ? createdMatch[1] : now,
-    thumbnail: thumbnailMatch ? thumbnailMatch[1] : null,
-  });
+// Games from the exported manifests. Only `active` games are public.
+const manifests = JSON.parse(
+  await fs.promises.readFile(path.join(publicDir, "game-meta.json"), "utf8"),
+);
+if (!Array.isArray(manifests) || manifests.length === 0) {
+  throw new Error("public/game-meta.json is empty: run scripts/export-manifests.mts first");
 }
-
-// The regex parse is fragile: fail loudly if it missed a registry entry.
-if (gameEntries.length === 0 || gameEntries.length !== registryCount) {
-  throw new Error(
-    `Parsed ${gameEntries.length} games but the registry has ${registryCount} load() entries`
-  );
-}
-const publicGames = gameEntries.filter((g) => !g.hidden);
-console.log(`Found ${gameEntries.length} games, ${publicGames.length} public`);
-
-// Per-game SEO descriptions from GAME_SEO_META in seoKeywords.ts.
-const seoMeta = {};
-{
-  const seoSrc = await fs.promises.readFile(seoKeywordsPath, "utf8");
-  const block = seoSrc.match(/GAME_SEO_META:\s*Record<string,\s*GameSeoMeta>\s*=\s*\{([\s\S]*?)\n\};/);
-  if (!block) throw new Error("GAME_SEO_META not found in seoKeywords.ts");
-  // Keys are either quoted ("word-stack") or bare (snapadile).
-  const entry = /^ {2}(?:"([a-z0-9-]+)"|([a-z0-9]+)): \{[\s\S]*?shortDescription:\s*"([^"]+)"/gm;
-  for (const m of block[1].matchAll(entry)) {
-    seoMeta[m[1] ?? m[2]] = { shortDescription: m[3] };
-  }
-  const missing = publicGames.filter((g) => !seoMeta[g.id]).map((g) => g.id);
-  if (missing.length) console.warn(`No GAME_SEO_META shortDescription for: ${missing.join(", ")}`);
-}
+const publicGames = manifests
+  .filter((m) => m.status === "active")
+  .map((m) => ({
+    id: m.id,
+    title: m.title,
+    description: m.seo?.description || m.description || "",
+    createdAt: m.createdAt || now,
+    updatedAt: m.updatedAt || m.createdAt || now,
+    thumbnail: m.cover || null,
+  }));
+console.log(`Found ${manifests.length} games, ${publicGames.length} active`);
 
 // ============================================================================
 // Generate sitemap.xml
@@ -139,7 +102,7 @@ ${sitemapUrls
     <lastmod>${u.lastmod}</lastmod>
     <changefreq>${u.changefreq}</changefreq>
     <priority>${u.priority}</priority>
-  </url>`
+  </url>`,
   )
   .join("\n")}
 </urlset>`;
@@ -173,26 +136,6 @@ await fs.promises.writeFile(path.join(publicDir, "robots.txt"), robots, "utf8");
 console.log("Generated robots.txt");
 
 // ============================================================================
-// Generate game-meta.json for runtime SEO enhancement
-// ============================================================================
-const gameMeta = publicGames.map((game) => ({
-  id: game.id,
-  title: game.title,
-  description: seoMeta[game.id]?.shortDescription || game.description,
-  thumbnail: game.thumbnail,
-  url: `${domain}/games/${game.id}`,
-  createdAt: game.createdAt,
-  updatedAt: game.updatedAt,
-}));
-
-await fs.promises.writeFile(
-  path.join(publicDir, "game-meta.json"),
-  JSON.stringify(gameMeta, null, 2),
-  "utf8"
-);
-console.log("Generated game-meta.json");
-
-// ============================================================================
 // Static HTML page per game, for link-preview bots and crawlers.
 // infra/cloudfront/bot-rewrite.js serves /games/:id from these for bot user
 // agents; humans who land on /static-games/:id.html are sent to the app.
@@ -207,7 +150,7 @@ const previewImage = (thumbnail) =>
 
 for (const game of publicGames) {
   const url = `${domain}/games/${game.id}`;
-  const desc = seoMeta[game.id]?.shortDescription || game.description || brandJson.description;
+  const desc = game.description || brandJson.description;
   const title = `${game.title} | ${brandJson.name}`;
   const image = previewImage(game.thumbnail);
   const jsonLd = {
@@ -220,7 +163,12 @@ for (const game of publicGames) {
     gamePlatform: ["Web Browser", "Mobile Browser", "PWA"],
     applicationCategory: "Game",
     operatingSystem: "Any",
-    offers: { "@type": "Offer", price: "0", priceCurrency: "AUD", availability: "https://schema.org/InStock" },
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "AUD",
+      availability: "https://schema.org/InStock",
+    },
     author: brandJson.makers.map((name) => ({ "@type": "Person", name })),
     publisher: { "@type": "Organization", name: brandJson.name, url: `${domain}/` },
     datePublished: game.createdAt,
@@ -279,4 +227,6 @@ ${jsonForScript(jsonLd)}
 await fs.promises.rm(path.join(publicDir, "games-index.html"), { force: true });
 
 console.log(`Generated ${publicGames.length} static game pages`);
-console.log(`SEO generation complete: sitemap.xml (${sitemapUrls.length} URLs), robots.txt, game-meta.json, static-games/`);
+console.log(
+  `SEO generation complete: sitemap.xml (${sitemapUrls.length} URLs), robots.txt, static-games/`,
+);

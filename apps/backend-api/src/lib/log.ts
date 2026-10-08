@@ -10,8 +10,22 @@ export type LogValue = string | number | boolean | null | undefined;
 export type LogFields = Record<string, LogValue>;
 
 const IDENTIFYING_KEYS = new Set([
-  "email", "username", "screenname", "displayname", "name", "userid", "uid", "targetuserid",
-  "token", "idtoken", "customtoken", "pin", "pinhash", "password", "phone", "ip",
+  "email",
+  "username",
+  "screenname",
+  "displayname",
+  "name",
+  "userid",
+  "uid",
+  "targetuserid",
+  "token",
+  "idtoken",
+  "customtoken",
+  "pin",
+  "pinhash",
+  "password",
+  "phone",
+  "ip",
 ]);
 
 const EMAIL = /[^\s@"'<>]+@[^\s@"'<>]+\.[^\s@"'<>]+/g;
@@ -30,7 +44,11 @@ export function safeFields(fields: LogFields = {}): LogFields {
 }
 
 export function errorFields(err: unknown): LogFields {
-  if (!err || typeof err !== "object") return err === undefined ? {} : { error: scrub(String(err)) };
+  if (err === undefined) return {};
+  if (err === null || typeof err !== "object") {
+    const text = typeof err === "string" ? err : (JSON.stringify(err) ?? typeof err);
+    return { error: scrub(text) };
+  }
   const e = err as { name?: unknown; code?: unknown; message?: unknown };
   return {
     errorName: typeof e.name === "string" ? e.name : undefined,
@@ -43,6 +61,7 @@ function emit(level: "info" | "warn" | "error", event: string, fields?: LogField
   const line = JSON.stringify({ level, event, ...safeFields(fields), ...errorFields(err) });
   if (level === "error") console.error(line);
   else if (level === "warn") console.warn(line);
+  // eslint-disable-next-line no-console -- this is the logger
   else console.info(line);
 }
 

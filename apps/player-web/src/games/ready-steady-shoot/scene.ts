@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain, no-restricted-imports -- TODO: inactive game (T5.1); clean these up if it is reworked and re-activated */
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { getBest, setBest } from "../../utils/bestScore";
@@ -208,13 +209,13 @@ export default class ReadySteadyShootGame extends Phaser.Scene {
     });
 
     // Overlap through hoop sensor (ball center passes through net area while falling)
-    this.physics.add.overlap(this.ball, this.hoopSensor as any, () => {
+    this.physics.add.overlap(this.ball, this.hoopSensor, () => {
       // Only award score when the ball was previously above the hoop and is now
       // falling through the hoop (prevents scoring from rim/backboard collisions).
       const body = this.ball.body as Phaser.Physics.Arcade.Body;
       if (
         this.state === "flying" &&
-        body.velocity.y! > 0 &&
+        body.velocity.y > 0 &&
         this.ballWasAboveHoop &&
         this.ball.y > this.hoopY
       ) {
@@ -241,7 +242,7 @@ export default class ReadySteadyShootGame extends Phaser.Scene {
       .zone(this.hoopX, this.hoopY - 6, this.rimRadius * 1.4, 12)
       .setOrigin(0.5);
     this.physics.add.existing(this.hoopPassZone, true);
-    this.physics.add.overlap(this.ball, this.hoopPassZone as any, () => {
+    this.physics.add.overlap(this.ball, this.hoopPassZone, () => {
       if (this.state === "flying" && this.ball.body?.velocity.y! > 0) {
         // disable rim colliders so ball can drop through cleanly
         if (this.rimLeftCollider) this.rimLeftCollider.active = false;
@@ -410,7 +411,7 @@ export default class ReadySteadyShootGame extends Phaser.Scene {
     const len = 140;
     const end = new Phaser.Math.Vector2(
       origin.x + Math.cos(this.angleRad) * len,
-      origin.y + Math.sin(this.angleRad) * len
+      origin.y + Math.sin(this.angleRad) * len,
     );
 
     // Blocky arrow body

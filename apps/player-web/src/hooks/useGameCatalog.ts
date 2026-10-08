@@ -66,7 +66,7 @@ interface BackendGameConfig {
   betaOnly?: boolean;
   createdAt?: string;
   updatedAt?: string;
-  metadata?: Record<string, any> | null;
+  metadata?: GameCatalogEntry["metadata"];
 }
 
 interface CatalogCache {
@@ -123,7 +123,7 @@ async function fetchGameConfigs(): Promise<BackendGameConfig[]> {
     const response = await fetch(url.toString());
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-    const data = await response.json();
+    const data = (await response.json()) as { items?: BackendGameConfig[]; nextCursor?: string };
     allConfigs.push(...(data.items || []));
     cursor = data.nextCursor;
   } while (cursor);
@@ -143,16 +143,7 @@ function mergeGameData(bundled: GameMeta, backend?: BackendGameConfig | null): G
 
   // Parse active campaign from metadata
   const now = new Date();
-  const campaigns = backend.metadata?.campaigns as
-    | Array<{
-        id: string;
-        name: string;
-        badge?: string;
-        startDate?: string;
-        endDate?: string;
-        priority?: number;
-      }>
-    | undefined;
+  const campaigns = backend.metadata?.campaigns;
 
   const activeCampaign = campaigns
     ?.filter((c) => {
@@ -170,7 +161,7 @@ function mergeGameData(bundled: GameMeta, backend?: BackendGameConfig | null): G
     // Campaign/promo data
     metadata: backend.metadata,
     featured: backend.metadata?.featured === true,
-    promoText: backend.metadata?.promoText as string | undefined,
+    promoText: backend.metadata?.promoText,
     campaignId: activeCampaign?.id,
     campaignBadge: activeCampaign?.badge,
   };
@@ -226,7 +217,7 @@ export function useGameCatalog(): GameCatalogState {
 
   // Initial fetch
   useEffect(() => {
-    refresh();
+    void refresh();
   }, [refresh]);
 
   // Merge bundled games with backend configs
@@ -240,7 +231,7 @@ export function useGameCatalog(): GameCatalogState {
       if (!bundled) return undefined;
       return mergeGameData(bundled, backendConfigs[id]);
     },
-    [backendConfigs]
+    [backendConfigs],
   );
 
   return {
@@ -258,7 +249,7 @@ export function useGameCatalog(): GameCatalogState {
  */
 export function filterByBetaAccess(
   games: GameCatalogEntry[],
-  isBetaTester: boolean
+  isBetaTester: boolean,
 ): GameCatalogEntry[] {
   return isBetaTester ? games : games.filter((g) => !g.betaOnly);
 }
@@ -268,7 +259,7 @@ export function filterByBetaAccess(
  */
 export function filterByCampaign(
   games: GameCatalogEntry[],
-  campaignId: string
+  campaignId: string,
 ): GameCatalogEntry[] {
   return games.filter((g) => g.campaignId === campaignId);
 }

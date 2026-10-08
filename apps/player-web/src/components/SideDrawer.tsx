@@ -147,12 +147,7 @@ export default function SideDrawer({
                   role="button"
                   aria-pressed="false"
                 >
-                  <svg
-                    className="w-5 h-5 text-brand"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden
-                  >
+                  <svg className="w-5 h-5 text-brand" viewBox="0 0 24 24" fill="none" aria-hidden>
                     <path
                       d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4z"
                       stroke="currentColor"
@@ -271,12 +266,7 @@ export default function SideDrawer({
                   role="button"
                   aria-pressed="false"
                 >
-                  <svg
-                    className="w-5 h-5 text-brand"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden
-                  >
+                  <svg className="w-5 h-5 text-brand" viewBox="0 0 24 24" fill="none" aria-hidden>
                     <path
                       d="M18 15V11a6 6 0 1 0-12 0v4L4.5 18h15z"
                       stroke="currentColor"
@@ -312,11 +302,9 @@ export default function SideDrawer({
               >
                 <ProfileAvatar user={user} size={48} />
                 <div className="min-w-0">
-                  <div className="text-xs text-brand leading-tight font-medium">
-                    Signed in as
-                  </div>
+                  <div className="text-xs text-brand leading-tight font-medium">Signed in as</div>
                   <div className="text-sm font-bold text-ink truncate max-w-[12rem]">
-                    {(user as any)?.screenName || "Player"}
+                    {user?.screenName || "Player"}
                   </div>
                 </div>
               </Link>
@@ -328,7 +316,7 @@ export default function SideDrawer({
                     Playing as guest
                   </div>
                   <div className="text-sm font-bold text-ink truncate max-w-[12rem]">
-                    {(user as any)?.screenName || "Guest"}
+                    {user.screenName || "Guest"}
                   </div>
                 </div>
               </div>

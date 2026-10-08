@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
@@ -98,7 +99,7 @@ async function summarizeUsers(sinceIso: string) {
         TableName: config.tables.users,
         ProjectionExpression: "userId, betaTester, admin, createdAt",
         ExclusiveStartKey: lastKey,
-      })
+      }),
     );
     const items = resp.Items || [];
     for (const item of items) {
@@ -107,7 +108,7 @@ async function summarizeUsers(sinceIso: string) {
       if (item?.admin) admins += 1;
       if (item?.createdAt && item.createdAt >= sinceIso) newUsers += 1;
     }
-    lastKey = resp.LastEvaluatedKey as Record<string, any> | undefined;
+    lastKey = resp.LastEvaluatedKey;
     iterations += 1;
   } while (lastKey && iterations < 500);
 
@@ -140,7 +141,7 @@ async function summarizeActivity(sinceIso: string) {
         ExpressionAttributeNames: { "#g": "gameId" },
         ExpressionAttributeValues: { ":since": sinceIso },
         ExclusiveStartKey: lastKey,
-      })
+      }),
     );
 
     const items = resp.Items || [];
@@ -156,7 +157,7 @@ async function summarizeActivity(sinceIso: string) {
       if (uid) userIds.add(uid);
     }
 
-    lastKey = resp.LastEvaluatedKey as Record<string, any> | undefined;
+    lastKey = resp.LastEvaluatedKey;
     iterations += 1;
   } while (lastKey && iterations < 500);
 
@@ -179,7 +180,7 @@ async function fetchAllGames() {
         gameId: g.gameId,
         title: g.title,
         thumbnail: g.thumbnail ?? null,
-      }))
+      })),
     );
     cursor = resp.nextCursor;
     iterations += 1;
@@ -190,19 +191,19 @@ async function fetchAllGames() {
 function buildRecommendations(
   users: { total: number; betaTesters: number; admins: number; newUsers: number },
   activity: { activeUsers: number; totalPlays7d: number },
-  topGames: Array<{ gameId: string; title: string; plays7d: number; share: number }>
+  topGames: Array<{ gameId: string; title: string; plays7d: number; share: number }>,
 ) {
   const recs: string[] = [];
   if (topGames[0] && topGames[0].share > 0.4) {
     recs.push(
       `${topGames[0].title} accounts for ${(topGames[0].share * 100).toFixed(
-        1
-      )}% of weekly plays — consider featuring another game to balance engagement.`
+        1,
+      )}% of weekly plays — consider featuring another game to balance engagement.`,
     );
   }
   if (activity.activeUsers < Math.max(10, Math.round(users.total * 0.1))) {
     recs.push(
-      "Active users are low versus total audience — schedule a push notification or email campaign."
+      "Active users are low versus total audience — schedule a push notification or email campaign.",
     );
   }
   if (users.betaTesters / Math.max(users.total, 1) < 0.05) {

@@ -5,7 +5,7 @@ import {
   fetchUserProfile,
   followUserApi,
   unfollowUserApi,
-  type ExperienceSummary,
+  type ProfileResponse,
 } from "../../lib/api";
 import { ProfileAvatar } from "../../components/profile";
 import ShareFollowCodeCard from "../../components/ShareFollowCodeCard";
@@ -15,29 +15,7 @@ import { ExperienceBar } from "../../components/ExperienceBar";
 import Seo from "../../components/Seo";
 import { SITE_URL } from "../../utils/seoKeywords";
 import { brand } from "../../config/brand";
-
-interface ProfileResponse {
-  profile: {
-    userId: string;
-    screenName?: string | null;
-    avatar?: number | null;
-    experience?: ExperienceSummary | null;
-    currentStreak?: number;
-  };
-  followingCount: number;
-  followersCount: number;
-  following: Array<{ userId: string; screenName?: string | null; avatar?: number | null }>;
-  followers: Array<{ userId: string; screenName?: string | null; avatar?: number | null }>;
-  recentGames: Array<{
-    userId: string;
-    gameId: string;
-    bestScore?: number;
-    lastScore?: number;
-    lastPlayedAt?: string;
-  }>;
-  isSelf: boolean;
-  isFollowing: boolean;
-}
+import { errorMessage } from "../../utils/errorCode";
 
 export default function ProfilePage() {
   const { userId } = useParams();
@@ -77,21 +55,23 @@ export default function ProfilePage() {
           }
           return;
         }
-        if (!cancelled) setData(res as ProfileResponse);
-      } catch (err: any) {
-        if (err?.message === "user_not_found" || err?.status === 404) {
+        if (!cancelled) setData(res);
+      } catch (err) {
+        const status =
+          err && typeof err === "object" ? (err as { status?: unknown }).status : undefined;
+        if (errorMessage(err, "") === "user_not_found" || status === 404) {
           setNotFound(true);
           setData(null);
         } else if (!navigator.onLine) {
           setError("You're offline. Connect to view this profile.");
         } else {
-          setError(err?.message || "Failed to load profile");
+          setError(errorMessage(err, "Failed to load profile"));
         }
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
-    load();
+    void load();
     return () => {
       cancelled = true;
     };
@@ -112,8 +92,8 @@ export default function ProfilePage() {
         await followUserApi(userId);
         setData({ ...data, isFollowing: true, followersCount: data.followersCount + 1 });
       }
-    } catch (err: any) {
-      setError(err?.message || "Unable to update follow state");
+    } catch (err) {
+      setError(errorMessage(err, "Unable to update follow state"));
     } finally {
       setBusy(false);
     }
@@ -145,9 +125,7 @@ export default function ProfilePage() {
     );
   }
   if (!data) {
-    return (
-      <div className="p-4 text-grape font-medium">{error ?? "Failed to load profile."}</div>
-    );
+    return <div className="p-4 text-grape font-medium">{error ?? "Failed to load profile."}</div>;
   }
 
   const canFollow = !!user && !data.isSelf;

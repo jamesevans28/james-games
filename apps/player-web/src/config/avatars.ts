@@ -23,5 +23,5 @@ export const AVATARS: readonly AvatarDef[] = [
 export function avatarFor(value: unknown): AvatarDef {
   const n = typeof value === "number" ? value : Number(value);
   const index = Number.isInteger(n) && n >= 1 ? (n - 1) % AVATARS.length : 0;
-  return AVATARS[index] ?? AVATARS[0]!;
+  return AVATARS[index] ?? AVATARS[0];
 }

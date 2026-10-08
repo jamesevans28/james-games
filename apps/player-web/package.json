@@ -10,10 +10,10 @@
     "build:no-seo": "vite build",
     "generate-snapadile-assets": "cd ../.. && node scripts/generate-snapadile-assets.mjs",
     "generate-car-crash-assets": "cd ../.. && node scripts/generate-car-crash-assets.mjs",
-    "generate-sitemap": "cd ../.. && node scripts/generate-sitemap.mjs",
-    "generate-seo": "cd ../.. && node scripts/generate-sitemap.mjs",
+    "generate-sitemap": "cd ../.. && tsx scripts/export-manifests.mts && node scripts/generate-sitemap.mjs",
+    "generate-seo": "cd ../.. && tsx scripts/export-manifests.mts && node scripts/generate-sitemap.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
-    "test": "tsx --test \"src/**/*.test.ts\""
+    "test": "vitest run --project player-web --root ../.."
   },
   "dependencies": {
     "firebase": "^13.0.0",
@@ -33,6 +33,7 @@
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "vite": "^8.3.3",
-    "vite-plugin-pwa": "^2.0.0"
+    "vite-plugin-pwa": "^2.0.0",
+    "zod": "^4.6.5"
   }
 }

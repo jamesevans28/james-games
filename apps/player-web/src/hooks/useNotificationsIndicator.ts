@@ -63,7 +63,7 @@ export function useNotificationsIndicator() {
       if (cancelled) return;
       await checkForUnread();
     };
-    run();
+    void run();
     let interval: number | null = null;
     if (typeof window !== "undefined" && user) {
       interval = window.setInterval(() => {

@@ -9,7 +9,7 @@
     "dev": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/dev-server.ts",
     "seed:game-configs": "node ./scripts/seed-game-configs-standalone.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "tsx --test \"src/**/*.test.ts\""
+    "test": "vitest run --project backend-api --root ../.."
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1147.0",

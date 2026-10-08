@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-redundant-type-constituents, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 // Firebase Authentication Controller
 // Handles auth flows for: Anonymous, Username+PIN, and Linked (social/email) accounts
 import type { Request, Response } from "express";
@@ -12,7 +13,7 @@ import {
   updateFirebaseUserEmail,
   checkEmailVerified,
 } from "../services/firebaseAuthService.js";
-import { putUser, getUser } from "../services/dynamoService.js";
+import { getUser } from "../services/dynamoService.js";
 import { createUniqueScreenName, generatePlayfulName } from "../services/userService.js";
 import { isUsernameTakenByOther } from "../services/usernamePolicy.js";
 import {
@@ -25,6 +26,7 @@ import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
 import { log } from "../lib/log.js";
 import { sendServerError } from "../lib/http.js";
+import { errorInfo } from "../lib/errors.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
@@ -123,7 +125,7 @@ export async function registerWithUsername(req: Request, res: Response) {
       screenName: assignedScreenName,
       accountType: "username_pin",
     });
-  } catch (e: any) {
+  } catch (e) {
     log.error("register_username_failed", undefined, e);
     return sendServerError(res, "auth_registration_failed", e);
   }
@@ -194,7 +196,7 @@ export async function loginWithUsername(req: Request, res: Response) {
       screenName: user.screenName,
       accountType: user.accountType || "username_pin",
     });
-  } catch (e: any) {
+  } catch (e) {
     log.error("login_username_failed", undefined, e);
     return sendServerError(res, "auth_login_failed", e);
   }
@@ -250,7 +252,7 @@ export async function registerAnonymous(req: Request, res: Response) {
       accountType: "anonymous",
       isNew: true,
     });
-  } catch (e: any) {
+  } catch (e) {
     log.error("register_anonymous_failed", undefined, e);
     return sendServerError(res, "auth_registration_failed", e);
   }
@@ -301,7 +303,7 @@ export async function linkProvider(req: Request, res: Response) {
       emailVerified,
       accountType: "linked",
     });
-  } catch (e: any) {
+  } catch (e) {
     log.error("link_provider_failed", undefined, e);
     return sendServerError(res, "auth_link_provider_failed", e);
   }
@@ -355,11 +357,11 @@ export async function changePin(req: Request, res: Response) {
           ":ph": newPinHash,
           ":u": new Date().toISOString(),
         },
-      })
+      }),
     );
 
     return res.json({ ok: true });
-  } catch (e: any) {
+  } catch (e) {
     log.error("change_pin_failed", undefined, e);
     return sendServerError(res, "auth_change_pin_failed", e);
   }
@@ -400,19 +402,19 @@ export async function addEmail(req: Request, res: Response) {
           ":ev": false,
           ":u": new Date().toISOString(),
         },
-      })
+      }),
     );
 
     return res.json({ ok: true, email, emailVerified: false });
-  } catch (e: any) {
+  } catch (e) {
     log.error("add_email_failed", undefined, e);
     // Handle specific Firebase errors
-    if (e.code === "auth/email-already-exists") {
+    if (errorInfo(e).code === "auth/email-already-exists") {
       return res
         .status(409)
         .json({ error: "This email is already associated with another account" });
     }
-    if (e.code === "auth/invalid-email") {
+    if (errorInfo(e).code === "auth/invalid-email") {
       return res.status(400).json({ error: "Invalid email address format" });
     }
     return sendServerError(res, "auth_add_email_failed", e);
@@ -444,12 +446,12 @@ export async function checkEmailVerifiedStatus(req: Request, res: Response) {
             ":ev": true,
             ":u": new Date().toISOString(),
           },
-        })
+        }),
       );
     }
 
     return res.json({ ok: true, emailVerified: isVerified });
-  } catch (e: any) {
+  } catch (e) {
     log.error("check_email_verified_failed", undefined, e);
     return sendServerError(res, "auth_check_email_verified_failed", e);
   }
@@ -482,7 +484,7 @@ export async function getCurrentUser(req: Request, res: Response) {
       avatar: profile.avatar,
       createdAt: profile.createdAt,
     });
-  } catch (e: any) {
+  } catch (e) {
     log.error("get_current_user_failed", undefined, e);
     return sendServerError(res, "auth_get_current_user_failed", e);
   }
@@ -505,10 +507,10 @@ async function findUserByUsername(username: string) {
         KeyConditionExpression: "username = :u",
         ExpressionAttributeValues: { ":u": username },
         Limit: 1,
-      })
+      }),
     );
     return result.Items?.[0] as any | undefined;
-  } catch (e: any) {
+  } catch (e) {
     // Fail closed: if the lookup errors we must not treat the username as free.
     // (If the username-index GSI is missing, run: npx tsx scripts/add-username-gsi.ts)
     log.error("find_user_by_username_failed", undefined, e);
@@ -544,7 +546,7 @@ async function putUserWithUsername(args: {
         updatedAt: now,
       },
       ConditionExpression: "attribute_not_exists(userId)",
-    })
+    }),
   );
 }
 
@@ -568,7 +570,7 @@ async function putUserAnonymous(args: { userId: string; screenName: string; acco
         updatedAt: now,
       },
       ConditionExpression: "attribute_not_exists(userId)",
-    })
+    }),
   );
 }
 
@@ -579,7 +581,7 @@ async function updateUserToUsernamePin(
     pinHash: string;
     screenName: string;
     accountType: string;
-  }
+  },
 ) {
   await ddb.send(
     new UpdateCommand({
@@ -594,7 +596,7 @@ async function updateUserToUsernamePin(
         ":at": args.accountType,
         ":u": new Date().toISOString(),
       },
-    })
+    }),
   );
 }
 
@@ -605,7 +607,7 @@ async function updateUserProviders(
     email?: string;
     emailVerified?: boolean;
     accountType: string;
-  }
+  },
 ) {
   const updateParts = ["providers = :pr", "accountType = :at", "updatedAt = :u"];
   const values: Record<string, any> = {
@@ -630,7 +632,7 @@ async function updateUserProviders(
       Key: { userId },
       UpdateExpression: "SET " + updateParts.join(", "),
       ExpressionAttributeValues: values,
-    })
+    }),
   );
 }
 
@@ -675,7 +677,7 @@ export async function adminResetUserPin(req: Request, res: Response) {
           ":pinHash": pinHash,
           ":updatedAt": new Date().toISOString(),
         },
-      })
+      }),
     );
 
     log.info("admin_pin_reset");

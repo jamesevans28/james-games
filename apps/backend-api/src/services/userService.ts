@@ -1,10 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-redundant-type-constituents, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import { config } from "../config/index.js";
-import {
-  getUser,
-  updateUserEmailMetadata,
-  updateUserPreferences,
-  putUser,
-} from "./dynamoService.js";
+import { getUser, updateUserPreferences, putUser } from "./dynamoService.js";
 import {
   DynamoDBDocumentClient,
   PutCommand,
@@ -15,6 +11,7 @@ import {
 import { dynamoClient } from "../config/aws.js";
 import crypto from "crypto";
 import { buildSummary } from "./experienceService.js";
+import { errorInfo } from "../lib/errors.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
@@ -167,24 +164,23 @@ export async function changeScreenName(userId: string, desired: string) {
         UpdateExpression: "SET screenName = :sn, updatedAt = :u",
         ExpressionAttributeValues: { ":sn": assigned, ":u": new Date().toISOString() },
         ConditionExpression: "attribute_exists(userId)",
-      })
+      }),
     );
     if (current?.screenName && current.screenName.toLowerCase() !== assigned.toLowerCase()) {
       await releaseScreenName(current.screenName);
     }
     return assigned;
-  } catch (e: any) {
+  } catch (e) {
     // Translate common Dynamo conditional failures into a clearer error message
-    const msg = e?.message || String(e);
+    const msg = errorInfo(e).message ?? "";
     if (
       msg.includes("could not reserve unique screen name") ||
       msg.includes("ConditionalCheckFailed")
     ) {
       // code lets callers map this to 409
-      throw Object.assign(
-        new Error("could not assign requested screen name; it may be taken"),
-        { code: "CONFLICT" }
-      );
+      throw Object.assign(new Error("could not assign requested screen name; it may be taken"), {
+        code: "CONFLICT",
+      });
     }
     throw e;
   }
@@ -204,7 +200,7 @@ async function reserveScreenName(screenName: string, userId: string) {
   // Check existing reservation
   try {
     const existing = await ddb.send(
-      new GetCommand({ TableName: config.tables.usernames, Key: { screenNameKey: key } })
+      new GetCommand({ TableName: config.tables.usernames, Key: { screenNameKey: key } }),
     );
     const item = existing.Item as any | undefined;
     if (item) {
@@ -228,7 +224,7 @@ async function reserveScreenName(screenName: string, userId: string) {
           createdAt: new Date().toISOString(),
         },
         ConditionExpression: "attribute_not_exists(screenNameKey)",
-      })
+      }),
     );
     return true;
   } catch {
@@ -242,7 +238,7 @@ async function releaseScreenName(screenName: string) {
     new DeleteCommand({
       TableName: config.tables.usernames,
       Key: { screenNameKey: screenName.toLowerCase() },
-    })
+    }),
   );
 }
 

@@ -1,17 +1,34 @@
-import { test, beforeEach } from "node:test";
+import { test, beforeEach, afterEach, vi } from "vitest";
 import assert from "node:assert/strict";
 import { getBest, setBest } from "./bestScore.ts";
 
 class MemoryStorage {
   private m = new Map<string, string>();
-  getItem(k: string) { return this.m.has(k) ? this.m.get(k)! : null; }
-  setItem(k: string, v: string) { this.m.set(k, String(v)); }
-  removeItem(k: string) { this.m.delete(k); }
-  clear() { this.m.clear(); }
-  key() { return null; }
-  get length() { return this.m.size; }
+  getItem(k: string) {
+    return this.m.has(k) ? this.m.get(k)! : null;
+  }
+  setItem(k: string, v: string) {
+    this.m.set(k, String(v));
+  }
+  removeItem(k: string) {
+    this.m.delete(k);
+  }
+  clear() {
+    this.m.clear();
+  }
+  key() {
+    return null;
+  }
+  get length() {
+    return this.m.size;
+  }
 }
-beforeEach(() => { (globalThis as { localStorage?: unknown }).localStorage = new MemoryStorage(); });
+beforeEach(() => {
+  vi.stubGlobal("localStorage", new MemoryStorage());
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 test("no score yet is 0", () => assert.equal(getBest("snapadile"), 0));
 
@@ -36,7 +53,7 @@ test("ignores junk values", () => {
 });
 
 test("never throws when storage is unavailable", () => {
-  delete (globalThis as { localStorage?: unknown }).localStorage;
+  vi.stubGlobal("localStorage", undefined);
   assert.equal(getBest("serpento"), 0);
   assert.equal(setBest("serpento", 7), 7);
 });

@@ -5,7 +5,8 @@ import Wordmark from "./brand/Wordmark";
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
   const mm = window.matchMedia && window.matchMedia("(display-mode: standalone)");
-  const iosStandalone = (window.navigator as any).standalone === true;
+  const iosStandalone =
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
   return (mm && mm.matches) || iosStandalone;
 }
 

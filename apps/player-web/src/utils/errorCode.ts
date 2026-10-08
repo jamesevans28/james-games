@@ -11,3 +11,15 @@ export function errorCode(err: unknown): string {
   }
   return "error";
 }
+
+/**
+ * A message to show the user for a caught error: its `message` when it has a
+ * non-empty one, otherwise the fallback. For UI only; do not log the result.
+ */
+export function errorMessage(err: unknown, fallback: string): string {
+  if (err && typeof err === "object") {
+    const m = (err as { message?: unknown }).message;
+    if (typeof m === "string" && m) return m;
+  }
+  return fallback;
+}

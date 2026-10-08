@@ -58,7 +58,7 @@ export default function GameLanding({ meta, onPlay }: Props) {
         setUserRating(
           typeof summary.userRating === "number" && !Number.isNaN(summary.userRating)
             ? summary.userRating
-            : null
+            : null,
         );
       } catch (err) {
         console.warn("Failed to load rating", err);
@@ -67,7 +67,7 @@ export default function GameLanding({ meta, onPlay }: Props) {
         if (!cancelled) setRatingLoading(false);
       }
     };
-    loadRating();
+    void loadRating();
     return () => {
       cancelled = true;
     };
@@ -82,9 +82,9 @@ export default function GameLanding({ meta, onPlay }: Props) {
       setRatingSummary(summary);
       setCachedRatingSummary(summary);
       setUserRating(summary.userRating ?? value);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to submit rating", err);
-      if (err?.message === "signin_required") {
+      if (err instanceof Error && err.message === "signin_required") {
         setRatingError("Sign in to rate this game (maybe relog).");
       } else {
         setRatingError("Unable to save your rating. Please try again.");
@@ -109,9 +109,8 @@ export default function GameLanding({ meta, onPlay }: Props) {
           statuses: ["playing", "game_lobby", "in_score_dialog", "browsing_high_scores"],
         });
         if (!cancelled) setActivity(res.activity || []);
-      } catch (err) {
-        if (import.meta.env.DEV) {
-        }
+      } catch {
+        // Activity is best-effort: keep showing the last list and retry on the next poll.
       } finally {
         if (!cancelled) setActivityLoading(false);
       }
@@ -119,7 +118,7 @@ export default function GameLanding({ meta, onPlay }: Props) {
         timeoutId = window.setTimeout(load, 20000);
       }
     };
-    load();
+    void load();
     return () => {
       cancelled = true;
       if (timeoutId && typeof window !== "undefined") window.clearTimeout(timeoutId);
@@ -154,14 +153,14 @@ export default function GameLanding({ meta, onPlay }: Props) {
       }
     };
 
-    load();
+    void load();
 
     // Listen for game over events to refresh leaderboard when a new score might be posted
     const off = onGameOver((detail) => {
       if (detail.gameId === meta.id) {
         // Clear cache and reload
         leaderboardCache.delete(meta.id);
-        load();
+        void load();
       }
     });
 
@@ -194,8 +193,8 @@ export default function GameLanding({ meta, onPlay }: Props) {
     const shareText = `${meta.title} — my best: ${myBest}`;
     const url = `${window.location.origin}/games/${meta.id}`;
     try {
-      if ((navigator as any).share) {
-        await (navigator as any).share({ title: meta.title, text: shareText, url });
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: meta.title, text: shareText, url });
         trackShare(meta.id, meta.title, myBest);
         return;
       }
@@ -318,12 +317,11 @@ function LeaderboardSection({
   const { user } = useAuth();
   const navigate = useNavigate();
   const goToProfile = (userId?: string) => {
-    if (userId) navigate(`/profile/${userId}`);
+    if (userId) void navigate(`/profile/${userId}`);
   };
 
   // Debugging: log leaderboard inputs so we can trace why nothing renders
   // (some runtime environments may return unexpected shapes)
-  // eslint-disable-next-line no-console
 
   if (loading) return <div className="mt-4 text-ink-2">Loading…</div>;
   if (error) return <div className="mt-4 text-grape">{error}</div>;
@@ -431,9 +429,7 @@ function LeaderboardSection({
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="text-ink-3 font-mono w-6">#{rank}</span>
-                  <span className="truncate text-ink font-medium">
-                    {r?.screenName ?? "—"}
-                  </span>
+                  <span className="truncate text-ink font-medium">{r?.screenName ?? "—"}</span>
                   {isYou && (
                     <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand/20 text-brand border border-brand/30">
                       your top score
@@ -485,12 +481,8 @@ function RatingSummaryCard({
     <div className="mt-6 border border-line rounded-2xl p-5 bg-card">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-wide text-ink-2 font-semibold">
-            Overall rating
-          </p>
-          <div className="text-3xl font-extrabold text-ink">
-            {loading ? "—" : avg.toFixed(1)}
-          </div>
+          <p className="text-xs uppercase tracking-wide text-ink-2 font-semibold">Overall rating</p>
+          <div className="text-3xl font-extrabold text-ink">{loading ? "—" : avg.toFixed(1)}</div>
           <p className="text-xs text-ink-2">{count} total ratings</p>
         </div>
         <RatingStars value={avg} readOnly size="sm" />
@@ -615,8 +607,8 @@ function TopBox({
     medal === "gold"
       ? "rgba(255,215,0,0.18)"
       : medal === "silver"
-      ? "rgba(192,192,192,0.18)"
-      : "rgba(205,127,50,0.18)";
+        ? "rgba(192,192,192,0.18)"
+        : "rgba(205,127,50,0.18)";
   const tagBg = medal === "gold" ? "#FFD700" : medal === "silver" ? "#C0C0C0" : "#CD7F32";
   const tagText = medal === "bronze" ? "text-white" : "text-on-accent";
   const interactive = typeof onSelect === "function";

@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { BRAND_COLORS } from "../../config/brand";
+import { hexToNumber } from "../hud/format";
 
 export type DPadDirection = "up" | "down" | "left" | "right";
 
@@ -42,7 +44,6 @@ export function createDPad(scene: Phaser.Scene, options: CreateDPadOptions): DPa
   // Ensure the DOWN button bottom edge stays above the screen bottom.
   const centerY = screenHeight - bottomPadding - buttonSize / 2 - spacing;
 
-
   const emit = (dir: DPadDirection | null) => {
     onDirectionChange(dir);
   };
@@ -63,15 +64,16 @@ export function createDPad(scene: Phaser.Scene, options: CreateDPadOptions): DPa
   };
 
   const makeButton = (x: number, y: number, label: string, dir: DPadDirection) => {
+    // Sticker-book button: paper fill, thick ink outline, ink arrow.
     const rect = scene.add
-      .rectangle(x, y, buttonSize, buttonSize, 0x333333, alpha)
-      .setStrokeStyle(2, 0xffffff)
+      .rectangle(x, y, buttonSize, buttonSize, hexToNumber(BRAND_COLORS.paper), alpha)
+      .setStrokeStyle(4, hexToNumber(BRAND_COLORS.ink))
       .setInteractive({ useHandCursor: true });
 
     const text = scene.add
       .text(x, y, label, {
         fontSize: "32px",
-        color: "#ffffff",
+        color: BRAND_COLORS.ink,
       })
       .setOrigin(0.5);
 
@@ -140,7 +142,11 @@ export function createDPad(scene: Phaser.Scene, options: CreateDPadOptions): DPa
     right.text.setVisible(visible);
   };
 
+  let destroyed = false;
   const destroy = () => {
+    if (destroyed) return;
+    destroyed = true;
+    scene.events.off(Phaser.Scenes.Events.SHUTDOWN, destroy);
     up.rect.destroy();
     up.text.destroy();
     down.rect.destroy();
@@ -155,6 +161,9 @@ export function createDPad(scene: Phaser.Scene, options: CreateDPadOptions): DPa
       scene.input.keyboard.off("keyup", keyUpHandler);
     }
   };
+
+  // Like the rest of the input kit, tear down with the scene.
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, destroy);
 
   return { destroy, setVisible };
 }

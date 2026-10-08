@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- TODO T6.4: one-off DynamoDB script, deleted after the Postgres migration */
 /**
  * Cleanup script to remove dummy emails from migrated Firebase users
  *

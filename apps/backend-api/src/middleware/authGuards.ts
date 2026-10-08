@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 // Auth guards and user attachment middleware (Firebase-based)
 import type { Request, Response, NextFunction } from "express";
 import { verifyIdToken as verifyFirebaseToken } from "../services/firebaseAuthService.js";
@@ -63,7 +64,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 
 // Require a non-anonymous account (username+PIN or linked)
 export function requireRegisteredAccount(req: Request, res: Response, next: NextFunction) {
-  const user = req.user as AuthUser | undefined;
+  const user = req.user;
   if (!user?.userId) {
     return res.status(401).json({ error: "unauthorized" });
   }
@@ -77,8 +78,8 @@ export function requireRegisteredAccount(req: Request, res: Response, next: Next
 }
 
 // Require a linked account with verified email
-export async function requireVerifiedEmail(req: Request, res: Response, next: NextFunction) {
-  const user = req.user as AuthUser | undefined;
+export function requireVerifiedEmail(req: Request, res: Response, next: NextFunction) {
+  const user = req.user;
   if (!user?.userId) {
     return res.status(401).json({ error: "unauthorized" });
   }
@@ -92,7 +93,7 @@ export async function requireVerifiedEmail(req: Request, res: Response, next: Ne
 }
 
 export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  const user = req.user as AuthUser | undefined;
+  const user = req.user;
   if (!user?.userId) {
     return res.status(401).json({ error: "unauthorized" });
   }

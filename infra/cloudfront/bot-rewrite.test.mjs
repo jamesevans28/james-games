@@ -1,7 +1,7 @@
 // Run: node --test "infra/**/*.test.mjs" (part of the root npm test)
 // CloudFront Functions are plain scripts with a global handler(), so load the
 // file into a sandbox exactly as CloudFront would.
-import { test } from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";

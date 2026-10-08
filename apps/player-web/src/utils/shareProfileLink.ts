@@ -26,8 +26,8 @@ export async function shareProfileLink(opts: {
   };
 
   try {
-    if (typeof navigator !== "undefined" && (navigator as any).share) {
-      await (navigator as any).share(shareData);
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      await navigator.share(shareData);
       return { status: "shared" as const, url };
     }
   } catch (err) {

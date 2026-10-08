@@ -29,11 +29,11 @@ export function UserDrawer({ userId, onClose }: { userId: string | null; onClose
 
   const updateMutation = useMutation({
     mutationFn: (payload: Parameters<typeof adminApi.updateUser>[1]) => {
-      if (!userId) return Promise.reject("no-user");
+      if (!userId) return Promise.reject(new Error("no-user"));
       return adminApi.updateUser(userId, payload);
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       queryClient.setQueryData(["admin-user", userId], data);
     },
   });
@@ -46,7 +46,7 @@ export function UserDrawer({ userId, onClose }: { userId: string | null; onClose
       alert("PIN reset successfully!");
       setPinDraft("");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       alert(`Failed to reset PIN: ${error.message || "Unknown error"}`);
     },
   });

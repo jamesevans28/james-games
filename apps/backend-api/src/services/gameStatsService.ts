@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
@@ -46,7 +47,7 @@ export async function getGameStats(gameId: string): Promise<GameStats> {
         },
         ProjectionExpression: "score, createdAt, userId",
         ExclusiveStartKey: lastKey,
-      })
+      }),
     );
 
     const items = (resp.Items || []) as Array<{
@@ -62,12 +63,12 @@ export async function getGameStats(gameId: string): Promise<GameStats> {
       totalScore += Number(item.score) || 0;
       if (item.userId) uniquePlayers.add(item.userId);
       const bucket = weeklyBuckets.find(
-        ({ startMs, endMs }) => created >= startMs && created < endMs
+        ({ startMs, endMs }) => created >= startMs && created < endMs,
       );
       if (bucket) bucket.count += 1;
     }
 
-    lastKey = resp.LastEvaluatedKey as Record<string, any> | undefined;
+    lastKey = resp.LastEvaluatedKey;
     iterations += 1;
   } while (lastKey && iterations < 200);
 

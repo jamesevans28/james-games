@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 import { DynamoDBDocumentClient, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { dynamoClient } from "../config/aws.js";
 import { config } from "../config/index.js";
@@ -8,6 +9,7 @@ import {
 } from "../data/experienceLevels.js";
 import { getUser } from "./dynamoService.js";
 import { log } from "../lib/log.js";
+import { isConditionalCheckFailed } from "../lib/errors.js";
 
 const ddb = DynamoDBDocumentClient.from(dynamoClient);
 
@@ -39,18 +41,16 @@ async function loadExperienceLevels(): Promise<ExperienceLevelRow[]> {
     const res = await ddb.send(
       new ScanCommand({
         TableName: config.tables.experienceLevels,
-      })
+      }),
     );
     const rows = ((res.Items || []) as Array<{ level: number; requiredXp: number }>).filter(
-      (row) => typeof row.level === "number" && typeof row.requiredXp === "number"
+      (row) => typeof row.level === "number" && typeof row.requiredXp === "number",
     );
     if (rows.length) {
       rows.sort((a, b) => a.level - b.level);
       const normalized: ExperienceLevelRow[] = [];
       rows.forEach((row, index) => {
         const prev = normalized[index - 1];
-        const fallback =
-          DEFAULT_EXPERIENCE_LEVELS[Math.min(index, DEFAULT_EXPERIENCE_LEVELS.length - 1)];
         normalized.push({
           level: row.level,
           requiredXp: row.requiredXp,
@@ -72,7 +72,7 @@ async function loadExperienceLevels(): Promise<ExperienceLevelRow[]> {
 function ensureRequirement(levels: ExperienceLevelRow[], level: number): ExperienceLevelRow {
   const clamped = Math.min(
     Math.max(level, 1),
-    levels[levels.length - 1]?.level ?? EXPERIENCE_MAX_LEVEL
+    levels[levels.length - 1]?.level ?? EXPERIENCE_MAX_LEVEL,
   );
   const found = levels.find((row) => row.level === clamped);
   if (found) return found;
@@ -112,7 +112,7 @@ export function buildSummary(user: any): ExperienceSummary {
 export function addExperience(
   levels: ExperienceLevelRow[],
   start: { level: number; progress: number; total: number },
-  xpEarned: number
+  xpEarned: number,
 ) {
   const maxLevel = levels[levels.length - 1]?.level ?? EXPERIENCE_MAX_LEVEL;
   let level = Math.min(Math.max(start.level, 1), maxLevel);
@@ -162,7 +162,7 @@ export async function applyExperienceToUser(userId: string, xpEarned: number) {
         progress: Number(user.xpProgress ?? 0),
         total: Number(user.xpTotal ?? 0),
       },
-      xpEarned
+      xpEarned,
     );
     const stamp = new Date().toISOString();
     try {
@@ -182,7 +182,7 @@ export async function applyExperienceToUser(userId: string, xpEarned: number) {
             ":ts": stamp,
             ...(prevStamp ? { ":prev": prevStamp } : {}),
           },
-        })
+        }),
       );
       const summary = buildSummary({
         xpLevel: next.level,
@@ -191,8 +191,8 @@ export async function applyExperienceToUser(userId: string, xpEarned: number) {
         xpUpdatedAt: stamp,
       });
       return { summary, awarded: xpEarned };
-    } catch (err: any) {
-      if (err?.name !== "ConditionalCheckFailedException") throw err;
+    } catch (err) {
+      if (!isConditionalCheckFailed(err)) throw err;
       // Someone else wrote first (or the user vanished): re-read and try again.
     }
   }

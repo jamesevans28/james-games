@@ -6,6 +6,7 @@ import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { markNotificationsAsRead } from "../../hooks/useNotificationsIndicator";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { OfflineBanner } from "../../components/OfflineBanner";
+import { errorMessage } from "../../utils/errorCode";
 
 function timeAgo(iso: string) {
   if (!iso) return "just now";
@@ -52,19 +53,19 @@ export default function NotificationsPage() {
           setNotifications(res.notifications || []);
           markNotificationsAsRead();
         }
-      } catch (err: any) {
+      } catch (err) {
         if (!cancelled) {
           if (!navigator.onLine) {
             setError("You're offline. Connect to view notifications.");
           } else {
-            setError(err?.message || "Failed to load notifications");
+            setError(errorMessage(err, "Failed to load notifications"));
           }
         }
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
-    load();
+    void load();
     let interval: number | null = null;
     if (typeof window !== "undefined") {
       interval = window.setInterval(load, 60000);

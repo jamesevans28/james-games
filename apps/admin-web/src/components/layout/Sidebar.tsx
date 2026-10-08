@@ -29,7 +29,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               className={({ isActive }) =>
                 clsx(
                   "flex items-center gap-3 rounded-xl px-4 py-2 text-sm font-medium transition hover:bg-slate-800",
-                  isActive ? "bg-slate-800 text-white" : "text-slate-400"
+                  isActive ? "bg-slate-800 text-white" : "text-slate-400",
                 )
               }
             >
@@ -46,7 +46,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </p>
         <button
           onClick={() => {
-            signOut();
+            void signOut();
             onNavigate?.();
           }}
           className="mt-3 flex w-full items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-300 hover:bg-slate-700"

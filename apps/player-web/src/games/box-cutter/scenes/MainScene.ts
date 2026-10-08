@@ -1,3 +1,4 @@
+/* eslint-disable no-empty, no-restricted-imports, no-useless-assignment -- TODO T5.5: legacy game code, cleaned when it moves onto the Game SDK */
 import Phaser from "phaser";
 import { ASSETS, preloadAssets, createBackground } from "../assets";
 import { type GameState, type Direction, DEFAULT_CONFIG } from "../entities/GameState";
@@ -14,7 +15,7 @@ import { rasterizePolyline } from "../useCases/rasterize";
 import { applyCapture } from "../useCases/captureFill";
 import { computeBorderMask } from "../useCases/borderMask";
 import { pointsForCapture } from "../useCases/score";
-import { createDPad, type DPadDirection, type DPadInstance } from "../../../game/ui/dpad";
+import { createDPad, type DPadDirection, type DPadInstance } from "../../../platform/input/dpad";
 import { dispatchGameOver } from "../../../utils/gameEvents";
 import { getBest, setBest } from "../../../utils/bestScore";
 
@@ -87,7 +88,7 @@ export class MainScene extends Phaser.Scene {
         width: this.gameWidth - horizontalPadding * 2,
         height: playAreaHeight - verticalPadding * 2,
       },
-      DEFAULT_CONFIG
+      DEFAULT_CONFIG,
     );
     this.state.bestScore = bestScore;
 
@@ -107,7 +108,7 @@ export class MainScene extends Phaser.Scene {
     const enemyStart = cellToWorldCenter(
       this.grid,
       Math.floor(this.grid.cols / 2),
-      Math.floor(this.grid.rows / 2)
+      Math.floor(this.grid.rows / 2),
     );
     this.state.enemyBall.x = enemyStart.x;
     this.state.enemyBall.y = enemyStart.y;
@@ -136,7 +137,7 @@ export class MainScene extends Phaser.Scene {
     this.enemySprite = this.add.sprite(
       this.state.enemyBall.x,
       this.state.enemyBall.y,
-      ASSETS.ENEMY
+      ASSETS.ENEMY,
     );
     this.enemySprite.setScale(0.8);
 
@@ -154,7 +155,7 @@ export class MainScene extends Phaser.Scene {
     this.playerSprite = this.add.sprite(
       this.state.playerBall.x,
       this.state.playerBall.y,
-      ASSETS.PLAYER
+      ASSETS.PLAYER,
     );
     this.playerSprite.setScale(0.7);
 
@@ -286,7 +287,7 @@ export class MainScene extends Phaser.Scene {
         this.gameWidth / 2,
         this.gameHeight / 2,
         "LEVEL COMPLETE!\nTap to Continue",
-        levelCompleteStyle
+        levelCompleteStyle,
       )
       .setOrigin(0.5)
       .setVisible(false);
@@ -472,7 +473,7 @@ export class MainScene extends Phaser.Scene {
       const enemyStart = cellToWorldCenter(
         this.grid,
         Math.floor(this.grid.cols / 2),
-        Math.floor(this.grid.rows / 2)
+        Math.floor(this.grid.rows / 2),
       );
       this.state.enemyBall.x = enemyStart.x;
       this.state.enemyBall.y = enemyStart.y;
@@ -610,7 +611,7 @@ export class MainScene extends Phaser.Scene {
           rasterizePolyline(
             this.grid,
             [this.pathCells[this.pathCells.length - 2], nextCell],
-            this.wallMask
+            this.wallMask,
           );
         }
 
@@ -946,7 +947,7 @@ export class MainScene extends Phaser.Scene {
           this.state.playBounds.x,
           this.state.playBounds.y,
           this.state.playBounds.width,
-          this.state.playBounds.height
+          this.state.playBounds.height,
         );
 
         const s = this.grid.cellSize;

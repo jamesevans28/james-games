@@ -1,0 +1,13 @@
+node_modules
+**/dist
+**/dev-dist
+coverage
+.npm-cache
+package-lock.json
+apps/game-server
+apps/player-web/public
+docs/archive
+# Generated word lists and data
+apps/player-web/src/game/words/*.txt
+*.min.js
+.npm-cache

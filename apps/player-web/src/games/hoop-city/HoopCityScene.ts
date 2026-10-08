@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method, no-restricted-imports -- TODO T5.6: legacy game code, cleaned when it moves onto the Game SDK */
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { trackGameStart } from "../../utils/analytics";
@@ -192,7 +193,7 @@ export default class HoopCityScene extends Phaser.Scene {
       BALL_RADIUS * 1.4,
       BALL_RADIUS * 0.5,
       0x000000,
-      0.25
+      0.25,
     );
     this.ballShadow.setDepth(3);
 
@@ -267,7 +268,7 @@ export default class HoopCityScene extends Phaser.Scene {
     const clampedShadowY = Phaser.Math.Clamp(
       this.ballContainer.y + 160,
       GAME_HEIGHT - 220,
-      GAME_HEIGHT - 80
+      GAME_HEIGHT - 80,
     );
     this.ballShadow.y = Phaser.Math.Linear(this.ballShadow.y, clampedShadowY, 0.2);
     this.ballShadow.scaleX = Phaser.Math.Clamp(1 - (this.ballContainer.y - 200) / 900, 0.3, 1);

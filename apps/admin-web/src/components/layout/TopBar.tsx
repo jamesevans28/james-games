@@ -39,7 +39,7 @@ export function TopBar({ onMenu }: { onMenu?: () => void }) {
               "rounded-full border px-3 py-1",
               envLabel === "Production"
                 ? "border-rose-400/50 text-rose-200"
-                : "border-amber-400/50 text-amber-200"
+                : "border-amber-400/50 text-amber-200",
             )}
           >
             {envLabel}

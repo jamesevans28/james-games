@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, no-empty, no-restricted-imports -- TODO: inactive game (T5.1); clean these up if it is reworked and re-activated */
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { getBest, setBest } from "../../utils/bestScore";
@@ -82,7 +83,7 @@ export default class HoHoHomeDeliveryGame extends Phaser.Scene {
       this.chimneyZones,
       (present, zone) => this.onPresentIntoChimney(present as Phaser.Physics.Arcade.Image, zone),
       undefined,
-      this
+      this,
     );
 
     // Input
@@ -323,7 +324,7 @@ export default class HoHoHomeDeliveryGame extends Phaser.Scene {
           frequency: 300,
           quantity: 5,
           blendMode: "ADD",
-        }
+        },
       );
       smokeMgr.setDepth(50);
       // store manager so we can destroy later

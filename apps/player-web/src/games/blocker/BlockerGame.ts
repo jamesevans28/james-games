@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/unbound-method, no-restricted-imports -- TODO T5.4: legacy game code, cleaned when it moves onto the Game SDK */
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { getBest, setBest } from "../../utils/bestScore";
+import { zoneIndex } from "../../platform/input/gestures";
 
 const GAME_WIDTH = 540;
 const GAME_HEIGHT = 960;
@@ -16,9 +18,7 @@ const RAW_SHAPES = [
   {
     id: "single",
     color: 0xef5350,
-    coords: [
-      [0, 0],
-    ],
+    coords: [[0, 0]],
   },
   {
     id: "domino",
@@ -262,7 +262,7 @@ export default class BlockerGame extends Phaser.Scene {
       GRID_START_X - 8,
       GRID_START_Y - 8,
       GRID_PIXEL + 16,
-      GRID_PIXEL + 16
+      GRID_PIXEL + 16,
     );
     this.gridGraphics.lineStyle(2, 0x1f2d46, 1);
 
@@ -300,7 +300,7 @@ export default class BlockerGame extends Phaser.Scene {
       const sprite = this.add.image(
         (block.x + 0.5) * CELL_SIZE - pixelWidth / 2,
         (block.y + 0.5) * CELL_SIZE - pixelHeight / 2,
-        "blocker-block"
+        "blocker-block",
       );
       sprite.setDisplaySize(CELL_SIZE - 6, CELL_SIZE - 6);
       sprite.setTint(shape.color);
@@ -311,7 +311,7 @@ export default class BlockerGame extends Phaser.Scene {
     container.setDepth(30);
     container.setInteractive(
       new Phaser.Geom.Rectangle(-hitWidth / 2, -hitHeight / 2 + hitOffsetY, hitWidth, hitHeight),
-      Phaser.Geom.Rectangle.Contains
+      Phaser.Geom.Rectangle.Contains,
     );
     if (container.input) {
       container.input.cursor = "pointer";
@@ -340,8 +340,7 @@ export default class BlockerGame extends Phaser.Scene {
     const isBottomHalf = pointer.y >= GAME_HEIGHT / 2;
     if (!isBottomHalf) return;
 
-    const isLeftHalf = pointer.x < GAME_WIDTH / 2;
-    const slotIndex = isLeftHalf ? 0 : 1;
+    const slotIndex = zoneIndex(pointer.x, GAME_WIDTH, 2);
     const slot = this.shapeSlots[slotIndex];
     if (!slot || !slot.shape || !slot.container) return;
 
@@ -383,7 +382,7 @@ export default class BlockerGame extends Phaser.Scene {
     slotIndex: number,
     container: Phaser.GameObjects.Container,
     shape: ShapeInstance,
-    pointer: Phaser.Input.Pointer
+    pointer: Phaser.Input.Pointer,
   ) {
     const offsetX = pointer.x - container.x;
     const offsetY = pointer.y - container.y;
@@ -398,8 +397,8 @@ export default class BlockerGame extends Phaser.Scene {
     container.x = pointer.x - offsetX;
     // Apply 1.8x speed to vertical movement
     const slotY = this.shapeSlots[this.activeDrag.slotIndex].position.y;
-    const dragDeltaY = (pointer.y - offsetY) - slotY;
-    container.y = slotY + (dragDeltaY * 1.8);
+    const dragDeltaY = pointer.y - offsetY - slotY;
+    container.y = slotY + dragDeltaY * 1.8;
     const target = this.getPlacementForShape(shape, container.x, container.y);
     this.renderPreview(shape, target);
   }
@@ -441,7 +440,7 @@ export default class BlockerGame extends Phaser.Scene {
   private getPlacementForShape(
     shape: ShapeInstance,
     centerX: number,
-    centerY: number
+    centerY: number,
   ): { row: number; col: number } | undefined {
     const pixelWidth = shape.width * CELL_SIZE;
     const pixelHeight = shape.height * CELL_SIZE;
@@ -562,7 +561,7 @@ export default class BlockerGame extends Phaser.Scene {
       const sprite = this.add.image(
         GRID_START_X + col * CELL_SIZE + CELL_SIZE / 2,
         GRID_START_Y + row * CELL_SIZE + CELL_SIZE / 2,
-        "blocker-block"
+        "blocker-block",
       );
       sprite.setDisplaySize(CELL_SIZE - 6, CELL_SIZE - 6);
       sprite.setTint(shape.color);
@@ -987,7 +986,7 @@ export default class BlockerGame extends Phaser.Scene {
       GAME_WIDTH,
       GAME_HEIGHT,
       0x0b0d11,
-      0.82
+      0.82,
     );
     overlay.setDepth(900);
     overlay.setScrollFactor(0);

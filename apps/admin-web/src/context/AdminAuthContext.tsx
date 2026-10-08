@@ -87,7 +87,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       signOut: handleSignOut,
       refresh,
     }),
-    [user, firebaseUser, loading, handleSignInWithGoogle, handleSignOut, refresh]
+    [user, firebaseUser, loading, handleSignInWithGoogle, handleSignOut, refresh],
   );
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;

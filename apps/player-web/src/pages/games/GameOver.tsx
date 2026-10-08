@@ -56,8 +56,8 @@ function LevelUpModal({ level, onClose }: { level: number; onClose: () => void }
           }
           100% {
             transform: translate(${Math.random() * 200 - 100}px, ${
-        Math.random() * 200 - 100
-      }px) scale(0);
+              Math.random() * 200 - 100
+            }px) scale(0);
             opacity: 0;
           }
         }
@@ -208,10 +208,9 @@ function AnimatedExperienceBar({
             width: `${displayPercent}%`,
             backgroundImage:
               "repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 8px, transparent 8px, transparent 16px)",
-            background: "linear-gradient(90deg, var(--color-sun) 0%, var(--color-tomato) 50%, var(--color-grape) 100%)",
-            boxShadow: isAnimating
-              ? "0 2px 0 0 var(--color-edge)"
-              : "none",
+            background:
+              "linear-gradient(90deg, var(--color-sun) 0%, var(--color-tomato) 50%, var(--color-grape) 100%)",
+            boxShadow: isAnimating ? "0 2px 0 0 var(--color-edge)" : "none",
             transition: "none",
           }}
         />
@@ -294,7 +293,7 @@ export default function GameOver({
         setScoreError(
           navigator.onLine
             ? "Could not save score. Please try again."
-            : "You're offline. Score could not be saved."
+            : "You're offline. Score could not be saved.",
         );
       });
     return () => {
@@ -375,9 +374,7 @@ export default function GameOver({
                   awardedXp={xpAwarded ?? 0}
                 />
               ) : (
-                <p className="text-xs text-ink-2">
-                  Play more runs to unlock experience tracking.
-                </p>
+                <p className="text-xs text-ink-2">Play more runs to unlock experience tracking.</p>
               )}
               {xpError && <p className="text-xs text-grape mt-2">{xpError}</p>}
             </div>

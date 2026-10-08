@@ -22,7 +22,8 @@ export class ScoreRejected extends Error {
   }
 }
 
-type ConfigLike = { xpMultiplier?: unknown; metadata?: Record<string, unknown> | null } | null | undefined;
+type ConfigLike =
+  { xpMultiplier?: unknown; metadata?: Record<string, unknown> | null } | null | undefined;
 
 const positive = (v: unknown): number | undefined =>
   typeof v === "number" && Number.isFinite(v) && v > 0 ? v : undefined;
@@ -45,7 +46,7 @@ export type ValidScore = { gameId: string; score: number; durationMs?: number };
 
 export function validateScoreSubmission(
   input: { gameId?: unknown; score?: unknown; durationMs?: unknown },
-  limits: ScoreLimits
+  limits: ScoreLimits,
 ): ValidScore {
   const { gameId, score, durationMs } = input;
   if (typeof gameId !== "string" || !/^[a-z0-9-]{1,40}$/.test(gameId)) {
@@ -61,7 +62,10 @@ export function validateScoreSubmission(
   if (typeof durationMs === "number" && Number.isFinite(durationMs) && durationMs > 0) {
     if (durationMs <= MAX_TRUSTED_DURATION_MS) trustedDuration = Math.round(durationMs);
   }
-  if (trustedDuration !== undefined && rounded / (trustedDuration / 1000) > limits.maxScorePerSecond) {
+  if (
+    trustedDuration !== undefined &&
+    rounded / (trustedDuration / 1000) > limits.maxScorePerSecond
+  ) {
     throw new ScoreRejected("score_too_fast");
   }
   return { gameId, score: rounded, durationMs: trustedDuration };

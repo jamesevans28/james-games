@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 function isInstalled(): boolean {
   const isStandalone = window.matchMedia?.("(display-mode: standalone)").matches;
-  const isIOSStandalone = (navigator as any).standalone === true; // iOS Safari
+  const isIOSStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true; // iOS Safari
   return Boolean(isStandalone || isIOSStandalone);
 }
 

@@ -206,7 +206,7 @@ async function run() {
       new PutCommand({
         TableName: tableName,
         Item: item,
-      })
+      }),
     );
   }
 

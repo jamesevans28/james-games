@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-redundant-type-constituents, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return -- TODO T6.3: untyped DynamoDB items; the Drizzle repository layer gives these real row types */
 // DynamoDB data access layer (scores & users)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 import {
   DynamoDBDocumentClient,
   PutCommand,
-  QueryCommand,
   GetCommand,
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
@@ -44,7 +44,7 @@ export async function putUser(args: {
       TableName: config.tables.users,
       Item: item,
       ConditionExpression: "attribute_not_exists(userId)",
-    })
+    }),
   );
   return item;
 }
@@ -56,7 +56,7 @@ export async function getUser(userId: string) {
 
 export async function updateUserEmailMetadata(
   userId: string,
-  flags: { email?: string | null; emailProvided?: boolean; validated?: boolean }
+  flags: { email?: string | null; emailProvided?: boolean; validated?: boolean },
 ) {
   const sets: string[] = ["updatedAt = :u"];
   const values: Record<string, any> = { ":u": new Date().toISOString() };
@@ -80,7 +80,7 @@ export async function updateUserEmailMetadata(
       UpdateExpression: "SET " + sets.join(", "),
       ExpressionAttributeValues: values,
       ConditionExpression: "attribute_exists(userId)",
-    })
+    }),
   );
 }
 
@@ -107,6 +107,6 @@ export async function updateUserPreferences(userId: string, patch: Record<string
       UpdateExpression: "SET " + sets.join(", "),
       ExpressionAttributeValues: values,
       ConditionExpression: "attribute_exists(userId)",
-    })
+    }),
   );
 }

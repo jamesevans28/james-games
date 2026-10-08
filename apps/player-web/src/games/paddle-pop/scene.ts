@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/unbound-method, no-restricted-imports -- TODO T5.8: legacy game code, cleaned when it moves onto the Game SDK */
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { getBest, setBest } from "../../utils/bestScore";
@@ -82,14 +83,14 @@ export default class PaddlePopScene extends Phaser.Scene {
     // process hits when the ball is moving downward into the paddle.
     this.physics.add.collider(
       this.balls,
-      this.paddle as any,
+      this.paddle,
       this.onBallPaddleHit as any,
       (ballObj: any) => {
         const ball = ballObj as Phaser.Physics.Arcade.Image;
         const body = ball.body as Phaser.Physics.Arcade.Body | undefined;
         return !!body && body.velocity.y > 0;
       },
-      this
+      this,
     );
     // Explicitly set world bounds to match our fixed playfield (needed for reliable side bounces)
     this.physics.world.setBounds(0, 0, PLAY_WIDTH, PLAY_HEIGHT, true, true, true, false);
@@ -317,7 +318,7 @@ export default class PaddlePopScene extends Phaser.Scene {
     const desiredSpeed = Phaser.Math.Clamp(
       this.getBallNominalSpeed(ball) * this.slowMultiplier,
       BALL_BASE_SPEED * 0.5,
-      BALL_MAX_SPEED
+      BALL_MAX_SPEED,
     );
     const vx = Math.cos(angle) * desiredSpeed;
     const vy = Math.sin(angle) * desiredSpeed;
@@ -374,7 +375,7 @@ export default class PaddlePopScene extends Phaser.Scene {
 
   private bounceBallOffPaddle(
     ball: Phaser.Physics.Arcade.Image,
-    paddle: Phaser.Physics.Arcade.Image
+    paddle: Phaser.Physics.Arcade.Image,
   ) {
     if (!this.gameActive || !ball.active || !paddle.active) return;
 
@@ -395,7 +396,7 @@ export default class PaddlePopScene extends Phaser.Scene {
     const speed = Phaser.Math.Clamp(
       this.getBallNominalSpeed(ball) * this.slowMultiplier,
       BALL_BASE_SPEED * 0.5,
-      BALL_MAX_SPEED
+      BALL_MAX_SPEED,
     );
 
     const maxVx = speed * 0.85;
@@ -454,7 +455,7 @@ export default class PaddlePopScene extends Phaser.Scene {
       this.lastSpeedInc = time;
       this.currentNominalSpeed = Math.min(
         this.currentNominalSpeed + SPEED_INCREASE_AMOUNT,
-        BALL_MAX_SPEED
+        BALL_MAX_SPEED,
       );
       for (const ball of this.getActiveBalls()) {
         ball.setData("nominalSpeed", this.currentNominalSpeed);
@@ -475,7 +476,7 @@ export default class PaddlePopScene extends Phaser.Scene {
         const desired = Phaser.Math.Clamp(
           this.getBallNominalSpeed(ball) * this.slowMultiplier,
           BALL_BASE_SPEED * 0.5,
-          BALL_MAX_SPEED
+          BALL_MAX_SPEED,
         );
         if (current < 1) {
           ball.setVelocity(0, -desired);
@@ -635,8 +636,8 @@ export default class PaddlePopScene extends Phaser.Scene {
 
         // Normal from disc to ball at impact (if center overlap, use opposite incoming)
         const nLen = Math.sqrt(dist2);
-        let nx = nLen > 1e-6 ? dx / nLen : -dirX;
-        let ny = nLen > 1e-6 ? dy / nLen : -dirY;
+        const nx = nLen > 1e-6 ? dx / nLen : -dirX;
+        const ny = nLen > 1e-6 ? dy / nLen : -dirY;
 
         // Reflect direction about normal
         const dot = dirX * nx + dirY * ny;
@@ -655,7 +656,7 @@ export default class PaddlePopScene extends Phaser.Scene {
         const speed = Phaser.Math.Clamp(
           this.getBallNominalSpeed(ball) * this.slowMultiplier,
           BALL_BASE_SPEED * 0.5,
-          BALL_MAX_SPEED
+          BALL_MAX_SPEED,
         );
         ball.setVelocity(rx * speed, ry * speed);
 
@@ -670,7 +671,7 @@ export default class PaddlePopScene extends Phaser.Scene {
   }
 
   private spawnBonus() {
-    const value = Phaser.Math.Between(1, 10) as number;
+    const value = Phaser.Math.Between(1, 10);
     const color = this.colorForValue(value);
     // Create a textured disc and physics body so the ball bounces off
     const texKey = `bonus-${value}`;
@@ -800,7 +801,7 @@ export default class PaddlePopScene extends Phaser.Scene {
       angle: { min: 210, max: 330 },
     });
 
-    this.physics.add.collider(sprite, this.paddle as any, () => {
+    this.physics.add.collider(sprite, this.paddle, () => {
       // Freeze player control and ball
       this.gameActive = false;
       this.movingLeft = false;
@@ -928,7 +929,7 @@ export default class PaddlePopScene extends Phaser.Scene {
         follow: ball,
         tint: 0x93c5fd,
         blendMode: "ADD",
-      })
+      }),
     );
     this.time.delayedCall(POWERUP_DURATION_MS, () => emitters.forEach((e) => e.destroy()));
   }
@@ -946,7 +947,7 @@ export default class PaddlePopScene extends Phaser.Scene {
     const speed = Phaser.Math.Clamp(
       this.getBallNominalSpeed(source) * this.slowMultiplier,
       BALL_BASE_SPEED * 0.5,
-      BALL_MAX_SPEED
+      BALL_MAX_SPEED,
     );
     const spread = Phaser.Math.DegToRad(25);
     const angles = [baseAngle, baseAngle + spread, baseAngle - spread];

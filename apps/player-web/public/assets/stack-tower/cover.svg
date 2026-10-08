@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Stack Tower</title>
+  <rect width="512" height="512" fill="#FFF8EC"/>
+  <g stroke="#2B2118" stroke-width="12" stroke-linejoin="round">
+    <rect x="96" y="392" width="320" height="64" rx="6" fill="#8E6CEF"/>
+    <rect x="112" y="328" width="288" height="64" rx="6" fill="#FF5A4E"/>
+    <rect x="136" y="264" width="248" height="64" rx="6" fill="#FFC93C"/>
+    <rect x="152" y="200" width="200" height="64" rx="6" fill="#3DBE6B"/>
+    <rect x="176" y="136" width="168" height="64" rx="6" fill="#3FA9F5"/>
+    <rect x="232" y="48" width="140" height="64" rx="6" fill="#FF5A4E"/>
+  </g>
+  <g stroke="#2B2118" stroke-width="8" stroke-linecap="round" fill="none">
+    <path d="M196 78 h-28"/>
+    <path d="M196 98 h-44"/>
+  </g>
+</svg>
