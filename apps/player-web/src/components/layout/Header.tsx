@@ -4,7 +4,7 @@ import { useAuth } from "../../context/FirebaseAuthProvider";
 import SideDrawer from "../SideDrawer";
 import { ProfileAvatar } from "../profile";
 import { useNotificationsIndicator } from "../../hooks/useNotificationsIndicator";
-import { brand } from "../../config/brand";
+import { brand, makersLine } from "../../config/brand";
 import Wordmark from "../brand/Wordmark";
 
 export default function Header() {
@@ -29,7 +29,10 @@ export default function Header() {
               alt=""
               className="w-10 h-10 group-hover:animate-wiggle"
             />
-            <Wordmark className="h-8 sm:h-9" />
+            <span className="flex flex-col items-start leading-none">
+              <Wordmark className="h-7 sm:h-8" />
+              <span className="mt-0.5 pl-1 text-[11px] font-bold text-ink-2">by {makersLine()}</span>
+            </span>
           </Link>
         </div>
         <div className="flex items-center gap-2">

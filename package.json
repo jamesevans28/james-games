@@ -24,7 +24,8 @@
     "web:asset:car-crash": "npm run generate-car-crash-assets --workspace apps/player-web",
     "web:generate-sitemap": "npm run generate-sitemap --workspace apps/player-web",
     "web:generate-seo": "npm run generate-seo --workspace apps/player-web",
-    "deps:check": "npm outdated --workspaces --include-workspace-root --long"
+    "deps:check": "npm outdated --workspaces --include-workspace-root --long",
+    "brand:icons": "node scripts/generate-brand-icons.mjs"
   },
   "devDependencies": {
     "@fontsource/baloo-2": "^5.3.0",

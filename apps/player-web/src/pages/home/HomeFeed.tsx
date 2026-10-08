@@ -194,7 +194,7 @@ export default function HomeFeed() {
         <div className="sticky top-0 z-10 bg-paper/95 backdrop-blur-xl border-b border-line px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-bold text-brand">For You</h1>
+              <h1 className="text-lg font-bold text-ink">Games</h1>
               <p className="text-xs text-ink-2">
                 {isFeedLoading ? "Loading..." : `${feedGames.length} games to explore`}
               </p>

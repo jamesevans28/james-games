@@ -316,7 +316,7 @@ export default function SettingsScreen() {
           <span
             className={`text-xs px-3 py-1 rounded-full font-bold ${
               isAnonymous
-                ? "bg-sun/20 text-sun border border-sun/30"
+                ? "bg-sun/20 text-ink border border-sun/50"
                 : isUsernamePin
                 ? "bg-sky/20 text-sky border border-sky/30"
                 : "bg-brand/20 text-brand border border-brand/30"
@@ -360,7 +360,7 @@ export default function SettingsScreen() {
                   ✓ Verified
                 </span>
               ) : (
-                <span className="text-xs bg-sun/20 text-sun px-2 py-1 rounded-full font-bold border border-sun/30">
+                <span className="text-xs bg-sun/20 text-ink px-2 py-1 rounded-full font-bold border border-sun/50">
                   Not verified
                 </span>
               )}
@@ -423,7 +423,7 @@ export default function SettingsScreen() {
 
           {!showPinChange ? (
             <button onClick={() => setShowPinChange(true)} className="btn btn-outline text-sm">
-              🔐 Change PIN
+              Change PIN
             </button>
           ) : (
             <form onSubmit={handleChangePin} className="space-y-4 max-w-xs">

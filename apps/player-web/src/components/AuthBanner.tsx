@@ -20,7 +20,7 @@ export default function AuthBanner() {
           </div>
           <div className="flex items-center gap-2">
             <a href="/signup" className="btn btn-primary text-sm whitespace-nowrap">
-              Sign up
+              Create account
             </a>
             <a href="/login" className="btn btn-outline text-sm whitespace-nowrap">
               Sign in

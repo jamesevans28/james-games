@@ -23,7 +23,6 @@ export const SITE_KEYWORDS = [
   "mobile games",
   "kid friendly games",
   "family friendly games",
-  "safe games for kids",
   "arcade games",
   "skill games",
   "casual games",
@@ -115,7 +114,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "vocabulary game online",
     ],
     shortDescription:
-      "Build a stack of 5-letter words by dragging letters! Free word puzzle game - play instantly in your browser.",
+      "Start with one 5-letter word, then swap in letters to make new ones. Free word puzzle, no ads.",
   },
   "reflex-ring": {
     category: "reflex",
@@ -129,7 +128,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "timing tap game",
     ],
     shortDescription:
-      "Test your reflexes! Tap when the arrow hits the target. Free reaction game - gets faster as you score!",
+      "Tap when the arrow hits the bright segment. It speeds up every round. Free, no ads.",
   },
   snapadile: {
     category: "reflex",
@@ -143,7 +142,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "free kids game",
     ],
     shortDescription:
-      "Tap the crocodiles before they reach your raft! Fun, free reflex game perfect for kids.",
+      "Crocs are swimming for your raft! Tap them before they snap. Free, no ads, and great for small fingers.",
   },
   "car-crash": {
     category: "arcade",
@@ -157,7 +156,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "highway game",
     ],
     shortDescription:
-      "Switch lanes to dodge traffic! Free endless arcade game - how far can you drive?",
+      "Switch lanes and dodge the traffic. How far can you drive? A free little arcade game, no ads.",
   },
   "fill-the-cup": {
     category: "casual",
@@ -171,7 +170,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "timing game",
     ],
     shortDescription:
-      "Hold to pour, release to stop! Fill each glass perfectly in this free precision game.",
+      "Hold to pour, let go to stop. Fill each glass to the line without spilling. Free, no ads.",
   },
   "flash-bash": {
     category: "memory",
@@ -185,7 +184,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "free memory game",
     ],
     shortDescription:
-      "Watch the pattern, repeat it! Free Simon Says-style memory game for all ages.",
+      "Watch the lights, then copy the pattern. How long a sequence can you remember? Free memory game, no ads.",
   },
   "ho-ho-home-delivery": {
     category: "arcade",
@@ -199,7 +198,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "kids christmas game",
     ],
     shortDescription:
-      "Help Santa deliver presents! Drop gifts into chimneys in this free Christmas arcade game.",
+      "Help Santa drop presents down the chimneys. A free Christmas game, no ads.",
   },
   "ready-steady-shoot": {
     category: "sports",
@@ -213,7 +212,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "sports arcade game",
     ],
     shortDescription:
-      "Aim, set power, and shoot! Score baskets in this free basketball arcade game.",
+      "Aim, pick your power and shoot for the hoop. A free basketball game, no ads.",
   },
   "paddle-pop": {
     category: "arcade",
@@ -226,7 +225,8 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "ball bounce game",
       "free arcade game",
     ],
-    shortDescription: "Bounce the ball, hit targets, collect power-ups! Free arcade paddle game.",
+    shortDescription:
+      "Bounce the ball, hit the targets, grab the power-ups. A free paddle game, no ads.",
   },
   "word-rush": {
     category: "word",
@@ -240,7 +240,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "vocabulary quiz",
     ],
     shortDescription:
-      "Guess words before time runs out! Free timed word puzzle game - test your vocabulary!",
+      "Pick your letters, then guess the hidden words before the clock runs out. Free word game, no ads.",
   },
   serpento: {
     category: "arcade",
@@ -254,7 +254,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "endless snake",
     ],
     shortDescription:
-      "Classic snake game - eat to grow, avoid walls! Free retro arcade game for all ages.",
+      "Eat to grow, don't hit the walls (or yourself). Our take on the classic snake game. Free, no ads.",
   },
   blocker: {
     category: "puzzle",
@@ -268,7 +268,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "brain teaser game",
     ],
     shortDescription:
-      "Place blocks, clear lines, chase combos! Free puzzle game - simple to learn, hard to master.",
+      "Drop blocks, clear lines, chain combos. Easy to start, hard to stop. Free puzzle game, no ads.",
   },
   "hoop-city": {
     category: "arcade",
@@ -281,7 +281,8 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "endless arcade game",
       "free casual game",
     ],
-    shortDescription: "Tap to float through hoops over the city skyline! Free endless arcade game.",
+    shortDescription:
+      "Tap to float the ball through hoops as the city scrolls past. Free, no ads, one more go guaranteed.",
   },
   "cosmic-clash": {
     category: "action",
@@ -295,7 +296,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "arcade shooter",
     ],
     shortDescription:
-      "Blast alien invaders in this free Space Invaders-style shooter! Collect power-ups, survive waves.",
+      "Blast the space invaders, grab power-ups and survive the waves. Free shooter, no ads.",
   },
   "block-breaker": {
     category: "arcade",
@@ -309,7 +310,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "classic arcade",
     ],
     shortDescription:
-      "Break all the bricks with your ball! Classic brick breaker arcade game - play free.",
+      "Smash every brick with your ball. The classic brick breaker, free and with no ads.",
   },
   "box-cutter": {
     category: "arcade",
@@ -323,7 +324,7 @@ export const GAME_SEO_META: Record<string, GameSeoMeta> = {
       "free arcade game",
     ],
     shortDescription:
-      "Draw lines to capture territory! Avoid the enemy ball in this free Qix-style arcade game.",
+      "Draw lines to box off the board while dodging the fireball. Free, no ads, very satisfying.",
   },
 };
 

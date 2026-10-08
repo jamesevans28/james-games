@@ -350,14 +350,14 @@ export default function SideDrawer({
                   className="flex-1 inline-flex items-center justify-center px-4 py-2.5 rounded-full border border-line text-ink font-semibold hover:bg-paper-2 transition-colors"
                   onClick={onClose}
                 >
-                  Log in
+                  Sign in
                 </Link>
                 <Link
                   to="/signup"
-                  className="flex-1 inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-gradient-to-r from-brand to-sky text-on-brand font-bold hover:shadow-sticker transition-all"
+                  className="flex-1 btn btn-primary px-4 py-2.5 text-sm"
                   onClick={onClose}
                 >
-                  Sign up
+                  Create account
                 </Link>
               </div>
             )}

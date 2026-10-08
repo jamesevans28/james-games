@@ -191,7 +191,7 @@ export default function FirebaseLoginPage() {
                   : "text-ink-2 hover:text-ink"
               }`}
             >
-              Sign In
+              Sign in
             </button>
             <button
               type="button"
@@ -205,7 +205,7 @@ export default function FirebaseLoginPage() {
                   : "text-ink-2 hover:text-ink"
               }`}
             >
-              Create Account
+              Create account
             </button>
           </div>
         </div>
@@ -220,7 +220,7 @@ export default function FirebaseLoginPage() {
         {/* Info for new users */}
         {mode === "register" && (
           <div className="mb-5 text-sm text-ink p-4 bg-sun/10 border border-sun/30 rounded-2xl">
-            <div className="font-bold mb-2">🎮 Why create an account?</div>
+            <div className="font-bold mb-2">Why create an account?</div>
             <ul className="list-disc list-inside space-y-1 text-ink-2">
               <li>Save your high scores to leaderboards</li>
               <li>Choose your own avatar</li>
@@ -277,7 +277,7 @@ export default function FirebaseLoginPage() {
             )}
             <div className="text-xs text-ink-2 mt-1.5">
               {mode === "register"
-                ? "Choose a PIN you'll remember — like a birthday or lucky numbers!"
+                ? "Pick 4 to 8 numbers you'll remember (not your birthday)."
                 : "Enter your 4-8 digit PIN"}
             </div>
           </label>
@@ -300,7 +300,7 @@ export default function FirebaseLoginPage() {
           )}
 
           <button type="submit" disabled={loading} className="btn btn-primary w-full py-3.5">
-            {loading ? "Please wait..." : mode === "login" ? "🚀 Sign In" : "🎉 Create Account"}
+            {loading ? "Please wait..." : mode === "login" ? "Sign in" : "Create account"}
           </button>
         </form>
 

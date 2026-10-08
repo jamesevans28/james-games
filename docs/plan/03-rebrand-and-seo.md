@@ -31,7 +31,7 @@ Steps:
 Done when: `git grep -i flingo -- apps ':!apps/player-web/public'` returns nothing; the app renders in the new palette in light and dark; `npm run typecheck` passes.
 
 ## T3.2 Logo, icons and share image
-Status: done (2026-10-08) except the manifest `screenshots` (taken at the end of T3.3, once the copy is final and with no real players' names on screen) and the post-deploy checks (Lighthouse install audit, link-preview tester) that run in T3.6. Placeholder art: `logo-mark.svg` is a hand-written sticker game pad; `logo.svg` and the PNGs come from `node scripts/generate-brand-icons.mjs` (sharp + opentype.js, fonts from @fontsource, text converted to paths). Avatars are 8 placeholder SVG animals in `public/brand/avatars/`, defined in `src/config/avatars.ts`; old sprite-sheet numbers wrap onto them, so no data migration. player-web is now `"type": "module"`.
+Status: done (2026-10-08) except the post-deploy checks (Lighthouse install audit, link-preview tester) that run in T3.6. Placeholder art: `logo-mark.svg` is a hand-written sticker game pad; `logo.svg` and the PNGs come from `node scripts/generate-brand-icons.mjs` (sharp + opentype.js, fonts from @fontsource, text converted to paths). Avatars are 8 placeholder SVG animals in `public/brand/avatars/`, defined in `src/config/avatars.ts`; old sprite-sheet numbers wrap onto them, so no data migration. player-web is now `"type": "module"`.
 Depends on: T3.1, T8.1 (style bible) for the final art; a placeholder set can ship first
 Goal: one logo system, a full icon set, a proper Open Graph image.
 Files: `apps/player-web/public/brand/` (new), `apps/player-web/public/favicon.svg`, `public/favicon.png`, `public/assets/shared/*`
@@ -44,7 +44,7 @@ Steps:
 Done when: Lighthouse PWA audit shows installable with maskable icon; sharing the home URL in a link-preview tester shows the new OG image; no file named `flingo*` remains in `public/`.
 
 ## T3.3 Copy and credits
-Status: todo
+Status: done (2026-10-08). Feed tiles show one plain status line ("Your best: N", "Played before", "Not played yet"); New/Updated/Continue stay as the feed badge. The PIN hint follows the real 4–8 digit rule rather than "6 numbers". Registry entries gained `makers`, `note` and `noteBy`. Puzzle answers like "TOM HANKS" in Word Rush's word lists are content, not the placeholder character, and stay until Word Rush is re-themed in Phase 5. Manifest screenshots (T3.2) were taken here.
 Depends on: T3.1
 Goal: the site reads as made by a family, not an app store.
 Files: `components/layout/Header.tsx`, `SideDrawer.tsx`, `pages/home/HomeFeed.tsx`, `pages/games/GameLanding.tsx`, `GameOver.tsx`, `pages/firebase-login.tsx`, `games/index.ts` (titles/descriptions), `utils/seoKeywords.ts` (`GAME_SEO_META`)

@@ -18,62 +18,15 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
   const navigate = useNavigate();
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
-  // Generate an engaging prompt based on game state and data
-  const engagingPrompt = useMemo(() => {
-    const lastPlayed = getLastPlayedGames();
+  // One plain status line: the player's best, or whether they've tried it.
+  // (New/Updated/Continue come from the feed badge.)
+  const statusLine = useMemo(() => {
     const bestScore = getBest(game.id);
-    const playedBefore = lastPlayed.includes(game.id);
-    const isRecentlyPlayed = lastPlayed.indexOf(game.id) === 0;
-    const ratingCount = rating?.ratingCount ?? 0;
-    const avgRating = rating?.avgRating ?? 0;
-
-    // Priority 1: User has played before - show their best score or encourage continuation
-    if (bestScore !== null && bestScore > 0) {
-      return { emoji: "🏆", text: `Your best: ${bestScore.toLocaleString()}` };
-    }
-
-    if (isRecentlyPlayed) {
-      return { emoji: "🔄", text: "Just played • Play again?" };
-    }
-
-    if (playedBefore) {
-      return { emoji: "✨", text: "Welcome back!" };
-    }
-
-    // Priority 2: Social proof from ratings
-    if (avgRating >= 4.5 && ratingCount >= 5) {
-      return { emoji: "⭐", text: `${avgRating.toFixed(1)} stars • Fan favorite!` };
-    }
-
-    if (ratingCount >= 10) {
-      return { emoji: "🔥", text: `${ratingCount} ratings • Popular!` };
-    }
-
-    // Priority 3: New or updated games
-    const now = Date.now();
-    const dayMs = 24 * 60 * 60 * 1000;
-    const createdAt = game.createdAt ? new Date(game.createdAt).getTime() : 0;
-    const updatedAt = game.updatedAt ? new Date(game.updatedAt).getTime() : 0;
-
-    const daysSinceCreation = (now - createdAt) / dayMs;
-    const daysSinceUpdate = (now - updatedAt) / dayMs;
-
-    if (daysSinceCreation <= 7) {
-      return { emoji: "🆕", text: "Brand new • Try it first!" };
-    }
-
-    if (daysSinceUpdate <= 7 && updatedAt > createdAt) {
-      return { emoji: "✨", text: "Just updated!" };
-    }
-
-    // Priority 4: Beta games
-    if (game.betaOnly) {
-      return { emoji: "🧪", text: "In development • Test it out!" };
-    }
-
-    // Default: Encouraging text
-    return { emoji: "🎮", text: "Tap to play!" };
-  }, [game, rating]);
+    if (bestScore > 0) return `Your best: ${bestScore.toLocaleString()}`;
+    if (getLastPlayedGames().includes(game.id)) return "Played before";
+    if (game.betaOnly) return "Still being made";
+    return "Not played yet";
+  }, [game]);
 
   const formatDateLabel = () => {
     const updatedAt = game.updatedAt ? new Date(game.updatedAt) : null;
@@ -154,10 +107,7 @@ export default function GameTile({ game, rating, badge, onShare }: GameTileProps
                 </span>
               )}
             </div>
-            {/* Engaging prompt instead of date */}
-            <p className="text-xs text-ink-2 mt-0.5 font-medium">
-              {engagingPrompt.emoji} {engagingPrompt.text}
-            </p>
+            <p className="text-xs text-ink-2 mt-0.5 font-semibold">{statusLine}</p>
           </div>
         </div>
       </div>

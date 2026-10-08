@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { trackShare } from "../../utils/analytics";
 import { type GameMeta } from "../../games";
-import { brand } from "../../config/brand";
+import { brand, makersLine } from "../../config/brand";
 import {
   getTopScores,
   fetchRatingSummary,
@@ -221,8 +221,19 @@ export default function GameLanding({ meta, onPlay }: Props) {
 
         <div className="mt-4">
           <h1 className="text-2xl font-extrabold mb-1 text-ink">{meta.title}</h1>
+          <p className="text-sm font-bold text-ink-2 mb-2">
+            Made by {makersLine(meta.makers ?? brand.makers)}
+          </p>
           {meta.description && (
             <p className="text-ink-2 text-sm leading-relaxed">{meta.description}</p>
+          )}
+          {meta.note && (
+            <figure className="mt-4 card p-4 rotate-[-0.6deg]">
+              <figcaption className="text-xs font-extrabold uppercase tracking-wide text-brand">
+                Designer&rsquo;s note{meta.noteBy ? ` from ${meta.noteBy}` : ""}
+              </figcaption>
+              <blockquote className="kid-note mt-1 text-ink">{meta.note}</blockquote>
+            </figure>
           )}
           {/* Leaderboard Top 3 + 4-10 */}
           <LeaderboardSection top={top} loading={loading} error={error} myBest={myBest} />

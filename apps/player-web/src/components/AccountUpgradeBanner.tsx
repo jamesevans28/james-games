@@ -79,9 +79,9 @@ export default function AccountUpgradeBanner() {
           <div className="flex flex-col gap-2 items-end">
             <button
               onClick={handleCreateAccount}
-              className="px-4 py-2 rounded-full bg-sun text-on-brand text-sm font-bold whitespace-nowrap shadow-sticker hover:shadow-sticker transition-all"
+              className="px-4 py-2 rounded-full bg-sun text-on-accent border-2 border-edge text-sm font-bold whitespace-nowrap shadow-sticker hover:shadow-sticker transition-all"
             >
-              Create Account
+              Create account
             </button>
             <button
               onClick={handleDismiss}
