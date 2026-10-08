@@ -537,6 +537,9 @@ export default class ReflexRingGame extends Phaser.Scene {
 
   private registerHit(isPerfect: boolean, showPerfectPopup: boolean): void {
     this.score += isPerfect ? 2 : 1;
+    const host = getHost(this);
+    if (isPerfect) host.audio.ding();
+    else host.audio.pop();
     this.scoreText.setText(this.makeScoreText());
 
     const speed = Math.abs(this.angularVelocity);
@@ -584,6 +587,8 @@ export default class ReflexRingGame extends Phaser.Scene {
       this.fadeOutPowerupStatus();
     }
 
+    getHost(this).audio.thud();
+    getHost(this).haptics.fail();
     this.cameras.main.shake(250, 0.012);
     this.cameras.main.flash(120, 255, 50, 50);
 

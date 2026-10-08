@@ -1,16 +1,20 @@
 import type { AudioKit } from "../sdk";
-import { unlockAudio } from "./context";
+import { listenForAudioUnlock } from "./context";
 import { isMuted } from "./mute";
+import { createSfxBank } from "./sfx";
 import { synth } from "./synth";
 
 export { isMuted, setMuted, onMutedChange } from "./mute";
-export { unlockAudio } from "./context";
+export { unlockAudio, listenForAudioUnlock } from "./context";
 
 /**
- * The audio kit games get as `host.audio`. Named effects fall back to synth sounds
- * until a game ships recorded SFX (T4.7 adds the loader).
+ * The audio kit games get as `host.audio`. `play(name)` uses the game's recorded
+ * effect (manifest `sfx`, files in public/assets/<id>/sfx/) when it has loaded,
+ * otherwise a synth sound. Everything respects the global mute.
  */
-export function createAudioKit(): AudioKit {
+export function createAudioKit(gameId = "", sfxNames: readonly string[] = []): AudioKit {
+  listenForAudioUnlock();
+  const bank = createSfxBank(gameId, sfxNames);
   const named: Record<string, () => void> = {
     hit: synth.pop,
     score: synth.ding,
@@ -23,23 +27,19 @@ export function createAudioKit(): AudioKit {
       return isMuted();
     },
     beep: (freq, ms) => {
-      unlockAudio();
       synth.beep(freq, ms);
     },
     ding: () => {
-      unlockAudio();
       synth.ding();
     },
     thud: () => {
-      unlockAudio();
       synth.thud();
     },
     pop: () => {
-      unlockAudio();
       synth.pop();
     },
     play: (name) => {
-      unlockAudio();
+      if (bank.play(name)) return;
       (named[name] ?? synth.pop)();
     },
   };

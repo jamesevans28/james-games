@@ -54,7 +54,7 @@ function readSafeArea(): SafeArea {
 
 export function createHost(manifest: GameManifest, options: HostOptions): PlatformHost {
   const now = options.now ?? (() => performance.now());
-  const audio = options.audio ?? createAudioKit();
+  const audio = options.audio ?? createAudioKit(manifest.id, manifest.sfx ?? []);
   const analytics: GameHost["analytics"] = options.analytics ?? {
     event: (name, params) => gaEvent(name, { game_id: manifest.id, ...params }),
   };

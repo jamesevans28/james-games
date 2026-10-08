@@ -52,6 +52,10 @@ test.each(Object.entries(manifests))("%s is valid", (path, mod) => {
   expect(checkManifest(m)).toEqual([]);
   expect(path).toBe(`../games/${m.id}/manifest.ts`);
   expect(existsSync(`${publicDir}${m.cover}`), `missing cover ${m.cover}`).toBe(true);
+  for (const name of m.sfx ?? []) {
+    const file = `${publicDir}/assets/${m.id}/sfx/${name}.mp3`;
+    expect(existsSync(file), `missing sound ${file}`).toBe(true);
+  }
 });
 
 test("game ids are unique", () => {

@@ -52,6 +52,8 @@ export type GameManifest = {
   createdAt: string;
   updatedAt: string;
   seo: { description: string; category: GameCategory };
+  /** Recorded effects in public/assets/<id>/sfx/<name>.mp3, played by host.audio.play(name). */
+  sfx?: string[];
   remix?: RemixKnob[];
 };
 

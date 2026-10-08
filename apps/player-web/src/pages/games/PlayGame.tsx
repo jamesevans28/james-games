@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { games, isSdkModule } from "../../games";
 import { createHost } from "../../platform/host";
+import { onMutedChange } from "../../platform/audio";
 import type { GameInstance } from "../../platform/sdk";
 import GameHeader from "./GameHeader";
 import { trackGameStart } from "../../utils/analytics";
@@ -49,6 +50,7 @@ export default function PlayGame() {
   // SDK games (T4.4): the running instance, so "Play again" restarts instead of remounting.
   const instanceRef = useRef<GameInstance | null>(null);
   const [paused, setPaused] = useState(false);
+  const [sdkGame, setSdkGame] = useState(false);
   // Both paths record the finished run here: SDK games through the host, legacy
   // games through the window event. An effect further down reacts with current state.
   const [finishedRun, setFinishedRun] = useState<{ score: number; durationMs?: number } | null>(
@@ -156,12 +158,14 @@ export default function PlayGame() {
         });
         const instance = mod.create(host, containerRef.current);
         instanceRef.current = instance;
+        setSdkGame(true);
         destroyRef.current = () => {
           instance.destroy();
           instanceRef.current = null;
         };
         instance.start();
       } else {
+        setSdkGame(false);
         const { destroy } = mod.mount(containerRef.current);
         destroyRef.current = destroy;
         // Legacy games: start the window-event timer (the host measures SDK games).
@@ -346,6 +350,9 @@ export default function PlayGame() {
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [playing, showScore]);
 
+  // The header's sound toggle reaches the running game's Phaser sound too.
+  useEffect(() => onMutedChange((m) => instanceRef.current?.setMuted(m)), []);
+
   const handleResume = () => {
     instanceRef.current?.resume();
     setPaused(false);
@@ -413,6 +420,7 @@ export default function PlayGame() {
       <GameHeader
         title={meta?.title ?? "Unknown Game"}
         leaderboardTo={meta ? `/leaderboard/${meta.id}` : undefined}
+        showMute={sdkGame}
         onBack={() => {
           if (playing) {
             setShowScore(false);

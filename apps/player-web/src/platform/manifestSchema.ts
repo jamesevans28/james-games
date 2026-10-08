@@ -44,6 +44,7 @@ export const manifestSchema = z.strictObject({
       "strategy",
     ]),
   }),
+  sfx: z.array(z.string().regex(/^[a-z0-9-]+$/)).optional(),
   remix: z
     .array(
       z.strictObject({

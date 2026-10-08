@@ -1,10 +1,13 @@
 import { Link } from "react-router";
 import { brand as brandConfig } from "../../config/brand";
+import MuteButton from "../../components/MuteButton";
 
 interface Props {
   title: string;
   brand?: string;
   leaderboardTo?: string; // route to leaderboard page
+  /** Show the sound toggle (SDK games only: legacy games ignore the setting). */
+  showMute?: boolean;
   onBack?: () => void;
 }
 
@@ -12,6 +15,7 @@ export default function GameHeader({
   title,
   brand = brandConfig.name,
   leaderboardTo,
+  showMute = false,
   onBack,
 }: Props) {
   return (
@@ -58,6 +62,9 @@ export default function GameHeader({
         </div>
 
         <div className="flex items-center gap-2">
+          {showMute && (
+            <MuteButton className="inline-flex items-center rounded-full border border-line bg-paper-2 hover:bg-line hover:border-brand/50 transition-colors px-3 py-1.5 text-ink" />
+          )}
           {leaderboardTo && (
             <Link
               to={leaderboardTo}
