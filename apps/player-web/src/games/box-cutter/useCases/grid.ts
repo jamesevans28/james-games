@@ -1,4 +1,4 @@
-import type { Bounds } from "../entities/GameState";
+import type { Bounds, Direction } from "../entities/GameState";
 
 export type Grid = {
   originX: number;
@@ -9,6 +9,14 @@ export type Grid = {
 };
 
 export type Cell = { c: number; r: number };
+
+/** The four grid neighbours, in a fixed order. */
+export const NEIGHBOURS: readonly { dc: number; dr: number }[] = [
+  { dc: 1, dr: 0 },
+  { dc: -1, dr: 0 },
+  { dc: 0, dr: 1 },
+  { dc: 0, dr: -1 },
+];
 
 export function createGrid(bounds: Bounds, cellSize: number): Grid {
   const cols = Math.max(1, Math.floor(bounds.width / cellSize));
@@ -49,4 +57,24 @@ export function cellToWorldCenter(grid: Grid, c: number, r: number): { x: number
 
 export function inBounds(grid: Grid, c: number, r: number): boolean {
   return c >= 0 && c < grid.cols && r >= 0 && r < grid.rows;
+}
+
+export function directionDelta(dir: Direction): { dc: number; dr: number } {
+  switch (dir) {
+    case "up":
+      return { dc: 0, dr: -1 };
+    case "down":
+      return { dc: 0, dr: 1 };
+    case "left":
+      return { dc: -1, dr: 0 };
+    case "right":
+      return { dc: 1, dr: 0 };
+  }
+}
+
+/** How many cells of a 0/1 mask are set. */
+export function countSet(mask: Uint8Array): number {
+  let count = 0;
+  for (let i = 0; i < mask.length; i++) if (mask[i]) count++;
+  return count;
 }
