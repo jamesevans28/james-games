@@ -19,6 +19,15 @@ function getFirebaseApp(): App {
     return firebaseApp;
   }
 
+  // Local stack (npm run local): the Auth emulator needs only a project id, and the
+  // Admin SDK then mints unsigned custom tokens the emulator accepts.
+  if (process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+    firebaseApp = initializeApp({
+      projectId: process.env.FIREBASE_PROJECT_ID || "demo-games4james",
+    });
+    return firebaseApp;
+  }
+
   // Initialize with service account credentials from environment
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;

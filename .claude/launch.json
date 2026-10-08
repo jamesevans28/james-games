@@ -18,6 +18,30 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "admin:dev"],
       "port": 3100
+    },
+    {
+      "name": "local-auth",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "local:auth"],
+      "port": 9099
+    },
+    {
+      "name": "local-server",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "local:server"],
+      "port": 8787
+    },
+    {
+      "name": "local-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "local:web"],
+      "port": 3000
+    },
+    {
+      "name": "local-admin",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "local:admin"],
+      "port": 3100
     }
   ]
 }

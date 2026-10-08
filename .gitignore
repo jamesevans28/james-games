@@ -110,3 +110,7 @@ Thumbs.db
 
 # Raw AI art before processing (Phase 8)
 art-inbox/
+
+# Local stack data (npm run local:server)
+.local/
+apps/backend-api/.local/
