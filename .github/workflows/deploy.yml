@@ -21,7 +21,6 @@ env:
   ADMIN_CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.ADMIN_CLOUDFRONT_DISTRIBUTION_ID }}
   # Backend (Lambda)
   LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
-  TABLE_NAME: ${{ vars.TABLE_NAME }}
 
 jobs:
   # Gate: nothing deploys unless every workspace typechecks and the backend tests pass.
@@ -155,6 +154,19 @@ jobs:
         run: |
           npm ci
 
+      # Schema first, then the games rows from the manifests (idempotent), then the code.
+      - name: Migrate database
+        working-directory: apps/backend-api
+        env:
+          DATABASE_URL_MIGRATIONS: ${{ secrets.DATABASE_URL_MIGRATIONS }}
+        run: npm run db:migrate
+
+      - name: Seed games and XP levels
+        working-directory: apps/backend-api
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run db:seed
+
       - name: Install backend dependencies (prod only)
         working-directory: apps/backend-api
         run: npm install --omit=dev --workspaces=false
@@ -203,17 +215,7 @@ jobs:
             --function-name "${{ env.LAMBDA_FUNCTION_NAME }}" \
             --environment '{
               "Variables": {
-                "SCORES_TABLE": "games4james-scores",
-                "TABLE_USERS": "games4james-users",
-                "TABLE_USERNAMES": "games4james-usernames",
-                "TABLE_RATINGS": "games4james-gameratings",
-                "TABLE_RATING_SUMMARY": "games4james-gameratings-summary",
-                "TABLE_FOLLOWS": "games4james-follows",
-                "TABLE_PRESENCE": "games4james-presence",
-                "TABLE_USER_GAME_STATS": "games4james-userGameStats",
-                "TABLE_EXPERIENCE_LEVELS": "games4james-experience-levels",
-                "TABLE_GAME_CONFIG": "games4james-game-config",
-                "AWS_NODEJS_CONNECTION_REUSE_ENABLED": "1",
+                "DATABASE_URL": "'"${{ secrets.DATABASE_URL }}"'",
                 "FIREBASE_PROJECT_ID": "'"${{ secrets.FIREBASE_PROJECT_ID }}"'",
                 "FIREBASE_CLIENT_EMAIL": "'"${{ secrets.FIREBASE_CLIENT_EMAIL }}"'",
                 "FIREBASE_PRIVATE_KEY": "'"${{ secrets.FIREBASE_PRIVATE_KEY }}"'",
