@@ -17,8 +17,8 @@ import { recordGamePlayed } from "../../utils/playHistory";
 import { getBest } from "../../utils/bestScore";
 import {
   buildGameJsonLd,
-  buildGameKeywords,
   getGameSeoDescription,
+  shareImageFor,
   SITE_URL,
 } from "../../utils/seoKeywords";
 import { brand } from "../../config/brand";
@@ -339,10 +339,6 @@ export default function PlayGame() {
     return getGameSeoDescription(meta.id, meta.description);
   }, [meta]);
 
-  const seoKeywords = useMemo(() => {
-    return meta ? buildGameKeywords(meta.id) : "";
-  }, [meta]);
-
   return (
     <div className="min-h-screen bg-paper text-ink flex flex-col">
       <Seo
@@ -354,13 +350,7 @@ export default function PlayGame() {
         description={seoDescription}
         url={`${SITE_URL}/games/${meta?.id ?? ""}`}
         canonical={`${SITE_URL}/games/${meta?.id ?? ""}`}
-        image={
-          meta?.thumbnail
-            ? `${SITE_URL}${meta.thumbnail}`
-            : `${SITE_URL}${brand.ogImage}`
-        }
-        keywords={seoKeywords}
-        ogType="game"
+        image={shareImageFor(meta?.thumbnail)}
         articlePublishedTime={meta?.createdAt}
         articleModifiedTime={meta?.updatedAt}
         jsonLd={jsonLd}

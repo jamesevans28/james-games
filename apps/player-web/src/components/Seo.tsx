@@ -8,11 +8,10 @@ export type SeoProps = {
   siteName?: string;
   noindex?: boolean;
   canonical?: string;
-  keywords?: string;
   author?: string;
   articlePublishedTime?: string;
   articleModifiedTime?: string;
-  ogType?: "website" | "article" | "game";
+  ogType?: "website" | "article";
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 };
 
@@ -24,7 +23,6 @@ export default function Seo({
   siteName = brand.name,
   noindex,
   canonical,
-  keywords,
   author,
   articlePublishedTime,
   articleModifiedTime,
@@ -40,7 +38,6 @@ export default function Seo({
       {title && <title>{title}</title>}
       {description && <meta name="description" content={description} />}
       {canonical && <link rel="canonical" href={canonical} />}
-      {keywords && <meta name="keywords" content={keywords} />}
       {author && <meta name="author" content={author} />}
       {noindex ? (
         <meta name="robots" content="noindex, nofollow" />

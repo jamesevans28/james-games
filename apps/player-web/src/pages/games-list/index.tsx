@@ -11,7 +11,6 @@ import {
   buildWebsiteJsonLd,
   buildGameCollectionJsonLd,
   buildOrganizationJsonLd,
-  SITE_KEYWORDS,
   SITE_URL,
 } from "../../utils/seoKeywords";
 import { brand, makersLine } from "../../config/brand";
@@ -154,7 +153,6 @@ export default function GamesList() {
         url={`${SITE_URL}/games-list`}
         canonical={`${SITE_URL}/games-list`}
         image={`${SITE_URL}${brand.ogImage}`}
-        keywords={[...SITE_KEYWORDS, "game catalog", "all games", "browse games"].join(", ")}
         jsonLd={[
           buildWebsiteJsonLd(),
           buildOrganizationJsonLd(),

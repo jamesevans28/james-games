@@ -8,7 +8,7 @@ import { ProfileAvatar } from "../../components/profile";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
-import { SITE_URL } from "../../utils/seoKeywords";
+import { SITE_URL, shareImageFor } from "../../utils/seoKeywords";
 import { brand } from "../../config/brand";
 
 export default function LeaderboardPage() {
@@ -109,16 +109,7 @@ export default function LeaderboardPage() {
         }
         url={`${SITE_URL}/leaderboard/${meta?.id ?? ""}`}
         canonical={`${SITE_URL}/leaderboard/${meta?.id ?? ""}`}
-        image={
-          meta?.thumbnail
-            ? `${SITE_URL}${meta.thumbnail}`
-            : `${SITE_URL}${brand.ogImage}`
-        }
-        keywords={
-          meta
-            ? `${meta.title} leaderboard, ${meta.title} high scores, free game scores, top players`
-            : "game leaderboard, high scores"
-        }
+        image={shareImageFor(meta?.thumbnail)}
         noindex={true}
       />
       <header className="fixed top-0 left-0 right-0 z-50 h-14">

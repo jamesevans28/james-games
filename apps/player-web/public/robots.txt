@@ -1,5 +1,4 @@
-# robots.txt for flingo.fun
-# Free online games - kid friendly, browser-based gaming
+# robots.txt for Games4James (https://games4james.com)
 
 User-agent: *
 Allow: /
@@ -12,7 +11,7 @@ Disallow: /login
 Disallow: /signup
 
 # Sitemap location
-Sitemap: https://flingo.fun/sitemap.xml
+Sitemap: https://games4james.com/sitemap.xml
 
 # Crawl-delay for polite crawling
 Crawl-delay: 1

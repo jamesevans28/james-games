@@ -58,7 +58,7 @@ Steps:
 Done when: a read-through of every screen in the Browser pane finds no "flingo", "Tom", "For You", or emoji section markers; the landing page shows "Made by James, Tilly & Harvey".
 
 ## T3.4 SEO origin, static pages, sitemap, structured data
-Status: todo
+Status: done (2026-10-08) in code; MANUAL: attach the CloudFront Function (infra/cloudfront/README.md), then the curl and Rich Results checks run after the T3.6 deploy. The generator reads brand.json, asserts the parsed game count matches the registry's `load()` entries (not a fixed 16, so new games don't break it), skips beta and `status: "inactive"` games, and now actually reads GAME_SEO_META (the old parser never matched). Static pages use a raster `og:image` (SVG thumbnails fall back to the brand card), escape every value, and redirect people with a path-guarded script. Meta keywords and the keyword lists are gone. Found while here: the deploy marks everything under `dist/assets/` immutable, including un-hashed game art copied from `public/assets/` (see T3.6 step 5).
 Note (from T1.9): stop generating public/games-index.html in scripts/generate-sitemap.mjs and delete it (deleting the file alone just regenerates it).
 Depends on: T3.1
 Goal: every URL the site advertises is games4james.com, and each game has its own link preview.

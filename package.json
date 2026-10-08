@@ -19,7 +19,7 @@
     "build": "npm run web:build && npm run admin:build && npm run backend:build",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present && node --test \"infra/**/*.test.mjs\"",
     "web:asset:snapadile": "npm run generate-snapadile-assets --workspace apps/player-web",
     "web:asset:car-crash": "npm run generate-car-crash-assets --workspace apps/player-web",
     "web:generate-sitemap": "npm run generate-sitemap --workspace apps/player-web",

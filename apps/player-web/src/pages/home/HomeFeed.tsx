@@ -12,7 +12,6 @@ import {
   buildWebsiteJsonLd,
   buildGameCollectionJsonLd,
   buildOrganizationJsonLd,
-  SITE_KEYWORDS,
   SITE_URL,
 } from "../../utils/seoKeywords";
 import { brand } from "../../config/brand";
@@ -177,7 +176,6 @@ export default function HomeFeed() {
         url={`${SITE_URL}/`}
         canonical={`${SITE_URL}/`}
         image={`${SITE_URL}${brand.ogImage}`}
-        keywords={SITE_KEYWORDS.join(", ")}
         jsonLd={[
           buildWebsiteJsonLd(),
           buildOrganizationJsonLd(),

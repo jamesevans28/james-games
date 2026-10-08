@@ -20,7 +20,8 @@ apps/backend-api/  Express API on AWS Lambda (data layer moving to Supabase Post
 apps/admin-web/    React admin console (keep minimal; moderation only)
 docs/plan/         The implementation plan. Source of truth for what to do next.
 docs/              Setup notes. Anything that contradicts docs/plan is stale.
-scripts/           Repo-level build/asset scripts
+scripts/           Repo-level build/asset scripts (SEO files, brand icons, codemods)
+infra/             Hand-attached cloud pieces (CloudFront Functions) with tests and MANUAL steps
 .github/workflows/ CI/CD
 ```
 

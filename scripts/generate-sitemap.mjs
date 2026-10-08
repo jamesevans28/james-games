@@ -1,14 +1,11 @@
 /**
- * Generate sitemap.xml, robots.txt, and static SEO files for the player-web app.
+ * Generate sitemap.xml, robots.txt, game-meta.json and one static HTML page per
+ * game (served to link-preview bots by infra/cloudfront/bot-rewrite.js).
  *
- * This script:
- * 1. Parses the games registry to extract all game IDs and metadata
- * 2. Generates a comprehensive sitemap.xml with game-specific metadata
- * 3. Generates robots.txt with proper directives
- * 4. Generates static HTML meta files for each game (for prerendering/SSR-like SEO)
+ * Brand values come from apps/player-web/src/config/brand.json. Game metadata is
+ * regex-parsed from the registry until Phase 4 gives every game a manifest.
  *
- * Run: npm run web:generate-sitemap
- * Or:  node scripts/generate-sitemap.mjs
+ * Run: npm run generate-seo -w apps/player-web   (also runs before `vite build`)
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -23,15 +20,26 @@ const brandJson = JSON.parse(
 
 await fs.promises.mkdir(publicDir, { recursive: true });
 
-const domain = process.env.SITE_ORIGIN || brandJson.origin;
+const domain = (process.env.SITE_ORIGIN || brandJson.origin).replace(/\/$/, "");
 const now = new Date().toISOString();
+
+const escapeHtml = (value) =>
+  String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+// JSON inside <script> must not be able to close the tag.
+const jsonForScript = (data) => JSON.stringify(data, null, 2).replace(/</g, "\\u003c");
+const makersLine = (makers) =>
+  makers.length <= 1 ? makers.join("") : `${makers.slice(0, -1).join(", ")} & ${makers.at(-1)}`;
 
 // Parse games registry
 const src = await fs.promises.readFile(gamesIndex, "utf8");
 
-// Extract game entries with more details
 const gameEntries = [];
 const gameBlocks = src.split(/\{\s*id:\s*"/);
+const registryCount = (src.match(/^\s*load:\s*async/gm) || []).length;
 
 for (let i = 1; i < gameBlocks.length; i++) {
   const block = gameBlocks[i];
@@ -44,13 +52,11 @@ for (let i = 1; i < gameBlocks.length; i++) {
   const createdMatch = block.match(/createdAt:\s*"([^"]+)"/);
   const updatedMatch = block.match(/updatedAt:\s*"([^"]+)"/);
   const thumbnailMatch = block.match(/thumbnail:\s*"([^"]+)"/);
-  const betaOnlyMatch = block.match(/betaOnly:\s*true/);
-
-  // Skip beta-only games from sitemap
-  if (betaOnlyMatch) continue;
+  const hidden = /betaOnly:\s*true/.test(block) || /status:\s*"inactive"/.test(block);
 
   gameEntries.push({
     id,
+    hidden,
     title: titleMatch ? titleMatch[1] : id,
     description: descMatch ? descMatch[1] : "",
     createdAt: createdMatch ? createdMatch[1] : now,
@@ -59,28 +65,28 @@ for (let i = 1; i < gameBlocks.length; i++) {
   });
 }
 
-console.log(`Found ${gameEntries.length} public games`);
-
-// Parse SEO keywords if available
-let seoMeta = {};
-try {
-  const seoSrc = await fs.promises.readFile(seoKeywordsPath, "utf8");
-  const seoMetaMatch = seoSrc.match(
-    /GAME_SEO_META:\s*Record<string,\s*GameSeoMeta>\s*=\s*\{([\s\S]*?)\n\};/
+// The regex parse is fragile: fail loudly if it missed a registry entry.
+if (gameEntries.length === 0 || gameEntries.length !== registryCount) {
+  throw new Error(
+    `Parsed ${gameEntries.length} games but the registry has ${registryCount} load() entries`
   );
-  if (seoMetaMatch) {
-    // Simple extraction of shortDescription for each game
-    const gameMetaBlocks = seoMetaMatch[1].split(/"\w+":\s*\{/);
-    for (const block of gameMetaBlocks) {
-      const gameIdMatch = block.match(/"([^"]+)":\s*\{/);
-      const shortDescMatch = block.match(/shortDescription:\s*"([^"]+)"/);
-      if (gameIdMatch && shortDescMatch) {
-        seoMeta[gameIdMatch[1]] = { shortDescription: shortDescMatch[1] };
-      }
-    }
+}
+const publicGames = gameEntries.filter((g) => !g.hidden);
+console.log(`Found ${gameEntries.length} games, ${publicGames.length} public`);
+
+// Per-game SEO descriptions from GAME_SEO_META in seoKeywords.ts.
+const seoMeta = {};
+{
+  const seoSrc = await fs.promises.readFile(seoKeywordsPath, "utf8");
+  const block = seoSrc.match(/GAME_SEO_META:\s*Record<string,\s*GameSeoMeta>\s*=\s*\{([\s\S]*?)\n\};/);
+  if (!block) throw new Error("GAME_SEO_META not found in seoKeywords.ts");
+  // Keys are either quoted ("word-stack") or bare (snapadile).
+  const entry = /^ {2}(?:"([a-z0-9-]+)"|([a-z0-9]+)): \{[\s\S]*?shortDescription:\s*"([^"]+)"/gm;
+  for (const m of block[1].matchAll(entry)) {
+    seoMeta[m[1] ?? m[2]] = { shortDescription: m[3] };
   }
-} catch (e) {
-  console.log("SEO keywords file not found, using defaults");
+  const missing = publicGames.filter((g) => !seoMeta[g.id]).map((g) => g.id);
+  if (missing.length) console.warn(`No GAME_SEO_META shortDescription for: ${missing.join(", ")}`);
 }
 
 // ============================================================================
@@ -102,14 +108,14 @@ const sitemapUrls = [
     priority: "0.9",
   },
   // Individual game pages
-  ...gameEntries.map((game) => ({
+  ...publicGames.map((game) => ({
     loc: `${domain}/games/${game.id}`,
     lastmod: game.updatedAt || game.createdAt || now,
     changefreq: "weekly",
     priority: "0.8",
   })),
   // Leaderboard pages (lower priority, still valuable for SEO)
-  ...gameEntries.map((game) => ({
+  ...publicGames.map((game) => ({
     loc: `${domain}/leaderboard/${game.id}`,
     lastmod: now,
     changefreq: "daily",
@@ -138,8 +144,7 @@ console.log(`Generated sitemap.xml with ${sitemapUrls.length} URLs`);
 // ============================================================================
 // Generate robots.txt
 // ============================================================================
-const robots = `# robots.txt for flingo.fun
-# Free online games - kid friendly, browser-based gaming
+const robots = `# robots.txt for ${brandJson.name} (${domain})
 
 User-agent: *
 Allow: /
@@ -164,7 +169,7 @@ console.log("Generated robots.txt");
 // ============================================================================
 // Generate game-meta.json for runtime SEO enhancement
 // ============================================================================
-const gameMeta = gameEntries.map((game) => ({
+const gameMeta = publicGames.map((game) => ({
   id: game.id,
   title: game.title,
   description: seoMeta[game.id]?.shortDescription || game.description,
@@ -182,180 +187,90 @@ await fs.promises.writeFile(
 console.log("Generated game-meta.json");
 
 // ============================================================================
-// Generate static HTML pages for each game (for search engine crawlers)
-// These serve as fallback content before JavaScript hydration
+// Static HTML page per game, for link-preview bots and crawlers.
+// infra/cloudfront/bot-rewrite.js serves /games/:id from these for bot user
+// agents; humans who land on /static-games/:id.html are sent to the app.
 // ============================================================================
 const staticGamesDir = path.join(publicDir, "static-games");
+await fs.promises.rm(staticGamesDir, { recursive: true, force: true });
 await fs.promises.mkdir(staticGamesDir, { recursive: true });
 
-for (const game of gameEntries) {
-  const seoDesc =
-    seoMeta[game.id]?.shortDescription ||
-    game.description ||
-    "Play free online games at flingo.fun!";
+// Social previews need a raster image; SVG thumbnails fall back to the brand card.
+const previewImage = (thumbnail) =>
+  `${domain}${thumbnail && /\.(png|jpe?g|webp)$/i.test(thumbnail) ? thumbnail : brandJson.ogImage}`;
+
+for (const game of publicGames) {
+  const url = `${domain}/games/${game.id}`;
+  const desc = seoMeta[game.id]?.shortDescription || game.description || brandJson.description;
+  const title = `${game.title} | ${brandJson.name}`;
+  const image = previewImage(game.thumbnail);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    name: game.title,
+    description: desc,
+    url,
+    image,
+    gamePlatform: ["Web Browser", "Mobile Browser", "PWA"],
+    applicationCategory: "Game",
+    operatingSystem: "Any",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "AUD", availability: "https://schema.org/InStock" },
+    author: brandJson.makers.map((name) => ({ "@type": "Person", name })),
+    publisher: { "@type": "Organization", name: brandJson.name, url: `${domain}/` },
+    datePublished: game.createdAt,
+    dateModified: game.updatedAt,
+    isAccessibleForFree: true,
+    playMode: "SinglePlayer",
+  };
 
   const gameHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${game.title} — Free Online Game | Play Now at flingo.fun</title>
-  <meta name="description" content="${seoDesc}">
-  <meta name="keywords" content="${game.title.toLowerCase()}, free online games, kid friendly games, browser games, arcade games, play free, no download games">
+  <title>${escapeHtml(title)}</title>
+  <meta name="description" content="${escapeHtml(desc)}">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="${domain}/games/${game.id}">
-  
-  <!-- Open Graph -->
-  <meta property="og:type" content="game">
-  <meta property="og:title" content="${game.title} — Play Free at flingo.fun">
-  <meta property="og:description" content="${seoDesc}">
-  <meta property="og:url" content="${domain}/games/${game.id}">
-  <meta property="og:image" content="${domain}${
-    game.thumbnail || brandJson.logoSquare
-  }">
-  <meta property="og:site_name" content="flingo.fun">
-  
-  <!-- Twitter -->
+  <link rel="canonical" href="${url}">
+  <link rel="icon" type="image/svg+xml" href="${brandJson.logoMark}">
+  <meta name="theme-color" content="${brandJson.themeColor}">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="${escapeHtml(brandJson.name)}">
+  <meta property="og:title" content="${escapeHtml(title)}">
+  <meta property="og:description" content="${escapeHtml(desc)}">
+  <meta property="og:url" content="${url}">
+  <meta property="og:image" content="${image}">
+  <meta property="og:image:alt" content="${escapeHtml(game.title)}">
+
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${game.title} — Play Free at flingo.fun">
-  <meta name="twitter:description" content="${seoDesc}">
-  <meta name="twitter:image" content="${domain}${
-    game.thumbnail || brandJson.logoSquare
-  }">
-  
-  <!-- JSON-LD Structured Data -->
+  <meta name="twitter:title" content="${escapeHtml(title)}">
+  <meta name="twitter:description" content="${escapeHtml(desc)}">
+  <meta name="twitter:image" content="${image}">
+
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "VideoGame",
-    "name": "${game.title}",
-    "description": "${seoDesc.replace(/"/g, '\\"')}",
-    "url": "${domain}/games/${game.id}",
-    "image": "${domain}${game.thumbnail || brandJson.logoSquare}",
-    "gamePlatform": ["Web Browser", "Mobile Browser", "PWA"],
-    "applicationCategory": "Game",
-    "operatingSystem": "Any",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD",
-      "availability": "https://schema.org/InStock"
-    },
-    "author": {
-      "@type": "Organization",
-      "name": "flingo.fun",
-      "url": "${domain}"
-    },
-    "datePublished": "${game.createdAt}",
-    "dateModified": "${game.updatedAt}",
-    "isAccessibleForFree": true,
-    "playMode": "SinglePlayer"
-  }
+${jsonForScript(jsonLd)}
   </script>
-  
-  <!-- Redirect to main app -->
-  <meta http-equiv="refresh" content="0;url=${domain}/games/${game.id}">
+  <script>
+    // Humans who open this file directly go to the app. Bots served this page
+    // at /games/:id stay here (the path check stops a redirect loop).
+    if (location.pathname.indexOf("/static-games/") === 0) location.replace("/games/${game.id}");
+  </script>
 </head>
 <body>
-  <h1>${game.title}</h1>
-  <p>${seoDesc}</p>
-  <p><a href="${domain}/games/${game.id}">Play ${game.title} free at flingo.fun</a></p>
-  <p>Loading game...</p>
+  <h1>${escapeHtml(game.title)}</h1>
+  <p>${escapeHtml(desc)}</p>
+  <p>Made by ${escapeHtml(makersLine(brandJson.makers))}.</p>
+  <p><a href="${url}">Play ${escapeHtml(game.title)} on ${escapeHtml(brandJson.name)}</a></p>
 </body>
-</html>`;
+</html>
+`;
 
   await fs.promises.writeFile(path.join(staticGamesDir, `${game.id}.html`), gameHtml, "utf8");
 }
 
-console.log(`Generated ${gameEntries.length} static game pages`);
+// games-index.html is retired (T1.9/T3.4): the SPA's /games-list is the listing page.
+await fs.promises.rm(path.join(publicDir, "games-index.html"), { force: true });
 
-// ============================================================================
-// Generate games-index.html for listing all games (SEO landing page)
-// ============================================================================
-const gamesListHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>All Free Online Games | Play Kid-Friendly Games at flingo.fun</title>
-  <meta name="description" content="Browse all free online games at flingo.fun! Kid-friendly arcade, puzzle, word, and skill games. No download required - play instantly in your browser.">
-  <meta name="keywords" content="free online games, kid friendly games, browser games, arcade games, puzzle games, word games, skill games, no download games, instant play">
-  <meta name="robots" content="index, follow">
-  <link rel="canonical" href="${domain}/">
-  
-  <!-- Open Graph -->
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="All Free Online Games | flingo.fun">
-  <meta property="og:description" content="Browse all free games at flingo.fun! Kid-friendly games for all ages.">
-  <meta property="og:url" content="${domain}/">
-  <meta property="og:image" content="${domain}${brandJson.ogImage}">
-  
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-    h1 { color: #7c3aed; }
-    .game-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-    .game-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; }
-    .game-card h2 { font-size: 1.1rem; margin: 0 0 8px; }
-    .game-card p { font-size: 0.9rem; color: #6b7280; margin: 0 0 10px; }
-    .game-card a { color: #7c3aed; text-decoration: none; font-weight: 600; }
-  </style>
-  
-  <!-- JSON-LD ItemList -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "name": "Free Online Games at flingo.fun",
-    "description": "Collection of free, kid-friendly browser games",
-    "numberOfItems": ${gameEntries.length},
-    "itemListElement": [
-      ${gameEntries
-        .map(
-          (game, i) => `{
-        "@type": "ListItem",
-        "position": ${i + 1},
-        "item": {
-          "@type": "VideoGame",
-          "name": "${game.title}",
-          "url": "${domain}/games/${game.id}"
-        }
-      }`
-        )
-        .join(",\n      ")}
-    ]
-  }
-  </script>
-  
-  <meta http-equiv="refresh" content="0;url=${domain}/">
-</head>
-<body>
-  <h1>Free Online Games at flingo.fun</h1>
-  <p>Play free, kid-friendly games instantly in your browser. No download required!</p>
-  
-  <div class="game-list">
-    ${gameEntries
-      .map(
-        (game) => `
-    <div class="game-card">
-      <h2>${game.title}</h2>
-      <p>${(seoMeta[game.id]?.shortDescription || game.description || "").slice(0, 100)}...</p>
-      <a href="${domain}/games/${game.id}">Play Now →</a>
-    </div>
-    `
-      )
-      .join("")}
-  </div>
-  
-  <p>Loading flingo.fun...</p>
-</body>
-</html>`;
-
-await fs.promises.writeFile(path.join(publicDir, "games-index.html"), gamesListHtml, "utf8");
-console.log("Generated games-index.html");
-
-console.log("\n✅ SEO generation complete!");
-console.log(`   - sitemap.xml: ${sitemapUrls.length} URLs`);
-console.log(`   - robots.txt: Updated`);
-console.log(`   - game-meta.json: ${gameEntries.length} games`);
-console.log(`   - static-games/: ${gameEntries.length} HTML pages`);
-console.log(`   - games-index.html: Game listing page`);
+console.log(`Generated ${publicGames.length} static game pages`);
+console.log(`SEO generation complete: sitemap.xml (${sitemapUrls.length} URLs), robots.txt, game-meta.json, static-games/`);
