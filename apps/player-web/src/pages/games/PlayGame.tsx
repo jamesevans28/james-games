@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { games, isSdkModule } from "../../games";
+import { allGames, isSdkModule } from "../../games";
 import { createHost } from "../../platform/host";
 import { onMutedChange } from "../../platform/audio";
 import type { GameInstance } from "../../platform/sdk";
@@ -43,7 +43,7 @@ export default function PlayGame() {
   const navigate = useNavigate();
   // Deliberately the bundled registry, not the live catalog: the mount effect depends
   // on `meta`, so a new object when catalog data arrives would remount a running game.
-  const meta = useMemo(() => games.find((g) => g.id === gameId), [gameId]);
+  const meta = useMemo(() => allGames.find((g) => g.id === gameId), [gameId]);
   const { user, ensureSession } = useAuth();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const destroyRef = useRef<null | (() => void)>(null);
@@ -436,7 +436,18 @@ export default function PlayGame() {
       />
 
       {error && <div className="p-4 text-grape">{error}</div>}
-      {meta && !error && (
+      {meta?.status === "inactive" && (
+        <div className="max-w-md mx-auto px-6 pt-24 pb-10 text-center">
+          <h1 className="font-display text-3xl font-extrabold text-ink">{meta.title}</h1>
+          <p className="kid-note mt-3 text-ink-2">
+            This game is taking a break while we make it better. Try another one!
+          </p>
+          <button type="button" className="btn btn-primary mt-6" onClick={() => void navigate("/")}>
+            See all the games
+          </button>
+        </div>
+      )}
+      {meta && meta.status !== "inactive" && !error && (
         <div className="landing-panel" data-state={landingState} aria-hidden={playing}>
           <GameLanding meta={meta} onPlay={() => setPlaying(true)} />
         </div>

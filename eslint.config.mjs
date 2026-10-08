@@ -48,7 +48,7 @@ export default tseslint.config(
 
   // Plain TS outside src (configs, Vite plugins) and all tests: syntax-only rules.
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ["**/*.{ts,tsx,mts}"],
     ignores: TS_SRC,
     extends: [tseslint.configs.recommended],
   },
@@ -80,7 +80,7 @@ export default tseslint.config(
   {
     files: [
       "apps/backend-api/**/*.{ts,js,mjs}",
-      "scripts/**/*.{js,mjs}",
+      "scripts/**/*.{js,mjs,mts}",
       "infra/**/*.{js,mjs}",
       "*.{js,mjs,ts}",
       "apps/*/vite.config.ts",
@@ -90,7 +90,7 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
-    files: ["scripts/**/*.{js,mjs}"],
+    files: ["scripts/**/*.{js,mjs,mts}"],
     rules: { "no-console": "off" },
   },
   // CloudFront Functions are plain scripts whose handler() is called by AWS.

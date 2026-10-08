@@ -9,7 +9,8 @@ export const brand = {
   ...brandJson,
   makers: brandJson.makers as readonly string[],
   // GA4 stream; VITE_ANALYTICS_ID overrides it (empty string turns analytics off).
-  analyticsId: import.meta.env.VITE_ANALYTICS_ID ?? brandJson.analyticsId,
+  // `?.`: scripts import manifests (and so this file) under tsx, where import.meta.env is unset.
+  analyticsId: import.meta.env?.VITE_ANALYTICS_ID ?? brandJson.analyticsId,
   social: {} as Record<string, string>, // no handles until there are real ones
 } as const;
 

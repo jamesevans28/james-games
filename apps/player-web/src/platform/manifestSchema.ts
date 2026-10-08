@@ -24,7 +24,7 @@ export const manifestSchema = z.strictObject({
   scoring: z.strictObject({
     max: z.number().positive(),
     perSecondMax: z.number().positive(),
-    xpMultiplier: z.number().positive().max(10),
+    xpMultiplier: z.number().positive().max(100),
   }),
   // SVG is allowed until Phase 8 covers land; link previews fall back to the brand card.
   cover: z.string().regex(/^\/assets\/.+\.(png|jpe?g|webp|svg)$/, "image under /assets/"),

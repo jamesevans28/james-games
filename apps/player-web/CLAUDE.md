@@ -32,7 +32,7 @@ Routes are defined in `src/App.tsx`.
 ## How a game is registered today
 
 1. Folder `src/games/<id>/` with `index.ts` exporting `mount(container) → { destroy() }`.
-2. An entry in `src/games/index.ts` with `id`, `title`, copy, `thumbnail`, `xpMultiplier`, dates and a lazy `load()`.
+2. A `manifest.ts` (`defineGame({...})`); the registry in `src/platform/registry.ts` finds it automatically.
 3. Assets in `public/assets/<id>/`.
 4. The scene calls `dispatchGameOver({ gameId, score })` from `utils/gameEvents.ts`; `PlayGame.tsx` shows `GameOver.tsx`, which posts the score.
 

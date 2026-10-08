@@ -10,8 +10,8 @@
     "build:no-seo": "vite build",
     "generate-snapadile-assets": "cd ../.. && node scripts/generate-snapadile-assets.mjs",
     "generate-car-crash-assets": "cd ../.. && node scripts/generate-car-crash-assets.mjs",
-    "generate-sitemap": "cd ../.. && node scripts/generate-sitemap.mjs",
-    "generate-seo": "cd ../.. && node scripts/generate-sitemap.mjs",
+    "generate-sitemap": "cd ../.. && tsx scripts/export-manifests.mts && node scripts/generate-sitemap.mjs",
+    "generate-seo": "cd ../.. && tsx scripts/export-manifests.mts && node scripts/generate-sitemap.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "test": "vitest run --project player-web --root ../.."
   },
