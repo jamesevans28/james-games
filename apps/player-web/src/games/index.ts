@@ -63,10 +63,7 @@ export const games: GameMeta[] = [
     xpMultiplier: 1.93,
     createdAt: "2025-09-16T00:00:00.000Z",
     updatedAt: "2025-11-25T00:00:00.000Z",
-    load: async () => {
-      const mod = await import("./snapadile/index");
-      return { mount: mod.mount };
-    },
+    load: () => import("./snapadile/index"),
   },
   {
     id: "car-crash",

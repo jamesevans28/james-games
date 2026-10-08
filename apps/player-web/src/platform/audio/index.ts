@@ -15,6 +15,7 @@ export function createAudioKit(): AudioKit {
     hit: synth.pop,
     score: synth.ding,
     miss: synth.thud,
+    end: synth.thud,
     tap: () => synth.beep(),
   };
   return {

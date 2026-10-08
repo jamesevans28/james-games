@@ -1,23 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/unbound-method, no-empty, no-restricted-imports -- TODO T4.5/T5.3: legacy game code, cleaned when it moves onto the Game SDK */
-import { dispatchGameOver } from "../../utils/gameEvents";
+/* eslint-disable @typescript-eslint/unbound-method -- TODO T5.3: Phaser timer callbacks with callbackScope */
 import Phaser from "phaser";
-import { getBest, setBest } from "../../utils/bestScore";
+import { BasePlatformScene } from "../../platform/scenes/BasePlatformScene";
 
 interface Croc extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
   sourceId: string;
   speed: number;
 }
 
-export default class SnapadileScene extends Phaser.Scene {
+export default class SnapadileScene extends BasePlatformScene {
   private center!: Phaser.Math.Vector2;
   private raftRadius = 60; // pixels around center to count as hit
-  private lives = 3;
+  private static readonly MAX_LIVES = 3;
+  private lives = SnapadileScene.MAX_LIVES;
   private score = 0;
-  private best = 0;
-
-  private scoreText!: Phaser.GameObjects.Text;
-  private livesText!: Phaser.GameObjects.Text;
-  private gameOverText?: Phaser.GameObjects.Text;
 
   private spawnTimer?: Phaser.Time.TimerEvent;
   private spawnInterval = 1000; // ms, decreases over time
@@ -41,7 +36,14 @@ export default class SnapadileScene extends Phaser.Scene {
     this.load.image("croc", "/assets/snapadile/croc.png");
   }
 
-  create() {
+  protected startRun() {
+    // The scene object survives restarts: reset per-run fields first.
+    this.lives = SnapadileScene.MAX_LIVES;
+    this.score = 0;
+    this.spawnInterval = 1000;
+    this.maxConcurrent = 1;
+    this.occupiedSpawns.clear();
+
     const { width, height } = this.scale;
     this.center = new Phaser.Math.Vector2(width / 2, height / 2);
 
@@ -58,24 +60,9 @@ export default class SnapadileScene extends Phaser.Scene {
     raft.setScale(raftScale);
     this.raftRadius = Math.max(raft.width, raft.height) * raftScale * 0.52; // slightly beyond raft edge
 
-    // UI
-    this.best = getBest("snapadile");
-    this.scoreText = this.add
-      .text(16, 12, this.makeScoreText(), {
-        fontFamily: "sans-serif",
-        fontSize: "28px",
-        color: "#ffffff",
-      })
-      .setDepth(10);
-
-    this.livesText = this.add
-      .text(width - 16, 12, "❤❤❤", {
-        fontFamily: "sans-serif",
-        fontSize: "28px",
-        color: "#ff7b7b",
-      })
-      .setOrigin(1, 0)
-      .setDepth(10);
+    this.hud.setScore(0);
+    this.hud.setBest(this.host.best.get());
+    this.hud.setHearts(this.lives, SnapadileScene.MAX_LIVES);
 
     // Spawn points: 3 per side, centers top/bottom, 4 corners
     this.computeSpawnPoints(width, height);
@@ -185,10 +172,10 @@ export default class SnapadileScene extends Phaser.Scene {
 
     // Score immediately on hit
     this.score += 1;
-    this.scoreText.setText(this.makeScoreText());
+    this.hud.setScore(this.score);
 
-    // Play hit sound + ripple + whack burst (remove screen flash)
-    this.playBeep(740, 90);
+    // Hit sound + ripple + whack burst
+    this.host.audio.play("hit");
     this.spawnRipple(croc.x, croc.y, 0x72f5a1);
     if (tapX !== undefined && tapY !== undefined) {
       this.spawnWhack(tapX, tapY);
@@ -271,11 +258,12 @@ export default class SnapadileScene extends Phaser.Scene {
     croc.destroy();
     if (this.lives <= 0) return;
     this.lives -= 1;
-    this.livesText.setText("❤".repeat(this.lives));
+    this.hud.setHearts(this.lives, SnapadileScene.MAX_LIVES);
 
     // Camera shake for feedback (match ReflexRing feel)
     this.cameras.main.shake(250, 0.01);
-    this.playBeep(180, 120);
+    this.host.audio.play("miss");
+    this.host.haptics.tap();
     this.spawnRipple(this.center.x, this.center.y, 0xff7777);
 
     if (this.lives <= 0) {
@@ -295,68 +283,7 @@ export default class SnapadileScene extends Phaser.Scene {
       return true;
     });
 
-    this.gameOverText = this.add
-      .text(
-        this.scale.width / 2,
-        this.scale.height / 2,
-        `Game Over\nScore: ${this.score}\nBest: ${this.best}\nTap to Restart`,
-        {
-          fontFamily: "sans-serif",
-          fontSize: "36px",
-          color: "#ffffff",
-          align: "center",
-        },
-      )
-      .setOrigin(0.5)
-      .setDepth(20);
-
-    // Update best score (local)
-    if (this.score > this.best) {
-      this.best = this.score;
-      setBest("snapadile", this.best);
-    }
-
-    // Score submission is handled by ScoreDialog after game over
-
-    // Notify shell
-    try {
-      dispatchGameOver({ gameId: "snapadile", score: this.score, ts: Date.now() });
-    } catch {}
-
-    // Delay before allowing restart to avoid accidental taps
-    this.time.delayedCall(1000, () => {
-      this.input.once("pointerdown", () => this.restartGame());
-    });
-  }
-
-  private restartGame() {
-    // Clear crocs
-    this.crocs.clear(true, true);
-    this.occupiedSpawns.clear();
-
-    // Reset state
-    this.lives = 3;
-    this.score = 0;
-    this.spawnInterval = 1000;
-    this.maxConcurrent = 1;
-
-    this.scoreText.setText(this.makeScoreText());
-    this.livesText.setText("❤❤❤");
-    this.gameOverText?.destroy();
-
-    // Restart timers
-    this.spawnTimer = this.time.addEvent({
-      delay: this.spawnInterval,
-      loop: true,
-      callback: this.trySpawn,
-      callbackScope: this,
-    });
-    this.difficultyTimer = this.time.addEvent({
-      delay: 4000,
-      loop: true,
-      callback: this.increaseDifficulty,
-      callbackScope: this,
-    });
+    this.endRun(this.score);
   }
 
   private spawnRipple(x: number, y: number, color: number = 0x72c8ff) {
@@ -370,23 +297,6 @@ export default class SnapadileScene extends Phaser.Scene {
       ease: "Sine.Out",
       onComplete: () => r.destroy(),
     });
-  }
-
-  private playBeep(freq: number, durationMs: number, type: OscillatorType = "sine") {
-    const ctx: AudioContext | null = (this.sound as any)?.context ?? null;
-    if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = type;
-    osc.frequency.value = freq;
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    const now = ctx.currentTime;
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.12, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + durationMs / 1000);
-    osc.start(now);
-    osc.stop(now + durationMs / 1000 + 0.02);
   }
 
   private spawnWhack(x: number, y: number) {
@@ -425,9 +335,5 @@ export default class SnapadileScene extends Phaser.Scene {
     schedule(400);
     schedule(1200);
     schedule(2000);
-  }
-
-  private makeScoreText() {
-    return `Score: ${this.score}   Best: ${this.best}`;
   }
 }
