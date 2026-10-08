@@ -15,17 +15,7 @@ export default function RootLayout() {
     pathname.startsWith("/leaderboard/");
 
   return (
-    <div
-      className="min-h-screen w-full font-sans text-flingo-900"
-      style={{
-        background: "#121318",
-        backgroundImage: `
-          radial-gradient(ellipse at 20% 0%, rgba(200, 255, 50, 0.04) 0%, transparent 50%),
-          radial-gradient(ellipse at 80% 100%, rgba(255, 62, 181, 0.04) 0%, transparent 50%),
-          radial-gradient(ellipse at 50% 50%, rgba(50, 212, 255, 0.02) 0%, transparent 70%)
-        `,
-      }}
-    >
+    <div className="min-h-screen w-full font-sans bg-paper text-ink">
       {!hideGlobalHeader && <Header />}
       <main className="w-full h-full">
         <Outlet />

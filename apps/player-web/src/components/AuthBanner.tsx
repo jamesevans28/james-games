@@ -13,9 +13,9 @@ export default function AuthBanner() {
 
   return (
     <div className="fixed bottom-4 inset-x-0 z-[10000] px-4">
-      <div className="mx-auto max-w-xl rounded-2xl border border-flingo-200/30 bg-surface-card/95 shadow-card-hover backdrop-blur px-5 py-4">
+      <div className="mx-auto max-w-xl rounded-2xl border border-line bg-card/95 shadow-card-hover backdrop-blur px-5 py-4">
         <div className="flex items-center justify-between gap-3">
-          <div className="text-sm text-flingo-800 font-medium">
+          <div className="text-sm text-ink font-medium">
             Create a free account to save your high scores, rate games, and play with friends.
           </div>
           <div className="flex items-center gap-2">
@@ -26,7 +26,7 @@ export default function AuthBanner() {
               Sign in
             </a>
             <button
-              className="p-2 rounded-full text-flingo-500 hover:text-flingo-800 hover:bg-flingo-100 transition-colors"
+              className="p-2 rounded-full text-ink-3 hover:text-ink hover:bg-paper-2 transition-colors"
               onClick={() => {
                 sessionStorage.setItem("authBannerDismissed", "1");
                 setDismissed(true);

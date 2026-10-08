@@ -1,64 +1,82 @@
 @import "tailwindcss";
 
+/* ========================================
+   STICKER-BOOK THEME (T3.1)
+   Warm paper, thick ink, flat bright fills. Semantic tokens only: never use
+   raw hex in components. Brand values also live in src/config/brand.json.
+   Light is the default; dark redefines the same tokens below.
+   ======================================== */
 @theme {
-  /* ========================================
-     NEO-ARCADE THEME: Bold, playful, dark base with neon accents
-     ======================================== */
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-transparent: transparent;
+  --color-current: currentColor;
 
-  /* Core dark palette - deep inky base */
-  --color-flingo-50: #1e2028;
-  --color-flingo-100: #252832;
-  --color-flingo-200: #2d313d;
-  --color-flingo-300: #3a3f4f;
-  --color-flingo-400: #4a5066;
-  --color-flingo-500: #5c6380;
-  --color-flingo-600: #7a829f;
-  --color-flingo-700: #9fa6be;
-  --color-flingo-800: #c4c9d9;
-  --color-flingo-900: #eaecf2;
+  /* Surfaces */
+  --color-paper: #fff8ec;
+  --color-paper-2: #fdecd2;
+  --color-card: #ffffff;
+  --color-line: #ead9bf;
+  --color-scrim: #2b2118;
 
-  /* Neon accent colors - electric & vibrant */
-  --color-neon-lime: #c8ff32;
-  --color-neon-pink: #ff3eb5;
-  --color-neon-blue: #32d4ff;
-  --color-neon-yellow: #ffeb3b;
-  --color-neon-orange: #ff7a32;
-  --color-neon-purple: #b366ff;
+  /* Ink (text) */
+  --color-ink: #2b2118;
+  --color-ink-2: #5c4a3a;
+  --color-ink-3: #8c7866;
+  --color-edge: #2b2118; /* sticker outlines and hard shadows */
 
-  /* Legacy candy aliases for compatibility */
-  --color-candy-pink: #ff3eb5;
-  --color-candy-yellow: #ffeb3b;
-  --color-candy-mint: #c8ff32;
-  --color-candy-sky: #32d4ff;
+  /* Crayon box */
+  --color-tomato: #ff5a4e;
+  --color-sun: #ffc93c;
+  --color-grass: #3dbe6b;
+  --color-sky: #3fa9f5;
+  --color-grape: #8e6cef;
 
-  /* Surface colors for cards/containers */
-  --color-surface-dark: #1a1c23;
-  --color-surface-card: #22252e;
-  --color-surface-elevated: #2a2e38;
+  /* Roles */
+  --color-brand: #ff5a4e;
+  --color-accent: #ffc93c;
+  --color-on-brand: #ffffff;
+  --color-on-accent: #2b2118;
 
-  /* Font families - Baloo 2 is chunky and playful */
-  --font-sans: "Baloo 2", "Nunito", Arial, sans-serif;
+  --font-sans: "Nunito", "Baloo 2", Arial, sans-serif;
   --font-display: "Baloo 2", "Nunito", Arial, sans-serif;
+  --font-note: "Patrick Hand", "Nunito", cursive;
 
-  /* Glow shadows for neon effect */
-  --shadow-neon-lime: 0 0 20px rgba(200, 255, 50, 0.4), 0 0 40px rgba(200, 255, 50, 0.2);
-  --shadow-neon-pink: 0 0 20px rgba(255, 62, 181, 0.4), 0 0 40px rgba(255, 62, 181, 0.2);
-  --shadow-neon-blue: 0 0 20px rgba(50, 212, 255, 0.4), 0 0 40px rgba(50, 212, 255, 0.2);
-  --shadow-fun: 0 4px 20px -2px rgba(200, 255, 50, 0.25);
-  --shadow-fun-lg: 0 8px 30px -4px rgba(200, 255, 50, 0.35);
-  --shadow-card: 0 4px 16px -4px rgba(0, 0, 0, 0.5);
-  --shadow-card-hover: 0 8px 32px -4px rgba(200, 255, 50, 0.3);
+  /* Hard offset shadows, like a sticker lifted off the page */
+  --shadow-sticker: 0 3px 0 0 var(--color-edge);
+  --shadow-sticker-lg: 0 5px 0 0 var(--color-edge);
+  --shadow-card: 0 2px 0 0 var(--color-line);
+  --shadow-card-hover: 0 4px 0 0 var(--color-edge);
 
-  /* Border radius - chunky & playful */
   --radius-2xl: 1rem;
   --radius-3xl: 1.5rem;
   --radius-4xl: 2rem;
 
-  /* Animations */
   --animate-wiggle: wiggle 1s ease-in-out infinite;
   --animate-float: float 3s ease-in-out infinite;
-  --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
   --animate-bounce-in: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #1f1a15;
+    --color-paper-2: #2a231c;
+    --color-card: #322920;
+    --color-line: #4a3d31;
+    --color-scrim: #000000;
+    --color-ink: #fff4e4;
+    --color-ink-2: #e2cfb8;
+    --color-ink-3: #ad9883;
+    --color-edge: #0e0b08;
+    --color-tomato: #ff6a5f;
+    --color-sun: #ffd25a;
+    --color-grass: #4fcf7c;
+    --color-sky: #5cb8f7;
+    --color-grape: #a185f3;
+    --color-brand: #ff6a5f;
+    --color-accent: #ffd25a;
+  }
 }
 
 /* ======================================
@@ -81,16 +99,6 @@
   }
   50% {
     transform: translateY(-10px);
-  }
-}
-
-@keyframes glow-pulse {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 8px rgba(200, 255, 50, 0.6));
-  }
-  50% {
-    filter: drop-shadow(0 0 20px rgba(200, 255, 50, 0.9));
   }
 }
 
@@ -128,22 +136,6 @@
   }
 }
 
-.animate-wiggle {
-  animation: wiggle 1s ease-in-out infinite;
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-glow-pulse {
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-
-.animate-bounce-in {
-  animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
 .animate-shimmer {
   animation: shimmer 2s linear infinite;
   background-size: 200% 100%;
@@ -153,45 +145,47 @@
   animation: slide-up 0.4s ease-out forwards;
 }
 
-/* ======================================
-   Base Styles - Neo-Arcade Dark Theme
-   ====================================== */
+@media (prefers-reduced-motion: reduce) {
+  .animate-wiggle,
+  .animate-float,
+  .animate-bounce-in,
+  .animate-shimmer {
+    animation: none;
+  }
+}
 
+/* ======================================
+   Base
+   ====================================== */
 @layer base {
-  /* Ensure root takes full height */
   html,
   body,
   #root {
     height: 100%;
   }
 
-  /* Dark base with subtle texture */
-  body {
-    margin: 0;
-    font-family: "Baloo 2", "Nunito", Arial, Helvetica, sans-serif;
-    background: #121318;
-    background-image: radial-gradient(
-        ellipse at 20% 0%,
-        rgba(200, 255, 50, 0.03) 0%,
-        transparent 50%
-      ),
-      radial-gradient(ellipse at 80% 100%, rgba(255, 62, 181, 0.03) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 50%, rgba(50, 212, 255, 0.02) 0%, transparent 70%);
-    min-height: 100vh;
-    color: #eaecf2;
+  html {
+    color-scheme: light dark;
   }
 
-  /* Headings in bright white */
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    min-height: 100vh;
+  }
+
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    color: #ffffff;
+    font-family: var(--font-display);
+    color: var(--color-ink);
   }
 
-  /* Phaser canvas fills the game container */
   #game-container {
     position: relative;
     overflow: hidden;
@@ -201,56 +195,32 @@
     display: block;
   }
 
-  /* Remove tap highlight color on mobile */
   a,
   button {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Custom scrollbar for dark theme */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #1a1c23;
+    background: var(--color-paper);
   }
   ::-webkit-scrollbar-thumb {
-    background: #3a3f4f;
+    background: var(--color-line);
     border-radius: 4px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #4a5066;
   }
 }
 
 :root {
   --header-h: 64px;
-
-  /* Neo-Arcade colors for non-Tailwind usage */
-  --flingo-primary: #c8ff32;
-  --flingo-primary-hover: #b8ef22;
-  --flingo-secondary: #ff3eb5;
-  --flingo-accent: #32d4ff;
-
-  /* Neon accents */
-  --neon-lime: #c8ff32;
-  --neon-pink: #ff3eb5;
-  --neon-blue: #32d4ff;
-  --neon-yellow: #ffeb3b;
-  --neon-orange: #ff7a32;
-  --neon-purple: #b366ff;
-
-  /* Legacy candy aliases */
-  --candy-pink: #ff3eb5;
-  --candy-yellow: #ffeb3b;
-  --candy-mint: #c8ff32;
-  --candy-sky: #32d4ff;
-
   --btn-radius: 9999px;
 }
 
-/* Button base styles - Neo-Arcade neon buttons */
+/* ======================================
+   Components: chunky sticker buttons and cards
+   ====================================== */
 @layer components {
   .btn {
     display: inline-flex;
@@ -259,66 +229,65 @@
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
     border-radius: var(--btn-radius);
-    font-weight: 700;
-    font-size: 0.9375rem;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.4);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    border: 2.5px solid var(--color-edge);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1rem;
+    line-height: 1.1;
+    box-shadow: var(--shadow-sticker);
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.12s ease,
+      background-color 0.15s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sticker-lg);
   }
 
   .btn:active {
-    transform: scale(0.97);
+    transform: translateY(3px);
+    box-shadow: 0 0 0 0 var(--color-edge);
+  }
+
+  .btn:disabled {
+    opacity: 0.6;
+    transform: none;
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, #c8ff32 0%, #9fdf00 100%);
-    color: #121318;
-    box-shadow: 0 0 20px rgba(200, 255, 50, 0.3);
-  }
-
-  .btn-primary:hover {
-    background: linear-gradient(135deg, #d8ff52 0%, #afef10 100%);
-    box-shadow: 0 0 30px rgba(200, 255, 50, 0.5);
-    transform: translateY(-2px);
+    background: var(--color-brand);
+    color: var(--color-on-brand);
   }
 
   .btn-secondary {
-    background: linear-gradient(135deg, #ff3eb5 0%, #e02090 100%);
-    color: white;
-    box-shadow: 0 0 20px rgba(255, 62, 181, 0.3);
-  }
-
-  .btn-secondary:hover {
-    box-shadow: 0 0 30px rgba(255, 62, 181, 0.5);
-    transform: translateY(-2px);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
   }
 
   .btn-outline {
-    background: transparent;
-    color: #c8ff32;
-    border: 2px solid #c8ff32;
-    box-shadow: none;
+    background: var(--color-card);
+    color: var(--color-ink);
   }
 
   .btn-outline:hover {
-    background: rgba(200, 255, 50, 0.1);
-    box-shadow: 0 0 20px rgba(200, 255, 50, 0.2);
+    background: var(--color-paper-2);
   }
 
-  /* Card styles for dark theme */
   .card {
-    background: #22252e;
-    border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.4);
-    transition: all 0.25s ease;
+    background: var(--color-card);
+    border-radius: 1.25rem;
+    border: 2.5px solid var(--color-edge);
+    box-shadow: var(--shadow-sticker);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
   }
 
   .card:hover {
-    border-color: rgba(200, 255, 50, 0.2);
-    box-shadow: 0 8px 32px -8px rgba(200, 255, 50, 0.15);
-    transform: translateY(-4px);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sticker-lg);
   }
 
   .card-interactive {
@@ -326,30 +295,18 @@
   }
 
   .card-interactive:active {
-    transform: scale(0.98);
+    transform: translateY(2px);
+    box-shadow: 0 0 0 0 var(--color-edge);
   }
 
-  /* Neon text glow effect */
-  .text-glow-lime {
-    text-shadow: 0 0 10px rgba(200, 255, 50, 0.5), 0 0 20px rgba(200, 255, 50, 0.3);
-  }
-
-  .text-glow-pink {
-    text-shadow: 0 0 10px rgba(255, 62, 181, 0.5), 0 0 20px rgba(255, 62, 181, 0.3);
-  }
-
-  .text-glow-blue {
-    text-shadow: 0 0 10px rgba(50, 212, 255, 0.5), 0 0 20px rgba(50, 212, 255, 0.3);
-  }
-
-  /* Gradient text utilities */
-  .text-gradient-neon {
-    background: linear-gradient(135deg, #c8ff32 0%, #32d4ff 50%, #ff3eb5 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  /* Handwritten notes from the kids */
+  .kid-note {
+    font-family: var(--font-note);
+    font-size: 1.15rem;
+    line-height: 1.3;
   }
 }
+
 /* Game screen sizing */
 .game-screen {
   height: calc(100dvh - var(--header-h));
@@ -370,7 +327,7 @@
   opacity: 0;
   pointer-events: none;
   transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1), opacity 450ms ease;
-  background: linear-gradient(180deg, #1a1c23 0%, #22252e 100%);
+  background: var(--color-paper);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -399,12 +356,12 @@
   filter: blur(1px);
 }
 
-/* Page slide transitions - dark theme */
+/* Page slide transitions */
 .page-container {
   position: relative;
   width: 100%;
   min-height: 100vh;
-  background: #121318;
+  background: var(--color-paper);
 }
 
 .page-transition-wrapper {
@@ -419,7 +376,7 @@
   right: 0;
   width: 100%;
   min-height: 100vh;
-  background: #121318;
+  background: var(--color-paper);
 }
 
 /* Forward transition (entering game page) */

@@ -15,6 +15,7 @@ import {
   SITE_KEYWORDS,
   SITE_URL,
 } from "../../utils/seoKeywords";
+import { brand } from "../../config/brand";
 
 const INITIAL_LOAD_COUNT = 5;
 const LOAD_MORE_COUNT = 3;
@@ -141,29 +142,29 @@ export default function HomeFeed() {
 
   // Skeleton loader component
   const GameTileSkeleton = () => (
-    <article className="bg-surface-card border-b border-flingo-200/30 animate-pulse">
+    <article className="bg-card border-b border-line animate-pulse">
       {/* Header */}
       <div className="px-4 pt-4 pb-2">
-        <div className="h-5 bg-flingo-200 rounded-lg w-32 mb-2" />
-        <div className="h-3 bg-flingo-100 rounded w-48" />
+        <div className="h-5 bg-line rounded-lg w-32 mb-2" />
+        <div className="h-3 bg-paper-2 rounded w-48" />
       </div>
 
       {/* Image placeholder */}
-      <div className="w-full aspect-square bg-flingo-100" />
+      <div className="w-full aspect-square bg-paper-2" />
 
       {/* Stats row */}
-      <div className="px-4 py-2 flex items-center justify-between bg-flingo-50/50">
+      <div className="px-4 py-2 flex items-center justify-between bg-paper-2">
         <div className="flex items-center gap-3">
-          <div className="h-4 bg-flingo-200 rounded w-20" />
-          <div className="h-3 bg-flingo-100 rounded w-16" />
+          <div className="h-4 bg-line rounded w-20" />
+          <div className="h-3 bg-paper-2 rounded w-16" />
         </div>
-        <div className="w-8 h-8 bg-flingo-200 rounded-full" />
+        <div className="w-8 h-8 bg-line rounded-full" />
       </div>
 
       {/* Description */}
       <div className="px-4 py-3">
-        <div className="h-4 bg-flingo-100 rounded w-full mb-2" />
-        <div className="h-4 bg-flingo-100 rounded w-3/4" />
+        <div className="h-4 bg-paper-2 rounded w-full mb-2" />
+        <div className="h-4 bg-paper-2 rounded w-3/4" />
       </div>
     </article>
   );
@@ -171,8 +172,8 @@ export default function HomeFeed() {
   return (
     <div className="min-h-screen flex flex-col">
       <Seo
-        title="Free Online Games for Kids & Families | Play Instantly at flingo.fun"
-        description="Play free online games at flingo.fun! Kid-friendly, browser-based arcade and skill games. No download, no ads - just tap and play on any device!"
+        title={`${brand.name} | ${brand.tagline}`}
+        description={brand.description}
         url={`${SITE_URL}/`}
         canonical={`${SITE_URL}/`}
         image={`${SITE_URL}/assets/shared/logo_square.png`}
@@ -187,21 +188,21 @@ export default function HomeFeed() {
       {/* Feed Container - Mobile-width centered */}
       <div
         ref={containerRef}
-        className="w-full max-w-[540px] mx-auto bg-surface-dark min-h-screen shadow-xl border-x border-flingo-200/20"
+        className="w-full max-w-[540px] mx-auto bg-paper min-h-screen shadow-xl border-x border-line"
       >
         {/* Welcome header */}
-        <div className="sticky top-0 z-10 bg-surface-dark/95 backdrop-blur-xl border-b border-flingo-200/30 px-4 py-3">
+        <div className="sticky top-0 z-10 bg-paper/95 backdrop-blur-xl border-b border-line px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-bold text-neon-lime text-glow-lime">For You</h1>
-              <p className="text-xs text-flingo-600">
+              <h1 className="text-lg font-bold text-brand">For You</h1>
+              <p className="text-xs text-ink-2">
                 {isFeedLoading ? "Loading..." : `${feedGames.length} games to explore`}
               </p>
             </div>
             <button
               type="button"
               onClick={() => navigate("/games-list")}
-              className="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide text-neon-lime bg-flingo-100 hover:bg-flingo-200 border border-neon-lime/30 hover:border-neon-lime/50 transition-all hover:shadow-neon-lime/20 hover:shadow-lg"
+              className="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide text-brand bg-paper-2 hover:bg-line border border-brand/30 hover:border-brand/50 transition-all hover:shadow-sticker hover:shadow-lg"
             >
               View all
             </button>
@@ -210,7 +211,7 @@ export default function HomeFeed() {
 
         {/* Loading skeletons */}
         {isFeedLoading && (
-          <div className="divide-y divide-flingo-200/30">
+          <div className="divide-y divide-line">
             {Array.from({ length: 3 }).map((_, i) => (
               <GameTileSkeleton key={i} />
             ))}
@@ -219,7 +220,7 @@ export default function HomeFeed() {
 
         {/* Game Tiles Feed */}
         {!isFeedLoading && (
-          <div className="divide-y divide-flingo-200/30">
+          <div className="divide-y divide-line">
             {displayItems.map((game, index) => (
               <GameTile
                 key={`${game.id}-${index}`}
@@ -236,8 +237,8 @@ export default function HomeFeed() {
           <div ref={loadMoreRef} className="py-8 flex items-center justify-center">
             {feedGames.length > 0 && (
               <div className="flex flex-col items-center gap-2">
-                <div className="w-6 h-6 border-2 border-flingo-400 border-t-neon-lime rounded-full animate-spin" />
-                <p className="text-xs text-flingo-500">Loading more games...</p>
+                <div className="w-6 h-6 border-2 border-ink-3 border-t-brand rounded-full animate-spin" />
+                <p className="text-xs text-ink-3">Loading more games...</p>
               </div>
             )}
           </div>
@@ -246,8 +247,8 @@ export default function HomeFeed() {
         {/* Empty state */}
         {!isFeedLoading && feedGames.length === 0 && (
           <div className="py-16 px-4 text-center">
-            <p className="text-flingo-800 font-medium">No games available</p>
-            <p className="text-sm text-flingo-500 mt-1">Check back soon!</p>
+            <p className="text-ink font-medium">No games available</p>
+            <p className="text-sm text-ink-3 mt-1">Check back soon!</p>
           </div>
         )}
       </div>

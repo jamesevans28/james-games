@@ -5,7 +5,7 @@ The brand is Games4James, by James, Tilly and Harvey. flingo.fun is gone. The vi
 Good news already true: DynamoDB tables, the Lambda, the API domain and the home-screen icon are all Games4James. This phase deletes the flingo layer and makes one coherent identity.
 
 ## T3.1 `brand.ts` and the sticker-book token set
-Status: todo
+Status: done (2026-10-08). Brand values live in `src/config/brand.json` (so Vite and scripts can read them) and `brand.ts` re-exports them with `makersLine`, `siteUrl`, `BRAND_FONTS`, `BRAND_COLORS`. Extra tokens beyond the list: `card`, `edge`, `scrim`, `on-brand`, `on-accent`. The default Tailwind palette is off (`--color-*: initial`). The only remaining `flingo` strings under `apps/` are the legacy key names in `src/utils/storageKeys.ts` (remove after one release) and the real Firebase project id `flingo-fun`. A placeholder `public/brand/logo-mark.svg` ships now; T3.2 makes the full set. Meta keywords, the `@flingofun` handle and the WebSite SearchAction/alternateName were removed here (T3.4 steps 3 and 5 partly done).
 Depends on: Phase 2 complete
 Goal: one file owns every brand string, colour and asset path; the Tailwind theme uses semantic tokens.
 Files: `apps/player-web/src/config/brand.ts` (new), `apps/player-web/src/index.css` (`@theme` block), `apps/player-web/index.html`, `apps/player-web/vite.config.ts` (manifest), `apps/admin-web/src/**` (title only)

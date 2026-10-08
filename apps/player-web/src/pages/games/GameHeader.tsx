@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { brand as brandConfig } from "../../config/brand";
 
 interface Props {
   title: string;
@@ -7,15 +8,15 @@ interface Props {
   onBack?: () => void;
 }
 
-export default function GameHeader({ title, brand = "flingo.fun", leaderboardTo, onBack }: Props) {
+export default function GameHeader({ title, brand = brandConfig.name, leaderboardTo, onBack }: Props) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-14">
-      <div className="h-full flex items-center justify-between px-3 bg-surface-dark/95 backdrop-blur-xl text-flingo-900 border-b border-flingo-200/30">
+      <div className="h-full flex items-center justify-between px-3 bg-paper/95 backdrop-blur-xl text-ink border-b border-line">
         {onBack ? (
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 rounded-full border border-flingo-300 bg-flingo-100 hover:bg-flingo-200 hover:border-neon-lime/50 transition-colors px-3 py-1.5 text-flingo-800"
+            className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-2 hover:bg-line hover:border-brand/50 transition-colors px-3 py-1.5 text-ink"
             aria-label="Back"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -31,7 +32,7 @@ export default function GameHeader({ title, brand = "flingo.fun", leaderboardTo,
         ) : (
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-full border border-flingo-300 bg-flingo-100 hover:bg-flingo-200 hover:border-neon-lime/50 transition-colors px-3 py-1.5 text-flingo-800"
+            className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-2 hover:bg-line hover:border-brand/50 transition-colors px-3 py-1.5 text-ink"
             aria-label="Back to games"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -47,15 +48,15 @@ export default function GameHeader({ title, brand = "flingo.fun", leaderboardTo,
         )}
 
         <div className="text-center pointer-events-none select-none">
-          <div className="text-lg font-extrabold text-flingo-900">{title}</div>
-          <div className="text-[10px] text-neon-lime leading-none font-medium">{brand}</div>
+          <div className="text-lg font-extrabold text-ink">{title}</div>
+          <div className="text-[10px] text-brand leading-none font-medium">{brand}</div>
         </div>
 
         <div className="flex items-center gap-2">
           {leaderboardTo && (
             <Link
               to={leaderboardTo}
-              className="inline-flex items-center gap-2 rounded-full border border-flingo-300 bg-flingo-100 hover:bg-flingo-200 hover:border-neon-lime/50 transition-colors px-3 py-1.5 text-flingo-800"
+              className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-2 hover:bg-line hover:border-brand/50 transition-colors px-3 py-1.5 text-ink"
               aria-label="Open leaderboard"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">

@@ -4,6 +4,8 @@ import { useAuth } from "../../context/FirebaseAuthProvider";
 import SideDrawer from "../SideDrawer";
 import { ProfileAvatar } from "../profile";
 import { useNotificationsIndicator } from "../../hooks/useNotificationsIndicator";
+import { brand } from "../../config/brand";
+import Wordmark from "../brand/Wordmark";
 
 export default function Header() {
   const { user } = useAuth();
@@ -14,7 +16,7 @@ export default function Header() {
   const { hasUnread, markRead } = useNotificationsIndicator();
 
   return (
-    <header className="w-full bg-surface-dark/95 backdrop-blur-xl sticky top-0 z-40 border-b border-flingo-200/50">
+    <header className="w-full bg-paper/95 backdrop-blur-xl sticky top-0 z-40 border-b border-line">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
@@ -23,14 +25,11 @@ export default function Header() {
             className="flex items-center gap-2.5 hover:opacity-90 focus:outline-none transition-opacity group"
           >
             <img
-              src="/assets/shared/flingo-logo-small.svg"
-              alt="Flingo.fun"
+              src={brand.logoMark}
+              alt=""
               className="w-10 h-10 group-hover:animate-wiggle"
             />
-            <span className="text-lg sm:text-xl font-extrabold flex items-baseline tracking-tight">
-              <span className="text-neon-lime text-glow-lime">flingo</span>
-              <span className="text-neon-pink">.fun</span>
-            </span>
+            <Wordmark className="text-xl sm:text-2xl" />
           </Link>
         </div>
         <div className="flex items-center gap-2">
@@ -41,7 +40,7 @@ export default function Header() {
                 markRead();
                 navigate("/notifications");
               }}
-              className="relative w-10 h-10 rounded-full bg-flingo-100 flex items-center justify-center text-flingo-700 hover:bg-flingo-200 hover:text-neon-lime focus:outline-none focus:ring-2 focus:ring-neon-lime/50 transition-colors"
+              className="relative w-10 h-10 rounded-full bg-paper-2 flex items-center justify-center text-ink-2 hover:bg-line hover:text-brand focus:outline-none focus:ring-2 focus:ring-brand/50 transition-colors"
               aria-label="Notifications"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -62,7 +61,7 @@ export default function Header() {
               </svg>
               {hasUnread && (
                 <span
-                  className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-neon-pink rounded-full border-2 border-surface-dark animate-pulse"
+                  className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-grape rounded-full border-2 border-paper animate-pulse"
                   aria-hidden
                 />
               )}
@@ -71,7 +70,7 @@ export default function Header() {
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
-            className="w-10 h-10 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-neon-lime/50 flex items-center justify-center bg-flingo-100 hover:bg-flingo-200 transition-colors"
+            className="w-10 h-10 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-brand/50 flex items-center justify-center bg-paper-2 hover:bg-line transition-colors"
             aria-label="Account"
           >
             {isAuthenticated ? (
@@ -86,7 +85,7 @@ export default function Header() {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="text-flingo-700"
+                className="text-ink-2"
               >
                 <circle cx="12" cy="12" r="1" />
                 <circle cx="19" cy="12" r="1" />

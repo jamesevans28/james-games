@@ -2,7 +2,7 @@
   "name": "@james-games/admin-web",
   "version": "0.1.0",
   "private": true,
-  "description": "Placeholder React app for James Games admin tooling.",
+  "description": "Games4James admin console (moderation).",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && vite build",

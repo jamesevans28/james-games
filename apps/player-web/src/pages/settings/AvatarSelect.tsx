@@ -57,15 +57,15 @@ export default function AvatarSelectPage() {
 
   return (
     <div className="p-4 mt-5 max-w-screen-md mx-auto">
-      <h2 className="text-xl font-semibold mb-4 text-flingo-900">Choose your avatar</h2>
-      <p className="mb-4 text-sm text-flingo-700">
+      <h2 className="text-xl font-semibold mb-4 text-ink">Choose your avatar</h2>
+      <p className="mb-4 text-sm text-ink-2">
         Tap an avatar to select it. Your selection will be saved to your profile.
       </p>
 
       {toast && (
         <div
           aria-live="polite"
-          className="fixed top-4 right-4 bg-neon-lime text-surface-dark px-3 py-2 rounded-xl shadow-neon-lime text-sm font-bold"
+          className="fixed top-4 right-4 bg-brand text-on-brand px-3 py-2 rounded-xl shadow-sticker text-sm font-bold"
         >
           {toast}
         </div>
@@ -82,7 +82,7 @@ export default function AvatarSelectPage() {
                 key={id}
                 onClick={() => handleSelect(id)}
                 className={`p-0 relative rounded-md focus:outline-none ${
-                  isSelected ? "ring-4 ring-neon-lime" : ""
+                  isSelected ? "ring-4 ring-brand" : ""
                 }`}
                 aria-pressed={isSelected}
                 disabled={saving}
@@ -92,10 +92,10 @@ export default function AvatarSelectPage() {
                   user={{ avatar: id }}
                   size={72}
                   borderWidth={3}
-                  borderColor={isSelected ? "#c8ff32" : "#3a3d47"}
+                  borderColor={isSelected ? "var(--color-brand)" : "var(--color-line)"}
                 />
                 {isSelected && (
-                  <span className="absolute -top-1 -right-1 bg-neon-lime text-surface-dark rounded-full px-1 text-xs shadow-neon-lime font-bold">
+                  <span className="absolute -top-1 -right-1 bg-brand text-on-brand rounded-full px-1 text-xs shadow-sticker font-bold">
                     ✓
                   </span>
                 )}

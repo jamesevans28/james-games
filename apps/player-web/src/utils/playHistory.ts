@@ -1,13 +1,12 @@
-/**
- * Recently played games, newest first, kept in localStorage on this device.
- * The key keeps its old name until T3.1 renames brand storage keys with a migration.
- */
-const LAST_PLAYED_KEY = "flingo_last_played_games";
+import { readMigrated, STORAGE_KEYS } from "./storageKeys";
+
+/** Recently played games, newest first, kept in localStorage on this device. */
+const LAST_PLAYED_KEY = STORAGE_KEYS.lastPlayed;
 const MAX_LAST_PLAYED = 10;
 
 export function getLastPlayedGames(): string[] {
   try {
-    const stored = localStorage.getItem(LAST_PLAYED_KEY);
+    const stored = readMigrated("lastPlayed");
     if (!stored) return [];
     const parsed: unknown = JSON.parse(stored);
     if (!Array.isArray(parsed)) return [];

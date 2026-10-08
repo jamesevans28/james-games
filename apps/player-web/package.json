@@ -1,6 +1,6 @@
 {
   "name": "@james-games/player-web",
-  "description": "Mobile-first Phaser minigames hub for James Games.",
+  "description": "Games4James: mobile-first Phaser mini-games by James, Tilly and Harvey.",
   "version": "1.2.0",
   "private": true,
   "scripts": {
@@ -10,7 +10,7 @@
     "generate-snapadile-assets": "cd ../.. && node scripts/generate-snapadile-assets.mjs",
     "generate-car-crash-assets": "cd ../.. && node scripts/generate-car-crash-assets.mjs",
     "generate-sitemap": "cd ../.. && node scripts/generate-sitemap.mjs",
-    "generate-seo": "cd ../.. && SITE_ORIGIN=https://flingo.fun node scripts/generate-sitemap.mjs",
+    "generate-seo": "cd ../.. && SITE_ORIGIN=https://games4james.com node scripts/generate-sitemap.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "test": "tsx --test \"src/**/*.test.ts\""
   },

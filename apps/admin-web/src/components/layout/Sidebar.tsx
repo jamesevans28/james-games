@@ -15,7 +15,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col bg-slate-950 text-slate-200">
       <div className="border-b border-slate-800 px-6 py-5">
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">James Games</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Games4James</p>
         <p className="text-xl font-semibold text-white">Admin Portal</p>
       </div>
       <nav className="flex-1 space-y-1 px-3 py-4">

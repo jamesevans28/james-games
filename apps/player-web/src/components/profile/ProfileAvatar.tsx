@@ -86,7 +86,7 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
   className = "",
   rounded = true,
   borderWidth = 4,
-  borderColor = "#3b82f6",
+  borderColor = "var(--color-sky)",
   strokeWidth = 2,
   strokeColor = "#000",
   title,

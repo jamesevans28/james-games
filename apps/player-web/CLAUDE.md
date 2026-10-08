@@ -25,7 +25,7 @@ Check UI in the Browser pane with the `player-web` launch config at a 375×812 v
 | `game/` | Phaser-agnostic shared helpers: `ui/dpad.ts`, `ui/onScreenKeyboard.ts`, `words/` dictionary |
 | `utils/` | Analytics, `gameEvents.ts` (game → React events), `playHistory.ts`, `errorCode.ts`, share links, SEO keywords |
 | `platform/` | Arrives in Phase 4: the Game SDK (host, mount, base scene, HUD/input/audio kits) |
-| `config/` | Arrives in Phase 1/3: `env.ts`, `brand.ts` |
+| `config/` | `env.ts` (API origin), `brand.json` + `brand.ts` (every brand string, colour, path) |
 
 Routes are defined in `src/App.tsx`.
 
@@ -52,7 +52,9 @@ CI sets the same names from GitHub repo variables plus `VITE_BUILD_NUMBER`.
 
 ## Gotchas
 
-- Brand strings still say flingo in many files. Phase 3 moves them into `src/config/brand.ts`; until then don't add new ones.
+- Brand values live in `src/config/brand.json` (read by `vite.config.ts`, `vite/brandHtml.ts` and repo scripts) and are exported with helpers from `src/config/brand.ts`. `index.html` uses `%BRAND.key%` placeholders.
+- Colours are semantic tokens from `src/index.css` (`paper`, `paper-2`, `card`, `line`, `ink`, `ink-2`, `ink-3`, `edge`, `scrim`, `brand`, `accent`, `on-brand`, `on-accent`, and the crayons `tomato`, `sun`, `grass`, `sky`, `grape`). The default Tailwind palette is switched off, so `bg-gray-100` silently does nothing. Dark mode redefines the same tokens. Canvas code uses `BRAND_COLORS`/`BRAND_FONTS` from `brand.ts`.
+- localStorage keys use the `g4j:` prefix; see `src/utils/storageKeys.ts`.
 - Phaser 4 is the baseline (4.2.1 since T2.7). No v3 pipeline, FX or mask APIs. Group children are a native Set: use `group.getChildren()` (a fresh array, safe to remove while looping). Fill tint is `setTint(c).setTintMode(Phaser.TintModes.FILL)` and `clearTint()` does not reset the mode. `Math.TAU` is 2π. Migration guide: node_modules/phaser/skills/v3-to-v4-migration/SKILL.md.
 - `vite.config.ts` holds the PWA manifest and service-worker caching rules (one config for dev and build; set `VITE_SW_DEV=1` to run the service worker in dev). Never cache an authenticated endpoint (see T1.5).
-- Best scores live in localStorage under inconsistent keys until T1.10.
+- Best scores are `g4j:best:<gameId>` via `src/utils/bestScore.ts` (legacy keys migrate on read).

@@ -6,9 +6,11 @@
  * browser-based games.
  */
 
-export const SITE_NAME = "flingo.fun";
-export const SITE_URL = "https://flingo.fun";
-export const SITE_TAGLINE = "Free Online Games for Everyone";
+import { brand, makersLine } from "../config/brand";
+
+export const SITE_NAME = brand.name;
+export const SITE_URL = brand.origin;
+export const SITE_TAGLINE = brand.tagline;
 
 // Core site-level keywords (used globally)
 export const SITE_KEYWORDS = [
@@ -357,7 +359,7 @@ export function getGameSeoDescription(gameId: string, fallback?: string): string
     // Truncate fallback to 155 chars + ellipsis if needed
     return fallback.length > 155 ? fallback.slice(0, 155) + "..." : fallback;
   }
-  return "Play free online games at flingo.fun! Fun, skill-based games you can play instantly.";
+  return brand.description;
 }
 
 /**
@@ -383,7 +385,7 @@ export function buildGameJsonLd(game: {
     url: `${SITE_URL}/games/${game.id}`,
     image: game.thumbnail
       ? `${SITE_URL}${game.thumbnail}`
-      : `${SITE_URL}/assets/shared/logo_square.png`,
+      : `${SITE_URL}${brand.logoSquare}`,
     gamePlatform: ["Web Browser", "Mobile Browser", "PWA"],
     applicationCategory: "Game",
     genre: getCategoryGenre(category),
@@ -451,9 +453,9 @@ export function buildGameCollectionJsonLd(
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "Free Online Games at flingo.fun",
+    name: `Games on ${brand.name}`,
     description:
-      "Collection of free, kid-friendly browser games. Play instantly - no download required!",
+      `Little games made by ${makersLine()}. Free, no ads, no download.`,
     numberOfItems: games.length,
     itemListElement: games.slice(0, 20).map((game, index) => ({
       "@type": "ListItem",
@@ -464,7 +466,7 @@ export function buildGameCollectionJsonLd(
         url: `${SITE_URL}/games/${game.id}`,
         image: game.thumbnail
           ? `${SITE_URL}${game.thumbnail}`
-          : `${SITE_URL}/assets/shared/logo_square.png`,
+          : `${SITE_URL}${brand.logoSquare}`,
       },
     })),
   };
@@ -478,26 +480,13 @@ export function buildWebsiteJsonLd(): Record<string, unknown> {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE_NAME,
-    alternateName: "Flingo Games",
-    url: SITE_URL,
-    description:
-      "Play free online games at flingo.fun! Kid-friendly, browser-based games you can play instantly on any device.",
+    url: `${SITE_URL}/`,
+    description: brand.description,
     publisher: {
       "@type": "Organization",
       name: SITE_NAME,
-      url: SITE_URL,
-      logo: {
-        "@type": "ImageObject",
-        url: `${SITE_URL}/assets/shared/logo_square.png`,
-      },
-    },
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${SITE_URL}/?search={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
+      url: `${SITE_URL}/`,
+      logo: { "@type": "ImageObject", url: `${SITE_URL}${brand.logoSquare}` },
     },
   };
 }
@@ -510,13 +499,8 @@ export function buildOrganizationJsonLd(): Record<string, unknown> {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: SITE_NAME,
-    url: SITE_URL,
-    logo: `${SITE_URL}/assets/shared/logo_square.png`,
-    sameAs: [],
-    contactPoint: {
-      "@type": "ContactPoint",
-      contactType: "customer support",
-      url: `${SITE_URL}/`,
-    },
+    url: `${SITE_URL}/`,
+    logo: `${SITE_URL}${brand.logoSquare}`,
+    founder: brand.makers.map((name) => ({ "@type": "Person", name })),
   };
 }

@@ -211,7 +211,7 @@ export default function GameLanding({ meta, onPlay }: Props) {
       <div className="pt-16 px-4 max-w-4xl mx-auto">
         {/* Hero image */}
         <div
-          className="aspect-square w-full max-w-md mx-auto bg-cover bg-center rounded-2xl border border-flingo-200/30 shadow-card overflow-hidden"
+          className="aspect-square w-full max-w-md mx-auto bg-cover bg-center rounded-2xl border border-line shadow-card overflow-hidden"
           style={{ backgroundImage: `url(${meta.thumbnail || "/assets/shared/logo_square.png"})` }}
           title={meta.title}
         />
@@ -219,9 +219,9 @@ export default function GameLanding({ meta, onPlay }: Props) {
         {user && <FollowingNowStrip loading={activityLoading} activity={activity} />}
 
         <div className="mt-4">
-          <h1 className="text-2xl font-extrabold mb-1 text-flingo-900">{meta.title}</h1>
+          <h1 className="text-2xl font-extrabold mb-1 text-ink">{meta.title}</h1>
           {meta.description && (
-            <p className="text-flingo-700 text-sm leading-relaxed">{meta.description}</p>
+            <p className="text-ink-2 text-sm leading-relaxed">{meta.description}</p>
           )}
           {/* Leaderboard Top 3 + 4-10 */}
           <LeaderboardSection top={top} loading={loading} error={error} myBest={myBest} />
@@ -238,17 +238,17 @@ export default function GameLanding({ meta, onPlay }: Props) {
 
           {/* metadata list */}
           <div className="mt-6">
-            <ul className="w-full bg-surface-card text-sm text-flingo-800 divide-y divide-flingo-200/30 border border-flingo-200/30 rounded-2xl overflow-hidden">
+            <ul className="w-full bg-card text-sm text-ink divide-y divide-line border border-line rounded-2xl overflow-hidden">
               {meta.createdAt && (
                 <li className="px-4 py-3 flex justify-between">
                   <span className="font-medium">Created</span>
-                  <span className="text-flingo-600">{fmtDateShort(meta.createdAt) ?? "—"}</span>
+                  <span className="text-ink-2">{fmtDateShort(meta.createdAt) ?? "—"}</span>
                 </li>
               )}
               {meta.updatedAt && (
                 <li className="px-4 py-3 flex justify-between">
                   <span className="font-medium">Updated</span>
-                  <span className="text-flingo-600">{fmtDateShort(meta.updatedAt) ?? "—"}</span>
+                  <span className="text-ink-2">{fmtDateShort(meta.updatedAt) ?? "—"}</span>
                 </li>
               )}
             </ul>
@@ -257,7 +257,7 @@ export default function GameLanding({ meta, onPlay }: Props) {
       </div>
 
       {/* sticky footer with Play + Share */}
-      <div className="fixed left-0 right-0 bottom-0 bg-surface-dark/95 backdrop-blur-xl border-t border-flingo-200/30 px-4 py-3">
+      <div className="fixed left-0 right-0 bottom-0 bg-paper/95 backdrop-blur-xl border-t border-line px-4 py-3">
         <div className="max-w-4xl mx-auto flex gap-3">
           <button type="button" className="btn btn-primary flex-1" onClick={onPlay}>
             Play
@@ -313,9 +313,9 @@ function LeaderboardSection({
   // (some runtime environments may return unexpected shapes)
   // eslint-disable-next-line no-console
 
-  if (loading) return <div className="mt-4 text-flingo-600">Loading…</div>;
-  if (error) return <div className="mt-4 text-neon-pink">{error}</div>;
-  if (!top || top.length === 0) return <div className="mt-4 text-flingo-600">No scores yet.</div>;
+  if (loading) return <div className="mt-4 text-ink-2">Loading…</div>;
+  if (error) return <div className="mt-4 text-grape">{error}</div>;
+  if (!top || top.length === 0) return <div className="mt-4 text-ink-2">No scores yet.</div>;
 
   const first = top[0];
   const second = top[1];
@@ -370,9 +370,9 @@ function LeaderboardSection({
 
       {/* If visitor is not logged in, show hint about logging in to record scores */}
       {!user && (
-        <div className="mt-3 p-4 rounded-2xl border border-neon-yellow/30 bg-neon-yellow/10 text-flingo-800 text-sm">
+        <div className="mt-3 p-4 rounded-2xl border border-sun/30 bg-sun/10 text-ink text-sm">
           To record your scores you need to be logged in.{" "}
-          <Link to="/login" className="underline text-neon-lime font-semibold">
+          <Link to="/login" className="underline text-brand font-semibold">
             Sign in
           </Link>{" "}
           or create an account.
@@ -383,7 +383,7 @@ function LeaderboardSection({
       <div className="mt-4">
         <ol
           start={4}
-          className="w-full bg-surface-card divide-y divide-flingo-200/30 border border-flingo-200/30 rounded-2xl overflow-hidden"
+          className="w-full bg-card divide-y divide-line border border-line rounded-2xl overflow-hidden"
         >
           {top.slice(3, 10).map((r, i) => {
             const rank = 4 + i;
@@ -400,7 +400,7 @@ function LeaderboardSection({
                 key={`${r?.screenName ?? "anon"}-${rank}`}
                 className={`flex items-center justify-between px-4 py-3 text-sm ${
                   hasProfile
-                    ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-neon-lime/50 hover:bg-flingo-100"
+                    ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand/50 hover:bg-paper-2"
                     : ""
                 }`}
                 role={hasProfile ? "button" : undefined}
@@ -418,17 +418,17 @@ function LeaderboardSection({
                 }
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-flingo-500 font-mono w-6">#{rank}</span>
-                  <span className="truncate text-flingo-900 font-medium">
+                  <span className="text-ink-3 font-mono w-6">#{rank}</span>
+                  <span className="truncate text-ink font-medium">
                     {r?.screenName ?? "—"}
                   </span>
                   {isYou && (
-                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-neon-lime/20 text-neon-lime border border-neon-lime/30">
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand/20 text-brand border border-brand/30">
                       your top score
                     </span>
                   )}
                 </div>
-                <span className="font-mono font-bold text-neon-lime">{r?.score ?? 0}</span>
+                <span className="font-mono font-bold text-brand">{r?.score ?? 0}</span>
               </li>
             );
           })}
@@ -438,10 +438,10 @@ function LeaderboardSection({
       {/* If the user is logged in but none of their scores made the top leaderboard,
             show their personal best so they know what to try to beat. */}
       {user && !userTopRow && myBest > 0 && (
-        <div className="mt-4 p-4 rounded-2xl border border-flingo-200/30 bg-surface-card text-sm text-flingo-800">
-          <div className="font-bold text-flingo-900">Your personal best</div>
-          <div className="mt-2 text-2xl font-bold text-neon-lime">{myBest}</div>
-          <div className="mt-1 text-xs text-flingo-600">
+        <div className="mt-4 p-4 rounded-2xl border border-line bg-card text-sm text-ink">
+          <div className="font-bold text-ink">Your personal best</div>
+          <div className="mt-2 text-2xl font-bold text-brand">{myBest}</div>
+          <div className="mt-1 text-xs text-ink-2">
             Keep playing to submit this score to the leaderboards.
           </div>
         </div>
@@ -470,27 +470,27 @@ function RatingSummaryCard({
   const avg = summary?.avgRating ?? 0;
   const count = summary?.ratingCount ?? 0;
   return (
-    <div className="mt-6 border border-flingo-200/30 rounded-2xl p-5 bg-surface-card">
+    <div className="mt-6 border border-line rounded-2xl p-5 bg-card">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-wide text-flingo-600 font-semibold">
+          <p className="text-xs uppercase tracking-wide text-ink-2 font-semibold">
             Overall rating
           </p>
-          <div className="text-3xl font-extrabold text-flingo-900">
+          <div className="text-3xl font-extrabold text-ink">
             {loading ? "—" : avg.toFixed(1)}
           </div>
-          <p className="text-xs text-flingo-600">{count} total ratings</p>
+          <p className="text-xs text-ink-2">{count} total ratings</p>
         </div>
         <RatingStars value={avg} readOnly size="sm" />
       </div>
-      <div className="mt-4 border-t border-flingo-200/30 pt-4">
+      <div className="mt-4 border-t border-line pt-4">
         {user ? (
           <div>
-            <p className="text-sm font-bold text-flingo-900 flex items-center">
+            <p className="text-sm font-bold text-ink flex items-center">
               Your rating
               {submitting && (
                 <svg
-                  className="ml-2 w-4 h-4 animate-spin text-flingo-500"
+                  className="ml-2 w-4 h-4 animate-spin text-ink-3"
                   viewBox="0 0 24 24"
                   fill="none"
                   aria-hidden
@@ -519,11 +519,11 @@ function RatingSummaryCard({
                 readOnly={loading || submitting}
               />
             </div>
-            {error && <p className="text-xs text-neon-pink mt-2">{error}</p>}
+            {error && <p className="text-xs text-grape mt-2">{error}</p>}
           </div>
         ) : (
-          <p className="text-sm text-flingo-700">
-            <Link to="/login" className="text-neon-lime underline font-semibold">
+          <p className="text-sm text-ink-2">
+            <Link to="/login" className="text-brand underline font-semibold">
               Sign in
             </Link>{" "}
             to rate this game.
@@ -549,12 +549,12 @@ function FollowingNowStrip({
   activity: FollowingActivityEntry[];
 }) {
   if (loading && !activity.length) {
-    return <div className="mt-4 text-sm text-flingo-500">Checking who&apos;s playing…</div>;
+    return <div className="mt-4 text-sm text-ink-3">Checking who&apos;s playing…</div>;
   }
   if (!activity.length) return null;
   return (
     <div className="mt-4">
-      <h3 className="text-sm font-bold text-flingo-700 mb-2">Players you follow</h3>
+      <h3 className="text-sm font-bold text-ink-2 mb-2">Players you follow</h3>
       <div className="flex gap-4 overflow-x-auto pb-2">
         {activity.map((entry) => (
           <Link
@@ -569,11 +569,11 @@ function FollowingNowStrip({
               strokeWidth={2}
               title={entry.targetScreenName ?? "Player"}
             />
-            <span className="mt-2 text-xs font-bold text-flingo-800 text-center truncate max-w-[80px]">
+            <span className="mt-2 text-xs font-bold text-ink text-center truncate max-w-[80px]">
               {entry.targetScreenName ?? "Player"}
             </span>
             {entry.presence?.status && (
-              <span className="mt-1 text-[11px] text-flingo-500 text-center">
+              <span className="mt-1 text-[11px] text-ink-3 text-center">
                 {STATUS_LABELS[entry.presence.status] || "Online"}
               </span>
             )}
@@ -606,17 +606,17 @@ function TopBox({
       ? "rgba(192,192,192,0.18)"
       : "rgba(205,127,50,0.18)";
   const tagBg = medal === "gold" ? "#FFD700" : medal === "silver" ? "#C0C0C0" : "#CD7F32";
-  const tagText = medal === "bronze" ? "text-white" : "text-gray-900";
+  const tagText = medal === "bronze" ? "text-white" : "text-on-accent";
   const interactive = typeof onSelect === "function";
 
   return (
     <div className="flex-1 min-w-0">
       <div
-        className={`rounded-2xl border border-flingo-200/30 p-3 flex flex-col items-center justify-between ${
+        className={`rounded-2xl border border-line p-3 flex flex-col items-center justify-between ${
           tall ? "min-h-48" : "min-h-40"
         } ${
           interactive
-            ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-neon-lime hover:border-neon-lime/50"
+            ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand hover:border-brand/50"
             : ""
         }`}
         style={{ background: `linear-gradient(to top, ${medalBg} 0%, transparent 60%)` }}
@@ -635,7 +635,7 @@ function TopBox({
         }
       >
         <div className="w-full flex flex-col items-center min-w-0">
-          <div className="text-xs text-flingo-500 font-bold">#{pos}</div>
+          <div className="text-xs text-ink-3 font-bold">#{pos}</div>
           <div className="mt-2">
             <ProfileAvatar
               user={{ avatar: row?.avatar ?? 1 }}
@@ -647,11 +647,11 @@ function TopBox({
               title={row?.screenName ?? "Player"}
             />
           </div>
-          <div className="mt-2 text-sm font-bold text-flingo-800 truncate max-w-full text-center min-w-0">
+          <div className="mt-2 text-sm font-bold text-ink truncate max-w-full text-center min-w-0">
             <span className="truncate block max-w-full">{row?.screenName ?? "—"}</span>
             {/** show small badge for user's top score */}
             {isUserBest && (
-              <div className="mt-1 inline-block px-2 py-0.5 text-[10px] font-semibold bg-flingo-100 text-flingo-700 rounded-full">
+              <div className="mt-1 inline-block px-2 py-0.5 text-[10px] font-semibold bg-paper-2 text-ink-2 rounded-full">
                 your top score
               </div>
             )}

@@ -1,0 +1,26 @@
+{
+  "name": "Games4James",
+  "shortName": "G4J",
+  "tagline": "Little games made by James, Tilly and Harvey",
+  "description": "Free little games for phones and tablets, made by James and his kids Tilly and Harvey. No downloads, no ads: tap and play.",
+  "makers": [
+    "James",
+    "Tilly",
+    "Harvey"
+  ],
+  "origin": "https://games4james.com",
+  "apiOrigin": "https://api.games4james.com",
+  "themeColor": "#FF5A4E",
+  "backgroundColor": "#FFF8EC",
+  "logo": "/brand/logo.svg",
+  "logoMark": "/brand/logo-mark.svg",
+  "logoSquare": "/brand/icon-512.png",
+  "ogImage": "/brand/og-1200x630.png",
+  "storagePrefix": "g4j:",
+  "analyticsId": "G-8EJGYV0500",
+  "fonts": {
+    "display": "Baloo 2",
+    "body": "Nunito",
+    "note": "Patrick Hand"
+  }
+}
