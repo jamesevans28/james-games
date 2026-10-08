@@ -15,7 +15,7 @@ export async function index(req: Request, res: Response) {
 }
 
 export async function show(req: Request, res: Response) {
-  const userId = req.params.userId;
+  const userId = String(req.params.userId);
   if (!userId) return res.status(400).json({ error: "userId_required" });
   try {
     const user = await getAdminUser(userId);
@@ -27,7 +27,7 @@ export async function show(req: Request, res: Response) {
 }
 
 export async function update(req: Request, res: Response) {
-  const userId = req.params.userId;
+  const userId = String(req.params.userId);
   if (!userId) return res.status(400).json({ error: "userId_required" });
   // Note: Password management is now handled through Firebase Auth
   const { email, username, betaTester, admin } = req.body || {};

@@ -31,8 +31,8 @@ const corsOptions: cors.CorsOptions = {
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 };
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(attachUser);
 app.use(routes);
+app.use((_req, res) => res.status(404).json({ error: "not_found" }));
 app.use(errorHandler);

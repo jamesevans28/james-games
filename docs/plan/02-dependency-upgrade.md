@@ -84,7 +84,7 @@ Steps:
 Done when: all four auth flows work in the Browser pane against `npm run server`; `npm run typecheck` passes.
 
 ## T2.6 Express 5 and serverless-http 4
-Status: todo
+Status: done (2026-10-08) except the zip-size target. Express 5.2, serverless-http 4.0, @types/express 5, cors 2.8.6, AWS SDK 3.1147, dotenv 18, @types/node 24. Only Express 5 breaks: app.options("*") removed (global cors() answers preflight) and route params typed string|string[] (5 handlers now use String()). Added a JSON 404 before the error middleware. Verified locally against production tables with read-only calls (throwaway anonymous user, deleted after): 29 route checks (public reads 200, signed-in reads 200, admin 403, guest 401, validation 400, retired XP route 410, preflight 204, foreign origin 403, unknown route 404) with no server errors; compiled dist/lambda.js answers REST API v1 and HTTP API v2 events. Zip: 18.8 MB (16.7 MB before the upgrade), so the "<10 MB" check is not met; AWS allows 50 MB and T9.3 (esbuild bundle, <3 MB) is the real fix.
 Depends on: T2.1
 Goal: the backend runs on Express 5 locally and on Lambda. `parallel-ok` with T2.3–T2.5.
 Files: `apps/backend-api/src/index.ts`, all `routes/*.ts`, `controllers/*.ts`, `middleware/*.ts`, `lambda.ts`, `dev-server.ts`

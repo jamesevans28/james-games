@@ -25,6 +25,7 @@ Done when: a PR shows the `ci` check as required.
 
 ## T9.3 Lambda bundle size and cold start
 Status: todo
+Context (from T2.6): the node_modules zip is 18.8 MB after the Express 5 / firebase-admin 14 upgrade (16.7 MB before), mostly @google-cloud/* and @firebase/* pulled in by firebase-admin. Bundling is the fix; mark firebase-admin's optional Firestore/Storage deps external or tree-shaken.
 Depends on: T2.6
 Steps: bundle the API with `esbuild` (`--platform=node --target=node24 --bundle --minify --external:@aws-sdk/*`) to a single `dist/lambda.js` instead of zipping `node_modules`; measure zip size (target < 3 MB) and cold start (CloudWatch `Init Duration`, target < 800 ms). Update `deploy-api.yml`.
 Done when: zip < 3 MB; routes still respond; init duration recorded in the PR.

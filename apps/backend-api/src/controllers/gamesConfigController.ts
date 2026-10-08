@@ -19,7 +19,7 @@ export async function list(req: Request, res: Response) {
 }
 
 export async function show(req: Request, res: Response) {
-  const { gameId } = req.params;
+  const gameId = String(req.params.gameId);
   if (!gameId) return res.status(400).json({ error: "gameId_required" });
   try {
     const game = await getGameConfig(gameId);
@@ -42,7 +42,7 @@ export async function create(req: Request, res: Response) {
 }
 
 export async function update(req: Request, res: Response) {
-  const { gameId } = req.params;
+  const gameId = String(req.params.gameId);
   if (!gameId) return res.status(400).json({ error: "gameId_required" });
   const body = req.body || {};
   try {

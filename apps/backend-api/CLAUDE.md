@@ -37,6 +37,13 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 
 DynamoDB tables named `games4james-*` (users, scores, gameratings, gameratings-summary, follows, presence, userGameStats, experience-levels, game-config, usernames). Phase 6 moves everything to Supabase Postgres with Drizzle. **Do not add new DynamoDB tables.**
 
+## Express 5 notes
+
+- Route params are typed `string | string[]`: read them as `String(req.params.x)`.
+- Path syntax: no bare `*` or `?` segments (use `/{*splat}` and `{/:optional}`). Preflight is handled by the global `cors()` middleware.
+- Async handlers that throw reach `errorHandler` (src/lib/http.ts). Unknown routes get JSON `404 {"error":"not_found"}`.
+- The Lambda entry (`dist/lambda.js`, serverless-http 4) handles both REST API (v1) and HTTP API (v2) events.
+
 ## Rules
 
 - **Never trust the client.** Scores, XP multipliers, streak dates and durations are validated or computed on the server (T1.4).
