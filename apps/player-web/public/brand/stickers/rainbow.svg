@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="rainbow sticker">
+<!-- Placeholder weekly sticker until the Phase 8 art (T8.x). -->
+<circle cx="50" cy="50" r="45" fill="#FFFFFF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M18 66a32 32 0 0 1 64 0" fill="none" stroke="#FF5A4E" stroke-width="8" stroke-linecap="round"/>
+<path d="M26 66a24 24 0 0 1 48 0" fill="none" stroke="#FFC93C" stroke-width="8" stroke-linecap="round"/>
+<path d="M34 66a16 16 0 0 1 32 0" fill="none" stroke="#3DBE6B" stroke-width="8" stroke-linecap="round"/>
+<path d="M42 66a8 8 0 0 1 16 0" fill="none" stroke="#3FA9F5" stroke-width="7" stroke-linecap="round"/>
+<path d="M12 72q0-8 8-8q2-6 9-5q6 1 6 7q6 0 6 6z" fill="#FFFFFF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M88 72q0-8-8-8q-2-6-9-5q-6 1-6 7q-6 0-6 6z" fill="#FFFFFF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="24" cy="68" r="1.6" fill="#2B2118"/><circle cx="30" cy="68" r="1.6" fill="#2B2118"/>
+<circle cx="70" cy="68" r="1.6" fill="#2B2118"/><circle cx="76" cy="68" r="1.6" fill="#2B2118"/>
+</svg>

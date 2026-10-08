@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router";
-import HomeFeed from "./pages/home/HomeFeed";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router";
+import HomeGrid from "./pages/home/HomeGrid";
 import RootLayout from "./components/layout/RootLayout";
 import { RequireRegistered } from "./components/RouteGuards";
 import SWUpdatePrompt from "./components/SWUpdatePrompt";
@@ -8,14 +8,12 @@ import InstallPWA from "./components/InstallPWA";
 import IOSInstallHint from "./components/IOSInstallHint";
 import SplashScreen from "./components/SplashScreen";
 import AccountUpgradeBanner from "./components/AccountUpgradeBanner";
-import StreakCelebration from "./components/StreakCelebration";
 import { AuthProvider } from "./context/FirebaseAuthProvider";
 import { GameCatalogProvider } from "./context/GameCatalogProvider";
 import PageTransition from "./components/PageTransition";
 
-// The home feed loads with the app so the first screen paints at once; every other
+// The home grid loads with the app so the first screen paints at once; every other
 // page is its own chunk, fetched on first visit (and precached by the service worker).
-const GamesList = lazy(() => import("./pages/games-list"));
 const PlayGame = lazy(() => import("./pages/games/PlayGame"));
 const LeaderboardPage = lazy(() => import("./pages/leaderboard/[gameId]"));
 const LoginPage = lazy(() => import("./pages/firebase-login"));
@@ -25,6 +23,8 @@ const FollowersPage = lazy(() => import("./pages/followers"));
 const ProfilePage = lazy(() => import("./pages/profile/[userId]"));
 const NotificationsPage = lazy(() => import("./pages/notifications"));
 const PrivacyPage = lazy(() => import("./pages/privacy"));
+const AboutPage = lazy(() => import("./pages/about"));
+const ParentsPage = lazy(() => import("./pages/parents"));
 
 function AppRoutes() {
   const location = useLocation();
@@ -34,9 +34,11 @@ function AppRoutes() {
       <Suspense fallback={null}>
         <Routes location={location}>
           <Route element={<RootLayout />}>
-            <Route path="/" element={<HomeFeed />} />
-            <Route path="/games-list" element={<GamesList />} />
+            <Route path="/" element={<HomeGrid />} />
+            <Route path="/games-list" element={<Navigate to="/" replace />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/parents" element={<ParentsPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<LoginPage />} />
             <Route
@@ -91,7 +93,6 @@ export default function App() {
           <InstallPWA />
           <IOSInstallHint />
           <AccountUpgradeBanner />
-          <StreakCelebration />
           <AppRoutes />
         </BrowserRouter>
       </GameCatalogProvider>

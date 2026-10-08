@@ -1,6 +1,6 @@
-import { and, count, desc, eq, gte, ne, sql } from "drizzle-orm";
+import { and, count, eq, gte, ne, sql } from "drizzle-orm";
 import { getDb, type Db } from "../db/client.js";
-import { follows, screenNameHistory, users, type NewUser, type User } from "../db/schema.js";
+import { screenNameHistory, users, type NewUser, type User } from "../db/schema.js";
 
 /** Pure data access for the users table. Services own the rules. */
 
@@ -109,81 +109,4 @@ export async function countRenamesSince(db: Db, userId: string, since: Date): Pr
     .from(screenNameHistory)
     .where(and(eq(screenNameHistory.userId, userId), gte(screenNameHistory.changedAt, since)));
   return row?.n ?? 0;
-}
-
-/** A user shown in someone else's follow list (public fields only). */
-export type FollowListEntry = {
-  userId: string;
-  screenName: string;
-  avatar: number;
-  createdAt: Date;
-};
-
-/** Accepted follow counts for a profile page. */
-export async function countFollows(
-  userId: string,
-): Promise<{ following: number; followers: number }> {
-  const db = getDb();
-  const accepted = eq(follows.status, "accepted");
-  const [[following], [followers]] = await Promise.all([
-    db
-      .select({ n: count() })
-      .from(follows)
-      .where(and(eq(follows.userId, userId), accepted)),
-    db
-      .select({ n: count() })
-      .from(follows)
-      .where(and(eq(follows.targetUserId, userId), accepted)),
-  ]);
-  return { following: following?.n ?? 0, followers: followers?.n ?? 0 };
-}
-
-/** The people `userId` follows (accepted), newest first. */
-export async function listFollowingUsers(
-  userId: string,
-  limit: number,
-): Promise<FollowListEntry[]> {
-  return getDb()
-    .select({
-      userId: users.id,
-      screenName: users.screenName,
-      avatar: users.avatar,
-      createdAt: follows.createdAt,
-    })
-    .from(follows)
-    .innerJoin(users, eq(users.id, follows.targetUserId))
-    .where(and(eq(follows.userId, userId), eq(follows.status, "accepted")))
-    .orderBy(desc(follows.createdAt))
-    .limit(limit);
-}
-
-/** The people following `userId` (accepted), newest first. */
-export async function listFollowerUsers(userId: string, limit: number): Promise<FollowListEntry[]> {
-  return getDb()
-    .select({
-      userId: users.id,
-      screenName: users.screenName,
-      avatar: users.avatar,
-      createdAt: follows.createdAt,
-    })
-    .from(follows)
-    .innerJoin(users, eq(users.id, follows.userId))
-    .where(and(eq(follows.targetUserId, userId), eq(follows.status, "accepted")))
-    .orderBy(desc(follows.createdAt))
-    .limit(limit);
-}
-
-export async function isFollowingUser(userId: string, targetUserId: string): Promise<boolean> {
-  const [row] = await getDb()
-    .select({ userId: follows.userId })
-    .from(follows)
-    .where(
-      and(
-        eq(follows.userId, userId),
-        eq(follows.targetUserId, targetUserId),
-        eq(follows.status, "accepted"),
-      ),
-    )
-    .limit(1);
-  return Boolean(row);
 }

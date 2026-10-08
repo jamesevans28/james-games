@@ -222,7 +222,7 @@ ${jsonForScript(jsonLd)}
   await fs.promises.writeFile(path.join(staticGamesDir, `${game.id}.html`), gameHtml, "utf8");
 }
 
-// games-index.html is retired (T1.9/T3.4): the SPA's /games-list is the listing page.
+// games-index.html is retired (T1.9/T3.4): the home page (/) is the game listing (T7.1).
 await fs.promises.rm(path.join(publicDir, "games-index.html"), { force: true });
 
 console.log(`Generated ${publicGames.length} static game pages`);

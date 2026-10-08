@@ -1,6 +1,6 @@
-import { asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { getDb, type Db } from "../db/client.js";
-import { experienceLevels, userGameStats, users, type User } from "../db/schema.js";
+import { experienceLevels, plays, userGameStats, users, type User } from "../db/schema.js";
 
 /**
  * Pure data access for a player's progress: XP and streak columns on users, the
@@ -79,4 +79,27 @@ export async function listRecentGameStats(
     .where(eq(userGameStats.userId, userId))
     .orderBy(desc(userGameStats.lastPlayedAt))
     .limit(limit);
+}
+
+/**
+ * The distinct local days (YYYY-MM-DD) on which a player has plays in a UTC
+ * window, with every play shifted by the same clamped UTC offset (T7.5).
+ */
+export async function listLocalPlayDays(
+  db: Db,
+  userId: string,
+  window: { startMs: number; endMs: number; tzOffsetMinutes: number },
+): Promise<string[]> {
+  const day = sql<string>`to_char((${plays.createdAt} at time zone 'UTC') + make_interval(mins => ${Math.round(window.tzOffsetMinutes)}::int), 'YYYY-MM-DD')`;
+  const rows = await db
+    .selectDistinct({ day })
+    .from(plays)
+    .where(
+      and(
+        eq(plays.userId, userId),
+        gte(plays.createdAt, new Date(window.startMs)),
+        lt(plays.createdAt, new Date(window.endMs)),
+      ),
+    );
+  return rows.map((r) => r.day);
 }

@@ -21,17 +21,17 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 
 ## Route map
 
-| Prefix           | Routes                                                                                                                                                                    |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/me`            | GET current user, PATCH screen-name, DELETE (account)                                                                                                                                       |
-| `/auth/firebase` | register-anonymous, register-username, login-username, me (same as `/me`), link-provider, change-pin, add-email, check-email-verified, admin/reset-pin                    |
-| `/users`         | GET screen-name/check, POST screen-name, POST preferences, PATCH settings, GET streak, POST streak/checkin, GET :userId                                                   |
-| `/scores`        | GET :gameId (leaderboard), POST / (submit, auth)                                                                                                                          |
-| `/experience`    | GET summary (POST runs returns 410; XP comes from POST /scores)                                                                                                           |
-| `/ratings`       | GET /, GET :gameId, POST :gameId                                                                                                                                          |
-| `/followers`     | summary, following, followers, activity, ids, notifications, POST status, POST/DELETE :targetUserId                                                                       |
-| `/games`         | GET config, GET config/:gameId, GET feed, GET feed/personalized                                                                                                           |
-| `/admin`         | users list/get/update, users/:id reset-screen-name/disable/enable, DELETE plays/:playId, GET screen-names, games list/get/stats/update (metadata only), metrics/dashboard |
+| Prefix           | Routes                                                                                                                                                                                             |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/me`            | GET current user, PATCH screen-name, DELETE (account)                                                                                                                                              |
+| `/auth/firebase` | register-anonymous, register-username, login-username, me (same as `/me`), link-provider, change-pin, add-email, check-email-verified, admin/reset-pin                                             |
+| `/users`         | GET screen-name/check, POST screen-name, POST preferences, PATCH settings, GET streak, POST streak/checkin, GET :userId                                                                            |
+| `/scores`        | GET :gameId (leaderboard), POST / (submit, auth)                                                                                                                                                   |
+| `/experience`    | GET summary (POST runs returns 410; XP comes from POST /scores)                                                                                                                                    |
+| `/ratings`       | GET /, GET :gameId, POST :gameId                                                                                                                                                                   |
+| `/followers`     | GET summary, GET requests, POST request {friendCode}, POST requests/:id/accept, DELETE requests/:id, DELETE friends/:id, POST/DELETE block/:id, POST status (stored only with prefs.sharePresence) |
+| `/games`         | GET config, GET config/:gameId                                                                                                                                                                     |
+| `/admin`         | users list/get/update, users/:id reset-screen-name/disable/enable, DELETE plays/:playId, GET screen-names, games list/get/stats/update (metadata only), metrics/dashboard                          |
 
 ## Data layer
 

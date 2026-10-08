@@ -1,272 +1,87 @@
 /**
- * Game Catalog Hook
- *
- * Provides a unified view of games that:
- * 1. Shows games INSTANTLY from the bundled index (has load() functions)
- * 2. HYDRATES with backend config data (admin-managed metadata)
- * 3. Supports future campaigns/promotions via backend metadata
- *
- * The bundled games/index.ts contains:
- * - id, load() function (required for code-splitting)
- * - Basic fallback title/description
- *
- * The backend gameConfigs table supplies admin-managed extras only:
- * - betaOnly
- * - metadata: { campaigns, featured, promoText, etc. }
- *
- * Display fields (title, copy, cover, dates) come from the bundled manifests: the
- * server's games rows are seeded from the same manifests and add only status and
- * admin metadata. XP multipliers are server-side only (T1.4).
+ * Game catalog: the bundled manifests (games/index.ts) plus the admin-managed extras
+ * from GET /games/config (today only `betaOnly`). Display fields (title, copy, cover,
+ * dates) always come from the manifests, so the catalog renders at once and works
+ * with the API offline; the server data is a TanStack Query (T7.10), not a cache.
  */
-
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { games as bundledGames, type GameMeta } from "../games";
+import { useCallback, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { allGames, type GameMeta } from "../games";
 import { API_BASE_URL } from "../config/env";
-import { readStored, STORAGE_KEYS } from "../utils/storageKeys";
+import { apiErrorFrom } from "../lib/apiError";
+import { queryKeys } from "../lib/queryClient";
 
-const API_BASE = API_BASE_URL;
-const CACHE_KEY = STORAGE_KEYS.catalog;
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
-// Extended game type with backend-managed fields
 export type GameCatalogEntry = GameMeta & {
-  // Backend-managed display fields
-  promoText?: string;
-  featured?: boolean;
-  campaignId?: string;
-  campaignBadge?: string;
-  // Metadata from admin
-  metadata?: {
-    campaigns?: Array<{
-      id: string;
-      name: string;
-      badge?: string;
-      startDate?: string;
-      endDate?: string;
-      priority?: number;
-    }>;
-    featured?: boolean;
-    promoText?: string;
-    tags?: string[];
-    difficulty?: "easy" | "medium" | "hard";
-    ageRating?: string;
-    [key: string]: unknown;
-  } | null;
+  /** Free-form admin metadata from the server's games row. */
+  metadata?: Record<string, unknown> | null;
 };
 
-// Backend response shape
-interface BackendGameConfig {
+/** The parts of GET /games/config the client uses. */
+export type GameConfig = {
   gameId: string;
-  title: string;
-  description?: string;
-  objective?: string;
-  controls?: string;
-  thumbnail?: string;
-  xpMultiplier?: number;
   betaOnly?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  metadata?: GameCatalogEntry["metadata"];
-}
+  metadata?: Record<string, unknown> | null;
+};
 
-interface CatalogCache {
-  timestamp: number;
-  configs: Record<string, BackendGameConfig>;
-}
-
-/**
- * Load cached catalog from localStorage
- */
-function loadCache(): CatalogCache | null {
-  try {
-    const raw = readStored("catalog");
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as CatalogCache;
-    if (Date.now() - parsed.timestamp > CACHE_TTL_MS) {
-      return null; // Expired
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Save catalog to localStorage cache
- */
-function saveCache(configs: Record<string, BackendGameConfig>): void {
-  try {
-    const cache: CatalogCache = {
-      timestamp: Date.now(),
-      configs,
-    };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-  } catch {
-    // localStorage full or unavailable
-  }
-}
-
-/**
- * Fetch all game configs from backend
- */
-async function fetchGameConfigs(): Promise<BackendGameConfig[]> {
-  if (!API_BASE) return [];
-  const allConfigs: BackendGameConfig[] = [];
+async function fetchGameConfigs(): Promise<Record<string, GameConfig>> {
+  const byId: Record<string, GameConfig> = {};
+  if (!API_BASE_URL) return byId;
   let cursor: string | undefined;
-
-  // Paginate through all games (handles 100s of games)
   do {
-    const url = new URL("/games/config", API_BASE);
+    const url = new URL("/games/config", API_BASE_URL);
     url.searchParams.set("limit", "100");
     if (cursor) url.searchParams.set("cursor", cursor);
-
-    const response = await fetch(url.toString());
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const data = (await response.json()) as { items?: BackendGameConfig[]; nextCursor?: string };
-    allConfigs.push(...(data.items || []));
+    const res = await fetch(url.toString());
+    if (!res.ok) throw await apiErrorFrom(res, "Failed to load games");
+    const data = (await res.json()) as { items?: GameConfig[]; nextCursor?: string };
+    for (const item of data.items ?? []) byId[item.gameId] = item;
     cursor = data.nextCursor;
   } while (cursor);
-
-  return allConfigs;
+  return byId;
 }
 
-/**
- * Merge bundled game with backend config
- * Backend is source of truth for display data
- */
-function mergeGameData(bundled: GameMeta, backend?: BackendGameConfig | null): GameCatalogEntry {
-  if (!backend) {
-    // No backend config yet - use bundled data
-    return { ...bundled, metadata: null };
-  }
-
-  // Parse active campaign from metadata
-  const now = new Date();
-  const campaigns = backend.metadata?.campaigns;
-
-  const activeCampaign = campaigns
-    ?.filter((c) => {
-      if (c.startDate && new Date(c.startDate) > now) return false;
-      if (c.endDate && new Date(c.endDate) < now) return false;
-      return true;
-    })
-    .sort((a, b) => (b.priority || 0) - (a.priority || 0))[0];
-
+/** A manifest with the server's extras applied. Pure. */
+export function mergeGameData(bundled: GameMeta, config?: GameConfig | null): GameCatalogEntry {
+  if (!config) return { ...bundled, metadata: null };
   return {
-    // Keep the load() function from bundled (required)
     ...bundled,
-    // Admin-managed extras only; display fields stay bundled (see header comment).
-    betaOnly: backend.betaOnly ?? bundled.betaOnly,
-    // Campaign/promo data
-    metadata: backend.metadata,
-    featured: backend.metadata?.featured === true,
-    promoText: backend.metadata?.promoText,
-    campaignId: activeCampaign?.id,
-    campaignBadge: activeCampaign?.badge,
+    betaOnly: config.betaOnly ?? bundled.betaOnly,
+    metadata: config.metadata ?? null,
   };
 }
 
 export type GameCatalogState = {
-  /** All games, instantly available (bundled + cached backend data) */
+  /** Listable games (active + beta), instantly available from the manifests. */
   games: GameCatalogEntry[];
-  /** Whether backend data is still loading */
+  /** True while the first server fetch is in flight. */
   isHydrating: boolean;
-  /** Whether we have fresh backend data */
-  isHydrated: boolean;
-  /** Error if backend fetch failed */
   error: Error | null;
-  /** Force refresh from backend */
-  refresh: () => Promise<void>;
-  /** Get a specific game by ID */
+  /** Any game by id, including inactive ones (direct links still resolve). */
   getGame: (id: string) => GameCatalogEntry | undefined;
 };
 
-/**
- * Hook to access the game catalog with instant display + backend hydration
- */
 export function useGameCatalog(): GameCatalogState {
-  // Backend configs (from cache initially, then fresh)
-  const [backendConfigs, setBackendConfigs] = useState<Record<string, BackendGameConfig>>(() => {
-    const cached = loadCache();
-    return cached?.configs || {};
-  });
-  const [isHydrating, setIsHydrating] = useState(true);
-  const [isHydrated, setIsHydrated] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  // Fetch fresh data from backend
-  const refresh = useCallback(async () => {
-    setIsHydrating(true);
-    setError(null);
-    try {
-      const configs = await fetchGameConfigs();
-      const configMap: Record<string, BackendGameConfig> = {};
-      configs.forEach((c) => {
-        configMap[c.gameId] = c;
-      });
-      setBackendConfigs(configMap);
-      saveCache(configMap);
-      setIsHydrated(true);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch game configs"));
-    } finally {
-      setIsHydrating(false);
-    }
-  }, []);
-
-  // Initial fetch
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  // Merge bundled games with backend configs
-  const games = useMemo((): GameCatalogEntry[] => {
-    return bundledGames.map((bundled) => mergeGameData(bundled, backendConfigs[bundled.id]));
-  }, [backendConfigs]);
-
-  const getGame = useCallback(
-    (id: string): GameCatalogEntry | undefined => {
-      const bundled = bundledGames.find((g) => g.id === id);
-      if (!bundled) return undefined;
-      return mergeGameData(bundled, backendConfigs[id]);
-    },
-    [backendConfigs],
-  );
-
-  return {
-    games,
-    isHydrating,
-    isHydrated,
+  const {
+    data: configs,
+    isPending,
     error,
-    refresh,
-    getGame,
-  };
+  } = useQuery({
+    queryKey: queryKeys.catalog,
+    queryFn: fetchGameConfigs,
+    staleTime: 5 * 60_000,
+  });
+
+  const merged = useMemo(() => allGames.map((g) => mergeGameData(g, configs?.[g.id])), [configs]);
+  const games = useMemo(() => merged.filter((g) => g.status !== "inactive"), [merged]);
+  const getGame = useCallback((id: string) => merged.find((g) => g.id === id), [merged]);
+
+  return { games, isHydrating: isPending, error, getGame };
 }
 
-/**
- * Filter games by beta access
- */
+/** Beta games only for beta testers. */
 export function filterByBetaAccess(
   games: GameCatalogEntry[],
   isBetaTester: boolean,
 ): GameCatalogEntry[] {
   return isBetaTester ? games : games.filter((g) => !g.betaOnly);
-}
-
-/**
- * Filter games by active campaign
- */
-export function filterByCampaign(
-  games: GameCatalogEntry[],
-  campaignId: string,
-): GameCatalogEntry[] {
-  return games.filter((g) => g.campaignId === campaignId);
-}
-
-/**
- * Get featured games
- */
-export function getFeaturedGames(games: GameCatalogEntry[]): GameCatalogEntry[] {
-  return games.filter((g) => g.featured);
 }

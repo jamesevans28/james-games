@@ -9,12 +9,14 @@ import adminRoutes from "./admin.routes.js";
 import gamesRoutes from "./games.routes.js";
 import { requireAuth } from "../middleware/authGuards.js";
 import { changeScreenName, me } from "../controllers/usersController.js";
+import { deleteMe } from "../controllers/firebaseAuthController.js";
 
 const router = Router();
 
 // The signed-in user's own account. GET /auth/firebase/me is the same handler.
 router.get("/me", requireAuth, me);
 router.patch("/me/screen-name", requireAuth, changeScreenName);
+router.delete("/me", requireAuth, deleteMe); // T7.8 account deletion
 
 // Firebase auth routes
 router.use("/auth/firebase", firebaseAuthRoutes);

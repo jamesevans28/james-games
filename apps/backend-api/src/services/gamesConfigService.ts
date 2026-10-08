@@ -1,7 +1,6 @@
 import type { Game } from "../db/schema.js";
 import { getGame, listGames, updateGameMetadata, type GameStatus } from "../repos/gamesRepo.js";
 import { getUserById } from "../repos/usersRepo.js";
-import { clearFeedCache } from "./feedService.js";
 
 /**
  * Game config. Rows are seeded from the manifests on every deploy (title, status,
@@ -101,6 +100,5 @@ export async function updateGameMetadataFromAdmin(
   }
   const row = await updateGameMetadata(gameId, metadata);
   if (!row) return { ok: false, status: 404, error: "game_not_found" };
-  clearFeedCache();
   return { ok: true, game: toAdminGameConfig(row) };
 }

@@ -26,4 +26,3 @@ Claude kept this list while working through the phases unattended (started 9 Oct
 - **Contact email.** The privacy and parents pages use `hello@games4james.com` (`brand.json` `contactEmail`). Does that inbox exist? If not, set one up (for example forwarding through your domain registrar or Route 53 + SES), or tell Claude which address to use.
 - **Deleted accounts.** They disappear from leaderboards entirely rather than showing as "Deleted player". Is that OK?
 - **Weekly stickers.** The weekly sticker needs 3 different days in one week (Monday to Sunday, the player's local time). It replaces the old streak celebration, and the day count still runs quietly. Is that OK?
-

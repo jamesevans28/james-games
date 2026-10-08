@@ -139,84 +139,6 @@ export async function verifyPin(pin: string, hash: string): Promise<boolean> {
 }
 
 // ============================================================================
-// Rate Limiting (in-memory, consider Redis for production at scale)
-// ============================================================================
-
-type LoginAttempt = {
-  attempts: number;
-  lastAttempt: number;
-  lockedUntil?: number;
-};
-
-const loginAttempts = new Map<string, LoginAttempt>();
-
-const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-const MAX_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 minutes after max attempts
-
-/**
- * Check if a login attempt is allowed (rate limiting).
- * Returns { allowed: true } or { allowed: false, retryAfter: seconds }
- */
-export function checkRateLimit(identifier: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const record = loginAttempts.get(identifier);
-
-  if (!record) {
-    return { allowed: true };
-  }
-
-  // Check if locked out
-  if (record.lockedUntil && now < record.lockedUntil) {
-    return {
-      allowed: false,
-      retryAfter: Math.ceil((record.lockedUntil - now) / 1000),
-    };
-  }
-
-  // Reset if window has passed
-  if (now - record.lastAttempt > RATE_LIMIT_WINDOW_MS) {
-    loginAttempts.delete(identifier);
-    return { allowed: true };
-  }
-
-  // Check attempt count
-  if (record.attempts >= MAX_ATTEMPTS) {
-    record.lockedUntil = now + LOCKOUT_DURATION_MS;
-    return {
-      allowed: false,
-      retryAfter: Math.ceil(LOCKOUT_DURATION_MS / 1000),
-    };
-  }
-
-  return { allowed: true };
-}
-
-/**
- * Record a login attempt (success or failure).
- */
-export function recordLoginAttempt(identifier: string, success: boolean): void {
-  const now = Date.now();
-
-  if (success) {
-    // Clear on success
-    loginAttempts.delete(identifier);
-    return;
-  }
-
-  const record = loginAttempts.get(identifier);
-  if (record) {
-    record.attempts += 1;
-    record.lastAttempt = now;
-  } else {
-    loginAttempts.set(identifier, {
-      attempts: 1,
-      lastAttempt: now,
-    });
-  }
-}
-
-// ============================================================================
 // Account Linking Helpers
 // ============================================================================
 
@@ -230,11 +152,16 @@ export async function setUserClaims(uid: string, claims: Record<string, unknown>
 }
 
 /**
- * Delete a Firebase user (for testing or account deletion).
+ * Delete a Firebase user (account deletion, T7.8). A user that is already gone
+ * counts as deleted, so a retried deletion still finishes.
  */
 export async function deleteFirebaseUser(uid: string): Promise<void> {
   const auth = getFirebaseAuth();
-  await auth.deleteUser(uid);
+  try {
+    await auth.deleteUser(uid);
+  } catch (e) {
+    if (errorInfo(e).code !== "auth/user-not-found") throw e;
+  }
 }
 
 /**

@@ -2,24 +2,44 @@
 // Every route that acts for the caller reads the uid from the verified bearer token
 // (req.user, set by attachUser); nothing trusts a uid from the body.
 import type { Request, Response } from "express";
-import { checkRateLimit, recordLoginAttempt } from "../services/firebaseAuthService.js";
 import {
   addEmail as addEmailFor,
   adminResetPin,
   changePin as changePinFor,
+  deleteAccount,
   linkProvider as linkProviderFor,
   loginWithUsername as loginWithUsernameFor,
   registerAnonymous as registerAnonymousFor,
   registerUsername,
   syncEmailVerified,
+  UserError,
 } from "../services/userService.js";
-import { isValidPin, isValidUsername, normalizeUsername } from "../services/usernamePolicy.js";
+import { isValidPin, isValidUsername } from "../services/usernamePolicy.js";
+import {
+  RULES,
+  checkThrottle,
+  loginChecks,
+  pinKey,
+  recordAttempt,
+  type ThrottleCheck,
+} from "../services/throttle.js";
 import { log } from "../lib/log.js";
 import { errorInfo } from "../lib/errors.js";
 import { bodyOf, replyWithError } from "./usersController.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const LOGIN_FAILED = { error: "Invalid username or PIN" };
+// One message for an unknown username, a username without a PIN and a wrong PIN (T7.7).
+const LOGIN_FAILED = { error: "That username and PIN don't match" };
+
+/** 429 with Retry-After. Says nothing about whether the username exists. */
+function tooManyTries(res: Response, retryAfterSec: number) {
+  res.setHeader("Retry-After", String(retryAfterSec));
+  return res.status(429).json({
+    error: "Too many tries. Take a break and try again in a little while.",
+    code: "too_many_attempts",
+    retryAfter: retryAfterSec,
+  });
+}
 
 /**
  * POST /auth/firebase/register-anonymous (bearer: the anonymous user's ID token).
@@ -89,22 +109,19 @@ export async function loginWithUsername(req: Request, res: Response) {
     return res.status(400).json({ error: "username and pin required" });
   }
 
-  const rateLimitKey = `login:${normalizeUsername(username)}`;
-  const rateCheck = checkRateLimit(rateLimitKey);
-  if (!rateCheck.allowed) {
-    return res.status(429).json({
-      error: "Too many login attempts. Please try again later.",
-      retryAfter: rateCheck.retryAfter,
-    });
-  }
-
+  // req.ip is the socket address: on Lambda, serverless-http fills it from API Gateway's
+  // sourceIp, which the client can't forge. `trust proxy` stays off on purpose, since
+  // it would make req.ip the client-supplied X-Forwarded-For.
+  const checks = loginChecks(isValidUsername(username) ? username : null, req.ip);
   try {
-    const result = await loginWithUsernameFor(username, pin);
-    if (!result) {
-      recordLoginAttempt(rateLimitKey, false);
-      return res.status(401).json(LOGIN_FAILED);
+    const verdict = await checkThrottle(checks);
+    if (!verdict.allowed) {
+      log.warn("auth_login_throttled");
+      return tooManyTries(res, verdict.retryAfterSec);
     }
-    recordLoginAttempt(rateLimitKey, true);
+    const result = await loginWithUsernameFor(username, pin);
+    await recordAttempt(checks, Boolean(result));
+    if (!result) return res.status(401).json(LOGIN_FAILED);
     return res.json({
       ok: true,
       customToken: result.customToken,
@@ -150,10 +167,22 @@ export async function changePin(req: Request, res: Response) {
     return res.status(400).json({ error: "currentPin and newPin required" });
   }
   if (!isValidPin(newPin)) {
-    return res.status(400).json({ error: "New PIN must be 4-8 digits" });
+    return res.status(400).json({ error: "New PIN must be 6 digits" });
   }
+  const checks: ThrottleCheck[] = [{ key: pinKey(auth.userId), rule: RULES.pinChange }];
   try {
-    await changePinFor(auth.userId, currentPin, newPin);
+    const verdict = await checkThrottle(checks);
+    if (!verdict.allowed) {
+      log.warn("auth_change_pin_throttled");
+      return tooManyTries(res, verdict.retryAfterSec);
+    }
+    try {
+      await changePinFor(auth.userId, currentPin, newPin);
+    } catch (e) {
+      if (e instanceof UserError && e.code === "wrong_pin") await recordAttempt(checks, false);
+      throw e;
+    }
+    await recordAttempt(checks, true);
     return res.json({ ok: true });
   } catch (e) {
     return replyWithError(res, "auth_change_pin_failed", e);
@@ -206,7 +235,7 @@ export async function adminResetUserPin(req: Request, res: Response) {
     return res.status(400).json({ error: "userId and newPin required" });
   }
   if (!isValidPin(newPin)) {
-    return res.status(400).json({ error: "PIN must be 4-8 digits" });
+    return res.status(400).json({ error: "PIN must be 6 digits" });
   }
   try {
     await adminResetPin(userId, newPin);
@@ -214,5 +243,21 @@ export async function adminResetUserPin(req: Request, res: Response) {
     return res.json({ success: true, message: "PIN reset successfully" });
   } catch (e) {
     return replyWithError(res, "admin_pin_reset_failed", e);
+  }
+}
+
+/**
+ * DELETE /me: deletes the caller's account for good (T7.8). Plays stay, anonymised;
+ * everything else about the player goes, and so does the Firebase user.
+ */
+export async function deleteMe(req: Request, res: Response) {
+  const auth = req.user;
+  if (!auth) return res.status(401).json({ error: "unauthorized" });
+  try {
+    await deleteAccount(auth.userId);
+    log.info("account_deleted");
+    return res.json({ ok: true });
+  } catch (e) {
+    return replyWithError(res, "account_delete_failed", e);
   }
 }

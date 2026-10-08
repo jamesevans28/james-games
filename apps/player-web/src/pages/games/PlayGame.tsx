@@ -10,9 +10,8 @@ import Seo from "../../components/Seo";
 import GameLanding from "./GameLanding";
 import GameOver from "./GameOver";
 import { useAuth } from "../../context/FirebaseAuthProvider";
-import RatingPromptModal from "../../components/RatingPromptModal";
-import { fetchRatingSummary, submitRating, type RatingSummary } from "../../lib/api";
-import { getCachedRatingSummary, setCachedRatingSummary } from "../../utils/ratingCache";
+import { useGameRatings } from "../../hooks/useGameRatings";
+import { recordPlay } from "../../lib/ratingPrompt";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { recordGamePlayed } from "../../utils/playHistory";
 import { getBest } from "../../platform/storage/bestScore";
@@ -23,18 +22,6 @@ import {
   SITE_URL,
 } from "../../utils/seoKeywords";
 import { brand } from "../../config/brand";
-
-const PLAY_COUNT_PREFIX = "rating:plays:";
-const RATING_PROMPT_INTERVAL = 10;
-
-function incrementPlayCounter(gameId: string) {
-  if (typeof window === "undefined") return 0;
-  const key = `${PLAY_COUNT_PREFIX}${gameId}`;
-  const current = Number(window.localStorage.getItem(key) || 0);
-  const next = current + 1;
-  window.localStorage.setItem(key, String(next));
-  return next;
-}
 
 export default function PlayGame() {
   const { gameId } = useParams();
@@ -64,18 +51,8 @@ export default function PlayGame() {
   // report game over, so it is captured while the score dialog is closed.
   const [previousBest, setPreviousBest] = useState(0);
   const [lastDurationMs, setLastDurationMs] = useState<number | undefined>(undefined);
-  const [pendingRatingTrigger, setPendingRatingTrigger] = useState(false);
-  const [ratingPromptOpen, setRatingPromptOpen] = useState(false);
-  const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(() =>
-    meta ? getCachedRatingSummary(meta.id) : null,
-  );
-  const [ratingLoading, setRatingLoading] = useState(false);
-  const [ratingSubmitting, setRatingSubmitting] = useState(false);
-  const [ratingError, setRatingError] = useState<string | null>(null);
-  const [pendingPromptAction, setPendingPromptAction] = useState<"none" | "playAgain" | "close">(
-    "none",
-  );
-  const [userRating, setUserRating] = useState<number | null>(null);
+  // For the page's structured data only; the landing page owns rating UI and the prompt (T7.4).
+  const { summary: ratingSummary } = useGameRatings(meta?.id);
   useEffect(() => {
     if (!showScore && meta) setPreviousBest(getBest(meta.id));
   }, [showScore, meta]);
@@ -92,28 +69,6 @@ export default function PlayGame() {
     gameId: meta?.id,
     enabled: !!meta,
   });
-
-  useEffect(() => {
-    if (!meta) {
-      setRatingSummary(null);
-      setUserRating(null);
-      return;
-    }
-    const cached = getCachedRatingSummary(meta.id);
-    setRatingSummary(cached);
-    setUserRating(
-      typeof cached?.userRating === "number" && !Number.isNaN(cached.userRating)
-        ? cached.userRating
-        : null,
-    );
-  }, [meta]);
-
-  useEffect(() => {
-    if (!user) {
-      setPendingRatingTrigger(false);
-      setRatingPromptOpen(false);
-    }
-  }, [user]);
 
   useEffect(() => {
     // When entering a game route, opportunistically restore session if a refresh token exists.
@@ -174,92 +129,6 @@ export default function PlayGame() {
     }
   }, [meta]);
 
-  const completePromptFlow = useCallback(() => {
-    if (pendingPromptAction === "playAgain") {
-      setPendingPromptAction("none");
-      setPlaying(true);
-      void mountGame();
-    } else {
-      setPendingPromptAction("none");
-    }
-  }, [pendingPromptAction, mountGame]);
-
-  const openRatingPrompt = useCallback(
-    async (nextAction: "none" | "playAgain" | "close") => {
-      if (!meta || !user) return;
-      setPendingRatingTrigger(false);
-      setPendingPromptAction(nextAction);
-      setRatingError(null);
-
-      // If we already know the user has rated, skip showing the prompt.
-      const knownUserRating = userRating ?? ratingSummary?.userRating ?? null;
-      if (typeof knownUserRating === "number" && !Number.isNaN(knownUserRating)) {
-        completePromptFlow();
-        return;
-      }
-
-      // Otherwise fetch latest summary to confirm whether the prompt is needed
-      setRatingLoading(true);
-      try {
-        const summary = await fetchRatingSummary(meta.id);
-        setRatingSummary(summary);
-        setCachedRatingSummary(summary);
-        const fetchedUserRating =
-          typeof summary.userRating === "number" && !Number.isNaN(summary.userRating)
-            ? summary.userRating
-            : null;
-        setUserRating(fetchedUserRating);
-        if (fetchedUserRating !== null) {
-          // User has already rated — don't open the modal.
-          completePromptFlow();
-          return;
-        }
-        // No rating yet — show the prompt now
-        setRatingPromptOpen(true);
-      } catch (err) {
-        console.error("Failed to load rating summary", err);
-        setRatingError("Unable to load rating info right now.");
-        // If we can't confirm, don't block the user — just continue their flow.
-        completePromptFlow();
-      } finally {
-        setRatingLoading(false);
-      }
-    },
-    [meta, user, userRating, ratingSummary?.userRating, completePromptFlow],
-  );
-
-  const handleRatingSkip = useCallback(() => {
-    setRatingPromptOpen(false);
-    setRatingError(null);
-    completePromptFlow();
-  }, [completePromptFlow]);
-
-  const handleRatingSubmit = useCallback(
-    async (value: number) => {
-      if (!meta) return;
-      setRatingSubmitting(true);
-      setRatingError(null);
-      try {
-        const summary = await submitRating(meta.id, value);
-        setRatingSummary(summary);
-        setCachedRatingSummary(summary);
-        setUserRating(summary.userRating ?? value);
-        setRatingPromptOpen(false);
-        completePromptFlow();
-      } catch (err) {
-        console.error("Failed to submit rating", err);
-        if (err instanceof Error && err.message === "signin_required") {
-          setRatingError("Please sign in to rate this game.");
-        } else {
-          setRatingError("Unable to save your rating. Please try again later.");
-        }
-      } finally {
-        setRatingSubmitting(false);
-      }
-    },
-    [meta, completePromptFlow],
-  );
-
   const handleCloseScore = () => {
     setShowScore(false);
     if (destroyRef.current) {
@@ -271,19 +140,10 @@ export default function PlayGame() {
       destroyRef.current = null;
     }
     setPlaying(false);
-    if (pendingRatingTrigger && user) {
-      void openRatingPrompt("close");
-    } else {
-      setPendingRatingTrigger(false);
-    }
   };
 
   const handlePlayAgain = () => {
     setShowScore(false);
-    if (pendingRatingTrigger && user) {
-      void openRatingPrompt("playAgain");
-      return;
-    }
     setPlaying(true);
     if (instanceRef.current) {
       // Same Phaser game, fresh run: no new WebGL context, no reload.
@@ -302,18 +162,9 @@ export default function PlayGame() {
     setLastScore(finishedRun.score);
     setLastDurationMs(finishedRun.durationMs);
     setShowScore(true);
-    if (user) {
-      const count = incrementPlayCounter(meta.id);
-      if (count > 0 && count % RATING_PROMPT_INTERVAL === 0) {
-        const alreadyRated =
-          typeof (userRating ?? ratingSummary?.userRating) === "number" &&
-          !Number.isNaN(userRating ?? ratingSummary?.userRating);
-        if (!alreadyRated) {
-          setPendingRatingTrigger(true);
-        }
-      }
-    }
-  }, [finishedRun, meta, user, userRating, ratingSummary?.userRating]);
+    // Counted for the rating prompt, which only ever asks on the landing page (T7.4).
+    recordPlay(meta.id);
+  }, [finishedRun, meta]);
 
   // Hiding the tab pauses an SDK game; the player resumes from the Paused overlay.
   useEffect(() => {
@@ -402,9 +253,6 @@ export default function PlayGame() {
         onBack={() => {
           if (playing) {
             setShowScore(false);
-            setPendingRatingTrigger(false);
-            setRatingPromptOpen(false);
-            setRatingError(null);
             setLastScore(null);
             setPlaying(false);
             return;
@@ -427,7 +275,11 @@ export default function PlayGame() {
       )}
       {meta && meta.status !== "inactive" && !error && (
         <div className="landing-panel" data-state={landingState} aria-hidden={playing}>
-          <GameLanding meta={meta} onPlay={() => setPlaying(true)} refreshKey={runsFinished} />
+          <GameLanding
+            meta={meta}
+            onPlay={() => setPlaying(true)}
+            canPromptRating={!playing && runsFinished === 0}
+          />
         </div>
       )}
 
@@ -473,31 +325,6 @@ export default function PlayGame() {
         )}
       </div>
 
-      {meta && (
-        <article className="prose prose-sm max-w-2xl mx-auto p-6 mt-8 mb-24 bg-card border border-line rounded-2xl">
-          <h1 className="text-2xl font-bold text-ink mb-4">{meta.title}</h1>
-
-          <section className="mb-6">
-            <h2 className="text-lg font-bold text-brand mb-2">About this Game</h2>
-            <p className="text-ink-2">{meta.description}</p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-bold text-sky mb-2">How to Play</h2>
-            <ul className="list-disc pl-5 text-ink-2 space-y-2">
-              <li>
-                <span className="font-medium text-ink">Objective:</span>{" "}
-                {meta.objective || "Score as high as possible."}
-              </li>
-              <li>
-                <span className="font-medium text-ink">Controls:</span>{" "}
-                {meta.controls || "Tap or click to interact."}
-              </li>
-            </ul>
-          </section>
-        </article>
-      )}
-
       <GameOver
         open={showScore}
         score={lastScore}
@@ -507,19 +334,6 @@ export default function PlayGame() {
         onClose={handleCloseScore}
         onPlayAgain={handlePlayAgain}
         onViewLeaderboard={meta ? () => navigate(`/leaderboard/${meta.id}`) : undefined}
-      />
-
-      <RatingPromptModal
-        open={ratingPromptOpen}
-        gameTitle={meta?.title ?? "Rate this game"}
-        avgRating={ratingSummary?.avgRating}
-        ratingCount={ratingSummary?.ratingCount}
-        initialRating={userRating}
-        loading={ratingLoading}
-        submitting={ratingSubmitting}
-        error={ratingError}
-        onSubmit={handleRatingSubmit}
-        onSkip={handleRatingSkip}
       />
     </div>
   );

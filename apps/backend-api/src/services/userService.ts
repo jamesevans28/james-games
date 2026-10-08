@@ -4,16 +4,12 @@ import type { NewUser, User } from "../db/schema.js";
 import {
   SCREEN_NAME_KEY,
   USERNAME_KEY,
-  countFollows,
   countRenamesSince,
   getUserById,
   getUserByUsername,
   getUserForUpdate,
   insertUser,
-  isFollowingUser,
   isScreenNameTaken,
-  listFollowerUsers,
-  listFollowingUsers,
   renameUser,
   uniqueViolation,
   updateUser,
@@ -23,14 +19,19 @@ import { SCREEN_NAME_MESSAGES, checkScreenName, generateScreenName } from "./scr
 import {
   checkEmailVerified,
   createCustomToken,
+  deleteFirebaseUser,
   hashPin,
   setUserClaims,
   updateFirebaseUserEmail,
   verifyPin,
 } from "./firebaseAuthService.js";
 import { toPublicProfile, type PublicProfile } from "./publicProfile.js";
-import { getRecentGamesForUser } from "./userGameStatsService.js";
+import { getFriendship, isBlockedEitherWay, type Friendship } from "./followersService.js";
+import { listStickers } from "../repos/stickersRepo.js";
 import { normalizeUsername } from "./usernamePolicy.js";
+import { deleteUserRow } from "../repos/accountRepo.js";
+import { deleteAttempts } from "../repos/authAttemptsRepo.js";
+import { pinKey, userKey } from "./throttle.js";
 
 /** A rule failure with the HTTP status and code the controller should answer with. */
 export class UserError extends Error {
@@ -207,6 +208,12 @@ export async function registerUsername(
   return { user, customToken };
 }
 
+let dummyHash: Promise<string> | null = null;
+function dummyPinHash(): Promise<string> {
+  dummyHash ??= hashPin(crypto.randomInt(1_000_000).toString().padStart(6, "0"));
+  return dummyHash;
+}
+
 /**
  * Checks a username + PIN and mints a custom token. Null for an unknown username,
  * an account without a PIN, or a wrong PIN, so callers cannot tell them apart.
@@ -216,7 +223,11 @@ export async function loginWithUsername(
   pin: string,
 ): Promise<{ user: User; customToken: string } | null> {
   const user = await getUserByUsername(username);
-  if (!user?.pinHash) return null;
+  if (!user?.pinHash) {
+    // Same bcrypt cost as a real check, so response time doesn't say whether the username exists.
+    await verifyPin(pin, await dummyPinHash());
+    return null;
+  }
   if (!(await verifyPin(pin, user.pinHash))) return null;
   const customToken = await createCustomToken(user.id, {
     accountType: user.accountType,
@@ -250,9 +261,31 @@ export async function changePin(uid: string, currentPin: string, newPin: string)
   await updateUser(uid, { pinHash: await hashPin(newPin) });
 }
 
+/** James resets a forgotten PIN; any sign-in lockout on the account is lifted too. */
 export async function adminResetPin(userId: string, newPin: string): Promise<void> {
   const user = await updateUser(userId, { pinHash: await hashPin(newPin) });
   if (!user) throw notFound();
+  const keys = [pinKey(userId)];
+  if (user.username) keys.push(userKey(user.username));
+  await deleteAttempts(getDb(), keys);
+}
+
+/**
+ * DELETE /me (T7.8): removes the account for good. In one transaction the row goes
+ * (plays stay, anonymised; best scores, friends, stickers and the rest cascade, so
+ * the player leaves every leaderboard), along with any sign-in attempts naming the
+ * account, and then the Firebase user is deleted. If Firebase fails the transaction
+ * rolls back and nothing is lost, so the player can simply try again.
+ */
+export async function deleteAccount(uid: string): Promise<void> {
+  await getDb().transaction(async (tx) => {
+    // No row (never registered, or a retry) still deletes the Firebase user.
+    const deleted = await deleteUserRow(tx, uid);
+    const keys = [pinKey(uid)];
+    if (deleted?.username) keys.push(userKey(deleted.username));
+    await deleteAttempts(tx, keys);
+    await deleteFirebaseUser(uid);
+  });
 }
 
 /** Sets an unverified email in Firebase and on the row. Firebase errors are thrown as-is. */
@@ -334,56 +367,43 @@ export async function updatePreferences(
   if (!(await updateUser(uid, set))) throw notFound();
 }
 
-const FOLLOW_LIST_LIMIT = 25;
-const RECENT_GAMES_LIMIT = 10;
+const PROFILE_STICKERS_LIMIT = 20;
 
-export type PublicFollowEntry = {
-  userId: string;
-  screenName: string;
-  avatar: number;
-  createdAt: string;
-};
-
-/** GET /users/:userId. Whitelisted fields only (see publicProfile.ts). */
+/**
+ * GET /users/:userId (T7.6). Whitelisted fields only (see publicProfile.ts): no
+ * friend or follower lists or counts, no last-seen. "Friends since" only for the
+ * viewer's friends; the friend code only for the player themselves.
+ */
 export type PublicProfileResponse = {
   profile: PublicProfile;
-  followingCount: number;
-  followersCount: number;
-  following: PublicFollowEntry[];
-  followers: PublicFollowEntry[];
-  recentGames: Awaited<ReturnType<typeof getRecentGamesForUser>>;
+  /** Sticker ids, newest first (art and names come from the client's catalogue). */
+  stickers: string[];
   isSelf: boolean;
-  isFollowing: boolean;
+  friendship: Friendship | "self";
+  friendsSince: string | null;
+  /** Only on your own profile, so you can share it. */
+  friendCode?: string;
 };
 
+/** Null when there is no such player, or when either of the two has blocked the other. */
 export async function getPublicProfile(
   targetUserId: string,
   viewerId: string | undefined,
 ): Promise<PublicProfileResponse | null> {
-  const user = await getUserById(targetUserId);
-  if (!user) return null;
   const isSelf = viewerId === targetUserId;
-  const [counts, following, followers, recentGames, viewerFollows] = await Promise.all([
-    countFollows(targetUserId),
-    listFollowingUsers(targetUserId, FOLLOW_LIST_LIMIT),
-    listFollowerUsers(targetUserId, FOLLOW_LIST_LIMIT),
-    getRecentGamesForUser(targetUserId, RECENT_GAMES_LIMIT),
-    viewerId && !isSelf ? isFollowingUser(viewerId, targetUserId) : Promise.resolve(false),
+  const [user, blocked, stickers, link] = await Promise.all([
+    getUserById(targetUserId),
+    viewerId && !isSelf ? isBlockedEitherWay(viewerId, targetUserId) : Promise.resolve(false),
+    listStickers(targetUserId),
+    viewerId && !isSelf ? getFriendship(viewerId, targetUserId) : Promise.resolve(null),
   ]);
-  const entry = (e: { userId: string; screenName: string; avatar: number; createdAt: Date }) => ({
-    userId: e.userId,
-    screenName: e.screenName,
-    avatar: e.avatar,
-    createdAt: e.createdAt.toISOString(),
-  });
+  if (!user || blocked) return null;
   return {
     profile: toPublicProfile(user),
-    followingCount: counts.following,
-    followersCount: counts.followers,
-    following: following.map(entry),
-    followers: followers.map(entry),
-    recentGames,
+    stickers: stickers.slice(0, PROFILE_STICKERS_LIMIT).map((s) => s.stickerId),
     isSelf,
-    isFollowing: viewerFollows,
+    friendship: isSelf ? "self" : (link?.friendship ?? "none"),
+    friendsSince: link?.friendsSince ?? null,
+    ...(isSelf ? { friendCode: user.friendCode } : {}),
   };
 }

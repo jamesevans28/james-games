@@ -1,8 +1,16 @@
 import { getDb, type Db } from "../db/client.js";
 import type { User } from "../db/schema.js";
 import { getUserById } from "../repos/usersRepo.js";
-import { lockUser, updateUserProgress } from "../repos/statsRepo.js";
-import { clampTzOffset, localDayFor, nextStreak, type StreakState } from "./streakRules.js";
+import { listLocalPlayDays, lockUser, updateUserProgress } from "../repos/statsRepo.js";
+import { awardSticker, hasSticker, listStickers } from "../repos/stickersRepo.js";
+import {
+  clampTzOffset,
+  localDayFor,
+  localWeekFor,
+  nextStreak,
+  weeklyStickerFor,
+  type StreakState,
+} from "./streakRules.js";
 
 export type StreakData = StreakState;
 
@@ -65,7 +73,40 @@ export async function recordDailyLogin(
   });
 }
 
+export type StickerEarned = { id: string; kind: "weekly" };
+
+/**
+ * The weekly sticker (T7.5), inside the score transaction after the play is
+ * inserted: collected the first time this local ISO week has plays on 3
+ * different days. Days are the server's play times shifted by the player's
+ * clamped UTC offset. Returns the sticker only when this run collected it.
+ */
+export async function applyWeeklySticker(
+  tx: Db,
+  userId: string,
+  tzOffsetMinutes: unknown,
+  nowMs: number = Date.now(),
+): Promise<StickerEarned | null> {
+  const week = localWeekFor(nowMs, tzOffsetMinutes);
+  if (await hasSticker(tx, userId, week.stickerId)) return null;
+  const days = await listLocalPlayDays(tx, userId, week);
+  // Today always counts: this run's play is part of the week even at its edges.
+  const id = weeklyStickerFor([...days, week.today], week.today);
+  if (!id) return null;
+  const collected = await awardSticker(tx, { userId, stickerId: id, earnedAt: new Date(nowMs) });
+  return collected ? { id, kind: "weekly" } : null;
+}
+
+/** A player's collected stickers, newest first. */
+export async function listUserStickers(
+  userId: string,
+): Promise<Array<{ id: string; earnedAt: string }>> {
+  const rows = await listStickers(userId);
+  return rows.map((r) => ({ id: r.stickerId, earnedAt: r.earnedAt.toISOString() }));
+}
+
 export default {
   getStreakData,
   recordDailyLogin,
+  listUserStickers,
 };

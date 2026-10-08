@@ -1,42 +1,39 @@
 import { useEffect } from "react";
-import { updatePresenceStatus, type PresenceStatus } from "../lib/api";
-import { useAuth } from "../context/FirebaseAuthProvider";
+import { reportPresence, type PresenceStatus } from "../lib/api";
+import { useSharePresence } from "./useFriends";
 
-const HEARTBEAT_MS = 30 * 1000;
+/** The server counts you online for 2 minutes after each report. */
+const HEARTBEAT_MS = 60 * 1000;
 
-export function usePresenceReporter(args: {
-  status: PresenceStatus;
-  gameId?: string;
-  enabled?: boolean;
-}) {
-  const { user, initialized } = useAuth();
+/**
+ * Tells friends you're online, but only if you switched on "Show friends when I'm
+ * online" in Settings (T7.6). With it off (the default) nothing is sent at all.
+ * Friends see only "online": `status` and `gameId` are accepted for the pages that
+ * pass them but are never sent.
+ */
+export function usePresenceReporter(
+  args: { status?: PresenceStatus; gameId?: string; enabled?: boolean } = {},
+) {
+  const { sharePresence } = useSharePresence();
+  const active = (args.enabled ?? true) && sharePresence;
+
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    // Wait for auth to be initialized before making API calls
-    if (!initialized) return;
-    if (!user || !args.enabled) return;
-    let cancelled = false;
-    let timeoutId: number | null = null;
-
-    const send = async () => {
-      try {
-        await updatePresenceStatus({
-          status: args.status,
-          gameId: args.gameId,
-        });
-      } catch {
-        // Presence is best-effort: the next heartbeat tries again.
-      } finally {
-        if (!cancelled) {
-          timeoutId = window.setTimeout(send, HEARTBEAT_MS);
-        }
-      }
+    if (!active || typeof window === "undefined") return;
+    let timer: number | undefined;
+    const send = () => {
+      if (document.visibilityState !== "visible") return;
+      // Best-effort: the next heartbeat tries again.
+      reportPresence().catch(() => undefined);
     };
-
-    void send();
+    const beat = () => {
+      send();
+      timer = window.setTimeout(beat, HEARTBEAT_MS);
+    };
+    beat();
+    document.addEventListener("visibilitychange", send);
     return () => {
-      cancelled = true;
-      if (timeoutId) window.clearTimeout(timeoutId);
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", send);
     };
-  }, [user?.userId, initialized, args.status, args.gameId, args.enabled]);
+  }, [active]);
 }

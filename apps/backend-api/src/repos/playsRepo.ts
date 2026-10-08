@@ -1,6 +1,8 @@
 import { and, asc, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { getDb, type Db } from "../db/client.js";
 import { bestScores, follows, games, plays, users, type Game, type Play } from "../db/schema.js";
+import { blockedEitherWay } from "./blocksRepo.js";
 
 /** Pure data access for plays, best scores and the leaderboards. Services own the rules. */
 
@@ -59,7 +61,8 @@ export type LeaderboardRow = {
 /**
  * Top best scores for a game (highest first, earlier wins a tie), public user
  * fields only. Disabled accounts are left out. With `friendsOf`, only that player
- * and the players they follow (accepted) are included.
+ * and their friends are included: accepted follows in both directions, never a
+ * blocked pair (T7.6).
  */
 export async function listLeaderboard(
   gameId: string,
@@ -70,11 +73,26 @@ export async function listLeaderboard(
   const conditions = [eq(bestScores.gameId, gameId), isNull(users.disabledAt)];
   if (opts.friendsOf) {
     const viewer = opts.friendsOf;
-    const followed = db
+    const reverse = alias(follows, "reverse");
+    const friends = db
       .select({ id: follows.targetUserId })
       .from(follows)
-      .where(and(eq(follows.userId, viewer), eq(follows.status, "accepted")));
-    conditions.push(or(eq(bestScores.userId, viewer), inArray(bestScores.userId, followed))!);
+      .innerJoin(
+        reverse,
+        and(
+          eq(reverse.userId, follows.targetUserId),
+          eq(reverse.targetUserId, follows.userId),
+          eq(reverse.status, "accepted"),
+        ),
+      )
+      .where(
+        and(
+          eq(follows.userId, viewer),
+          eq(follows.status, "accepted"),
+          sql`not ${blockedEitherWay(follows.userId, follows.targetUserId)}`,
+        ),
+      );
+    conditions.push(or(eq(bestScores.userId, viewer), inArray(bestScores.userId, friends))!);
   }
   return db
     .select({

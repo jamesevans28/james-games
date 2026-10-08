@@ -6,6 +6,7 @@
   "makers": ["James", "Tilly", "Harvey"],
   "origin": "https://games4james.com",
   "apiOrigin": "https://api.games4james.com",
+  "contactEmail": "hello@games4james.com",
   "themeColor": "#FF5A4E",
   "backgroundColor": "#FFF8EC",
   "logo": "/brand/logo.svg",

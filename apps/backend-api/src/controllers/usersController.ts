@@ -93,7 +93,10 @@ export async function updatePreferences(req: Request, res: Response) {
   }
 }
 
-/** GET /users/:userId: a public profile (whitelisted fields only) plus follow data. */
+/**
+ * GET /users/:userId: a public profile (whitelisted fields only), stickers and, for a
+ * signed-in viewer, how the two are connected. 404 for a missing player or a blocked pair.
+ */
 export async function getPublicProfile(req: Request, res: Response) {
   const targetUserId = String(req.params.userId ?? "").trim();
   if (!targetUserId) return res.status(400).json({ error: "userId_required" });

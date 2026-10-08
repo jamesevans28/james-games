@@ -16,7 +16,12 @@ import {
   loadExperienceLevels,
   type ExperienceSummary,
 } from "./experienceService.js";
-import { applyDailyStreak, type StreakResult } from "./streakService.js";
+import {
+  applyDailyStreak,
+  applyWeeklySticker,
+  type StickerEarned,
+  type StreakResult,
+} from "./streakService.js";
 
 export interface PublicScoreRow {
   userId?: string;
@@ -37,13 +42,15 @@ export type ScoreSubmission = {
   newLevel?: number;
   summary: ExperienceSummary;
   streak: StreakResult["streak"] & { extended: boolean; isNewStreak: boolean };
+  /** Only when this run collected the weekly sticker (T7.5). */
+  stickerEarned?: StickerEarned;
 };
 
 /**
  * Saves one run in a single transaction: check the game and the player, validate
  * the score against the game's own limits, insert the play, raise the best score,
- * add XP (score × the game's multiplier from the database), count today's streak
- * and update the per-game stats. Throws ScoreRejected for anything refused.
+ * add XP (score × the game's multiplier from the database), count today's streak,
+ * collect the weekly sticker and update the per-game stats. Throws ScoreRejected for anything refused.
  */
 export async function submitScore(
   userId: string,
@@ -93,6 +100,7 @@ export async function submitScore(
         : player;
 
     const streak = await applyDailyStreak(tx, player, body.tzOffsetMinutes, nowMs);
+    const sticker = await applyWeeklySticker(tx, userId, body.tzOffsetMinutes, nowMs);
     await recordGamePlay(tx, { userId, gameId, score: valid.score, playedAt: now });
 
     return {
@@ -104,6 +112,7 @@ export async function submitScore(
       ...(xp.level > player.xpLevel ? { newLevel: xp.level } : {}),
       summary: buildSummary(updated ?? player),
       streak: { ...streak.streak, extended: streak.extended, isNewStreak: streak.isNewStreak },
+      ...(sticker ? { stickerEarned: sticker } : {}),
     };
   });
 }
