@@ -109,7 +109,7 @@ Steps:
 Done when: 16/16 games load and reach game over; no console errors; bundle size of the Phaser chunk noted in the PR.
 
 ## T2.8 Everything else, and a dependency policy
-Status: todo
+Status: done (2026-10-08). Upgraded lucide-react 0.454 -> 1.52 (admin; all 14 icons still exist). Removed the unconfigured ESLint packages from player-web (eslint, @eslint/js, react-hooks, react-refresh, globals); T4.1 installs current versions at the root. `npm run deps:check` added. .github/dependabot.yml: weekly (Monday, Sydney) grouped minor+patch PR for npm and for GitHub Actions; majors as separate PRs; TypeScript and @types/node majors ignored with reasons in DECISIONS.md. deps:check now lists only those two pinned packages. Phase 2 verified on Node 24 and on local Node 22.14: typecheck, tests, all three builds. Dependabot validity shows on GitHub after the push (Insights -> Dependency graph -> Dependabot).
 Depends on: T2.7
 Goal: no outdated packages; a rule for staying current.
 Files: all `package.json`, `.github/dependabot.yml` (new)

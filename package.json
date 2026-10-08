@@ -23,7 +23,8 @@
     "web:asset:snapadile": "npm run generate-snapadile-assets --workspace apps/player-web",
     "web:asset:car-crash": "npm run generate-car-crash-assets --workspace apps/player-web",
     "web:generate-sitemap": "npm run generate-sitemap --workspace apps/player-web",
-    "web:generate-seo": "npm run generate-seo --workspace apps/player-web"
+    "web:generate-seo": "npm run generate-seo --workspace apps/player-web",
+    "deps:check": "npm outdated --workspaces --include-workspace-root --long"
   },
   "devDependencies": {
     "pureimage": "^0.3.17",

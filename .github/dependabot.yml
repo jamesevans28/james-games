@@ -1,0 +1,37 @@
+# Keeps dependencies current (plan T2.8). One weekly PR per ecosystem for minor and
+# patch updates; each major update gets its own PR so it can be reviewed separately.
+# Majors held back on purpose are ignored here and recorded in docs/plan/DECISIONS.md.
+version: 2
+updates:
+  - package-ecosystem: npm
+    # The root lockfile covers every workspace (apps/player-web, backend-api, admin-web).
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Australia/Sydney
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      # typescript-eslint supports TypeScript <6.1 only (DECISIONS.md, re-check 2027-01-08).
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # Node types track the Node runtime major (24, see .nvmrc).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Australia/Sydney
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci(deps)"
