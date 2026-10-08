@@ -20,11 +20,16 @@ Steps:
 
 ## T5.2 Reflex Ring (pilot, finished)
 
-Status: todo (T4.4 and T4.7 already moved it onto host/mount with kit audio; steps 1's HUD/base-scene part and steps 2–5 remain)
-Depends on: T4.4 (it was the mount pilot), T4.5
-Goal: fully on the SDK, polished.
-Files: `games/reflex-ring/**`
-Steps:
+Status: done (2026-10-09).
+
+- **SDK.** On `BasePlatformScene` with the kit HUD, `tapZones` and kit audio, and `endRun` (shake and flash, no in-scene overlay). The DOM letterbox listener is gone.
+- **Rules and art.** `useCases/rules.ts` (`segmentHit`, `isPerfect`, `nextVelocity`, `pickTarget`, `powerupRoll`, all on `host.rng`) with 6 tests. Power-ups use the four SVGs, and wedges use the brand crayons with ink outlines. The instruction text is ink on paper; the grey background blocks were dropped.
+- **Scoring** is calculated rather than measured (no live data after the reset): ceiling about 14 points/s, so `max` 5,000 and `perSecondMax` 15.
+- **Smoke test:** three runs with two Play-agains in the same game, best updating, no console errors.
+  Depends on: T4.4 (it was the mount pilot), T4.5
+  Goal: fully on the SDK, polished.
+  Files: `games/reflex-ring/**`
+  Steps:
 
 1. Finish the migration: scene extends `BasePlatformScene`; HUD from the kit; audio from the kit; `endRun` replaces the in-scene overlay; delete the DOM letterbox listener (the host's tap zone covers the stage).
 2. Use the four `powerup-*.svg` assets (currently drawn as circles).
