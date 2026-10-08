@@ -1,5 +1,5 @@
 {
-  "id": "25a9901a-1b71-48c3-b3c3-c310988a73f7",
+  "id": "fb1157f9-d3ef-44ef-b7fc-653f74620640",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -912,6 +912,12 @@
         "streak_last_day": {
           "name": "streak_last_day",
           "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "disabled_at": {
+          "name": "disabled_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },

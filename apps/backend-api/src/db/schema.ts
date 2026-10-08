@@ -54,6 +54,8 @@ export const users = pgTable(
     streakLongest: integer("streak_longest").notNull().default(0),
     /** The player's local calendar day of their last check-in (YYYY-MM-DD). */
     streakLastDay: date("streak_last_day", { mode: "string" }),
+    /** Set by an admin (T6.8); a disabled account can sign in but not post scores or follow. */
+    disabledAt: timestamp("disabled_at", { withTimezone: true }),
     prefs: jsonb("prefs").$type<Record<string, unknown>>().notNull().default({}),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

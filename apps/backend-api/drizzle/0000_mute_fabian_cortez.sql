@@ -100,6 +100,7 @@ CREATE TABLE "users" (
 	"streak_current" integer DEFAULT 0 NOT NULL,
 	"streak_longest" integer DEFAULT 0 NOT NULL,
 	"streak_last_day" date,
+	"disabled_at" timestamp with time zone,
 	"prefs" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
