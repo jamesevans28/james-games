@@ -1,147 +1,198 @@
-/* eslint-disable no-empty, no-restricted-imports, no-useless-assignment -- TODO T5.5: legacy game code, cleaned when it moves onto the Game SDK */
 import Phaser from "phaser";
+import { BasePlatformScene } from "../../../platform/scenes/BasePlatformScene";
+import { dpad, keys, swipe, type DPadDirection } from "../../../platform/input";
+import { hexToNumber } from "../../../platform/hud/format";
 import { ASSETS, preloadAssets, createBackground } from "../assets";
-import { type GameState, type Direction, DEFAULT_CONFIG } from "../entities/GameState";
-import { createInitialState, advanceLevel } from "../useCases/stateManager";
 import {
-  createGrid,
-  worldToCell,
+  DEFAULT_CONFIG,
+  type Bounds,
+  type Direction,
+  type EnemyBall,
+  type PlayerBall,
+} from "../entities/GameState";
+import {
   cellToWorldCenter,
-  type Grid,
-  type Cell,
+  countSet,
+  createGrid,
+  directionDelta,
   idx,
+  inBounds,
+  worldToCell,
+  type Cell,
+  type Grid,
 } from "../useCases/grid";
 import { rasterizePolyline } from "../useCases/rasterize";
 import { applyCapture } from "../useCases/captureFill";
-import { computeBorderMask } from "../useCases/borderMask";
+import {
+  computeBorderMask,
+  countForwardBorderOptions,
+  findNearestBorderCell,
+} from "../useCases/borderMask";
 import { pointsForCapture } from "../useCases/score";
-import { createDPad, type DPadDirection, type DPadInstance } from "../../../platform/input/dpad";
-import { dispatchGameOver } from "../../../utils/gameEvents";
-import { getBest, setBest } from "../../../utils/bestScore";
+import {
+  collectPickup,
+  coveragePct,
+  enemySpeedFactor,
+  isLevelComplete,
+  levelSettings,
+  loseLife,
+  MAX_LIVES,
+  newPowerupClock,
+  pickPickupCell,
+  skipPickup,
+  startVelocity,
+  tickPowerups,
+  type PowerupClock,
+} from "../useCases/rules";
 
-const GAME_WIDTH = 540;
-const GAME_HEIGHT = 960;
+const W = 540;
+const H = 960;
+/** The board, laid out for 540×960: below the HUD and status line, above the d-pad. */
+const PLAY_BOUNDS: Bounds = { x: 36, y: 198, width: 468, height: 504 };
+/** Smaller cells mean more precise captures and more work per frame. */
+const CELL_SIZE = 3;
+const PLAYER_SPEED = 200; // px/s
+const ENEMY_RADIUS = 10;
+const PICKUP_RADIUS = 14;
+const STATUS_Y = 172;
+const BOARD_CENTER = {
+  x: PLAY_BOUNDS.x + PLAY_BOUNDS.width / 2,
+  y: PLAY_BOUNDS.y + PLAY_BOUNDS.height / 2,
+};
 
-export class MainScene extends Phaser.Scene {
-  private state!: GameState;
+type NextButton = { container: Phaser.GameObjects.Container; zone: Phaser.GameObjects.Zone };
+
+export default class MainScene extends BasePlatformScene {
+  // Per-run state: every field is reset in startRun().
+  private rng: () => number = Math.random;
+  private score = 0;
+  private lives = MAX_LIVES;
+  private level = 1;
+  private coverage = 0;
+  private targetCoverage = 0;
+  private levelComplete = false;
+  private player: PlayerBall = { x: 0, y: 0, isDrawing: false };
+  private enemy: EnemyBall = { x: 0, y: 0, velocityX: 0, velocityY: 0, radius: ENEMY_RADIUS };
+  private currentDirection: Direction | null = null;
+  private playerStepCarrySeconds = 0;
+  private powerups: PowerupClock = { spawnInMs: 0, pickupLeftMs: 0, slowLeftMs: 0 };
+  private pickupCell: Cell | null = null;
+
+  private grid!: Grid;
+  private filledMask!: Uint8Array; // 1 = out of play
+  private wallMask!: Uint8Array; // 1 = the line being drawn
+  private borderMask!: Uint8Array; // 1 = open cell on the outer edge or next to a filled one
+  private pathCells: Cell[] = [];
+  private staticGraphicsDirty = true;
+
+  // Game objects: recreated in startRun() because a restart rebuilds the display list.
   private playerSprite!: Phaser.GameObjects.Sprite;
   private enemySprite!: Phaser.GameObjects.Sprite;
   private borderGraphics!: Phaser.GameObjects.Graphics;
   private pathGraphics!: Phaser.GameObjects.Graphics;
   private filledGraphics!: Phaser.GameObjects.Graphics;
-  private currentDirection: Direction | null = null;
-  private playerStepCarrySeconds = 0;
   private particles!: Phaser.GameObjects.Particles.ParticleEmitter;
-
-  private grid!: Grid;
-  private filledMask!: Uint8Array; // 1 = out of play
-  private wallMask!: Uint8Array; // 1 = current drawing line
-  private borderMask!: Uint8Array; // 1 = empty cell adjacent to filled or outer boundary
-  private pathCells: Cell[] = [];
-
-  private staticGraphicsDirty = true;
-
-  // UI elements
-  private levelText!: Phaser.GameObjects.Text;
-  private scoreText!: Phaser.GameObjects.Text;
-  private bestScoreText!: Phaser.GameObjects.Text;
-  private coverageText!: Phaser.GameObjects.Text;
-  private targetText!: Phaser.GameObjects.Text;
-  private gameOverText!: Phaser.GameObjects.Text;
-  private levelCompleteText!: Phaser.GameObjects.Text;
-  private levelBannerText?: Phaser.GameObjects.Text;
-
-  private gameOverAwaitingTap = false;
-
-  private dpad!: DPadInstance;
-
-  private gameWidth!: number;
-  private gameHeight!: number;
+  private statusText!: Phaser.GameObjects.Text;
+  private pickup: Phaser.GameObjects.Container | null = null;
+  private nextButton: NextButton | null = null;
+  private levelBannerText: Phaser.GameObjects.Text | null = null;
 
   constructor() {
-    super({ key: "MainScene" });
+    super("MainScene");
   }
 
   preload() {
     preloadAssets(this);
   }
 
-  create() {
-    // Get actual game dimensions
-    this.gameWidth = this.scale.width;
-    this.gameHeight = this.scale.height;
+  protected startRun() {
+    // The scene object survives restarts: reset per-run fields first.
+    this.rng = this.host.rng();
+    this.score = 0;
+    this.lives = MAX_LIVES;
+    this.level = 1;
+    this.levelComplete = false;
+    this.currentDirection = null;
+    this.playerStepCarrySeconds = 0;
+    this.pickup = null;
+    this.pickupCell = null;
+    this.nextButton = null;
+    this.levelBannerText = null;
 
-    createBackground(this, this.gameWidth, this.gameHeight);
-    const bestScore = this.loadBestScore();
+    createBackground(this, W, H);
+    this.addBackgroundPixels();
+    this.borderGraphics = this.add.graphics();
+    this.filledGraphics = this.add.graphics();
+    this.pathGraphics = this.add.graphics();
+    this.setupSprites();
+    this.setupParticles();
 
-    // Calculate responsive dimensions
-    const uiHeight = this.gameHeight * 0.104; // ~10% of screen
-    const dpadHeight = this.gameHeight * 0.208; // ~20% of screen
-    const playAreaHeight = this.gameHeight - uiHeight - dpadHeight;
-    const horizontalPadding = this.gameWidth * 0.093; // ~9% padding
-    const verticalPadding = playAreaHeight * 0.033; // ~3% padding
+    this.statusText = this.add
+      .text(W / 2, STATUS_Y, "", {
+        fontFamily: this.host.fonts.display,
+        fontSize: "24px",
+        fontStyle: "800",
+        color: this.host.colors.paper,
+        stroke: this.host.colors.ink,
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5);
 
-    this.state = createInitialState(
-      {
-        x: horizontalPadding,
-        y: uiHeight + verticalPadding,
-        width: this.gameWidth - horizontalPadding * 2,
-        height: playAreaHeight - verticalPadding * 2,
-      },
-      DEFAULT_CONFIG,
-    );
-    this.state.bestScore = bestScore;
+    this.hud.setScore(0);
+    this.hud.setBest(this.host.best.get());
+    this.hud.setHearts(this.lives, MAX_LIVES);
 
-    // Grid-backed playfield for exact (non-rect) capture + merged shapes.
-    // Smaller cellSize = more precise captures, more work per frame.
-    this.grid = createGrid(this.state.playBounds, 3);
+    this.setupInput();
+    this.startLevel(1);
+  }
+
+  /** A fresh board for `level`. Score and lives carry over. */
+  private startLevel(level: number) {
+    const { enemySpeed, targetCoverage } = levelSettings(level, DEFAULT_CONFIG);
+    this.level = level;
+    this.targetCoverage = targetCoverage;
+    this.coverage = 0;
+    this.levelComplete = false;
+    this.currentDirection = null;
+    this.playerStepCarrySeconds = 0;
+
+    this.grid = createGrid(PLAY_BOUNDS, CELL_SIZE);
     this.filledMask = new Uint8Array(this.grid.cols * this.grid.rows);
     this.wallMask = new Uint8Array(this.grid.cols * this.grid.rows);
     this.borderMask = computeBorderMask(this.grid, this.filledMask);
-    this.staticGraphicsDirty = true;
+    this.pathCells = [];
 
-    // Snap player/enemy to grid cell centers to keep borders reliable.
+    // Snap player and enemy to cell centres to keep borders reliable.
     const playerStart = cellToWorldCenter(this.grid, 0, 0);
-    this.state.playerBall.x = playerStart.x;
-    this.state.playerBall.y = playerStart.y;
-
+    this.player = { x: playerStart.x, y: playerStart.y, isDrawing: false };
     const enemyStart = cellToWorldCenter(
       this.grid,
       Math.floor(this.grid.cols / 2),
       Math.floor(this.grid.rows / 2),
     );
-    this.state.enemyBall.x = enemyStart.x;
-    this.state.enemyBall.y = enemyStart.y;
+    const v = startVelocity(enemySpeed, this.rng);
+    this.enemy = {
+      x: enemyStart.x,
+      y: enemyStart.y,
+      velocityX: v.vx,
+      velocityY: v.vy,
+      radius: ENEMY_RADIUS,
+    };
 
-    this.setupGraphics();
-    this.setupSprites();
-    this.setupUI();
-    this.setupDPad();
-    this.setupParticles();
-    this.addBackgroundPixels();
+    this.powerups = newPowerupClock(this.rng);
+    this.removePickup(false);
+    this.enemySprite.clearTint();
+    this.particles.start();
 
-    this.showLevelBanner(this.state.level);
-
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.dpad?.destroy();
-    });
-  }
-
-  private setupGraphics() {
-    this.borderGraphics = this.add.graphics();
-    this.filledGraphics = this.add.graphics();
-    this.pathGraphics = this.add.graphics();
+    this.staticGraphicsDirty = true;
+    this.updateSprites(0);
+    this.updateGraphics();
+    this.updateStatus();
+    this.showLevelBanner(level);
   }
 
   private setupSprites() {
-    this.enemySprite = this.add.sprite(
-      this.state.enemyBall.x,
-      this.state.enemyBall.y,
-      ASSETS.ENEMY,
-    );
-    this.enemySprite.setScale(0.8);
-
-    // Add pulsing glow to enemy
+    this.enemySprite = this.add.sprite(this.enemy.x, this.enemy.y, ASSETS.ENEMY).setScale(0.8);
     this.tweens.add({
       targets: this.enemySprite,
       scaleX: 0.9,
@@ -152,14 +203,7 @@ export class MainScene extends Phaser.Scene {
       ease: "Sine.easeInOut",
     });
 
-    this.playerSprite = this.add.sprite(
-      this.state.playerBall.x,
-      this.state.playerBall.y,
-      ASSETS.PLAYER,
-    );
-    this.playerSprite.setScale(0.7);
-
-    // Add glow/pulse effect to player
+    this.playerSprite = this.add.sprite(this.player.x, this.player.y, ASSETS.PLAYER).setScale(0.7);
     this.tweens.add({
       targets: this.playerSprite,
       scaleX: 0.75,
@@ -182,429 +226,309 @@ export class MainScene extends Phaser.Scene {
     this.particles.startFollow(this.playerSprite);
   }
 
-  private setupUI() {
-    // Responsive font sizes based on screen dimensions
-    const baseFontSize = Math.min(this.gameWidth, this.gameHeight) * 0.045;
-    const scoreFontSize = baseFontSize * 1.2;
-    const labelFontSize = baseFontSize * 0.8;
-    const gameOverFontSize = baseFontSize * 2.3;
-    const levelCompleteFontSize = baseFontSize * 1.8;
-
-    const padding = this.gameWidth * 0.037; // ~4% padding
-
-    // Golden title style matching the reference image
-    const goldStyle = {
-      fontFamily: "Impact, 'Arial Black', sans-serif",
-      fontSize: `${scoreFontSize}px`,
-      color: "#FFD700",
-      stroke: "#8B4513",
-      strokeThickness: Math.max(4, scoreFontSize * 0.25),
-      shadow: {
-        blur: 8,
-        color: "#FF8800",
-        fill: true,
-        offsetX: 0,
-        offsetY: 0,
-      },
-    };
-
-    const cyanStyle = {
-      fontFamily: "Impact, 'Arial Black', sans-serif",
-      fontSize: `${baseFontSize}px`,
-      color: "#00FFFF",
-      stroke: "#003366",
-      strokeThickness: Math.max(3, baseFontSize * 0.2),
-      shadow: {
-        blur: 6,
-        color: "#0099FF",
-        fill: true,
-      },
-    };
-
-    const labelStyle = {
-      fontFamily: "Arial Black, sans-serif",
-      fontSize: `${labelFontSize}px`,
-      color: "#FFFFFF",
-      stroke: "#000033",
-      strokeThickness: Math.max(2, labelFontSize * 0.19),
-    };
-
-    const gameOverStyle = {
-      fontFamily: "Impact, 'Arial Black', sans-serif",
-      fontSize: `${gameOverFontSize}px`,
-      color: "#FF3333",
-      stroke: "#660000",
-      strokeThickness: Math.max(6, gameOverFontSize * 0.14),
-      align: "center",
-      shadow: {
-        blur: 12,
-        color: "#FF0000",
-        fill: true,
-      },
-    };
-
-    const levelCompleteStyle = {
-      fontFamily: "Impact, 'Arial Black', sans-serif",
-      fontSize: `${levelCompleteFontSize}px`,
-      color: "#00FF00",
-      stroke: "#003300",
-      strokeThickness: Math.max(6, levelCompleteFontSize * 0.18),
-      align: "center",
-      shadow: {
-        blur: 12,
-        color: "#00FF00",
-        fill: true,
-      },
-    };
-
-    this.levelText = this.add.text(padding, padding * 0.5, "Level 1", labelStyle);
-
-    this.scoreText = this.add.text(padding, padding * 1.6, "Score: 0", goldStyle);
-
-    this.bestScoreText = this.add.text(padding, padding * 3.1, "Best: 0", {
-      ...labelStyle,
-      color: "#AAAAAA",
-    });
-
-    this.coverageText = this.add
-      .text(this.gameWidth - padding, padding * 1.6, "Coverage: 0%", cyanStyle)
-      .setOrigin(1, 0);
-
-    this.targetText = this.add
-      .text(this.gameWidth - padding, padding * 3.1, "Target: 75%", {
-        ...labelStyle,
-        color: "#FFFF00",
-      })
-      .setOrigin(1, 0);
-
-    this.gameOverText = this.add
-      .text(this.gameWidth / 2, this.gameHeight / 2, "GAME OVER\nTap to Continue", gameOverStyle)
-      .setOrigin(0.5)
-      .setVisible(false);
-
-    this.levelCompleteText = this.add
-      .text(
-        this.gameWidth / 2,
-        this.gameHeight / 2,
-        "LEVEL COMPLETE!\nTap to Continue",
-        levelCompleteStyle,
-      )
-      .setOrigin(0.5)
-      .setVisible(false);
-  }
-
-  private setupDPad() {
-    const handle = (direction: DPadDirection | null) => {
-      if (this.state.gameOver || this.state.levelComplete) {
-        this.currentDirection = null;
-        return;
-      }
-
-      // In sticky mode, the D-pad may emit null (toggle off) or a direction (toggle on).
-      this.currentDirection = direction;
-
-      // Nudge immediately so short taps still move at least one cell.
-      this.updatePlayer(1 / 60);
-    };
-
-    this.dpad = createDPad(this, {
-      centerX: this.gameWidth / 2,
-      bottomPadding: this.gameHeight * 0.021,
-      buttonSize: Math.min(this.gameWidth, this.gameHeight) * 0.111,
-      spacing: Math.min(this.gameWidth, this.gameHeight) * 0.148,
-      alpha: 0.8,
-      onDirectionChange: handle,
-      enabled: () => !this.state.gameOver && !this.state.levelComplete,
+  private setupInput() {
+    const canSteer = () => !this.runEnded && !this.levelComplete;
+    // The d-pad also maps the arrow keys, so swipe leaves the keyboard alone.
+    dpad(this, {
+      centerX: W / 2,
+      bottomPadding: 20,
+      buttonSize: 60,
+      spacing: 80,
+      alpha: 0.85,
+      onDirectionChange: (dir) => this.steer(dir),
+      enabled: canSteer,
       keyboard: true,
       mode: "sticky",
     });
+    swipe(this, { onSwipe: (dir) => this.steer(dir), keyboard: false });
+    keys(this, { Enter: () => this.nextLevel(), " ": () => this.nextLevel() });
+  }
+
+  private steer(direction: DPadDirection | null) {
+    if (this.runEnded || this.levelComplete) {
+      this.currentDirection = null;
+      return;
+    }
+    // Sticky d-pad: a direction keeps the player moving until a wall or junction.
+    this.currentDirection = direction;
+    // Nudge straight away so short taps still move at least one cell.
+    this.updatePlayer(1 / 60);
   }
 
   update(_time: number, delta: number) {
-    if (this.state.gameOver) return;
+    if (this.runEnded || this.levelComplete) return;
 
-    if (this.state.levelComplete) {
-      this.handleLevelCompleteInput();
-      return;
-    }
-
-    // Clamp delta to keep physics stable on mobile (prevents tunneling/sticking after a hitch).
+    // Clamp delta to keep physics stable on mobile (prevents tunnelling after a hitch).
     const deltaSeconds = Math.min(delta / 1000, 1 / 30);
 
-    // Update player on grid
-    this.updatePlayer(deltaSeconds);
+    const tick = tickPowerups(this.powerups, deltaSeconds * 1000, this.rng);
+    this.powerups = tick.clock;
+    if (tick.expired) this.removePickup(true);
+    if (tick.spawn) this.spawnPickup();
+    if (tick.slowEnded) this.enemySprite.clearTint();
 
-    // Update enemy with collisions against filled + current wall
-    const hitLiveWall = this.updateEnemy(deltaSeconds);
-    if (hitLiveWall) {
-      this.endGame();
+    this.updatePlayer(deltaSeconds);
+    // A capture can finish the level mid-frame; completeLevel() has drawn it already.
+    if (this.levelComplete) return;
+    this.checkPickup();
+
+    const factor = enemySpeedFactor(this.powerups);
+    if (this.updateEnemy(deltaSeconds * factor)) this.onLineHit();
+
+    this.updateSprites(deltaSeconds * factor);
+    this.updateGraphics();
+  }
+
+  // --- Lives, levels, game over --------------------------------------------
+
+  /** The fireball touched the line being drawn: lose a life and the line. */
+  private onLineHit() {
+    this.lives = loseLife(this.lives);
+    this.hud.setHearts(this.lives, MAX_LIVES);
+    this.cameras.main.shake(250, 0.01);
+    this.flash(hexToNumber(this.host.colors.tomato));
+    this.currentDirection = null;
+    this.playerStepCarrySeconds = 0;
+
+    if (this.lives <= 0) {
+      // Leave the broken line on screen; endRun plays the end sting and fail haptic.
+      this.particles.stop();
+      this.endRun(this.score, { level: this.level });
       return;
     }
 
-    this.updateSprites();
-    this.updateGraphics();
-    this.updateUI();
+    this.host.audio.play("miss");
+    this.host.haptics.tap();
+
+    // Back to where the line started (still a border cell: nothing was filled meanwhile).
+    const start = this.pathCells[0];
+    this.wallMask.fill(0);
+    this.pathCells = [];
+    this.player.isDrawing = false;
+    if (start) {
+      const p = cellToWorldCenter(this.grid, start.c, start.r);
+      this.player.x = p.x;
+      this.player.y = p.y;
+    }
+    this.hud.popup("Ouch!", this.player.x, this.player.y - 24, this.host.colors.tomato);
   }
 
   private completeLevel() {
-    this.state.levelComplete = true;
-    this.levelCompleteText.setVisible(true);
+    this.levelComplete = true;
+    this.currentDirection = null;
+    this.particles.stop();
+    this.removePickup(false);
+    this.enemySprite.clearTint();
+    this.updateSprites(0);
+    this.updateGraphics();
+    this.updateStatus();
 
-    // Pulsing animation for level complete text
+    this.createCelebrationEffect();
+    this.host.audio.ding();
+    this.host.haptics.success();
+    this.showNextButton();
+  }
+
+  private nextLevel() {
+    if (!this.levelComplete || this.runEnded) return;
+    if (this.nextButton) {
+      this.nextButton.container.destroy();
+      this.nextButton.zone.destroy();
+      this.nextButton = null;
+    }
+    this.host.audio.play("tap");
+    this.startLevel(this.level + 1);
+  }
+
+  /** A sticker-style "Next level" button over the board. */
+  private showNextButton() {
+    const ink = hexToNumber(this.host.colors.ink);
+    const sun = hexToNumber(this.host.colors.sun);
+    const w = 280;
+    const h = 80;
+    const { x, y } = BOARD_CENTER;
+
+    const heading = this.add
+      .text(0, -100, `Level ${this.level} cleared!`, {
+        fontFamily: this.host.fonts.display,
+        fontSize: "40px",
+        fontStyle: "800",
+        color: this.host.colors.grass,
+        stroke: this.host.colors.ink,
+        strokeThickness: 8,
+      })
+      .setOrigin(0.5);
+
+    const face = this.add.graphics();
+    face.fillStyle(ink, 1).fillRoundedRect(-w / 2, -h / 2 + 6, w, h, 22);
+    face.fillStyle(sun, 1).fillRoundedRect(-w / 2, -h / 2, w, h, 22);
+    face.lineStyle(4, ink, 1).strokeRoundedRect(-w / 2, -h / 2, w, h, 22);
+
+    const label = this.add
+      .text(0, 0, "Next level ▶", {
+        fontFamily: this.host.fonts.display,
+        fontSize: "34px",
+        fontStyle: "800",
+        color: this.host.colors.ink,
+      })
+      .setOrigin(0.5);
+
+    const container = this.add.container(x, y, [heading, face, label]).setDepth(60).setScale(0.6);
+    const zone = this.add
+      .zone(x, y, w, h)
+      .setDepth(61)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => this.nextLevel());
+
+    this.tweens.add({ targets: container, scale: 1, duration: 300, ease: "Back.Out" });
     this.tweens.add({
-      targets: this.levelCompleteText,
-      scale: { from: 0.8, to: 1.2 },
-      duration: 800,
+      targets: [face, label],
+      scale: 1.05,
+      duration: 600,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+      delay: 300,
+    });
+    this.nextButton = { container, zone };
+  }
+
+  private updateStatus() {
+    const slowS = Math.ceil(this.powerups.slowLeftMs / 1000);
+    const slow = slowS > 0 && !this.levelComplete ? `  ·  Slow ${slowS}s` : "";
+    const text = `Level ${this.level}  ·  ${Math.floor(this.coverage)}% of ${this.targetCoverage}%${slow}`;
+    if (this.statusText.text !== text) this.statusText.setText(text);
+  }
+
+  // --- Power-up --------------------------------------------------------------
+
+  private spawnPickup() {
+    const cell = pickPickupCell(this.grid, this.filledMask, this.rng);
+    if (!cell) {
+      this.powerups = skipPickup(this.powerups, this.rng);
+      return;
+    }
+    this.pickupCell = cell;
+    const { x, y } = cellToWorldCenter(this.grid, cell.c, cell.r);
+
+    const ink = hexToNumber(this.host.colors.ink);
+    const g = this.add.graphics();
+    // A little clock: grab it and the fireball slows down.
+    g.fillStyle(hexToNumber(this.host.colors.sky), 1).fillCircle(0, 0, PICKUP_RADIUS);
+    g.lineStyle(3, ink, 1).strokeCircle(0, 0, PICKUP_RADIUS);
+    g.fillStyle(hexToNumber(this.host.colors.paper), 1).fillCircle(0, 0, PICKUP_RADIUS - 5);
+    g.lineStyle(2, ink, 1);
+    g.lineBetween(0, 0, 0, -6);
+    g.lineBetween(0, 0, 5, 0);
+
+    this.pickup = this.add.container(x, y, [g]).setDepth(20).setScale(0);
+    this.tweens.add({ targets: this.pickup, scale: 1, duration: 250, ease: "Back.Out" });
+    this.tweens.add({
+      targets: g,
+      angle: { from: -12, to: 12 },
+      duration: 300,
       yoyo: true,
       repeat: -1,
       ease: "Sine.easeInOut",
     });
-
-    // Celebration particles
-    this.createCelebrationEffect();
-
-    this.saveBestScore();
+    this.host.audio.pop();
   }
 
-  private endGame() {
-    this.state.gameOver = true;
-    this.gameOverText.setVisible(true);
-
-    // Shake animation for game over text
-    this.tweens.add({
-      targets: this.gameOverText,
-      y: this.gameOverText.y + 10,
-      duration: 100,
-      yoyo: true,
-      repeat: 3,
-      ease: "Quad.easeInOut",
-    });
-
-    this.particles.stop();
-    this.saveBestScore();
-
-    if (this.gameOverAwaitingTap) return;
-    this.gameOverAwaitingTap = true;
-
-    // Pause and wait for a deliberate tap/click, then hand off to the shared ScoreDialog.
-    this.time.delayedCall(600, () => {
-      this.input.once("pointerdown", () => {
-        try {
-          dispatchGameOver({ gameId: "box-cutter", score: this.state.score, ts: Date.now() });
-        } catch {}
-      });
-    });
-  }
-
-  private showLevelBanner(level: number) {
-    this.levelBannerText?.destroy();
-    const bannerFontSize = Math.min(this.gameWidth, this.gameHeight) * 0.133;
-    this.levelBannerText = this.add
-      .text(this.gameWidth / 2, this.gameHeight / 2, `LEVEL ${level}`, {
-        fontFamily: "Impact, 'Arial Black', sans-serif",
-        fontSize: `${bannerFontSize}px`,
-        color: "#FFD700",
-        align: "center",
-        stroke: "#8B4513",
-        strokeThickness: Math.max(8, bannerFontSize * 0.139),
-        shadow: {
-          blur: 15,
-          color: "#FF8800",
-          fill: true,
-        },
-      })
-      .setOrigin(0.5)
-      .setDepth(50)
-      .setScale(0);
-
-    // Scale up, then fade out
-    this.tweens.add({
-      targets: this.levelBannerText,
-      scale: { from: 0, to: 1.5 },
-      alpha: { from: 1, to: 0 },
-      duration: 1200,
-      ease: "Back.easeOut",
-      onComplete: () => {
-        this.levelBannerText?.destroy();
-        this.levelBannerText = undefined;
-      },
-    });
-  }
-
-  private createCelebrationEffect() {
-    // Burst of particles from center
-    for (let i = 0; i < 20; i++) {
-      const angle = (i / 20) * Math.PI * 2;
-      const particle = this.add.sprite(this.gameWidth / 2, this.gameHeight / 2, ASSETS.SPARK);
-
-      this.tweens.add({
-        targets: particle,
-        x: this.gameWidth / 2 + Math.cos(angle) * 200,
-        y: this.gameHeight / 2 + Math.sin(angle) * 200,
-        alpha: { from: 1, to: 0 },
-        scale: { from: 1, to: 0 },
-        duration: 1000,
-        ease: "Quad.easeOut",
-        onComplete: () => particle.destroy(),
-      });
+  private removePickup(fade: boolean) {
+    const obj = this.pickup;
+    this.pickup = null;
+    this.pickupCell = null;
+    if (!obj) return;
+    if (!fade) {
+      obj.destroy();
+      return;
     }
+    this.tweens.add({
+      targets: obj,
+      alpha: 0,
+      scale: 0.4,
+      duration: 250,
+      onComplete: () => obj.destroy(),
+    });
   }
 
-  private handleLevelCompleteInput() {
-    if (this.input.activePointer.isDown) {
-      this.state = advanceLevel(this.state, DEFAULT_CONFIG);
-      this.levelCompleteText.setVisible(false);
-      this.currentDirection = null;
-      this.playerStepCarrySeconds = 0;
-      this.particles.start();
+  /** The player touched the pickup, or boxed it in with a capture. */
+  private checkPickup() {
+    const cell = this.pickupCell;
+    if (!cell) return;
+    const { x, y } = cellToWorldCenter(this.grid, cell.c, cell.r);
+    const touched = Math.hypot(this.player.x - x, this.player.y - y) <= PICKUP_RADIUS + 6;
+    const boxedIn = this.filledMask[idx(this.grid, cell.c, cell.r)] === 1;
+    if (!touched && !boxedIn) return;
 
-      // Rebuild grid/masks for the new level.
-      this.grid = createGrid(this.state.playBounds, 3);
-      this.filledMask = new Uint8Array(this.grid.cols * this.grid.rows);
-      this.wallMask = new Uint8Array(this.grid.cols * this.grid.rows);
-      this.borderMask = computeBorderMask(this.grid, this.filledMask);
-
-      const playerStart = cellToWorldCenter(this.grid, 0, 0);
-      this.state.playerBall.x = playerStart.x;
-      this.state.playerBall.y = playerStart.y;
-      this.state.playerBall.isDrawing = false;
-      this.pathCells = [];
-
-      const enemyStart = cellToWorldCenter(
-        this.grid,
-        Math.floor(this.grid.cols / 2),
-        Math.floor(this.grid.rows / 2),
-      );
-      this.state.enemyBall.x = enemyStart.x;
-      this.state.enemyBall.y = enemyStart.y;
-
-      this.staticGraphicsDirty = true;
-
-      this.showLevelBanner(this.state.level);
-    }
+    this.powerups = collectPickup(this.rng);
+    this.removePickup(false);
+    this.enemySprite.setTint(hexToNumber(this.host.colors.sky));
+    this.hud.popup("Slow-mo!", x, y - 20, this.host.colors.sky);
+    this.host.audio.ding();
+    this.host.haptics.success();
   }
 
-  private updateSprites() {
-    this.playerSprite.setPosition(this.state.playerBall.x, this.state.playerBall.y);
-    this.enemySprite.setPosition(this.state.enemyBall.x, this.state.enemyBall.y);
+  // --- Movement --------------------------------------------------------------
 
-    // Rotate enemy
-    this.enemySprite.rotation += 0.1;
+  private updateSprites(deltaSeconds: number) {
+    this.playerSprite.setPosition(this.player.x, this.player.y);
+    this.enemySprite.setPosition(this.enemy.x, this.enemy.y);
+    this.enemySprite.rotation += 6 * deltaSeconds; // about a turn a second
 
-    // Rotate player based on direction
     if (this.currentDirection) {
-      let angle = 0;
-      switch (this.currentDirection) {
-        case "up":
-          angle = -Math.PI / 2;
-          break;
-        case "down":
-          angle = Math.PI / 2;
-          break;
-        case "left":
-          angle = Math.PI;
-          break;
-        case "right":
-          angle = 0;
-          break;
-      }
-      this.playerSprite.setRotation(angle);
+      const angles: Record<Direction, number> = {
+        up: -Math.PI / 2,
+        down: Math.PI / 2,
+        left: Math.PI,
+        right: 0,
+      };
+      this.playerSprite.setRotation(angles[this.currentDirection]);
     }
+    this.updateStatus();
+  }
+
+  private stopPlayer() {
+    this.currentDirection = null;
+    this.playerStepCarrySeconds = 0;
   }
 
   private updatePlayer(deltaSeconds: number) {
     if (!this.currentDirection) return;
 
-    const speedPxPerSecond = 200;
-    const stepSeconds = this.grid.cellSize / speedPxPerSecond;
+    const stepSeconds = this.grid.cellSize / PLAYER_SPEED;
     this.playerStepCarrySeconds += deltaSeconds;
-
-    const countForwardBorderOptions = (from: Cell, at: Cell) => {
-      let count = 0;
-      const dirs = [
-        { dc: 1, dr: 0 },
-        { dc: -1, dr: 0 },
-        { dc: 0, dr: 1 },
-        { dc: 0, dr: -1 },
-      ];
-      for (const { dc, dr } of dirs) {
-        const nc = at.c + dc;
-        const nr = at.r + dr;
-        if (nc < 0 || nr < 0 || nc >= this.grid.cols || nr >= this.grid.rows) continue;
-        if (nc === from.c && nr === from.r) continue;
-        const ni = idx(this.grid, nc, nr);
-        if (this.filledMask[ni] === 1) continue;
-        if (this.borderMask[ni] === 1) count++;
-      }
-      return count;
-    };
-
-    const directionDelta = (dir: Direction): { dc: number; dr: number } => {
-      switch (dir) {
-        case "up":
-          return { dc: 0, dr: -1 };
-        case "down":
-          return { dc: 0, dr: 1 };
-        case "left":
-          return { dc: -1, dr: 0 };
-        case "right":
-          return { dc: 1, dr: 0 };
-      }
-    };
 
     let steps = 0;
     const maxSteps = 20;
-    let movedAtLeastOnce = false;
 
     while (this.playerStepCarrySeconds >= stepSeconds && steps < maxSteps) {
       this.playerStepCarrySeconds -= stepSeconds;
       steps++;
 
-      const beforeCell = worldToCell(this.grid, this.state.playerBall.x, this.state.playerBall.y);
-      const beforeIdx = idx(this.grid, beforeCell.c, beforeCell.r);
-      const wasOnBorderCell = this.borderMask[beforeIdx] === 1;
+      const beforeCell = worldToCell(this.grid, this.player.x, this.player.y);
+      const wasOnBorderCell = this.borderMask[idx(this.grid, beforeCell.c, beforeCell.r)] === 1;
 
       const { dc, dr } = directionDelta(this.currentDirection);
       const nextCell = { c: beforeCell.c + dc, r: beforeCell.r + dr };
 
-      // Block by grid bounds.
-      if (
-        nextCell.c < 0 ||
-        nextCell.r < 0 ||
-        nextCell.c >= this.grid.cols ||
-        nextCell.r >= this.grid.rows
-      ) {
-        this.currentDirection = null;
-        this.playerStepCarrySeconds = 0;
-        break;
-      }
-
+      // Blocked by the edge of the board or by filled cells.
+      if (!inBounds(this.grid, nextCell.c, nextCell.r)) return this.stopPlayer();
       const nextI = idx(this.grid, nextCell.c, nextCell.r);
+      if (this.filledMask[nextI] === 1) return this.stopPlayer();
+      const nextIsBorder = this.borderMask[nextI] === 1;
 
-      // Can't enter filled cells.
-      if (this.filledMask[nextI] === 1) {
-        this.currentDirection = null;
-        this.playerStepCarrySeconds = 0;
-        break;
-      }
-
-      // If not drawing, you must start from (and return to) the border.
-      if (!this.state.playerBall.isDrawing) {
-        if (!wasOnBorderCell) {
-          this.currentDirection = null;
-          this.playerStepCarrySeconds = 0;
-          break;
-        }
-
-        const nextIsBorder = this.borderMask[nextI] === 1;
+      if (!this.player.isDrawing) {
+        // A line must start from the border.
+        if (!wasOnBorderCell) return this.stopPlayer();
         if (!nextIsBorder) {
-          this.state.playerBall.isDrawing = true;
+          this.player.isDrawing = true;
           this.pathCells = [beforeCell, nextCell];
           this.wallMask.fill(0);
           rasterizePolyline(this.grid, this.pathCells, this.wallMask);
         }
       } else {
-        // Drawing: extend wall path when entering new cell
+        // Drawing: extend the line into the new cell.
         const last = this.pathCells[this.pathCells.length - 1];
         if (!last || last.c !== nextCell.c || last.r !== nextCell.r) {
           this.pathCells.push(nextCell);
@@ -615,118 +539,93 @@ export class MainScene extends Phaser.Scene {
           );
         }
 
-        // Complete capture if we return to any border cell
-        const nextIsBorder = this.borderMask[nextI] === 1;
+        // Back on any border cell closes the shape.
         if (nextIsBorder && this.pathCells.length >= 2) {
-          // Move onto the border closure cell, then complete the capture.
-          // completeCapture() will re-snap the player to a valid post-capture border cell.
-          const snappedToClosure = cellToWorldCenter(this.grid, nextCell.c, nextCell.r);
-          this.state.playerBall.x = snappedToClosure.x;
-          this.state.playerBall.y = snappedToClosure.y;
-          movedAtLeastOnce = true;
-
+          const closure = cellToWorldCenter(this.grid, nextCell.c, nextCell.r);
+          this.player.x = closure.x;
+          this.player.y = closure.y;
+          // completeCapture() re-snaps the player; stop so nothing overwrites that.
+          this.stopPlayer();
           this.completeCapture();
-
-          // Stop movement for this tick; otherwise we'd overwrite the snap done in completeCapture.
-          this.currentDirection = null;
-          this.playerStepCarrySeconds = 0;
           return;
         }
       }
 
-      // Snap player to cell center for stable border/drawing behavior.
+      // Snap to the cell centre for stable border/drawing behaviour.
       const snapped = cellToWorldCenter(this.grid, nextCell.c, nextCell.r);
-      this.state.playerBall.x = snapped.x;
-      this.state.playerBall.y = snapped.y;
-      movedAtLeastOnce = true;
+      this.player.x = snapped.x;
+      this.player.y = snapped.y;
 
-      // If we're following the border, stop at decision points.
-      if (!this.state.playerBall.isDrawing) {
-        const afterIdx = idx(this.grid, nextCell.c, nextCell.r);
-        if (this.borderMask[afterIdx] === 1) {
-          // Exclude the cell we came from; if there isn't exactly one way forward, stop.
-          const forward = countForwardBorderOptions(beforeCell, nextCell);
-          if (forward !== 1 && movedAtLeastOnce) {
-            this.currentDirection = null;
-            this.playerStepCarrySeconds = 0;
-            break;
-          }
-        }
+      // Following the border: stop at junctions and dead ends.
+      if (!this.player.isDrawing && nextIsBorder) {
+        const forward = countForwardBorderOptions(
+          this.grid,
+          this.filledMask,
+          this.borderMask,
+          beforeCell,
+          nextCell,
+        );
+        if (forward !== 1) return this.stopPlayer();
       }
     }
   }
 
   private circleOverlapsMask(mask: Uint8Array, x: number, y: number, radius: number): boolean {
+    const d = radius * 0.707;
     const samples = [
-      { dx: 0, dy: 0 },
-      { dx: radius, dy: 0 },
-      { dx: -radius, dy: 0 },
-      { dx: 0, dy: radius },
-      { dx: 0, dy: -radius },
-      { dx: radius * 0.707, dy: radius * 0.707 },
-      { dx: radius * 0.707, dy: -radius * 0.707 },
-      { dx: -radius * 0.707, dy: radius * 0.707 },
-      { dx: -radius * 0.707, dy: -radius * 0.707 },
-    ];
+      [0, 0],
+      [radius, 0],
+      [-radius, 0],
+      [0, radius],
+      [0, -radius],
+      [d, d],
+      [d, -d],
+      [-d, d],
+      [-d, -d],
+    ] as const;
 
-    for (const s of samples) {
-      const cell = worldToCell(this.grid, x + s.dx, y + s.dy);
-      if (cell.c < 0 || cell.r < 0 || cell.c >= this.grid.cols || cell.r >= this.grid.rows)
-        continue;
+    for (const [dx, dy] of samples) {
+      const cell = worldToCell(this.grid, x + dx, y + dy);
       if (mask[idx(this.grid, cell.c, cell.r)] === 1) return true;
     }
     return false;
   }
 
+  /** Moves the fireball; true if it touched the line being drawn. */
   private updateEnemy(deltaSeconds: number): boolean {
-    const e = this.state.enemyBall;
+    const e = this.enemy;
+    const b = PLAY_BOUNDS;
+    const minX = b.x + e.radius;
+    const maxX = b.x + b.width - e.radius;
+    const minY = b.y + e.radius;
+    const maxY = b.y + b.height - e.radius;
 
-    const minX = this.state.playBounds.x + e.radius;
-    const maxX = this.state.playBounds.x + this.state.playBounds.width - e.radius;
-    const minY = this.state.playBounds.y + e.radius;
-    const maxY = this.state.playBounds.y + this.state.playBounds.height - e.radius;
-
-    // Sub-step to avoid tunneling through thin (cell-sized) live walls.
-    const stepX = e.velocityX * deltaSeconds;
-    const stepY = e.velocityY * deltaSeconds;
-    const maxStep = Math.max(Math.abs(stepX), Math.abs(stepY));
+    // Sub-step to avoid tunnelling through thin (cell-sized) live walls.
+    const maxStep = Math.max(Math.abs(e.velocityX), Math.abs(e.velocityY)) * deltaSeconds;
     const subSteps = Math.max(1, Math.min(30, Math.ceil(maxStep / (this.grid.cellSize * 0.75))));
     const dt = deltaSeconds / subSteps;
 
     for (let s = 0; s < subSteps; s++) {
-      // Live wall hit is instant game over.
       if (this.circleOverlapsMask(this.wallMask, e.x, e.y, e.radius)) return true;
 
-      // IMPORTANT: recompute per-substep deltas from the *current* velocity.
-      // On low-FPS/mobile, bounces can occur mid-frame; using a fixed dx/dy can pin the ball to walls.
-      const dx = e.velocityX * dt;
-      const dy = e.velocityY * dt;
-
-      // X axis collision against bounds + filled.
-      let nextX = e.x + dx;
-      let nextY = e.y;
-
+      // Recompute per-substep deltas from the current velocity: bounces can happen mid-frame.
+      let nextX = e.x + e.velocityX * dt;
       if (nextX <= minX || nextX >= maxX) {
         e.velocityX = -e.velocityX;
         nextX = Math.max(minX, Math.min(maxX, nextX));
       }
-
-      if (this.circleOverlapsMask(this.filledMask, nextX, nextY, e.radius)) {
+      if (this.circleOverlapsMask(this.filledMask, nextX, e.y, e.radius)) {
         e.velocityX = -e.velocityX;
       } else {
         e.x = nextX;
       }
 
-      // Y axis collision against bounds + filled.
-      nextX = e.x;
-      nextY = e.y + dy;
-
+      let nextY = e.y + e.velocityY * dt;
       if (nextY <= minY || nextY >= maxY) {
         e.velocityY = -e.velocityY;
         nextY = Math.max(minY, Math.min(maxY, nextY));
       }
-
-      if (this.circleOverlapsMask(this.filledMask, nextX, nextY, e.radius)) {
+      if (this.circleOverlapsMask(this.filledMask, e.x, nextY, e.radius)) {
         e.velocityY = -e.velocityY;
       } else {
         e.y = nextY;
@@ -738,259 +637,162 @@ export class MainScene extends Phaser.Scene {
     return false;
   }
 
+  // --- Capture ---------------------------------------------------------------
+
   private completeCapture() {
-    const enemyCell = worldToCell(this.grid, this.state.enemyBall.x, this.state.enemyBall.y);
-    const beforeFilledCount = this.countFilled();
+    const enemyCell = worldToCell(this.grid, this.enemy.x, this.enemy.y);
+    const before = countSet(this.filledMask);
     applyCapture(this.grid, this.filledMask, this.wallMask, enemyCell);
-    const afterFilledCount = this.countFilled();
+    const after = countSet(this.filledMask);
 
-    const newly = afterFilledCount - beforeFilledCount;
     const total = this.grid.cols * this.grid.rows;
-    const newlyPct = total === 0 ? 0 : (newly / total) * 100;
+    const newlyPct = coveragePct(after - before, total);
+    const points = pointsForCapture(newlyPct, DEFAULT_CONFIG);
+    this.score += points;
+    this.coverage = coveragePct(after, total);
+    this.hud.setScore(this.score);
+    this.host.audio.play("score");
+    this.createCaptureEffect(points);
 
-    this.state.score += pointsForCapture(newlyPct, DEFAULT_CONFIG);
-    this.state.coverage = total === 0 ? 0 : (afterFilledCount / total) * 100;
-
-    // Visual feedback for capture
-    this.createCaptureEffect(newlyPct);
-
-    // Recompute border from merged filled mask (auto-joins touching shapes)
+    // Recompute the border from the merged filled mask (touching shapes join up).
     this.borderMask = computeBorderMask(this.grid, this.filledMask);
 
-    // Ensure the player isn't sitting on a newly-filled wall cell.
-    this.snapPlayerToNearestBorderCell();
+    // Make sure the player isn't sitting on a newly filled cell.
+    const here = worldToCell(this.grid, this.player.x, this.player.y);
+    const target = findNearestBorderCell(this.grid, this.filledMask, this.borderMask, here);
+    if (target) {
+      const p = cellToWorldCenter(this.grid, target.c, target.r);
+      this.player.x = p.x;
+      this.player.y = p.y;
+    }
 
-    // Reset drawing
-    this.state.playerBall.isDrawing = false;
+    this.player.isDrawing = false;
     this.pathCells = [];
-
-    // Reset movement accumulator so the player can move immediately after capture.
     this.playerStepCarrySeconds = 0;
-
     this.staticGraphicsDirty = true;
 
-    if (this.state.coverage >= this.state.targetCoverage) {
-      this.completeLevel();
-    }
+    if (isLevelComplete(this.coverage, this.targetCoverage)) this.completeLevel();
   }
 
-  private createCaptureEffect(capturePercent: number) {
-    // Flash effect
-    const flash = this.add.graphics();
-    flash.fillStyle(0x00ffff, 0.3);
-    flash.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    flash.setDepth(40);
+  // --- Effects ---------------------------------------------------------------
 
+  private flash(color: number) {
+    const flash = this.add.graphics().setDepth(40);
+    flash.fillStyle(color, 0.3).fillRect(0, 0, W, H);
     this.tweens.add({
       targets: flash,
       alpha: 0,
       duration: 300,
       onComplete: () => flash.destroy(),
     });
+  }
 
-    // Floating score text
-    if (capturePercent > 5) {
-      const points = pointsForCapture(capturePercent, DEFAULT_CONFIG);
-      const bonusText = this.add
-        .text(this.state.playerBall.x, this.state.playerBall.y, `+${points}`, {
-          fontFamily: "Impact, sans-serif",
-          fontSize: "32px",
-          color: "#FFD700",
-          stroke: "#000000",
-          strokeThickness: 4,
-        })
-        .setOrigin(0.5);
+  private createCaptureEffect(points: number) {
+    this.flash(0x00ffff);
+    if (points > 0) this.hud.popup(`+${points}`, this.player.x, this.player.y - 20);
 
-      this.tweens.add({
-        targets: bonusText,
-        y: bonusText.y - 60,
-        alpha: { from: 1, to: 0 },
-        duration: 1200,
-        ease: "Quad.easeOut",
-        onComplete: () => bonusText.destroy(),
-      });
-    }
-
-    // Pixel burst from captured area
+    // Pixel burst over the board (cosmetic).
     for (let i = 0; i < 15; i++) {
-      const px = this.state.playBounds.x + Math.random() * this.state.playBounds.width;
-      const py = this.state.playBounds.y + Math.random() * this.state.playBounds.height;
+      const px = PLAY_BOUNDS.x + Phaser.Math.FloatBetween(0, PLAY_BOUNDS.width);
+      const py = PLAY_BOUNDS.y + Phaser.Math.FloatBetween(0, PLAY_BOUNDS.height);
       const pixel = this.add.sprite(px, py, ASSETS.PIXEL);
-
       this.tweens.add({
         targets: pixel,
-        y: py - 100 - Math.random() * 50,
-        x: px + (Math.random() - 0.5) * 100,
+        y: py - Phaser.Math.FloatBetween(100, 150),
+        x: px + Phaser.Math.FloatBetween(-50, 50),
         alpha: { from: 1, to: 0 },
         scale: { from: 1, to: 0 },
-        duration: 800 + Math.random() * 400,
+        duration: Phaser.Math.Between(800, 1200),
         ease: "Quad.easeOut",
         onComplete: () => pixel.destroy(),
       });
     }
   }
 
-  private countFilled(): number {
-    let count = 0;
-    for (let i = 0; i < this.filledMask.length; i++) {
-      if (this.filledMask[i]) count++;
+  private createCelebrationEffect() {
+    const { x, y } = BOARD_CENTER;
+    for (let i = 0; i < 20; i++) {
+      const angle = (i / 20) * Math.PI * 2;
+      const spark = this.add.sprite(x, y, ASSETS.SPARK).setDepth(55);
+      this.tweens.add({
+        targets: spark,
+        x: x + Math.cos(angle) * 200,
+        y: y + Math.sin(angle) * 200,
+        alpha: { from: 1, to: 0 },
+        scale: { from: 1, to: 0 },
+        duration: 1000,
+        ease: "Quad.easeOut",
+        onComplete: () => spark.destroy(),
+      });
     }
-    return count;
   }
 
-  private snapPlayerToNearestBorderCell() {
-    const start = worldToCell(this.grid, this.state.playerBall.x, this.state.playerBall.y);
-    const target = this.findNearestBorderCell(start);
-    if (!target) return;
+  private showLevelBanner(level: number) {
+    this.levelBannerText?.destroy();
+    const banner = this.add
+      .text(BOARD_CENTER.x, BOARD_CENTER.y, `LEVEL ${level}`, {
+        fontFamily: this.host.fonts.display,
+        fontSize: "72px",
+        fontStyle: "800",
+        color: this.host.colors.sun,
+        stroke: this.host.colors.ink,
+        strokeThickness: 10,
+      })
+      .setOrigin(0.5)
+      .setDepth(50)
+      .setScale(0);
+    this.levelBannerText = banner;
 
-    const snapped = cellToWorldCenter(this.grid, target.c, target.r);
-    this.state.playerBall.x = snapped.x;
-    this.state.playerBall.y = snapped.y;
+    // Scale up, then fade out.
+    this.tweens.add({
+      targets: banner,
+      scale: { from: 0, to: 1.5 },
+      alpha: { from: 1, to: 0 },
+      duration: 1200,
+      ease: "Back.easeOut",
+      onComplete: () => {
+        banner.destroy();
+        if (this.levelBannerText === banner) this.levelBannerText = null;
+      },
+    });
   }
 
-  private findNearestBorderCell(start: Cell): Cell | null {
-    const visited = new Uint8Array(this.grid.cols * this.grid.rows);
-    const qC = new Int16Array(this.grid.cols * this.grid.rows);
-    const qR = new Int16Array(this.grid.cols * this.grid.rows);
-    let qh = 0;
-    let qt = 0;
+  private addBackgroundPixels() {
+    // Scattered, slowly floating pixels behind everything (cosmetic).
+    for (let i = 0; i < 30; i++) {
+      const x = Phaser.Math.FloatBetween(0, W);
+      const y = Phaser.Math.FloatBetween(0, H);
+      const pixel = this.add
+        .sprite(x, y, ASSETS.PIXEL)
+        .setAlpha(Phaser.Math.FloatBetween(0.3, 0.7))
+        .setScale(Phaser.Math.FloatBetween(0.5, 1))
+        .setDepth(-1);
 
-    qC[qt] = start.c;
-    qR[qt] = start.r;
-    qt++;
-    visited[idx(this.grid, start.c, start.r)] = 1;
-
-    while (qh < qt) {
-      const c = qC[qh];
-      const r = qR[qh];
-      qh++;
-
-      const i = idx(this.grid, c, r);
-      const isFilled = this.filledMask[i] === 1;
-      if (!isFilled && this.borderMask[i] === 1) {
-        return { c, r };
-      }
-
-      const dirs = [
-        { dc: 1, dr: 0 },
-        { dc: -1, dr: 0 },
-        { dc: 0, dr: 1 },
-        { dc: 0, dr: -1 },
-      ];
-
-      for (const { dc, dr } of dirs) {
-        const nc = c + dc;
-        const nr = r + dr;
-        if (nc < 0 || nr < 0 || nc >= this.grid.cols || nr >= this.grid.rows) continue;
-        const ni = idx(this.grid, nc, nr);
-        if (visited[ni]) continue;
-        visited[ni] = 1;
-        // We can traverse through filled cells for the search frontier, but only enqueue if it helps.
-        qC[qt] = nc;
-        qR[qt] = nr;
-        qt++;
-      }
+      this.tweens.add({
+        targets: pixel,
+        y: y + (Phaser.Math.Between(0, 1) === 1 ? 20 : -20),
+        alpha: { from: pixel.alpha, to: 0.1 },
+        duration: Phaser.Math.Between(3000, 5000),
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+        delay: Phaser.Math.Between(0, 2000),
+      });
     }
-
-    return null;
   }
+
+  // --- Drawing ---------------------------------------------------------------
 
   private updateGraphics() {
     if (this.staticGraphicsDirty) {
-      this.borderGraphics.clear();
-      this.filledGraphics.clear();
-
-      // Filled areas
-      this.filledGraphics.fillStyle(0x001a33, 0.9);
-      for (let r = 0; r < this.grid.rows; r++) {
-        let runStart = -1;
-        for (let c = 0; c < this.grid.cols; c++) {
-          const i = idx(this.grid, c, r);
-          const filled = this.filledMask[i] === 1;
-          if (filled && runStart === -1) runStart = c;
-          if ((!filled || c === this.grid.cols - 1) && runStart !== -1) {
-            const runEnd = filled && c === this.grid.cols - 1 ? c : c - 1;
-            const x = this.grid.originX + runStart * this.grid.cellSize;
-            const y = this.grid.originY + r * this.grid.cellSize;
-            const w = (runEnd - runStart + 1) * this.grid.cellSize;
-            const h = this.grid.cellSize;
-            this.filledGraphics.fillRect(x, y, w, h);
-            runStart = -1;
-          }
-        }
-      }
-
-      // Add tech pattern overlay
-      this.filledGraphics.lineStyle(1, 0x0066aa, 0.4);
-      for (let r = 0; r < this.grid.rows; r++) {
-        for (let c = 0; c < this.grid.cols; c++) {
-          const i = idx(this.grid, c, r);
-          if (this.filledMask[i] !== 1) continue;
-
-          const x = this.grid.originX + c * this.grid.cellSize;
-          const y = this.grid.originY + r * this.grid.cellSize;
-          const s = this.grid.cellSize;
-
-          // Diagonal lines
-          if ((c + r) % 3 === 0) {
-            this.filledGraphics.lineBetween(x, y, x + s, y + s);
-          }
-          if ((c - r) % 4 === 0) {
-            this.filledGraphics.lineBetween(x + s, y, x, y + s);
-          }
-        }
-      }
-
-      // Borders helper
-      const drawBorders = (g: Phaser.GameObjects.Graphics) => {
-        g.strokeRect(
-          this.state.playBounds.x,
-          this.state.playBounds.y,
-          this.state.playBounds.width,
-          this.state.playBounds.height,
-        );
-
-        const s = this.grid.cellSize;
-        for (let r = 0; r < this.grid.rows; r++) {
-          for (let c = 0; c < this.grid.cols; c++) {
-            const i = idx(this.grid, c, r);
-            if (this.filledMask[i] !== 1) continue;
-
-            const x = this.grid.originX + c * s;
-            const y = this.grid.originY + r * s;
-
-            if (r === 0 || this.filledMask[idx(this.grid, c, r - 1)] === 0) {
-              g.lineBetween(x, y, x + s, y);
-            }
-            if (r === this.grid.rows - 1 || this.filledMask[idx(this.grid, c, r + 1)] === 0) {
-              g.lineBetween(x, y + s, x + s, y + s);
-            }
-            if (c === 0 || this.filledMask[idx(this.grid, c - 1, r)] === 0) {
-              g.lineBetween(x, y, x, y + s);
-            }
-            if (c === this.grid.cols - 1 || this.filledMask[idx(this.grid, c + 1, r)] === 0) {
-              g.lineBetween(x + s, y, x + s, y + s);
-            }
-          }
-        }
-      };
-
-      // Draw glow
-      this.borderGraphics.lineStyle(6, 0x00ffff, 0.3);
-      drawBorders(this.borderGraphics);
-      // Draw core
-      this.borderGraphics.lineStyle(2, 0x00ffff, 1.0);
-      drawBorders(this.borderGraphics);
-
+      this.drawStatic();
       this.staticGraphicsDirty = false;
     }
 
-    // Path
     this.pathGraphics.clear();
     if (this.pathCells.length > 1) {
       const drawPath = (g: Phaser.GameObjects.Graphics) => {
         const first = cellToWorldCenter(this.grid, this.pathCells[0].c, this.pathCells[0].r);
-        // Round to nearest pixel for crisp rendering
         g.beginPath();
         g.moveTo(Math.round(first.x), Math.round(first.y));
         for (let i = 1; i < this.pathCells.length; i++) {
@@ -999,7 +801,6 @@ export class MainScene extends Phaser.Scene {
         }
         g.strokePath();
       };
-
       this.pathGraphics.lineStyle(6, 0xff00ff, 0.4);
       drawPath(this.pathGraphics);
       this.pathGraphics.lineStyle(2, 0xff00ff, 1.0);
@@ -1007,46 +808,65 @@ export class MainScene extends Phaser.Scene {
     }
   }
 
-  private updateUI() {
-    this.levelText.setText(`Level ${this.state.level}`);
-    this.scoreText.setText(`Score: ${this.state.score}`);
-    this.bestScoreText.setText(`Best: ${this.state.bestScore}`);
-    this.coverageText.setText(`Coverage: ${this.state.coverage.toFixed(1)}%`);
-    this.targetText.setText(`Target: ${this.state.targetCoverage}%`);
-  }
+  private drawStatic() {
+    const { grid, filledMask: filled } = this;
+    const s = grid.cellSize;
+    this.borderGraphics.clear();
+    this.filledGraphics.clear();
 
-  private loadBestScore(): number {
-    return getBest("box-cutter");
-  }
-
-  private saveBestScore() {
-    if (this.state.score > this.state.bestScore) {
-      this.state.bestScore = this.state.score;
-      setBest("box-cutter", this.state.score);
+    // Filled areas, one rect per horizontal run.
+    this.filledGraphics.fillStyle(0x001a33, 0.9);
+    for (let r = 0; r < grid.rows; r++) {
+      let runStart = -1;
+      for (let c = 0; c < grid.cols; c++) {
+        const isFilled = filled[idx(grid, c, r)] === 1;
+        if (isFilled && runStart === -1) runStart = c;
+        if ((!isFilled || c === grid.cols - 1) && runStart !== -1) {
+          const runEnd = isFilled && c === grid.cols - 1 ? c : c - 1;
+          this.filledGraphics.fillRect(
+            grid.originX + runStart * s,
+            grid.originY + r * s,
+            (runEnd - runStart + 1) * s,
+            s,
+          );
+          runStart = -1;
+        }
+      }
     }
-  }
 
-  private addBackgroundPixels() {
-    // Add scattered animated pixels in the background
-    for (let i = 0; i < 30; i++) {
-      const x = Math.random() * this.gameWidth;
-      const y = Math.random() * this.gameHeight;
-      const pixel = this.add.sprite(x, y, ASSETS.PIXEL);
-      pixel.setAlpha(0.3 + Math.random() * 0.4);
-      pixel.setScale(0.5 + Math.random() * 0.5);
-      pixel.setDepth(-1);
-
-      // Slow float animation
-      this.tweens.add({
-        targets: pixel,
-        y: y + 20 * (Math.random() > 0.5 ? 1 : -1),
-        alpha: { from: pixel.alpha, to: 0.1 },
-        duration: 3000 + Math.random() * 2000,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
-        delay: Math.random() * 2000,
-      });
+    // Tech pattern overlay.
+    this.filledGraphics.lineStyle(1, 0x0066aa, 0.4);
+    for (let r = 0; r < grid.rows; r++) {
+      for (let c = 0; c < grid.cols; c++) {
+        if (filled[idx(grid, c, r)] !== 1) continue;
+        const x = grid.originX + c * s;
+        const y = grid.originY + r * s;
+        if ((c + r) % 3 === 0) this.filledGraphics.lineBetween(x, y, x + s, y + s);
+        if ((c - r) % 4 === 0) this.filledGraphics.lineBetween(x + s, y, x, y + s);
+      }
     }
+
+    const drawBorders = (g: Phaser.GameObjects.Graphics) => {
+      g.strokeRect(PLAY_BOUNDS.x, PLAY_BOUNDS.y, PLAY_BOUNDS.width, PLAY_BOUNDS.height);
+      for (let r = 0; r < grid.rows; r++) {
+        for (let c = 0; c < grid.cols; c++) {
+          if (filled[idx(grid, c, r)] !== 1) continue;
+          const x = grid.originX + c * s;
+          const y = grid.originY + r * s;
+          if (r === 0 || filled[idx(grid, c, r - 1)] === 0) g.lineBetween(x, y, x + s, y);
+          if (r === grid.rows - 1 || filled[idx(grid, c, r + 1)] === 0)
+            g.lineBetween(x, y + s, x + s, y + s);
+          if (c === 0 || filled[idx(grid, c - 1, r)] === 0) g.lineBetween(x, y, x, y + s);
+          if (c === grid.cols - 1 || filled[idx(grid, c + 1, r)] === 0)
+            g.lineBetween(x + s, y, x + s, y + s);
+        }
+      }
+    };
+
+    // Glow, then core.
+    this.borderGraphics.lineStyle(6, 0x00ffff, 0.3);
+    drawBorders(this.borderGraphics);
+    this.borderGraphics.lineStyle(2, 0x00ffff, 1.0);
+    drawBorders(this.borderGraphics);
   }
 }
