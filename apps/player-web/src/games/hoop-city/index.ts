@@ -1,29 +1,9 @@
-import Phaser from "phaser";
-import HoopCityScene from "./HoopCityScene";
+import type { CreateGame } from "../../platform/sdk";
+import { createGameMount } from "../../platform/mount";
+import HoopCityScene from "./scenes/HoopCityScene";
 
-export function mount(container: HTMLElement) {
-  const config: Phaser.Types.Core.GameConfig = {
-    type: Phaser.AUTO,
-    width: 540,
-    height: 960,
-    parent: container,
-    transparent: true,
-    scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: 540,
-      height: 960,
-    },
-    scene: [HoopCityScene],
-  };
+export { default as manifest } from "./manifest";
 
-  const game = new Phaser.Game(config);
-
-  return {
-    destroy: () => {
-      game.destroy(true);
-    },
-  };
-}
-
-export default {};
+/** Night sky, so the city and the ball read well (the canvas is transparent otherwise). */
+export const create: CreateGame = (host, el) =>
+  createGameMount(host, el, { scenes: [HoopCityScene], backgroundColor: "#06142a" });
