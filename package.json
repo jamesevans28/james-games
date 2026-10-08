@@ -58,5 +58,10 @@
   "engines": {
     "node": ">=24",
     "npm": ">=10"
+  },
+  "overrides": {
+    "@capacitor-firebase/authentication": {
+      "firebase": "^13.0.0"
+    }
   }
 }

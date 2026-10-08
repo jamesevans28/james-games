@@ -22,6 +22,11 @@ const config: CapacitorConfig = {
       backgroundColor: brand.backgroundColor,
       showSpinner: false,
     },
+    // Native Google/Apple sheets hand their credential to the web SDK (T10.3).
+    FirebaseAuthentication: {
+      skipNativeAuth: true,
+      providers: ["google.com", "apple.com"],
+    },
     StatusBar: {
       style: "LIGHT",
       backgroundColor: brand.backgroundColor,

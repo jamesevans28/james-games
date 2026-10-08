@@ -37,7 +37,7 @@ Steps:
 
 ## T10.3 Native auth
 
-Status: todo
+Status: done in code 2026-10-09 (@capacitor-firebase/authentication 8.5.2; native sheet → credential → web SDK sign-in/link, so the backend flow is unchanged); MANUAL: Firebase iOS/Android apps, plist/json, URL scheme, Apple capability (docs/native-setup.md)
 Depends on: T10.2
 Files: `platform/adapters/auth.capacitor.ts`, Firebase console (MANUAL), `ios/App/App/Info.plist`, `android/app/google-services.json`
 Steps:
