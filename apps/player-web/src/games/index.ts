@@ -1,3 +1,5 @@
+import type { GameModule } from "../platform/sdk";
+
 export type GameMeta = {
   id: string;
   title: string;
@@ -13,8 +15,14 @@ export type GameMeta = {
   makers?: string[]; // who made it; defaults to brand.makers
   note?: string; // "Designer's note" from the kid who made it (written in Phase 11)
   noteBy?: string; // which maker wrote the note
-  load: () => Promise<{ mount: (container: HTMLElement) => { destroy: () => void } }>;
+  load: () => Promise<LegacyGameModule | GameModule>;
 };
+
+/** Pre-SDK games: mount into a container, report via the window event bus. */
+export type LegacyGameModule = { mount: (container: HTMLElement) => { destroy: () => void } };
+
+export const isSdkModule = (mod: LegacyGameModule | GameModule): mod is GameModule =>
+  "create" in mod;
 
 export const games: GameMeta[] = [
   {
@@ -43,10 +51,7 @@ export const games: GameMeta[] = [
     xpMultiplier: 2.92,
     createdAt: "2025-09-15T00:00:00.000Z",
     updatedAt: "2025-11-26T00:00:00.000Z",
-    load: async () => {
-      const mod = await import("./reflex-ring/index");
-      return { mount: mod.mount };
-    },
+    load: () => import("./reflex-ring/index"),
   },
   {
     id: "snapadile",

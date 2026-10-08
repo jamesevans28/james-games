@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { games } from "../../games";
+import { games, isSdkModule } from "../../games";
+import { createHost } from "../../platform/host";
+import type { GameInstance } from "../../platform/sdk";
 import GameHeader from "./GameHeader";
 import { trackGameStart } from "../../utils/analytics";
 // import NameDialog from "../../components/NameDialog";
@@ -44,6 +46,15 @@ export default function PlayGame() {
   const { user, ensureSession } = useAuth();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const destroyRef = useRef<null | (() => void)>(null);
+  // SDK games (T4.4): the running instance, so "Play again" restarts instead of remounting.
+  const instanceRef = useRef<GameInstance | null>(null);
+  const [paused, setPaused] = useState(false);
+  // Both paths record the finished run here: SDK games through the host, legacy
+  // games through the window event. An effect further down reacts with current state.
+  const [finishedRun, setFinishedRun] = useState<{ score: number; durationMs?: number } | null>(
+    null,
+  );
+
   const mountingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -139,11 +150,24 @@ export default function PlayGame() {
         }
         destroyRef.current = null;
       }
-      const { destroy } = mod.mount(containerRef.current);
-      destroyRef.current = destroy;
-      // Dispatch game start event to begin timing
-      dispatchGameStart(meta.id);
-      trackGameStart(meta.id, meta.title);
+      if (isSdkModule(mod)) {
+        const host = createHost(mod.manifest, {
+          onGameOver: ({ score, durationMs }) => setFinishedRun({ score, durationMs }),
+        });
+        const instance = mod.create(host, containerRef.current);
+        instanceRef.current = instance;
+        destroyRef.current = () => {
+          instance.destroy();
+          instanceRef.current = null;
+        };
+        instance.start();
+      } else {
+        const { destroy } = mod.mount(containerRef.current);
+        destroyRef.current = destroy;
+        // Legacy games: start the window-event timer (the host measures SDK games).
+        dispatchGameStart(meta.id);
+        trackGameStart(meta.id, meta.title);
+      }
       // Record this game as recently played for feed algorithm
       recordGamePlayed(meta.id);
     } catch (e) {
@@ -271,32 +295,61 @@ export default function PlayGame() {
       return;
     }
     setPlaying(true);
+    if (instanceRef.current) {
+      // Same Phaser game, fresh run: no new WebGL context, no reload.
+      instanceRef.current.restart();
+      recordGamePlayed(meta?.id ?? "");
+      return;
+    }
     void mountGame();
   };
 
   useEffect(() => {
     if (!meta) return;
-    // Listen for game over and show score dialog over the running game
+    // Legacy games (TODO T5.13): game over arrives on the window event bus.
     const off = onGameOver((d) => {
-      if (!meta || d.gameId !== meta.id) return;
-      // Keep the game mounted so it's visible in the background
-      setLastScore(d.score);
-      setLastDurationMs(d.durationMs);
-      setShowScore(true);
-      if (user) {
-        const count = incrementPlayCounter(meta.id);
-        if (count > 0 && count % RATING_PROMPT_INTERVAL === 0) {
-          const alreadyRated =
-            typeof (userRating ?? ratingSummary?.userRating) === "number" &&
-            !Number.isNaN(userRating ?? ratingSummary?.userRating);
-          if (!alreadyRated) {
-            setPendingRatingTrigger(true);
-          }
-        }
-      }
+      if (d.gameId === meta.id) setFinishedRun({ score: d.score, durationMs: d.durationMs });
     });
     return () => off?.();
-  }, [meta, user, userRating, ratingSummary?.userRating]);
+  }, [meta]);
+
+  useEffect(() => {
+    if (!meta || !finishedRun) return;
+    setFinishedRun(null);
+    // Keep the game mounted so it's visible in the background
+    setLastScore(finishedRun.score);
+    setLastDurationMs(finishedRun.durationMs);
+    setShowScore(true);
+    if (user) {
+      const count = incrementPlayCounter(meta.id);
+      if (count > 0 && count % RATING_PROMPT_INTERVAL === 0) {
+        const alreadyRated =
+          typeof (userRating ?? ratingSummary?.userRating) === "number" &&
+          !Number.isNaN(userRating ?? ratingSummary?.userRating);
+        if (!alreadyRated) {
+          setPendingRatingTrigger(true);
+        }
+      }
+    }
+  }, [finishedRun, meta, user, userRating, ratingSummary?.userRating]);
+
+  // Hiding the tab pauses an SDK game; the player resumes from the Paused overlay.
+  useEffect(() => {
+    if (!playing) return;
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden" && instanceRef.current && !showScore) {
+        instanceRef.current.pause();
+        setPaused(true);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [playing, showScore]);
+
+  const handleResume = () => {
+    instanceRef.current?.resume();
+    setPaused(false);
+  };
 
   useEffect(() => {
     let canceled = false;
@@ -399,6 +452,20 @@ export default function PlayGame() {
           id="game-container"
           className="relative w-full h-full overflow-hidden bg-paper"
         />
+        {paused && playing && !showScore && (
+          <button
+            type="button"
+            onClick={handleResume}
+            className="absolute inset-0 z-[1001] flex flex-col items-center justify-center gap-4 bg-scrim/60"
+          >
+            <span className="card px-8 py-6 text-center">
+              <span className="block font-display text-3xl font-extrabold text-ink">Paused</span>
+              <span className="mt-1 block text-sm font-semibold text-ink-2">
+                Tap to keep playing
+              </span>
+            </span>
+          </button>
+        )}
         {mounting && playing && (
           <div className="absolute inset-0 flex items-center justify-center bg-paper/90 z-[1000]">
             <div className="flex flex-col items-center">

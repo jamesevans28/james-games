@@ -1,9 +1,6 @@
-/* eslint-disable no-restricted-imports -- TODO T4.4/T5.2: legacy game code, cleaned when it moves onto the Game SDK */
 // (Removed duplicate power-up system methods and properties)
 import Phaser from "phaser";
-import { trackGameStart } from "../../utils/analytics";
-import { dispatchGameOver } from "../../utils/gameEvents";
-import { getBest, setBest } from "../../utils/bestScore";
+import { getHost } from "../../platform/mount";
 
 const MIN_TARGET_SEPARATION_DEG = 40;
 const MAX_TARGET_SEPARATION_DEG = 250;
@@ -113,6 +110,8 @@ export default class ReflexRingGame extends Phaser.Scene {
   }
 
   create(): void {
+    // The scene object survives scene.restart(), so reset per-run state first.
+    this.resetRunFields();
     const { width, height } = this.scale;
     this.centerX = Math.floor(width / 2);
     this.centerY = Math.floor(height / 2);
@@ -152,7 +151,6 @@ export default class ReflexRingGame extends Phaser.Scene {
 
     this.input.on("pointerdown", this.handleTap, this);
     this.attachDomPointerHandler();
-    trackGameStart("reflex-ring", "Reflex Ring");
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.backgroundDriftTimer?.remove();
@@ -301,7 +299,7 @@ export default class ReflexRingGame extends Phaser.Scene {
     this.wedgeGraphics?.destroy();
     this.wedgeGraphics = this.add.graphics().setDepth(2);
 
-    this.best = getBest("reflex-ring");
+    this.best = getHost(this).best.get();
     this.scoreText?.destroy();
     this.scoreText = this.add
       .text(this.centerX, 24, this.makeScoreText(), {
@@ -589,12 +587,7 @@ export default class ReflexRingGame extends Phaser.Scene {
     this.cameras.main.shake(250, 0.012);
     this.cameras.main.flash(120, 255, 50, 50);
 
-    if (this.score > this.best) {
-      this.best = this.score;
-      setBest("reflex-ring", this.best);
-    }
-
-    const overlay = this.add.rectangle(
+    this.add.rectangle(
       this.centerX,
       this.centerY,
       this.scale.width,
@@ -602,7 +595,7 @@ export default class ReflexRingGame extends Phaser.Scene {
       0x000000,
       0.55,
     );
-    const t1 = this.add
+    this.add
       .text(this.centerX, this.centerY - 20, "Game Over", {
         fontFamily: "Arial Black",
         fontSize: "42px",
@@ -611,74 +604,22 @@ export default class ReflexRingGame extends Phaser.Scene {
         strokeThickness: 6,
       })
       .setOrigin(0.5);
-    const t2 = this.add
-      .text(this.centerX, this.centerY + 30, "Tap to Restart", {
-        fontFamily: "Arial",
-        fontSize: "22px",
-        color: "#ffffff",
-      })
-      .setOrigin(0.5);
-
-    const restart = () => {
-      overlay.destroy();
-      t1.destroy();
-      t2.destroy();
-      this.resetGameState();
-      this.input.on("pointerdown", this.handleTap, this);
-      this.input.off("pointerdown", restart);
-      trackGameStart("reflex-ring", "Reflex Ring");
-    };
-
-    // Delay dispatching the game-over event slightly so the in-game "Game Over"
-    // animations (shake/flash) complete and any overlays in the React UI don't
-    // immediately navigate away from the running scene.
-    const GAME_OVER_DISPATCH_DELAY = 900; // ms
-    try {
-      this.time.delayedCall(GAME_OVER_DISPATCH_DELAY, () => {
-        try {
-          dispatchGameOver({ gameId: "reflex-ring", score: this.score, ts: Date.now() });
-        } catch {
-          // ignore dispatch errors to keep the game responsive
-        }
-      });
-    } catch {
-      // ignore scheduling errors
-    }
-
-    this.time.delayedCall(900, () => {
-      this.input.once("pointerdown", restart);
-    });
+    // Let the shake and flash play, then hand the result to the platform, which
+    // shows the score dialog and restarts the scene for "Play again".
+    this.time.delayedCall(900, () => getHost(this).gameOver({ score: this.score }));
   }
 
-  private resetGameState(): void {
+  /** Plain per-run fields. Display objects are rebuilt by create(). */
+  private resetRunFields(): void {
     this.score = 0;
-    this.scoreText.setText(this.makeScoreText());
-    this.currentAngle = 0;
-    this.angularVelocity = this.baseAngularVelocity;
-    this.maxSpeed = this.baseMaxSpeed;
     this.savedAngularVelocity = null;
     this.savedMaxSpeed = null;
-    this.segmentWidth = this.baseSegmentWidth;
-    this.forcePerfectHits = false;
-    this.autoHitActive = false;
-    this.activePowerupType = null;
-    this.pendingPowerupType = null;
     this.powerupActive = false;
-    this.powerupTimer?.remove();
     this.powerupTimer = null;
-    this.powerupToken?.destroy(true);
-    this.powerupToken = undefined;
     this.powerupTokenRadius = 0;
-    this.powerupStatusText?.destroy();
-    this.powerupStatusText = undefined;
-    this.currentPowerupLabel = "";
-    this.hitPulseTween?.stop();
     this.hitPulseTween = undefined;
-    this.arrowContainer.setScale(1);
     this.tappedThisWedge = false;
     this.inWedgePrev = false;
-    this.gameOver = false;
-    this.pickNewTargetAngle(this.currentAngle);
   }
 
   private isWithinWedge(angle: number, wedgeCenter: number, wedgeWidth: number): boolean {
