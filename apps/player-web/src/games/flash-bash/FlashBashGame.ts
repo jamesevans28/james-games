@@ -285,7 +285,7 @@ export default class FlashBashGame extends Phaser.Scene {
         graphics.strokePath();
         break;
       case "star":
-        graphics.fillPoints([
+        graphics.fillPoints(toVectors([
           { x: 0, y: -30 },
           { x: 10, y: -10 },
           { x: 30, y: -10 },
@@ -296,8 +296,8 @@ export default class FlashBashGame extends Phaser.Scene {
           { x: -15, y: 5 },
           { x: -30, y: -10 },
           { x: -10, y: -10 },
-        ]);
-        graphics.strokePoints([
+        ]));
+        graphics.strokePoints(toVectors([
           { x: 0, y: -30 },
           { x: 10, y: -10 },
           { x: 30, y: -10 },
@@ -308,7 +308,7 @@ export default class FlashBashGame extends Phaser.Scene {
           { x: -15, y: 5 },
           { x: -30, y: -10 },
           { x: -10, y: -10 },
-        ]);
+        ]));
         break;
       case "diamond":
         graphics.beginPath();
@@ -643,4 +643,9 @@ export default class FlashBashGame extends Phaser.Scene {
     this.tweens.add({ targets: txt, alpha: 0.9, duration: 120, ease: "Cubic.easeOut" });
     this.time.delayedCall(800, () => txt.destroy());
   }
+}
+
+/** Phaser 4 types point lists as Vector2[]; build them from plain {x, y} literals. */
+function toVectors(points: Array<{ x: number; y: number }>): Phaser.Math.Vector2[] {
+  return points.map((p) => new Phaser.Math.Vector2(p.x, p.y));
 }

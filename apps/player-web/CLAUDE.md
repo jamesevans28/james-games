@@ -53,6 +53,6 @@ CI sets the same names from GitHub repo variables plus `VITE_BUILD_NUMBER`.
 ## Gotchas
 
 - Brand strings still say flingo in many files. Phase 3 moves them into `src/config/brand.ts`; until then don't add new ones.
-- The Phaser version is 3.90 until Phase 2 (T2.7) moves to Phaser 4.
+- Phaser 4 is the baseline (4.2.1 since T2.7). No v3 pipeline, FX or mask APIs. Group children are a native Set: use `group.getChildren()` (a fresh array, safe to remove while looping). Fill tint is `setTint(c).setTintMode(Phaser.TintModes.FILL)` and `clearTint()` does not reset the mode. `Math.TAU` is 2π. Migration guide: node_modules/phaser/skills/v3-to-v4-migration/SKILL.md.
 - `vite.config.ts` holds the PWA manifest and service-worker caching rules (one config for dev and build; set `VITE_SW_DEV=1` to run the service worker in dev). Never cache an authenticated endpoint (see T1.5).
 - Best scores live in localStorage under inconsistent keys until T1.10.

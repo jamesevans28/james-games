@@ -103,7 +103,7 @@ export default class HoHoHomeDeliveryGame extends Phaser.Scene {
     const dx = -this.scrollSpeed * (delta / 1000);
     // Speed up marginally as score increases
     this.scrollSpeed = Math.min(400, 180 + Math.floor(this.score / 5) * 15);
-    this.chimneyZones.children.iterate((c: any) => {
+    this.chimneyZones.getChildren().forEach((c: any) => {
       if (!c) return true;
       c.x += dx;
       // static body must be refreshed when moved
@@ -141,7 +141,7 @@ export default class HoHoHomeDeliveryGame extends Phaser.Scene {
     }
 
     // Check presents for ground hit
-    this.presents.children.iterate((p: any) => {
+    this.presents.getChildren().forEach((p: any) => {
       if (!p) return true;
       if (p.y >= this.groundY - 8) {
         // Missed

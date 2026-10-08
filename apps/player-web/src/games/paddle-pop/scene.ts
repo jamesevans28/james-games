@@ -978,20 +978,22 @@ export default class PaddlePopScene extends Phaser.Scene {
         body?.setSize(this.paddle.displayWidth, this.paddle.displayHeight, true);
       },
     });
-    // Flash without changing transparency (avoid leaving paddle semi-transparent)
+    // Flash without changing transparency (avoid leaving paddle semi-transparent).
+    // Phaser 4: fill is a tint *mode*, and clearTint() does not reset the mode.
+    let bright = false;
     const flash = this.time.addEvent({
       delay: 100,
       repeat: 8,
       callback: () => {
-        // Toggle a quick "bright" flash while keeping alpha at 1
-        if (this.paddle.isTinted) this.paddle.clearTint();
-        else this.paddle.setTintFill(0xffffff);
+        bright = !bright;
+        if (bright) this.paddle.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+        else this.paddle.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
         this.paddle.setAlpha(1);
       },
     });
     this.time.delayedCall(POWERUP_DURATION_MS, () => {
       flash.remove();
-      this.paddle.clearTint();
+      this.paddle.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
       this.paddle.setAlpha(1);
       this.resetPaddleSize();
     });

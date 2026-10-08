@@ -241,7 +241,7 @@ export default class SnapadileScene extends Phaser.Scene {
     if (this.isGameOver()) return;
 
     // Check crocs reaching the raft or leaving the screen (destroy on leave if retreating)
-    this.crocs.children.iterate((obj) => {
+    this.crocs.getChildren().forEach((obj) => {
       const croc = obj as Croc & { retreating?: boolean };
       if (!croc || !croc.active) return true;
       const d = Phaser.Math.Distance.Between(croc.x, croc.y, this.center.x, this.center.y);
@@ -287,7 +287,7 @@ export default class SnapadileScene extends Phaser.Scene {
     this.spawnTimer?.remove();
     this.difficultyTimer?.remove();
 
-    this.crocs.children.iterate((obj) => {
+    this.crocs.getChildren().forEach((obj) => {
       const c = obj as Croc & { wiggleTween?: Phaser.Tweens.Tween };
       if (c && c.body) c.setVelocity(0, 0);
       if (c?.wiggleTween) c.wiggleTween.stop();

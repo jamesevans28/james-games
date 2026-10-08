@@ -96,7 +96,7 @@ Steps:
 Done when: `npm run backend:build` passes; every route responds locally; the Lambda zip is under 10 MB (check `node_modules` prod-only install still works).
 
 ## T2.7 Phaser 4
-Status: todo
+Status: done (2026-10-08). Phaser 4.2.1. Typecheck flagged 5 games, all fixed: Cosmic Clash, Snapadile, Ho Ho (group.children is now a native Set: .entries/.iterate -> getChildren(), which returns a fresh array so removal during loops is now safe), Flash Bash (fillPoints/strokePoints typed Vector2[]: wrapped literals), Paddle Pop (setTintFill removed: setTint + TintModes.FILL, with an explicit flag and mode reset because clearTint keeps the mode), Reflex Ring (Math.PI2 removed -> Math.TAU, now 2π). No masks, FX, pipelines, render textures, Geom.Point or Grid shapes in use. Smoke test in the Browser pane: 16/16 games start with no JS errors; Paddle Pop, Cosmic Clash, Flash Bash, Blocker, Snapadile, Box Cutter and Reflex Ring checked visually at 375x812 (Snapadile and Box Cutter match the Phaser 3 screenshots); Flash Bash game-over flow ran. Phaser chunk 1.31 MB (354 KB gzip), up from 1.14 MB on Phaser 3.
 Depends on: T2.3
 Goal: all 16 games compile and run on Phaser 4.x. Deep per-game polish is Phase 5; this task is the mechanical migration.
 Files: `apps/player-web/src/games/**`, `apps/player-web/src/game/ui/*.ts`

@@ -243,7 +243,7 @@ export default class CosmicClashGame extends Phaser.Scene {
     if (this.isGameOver || this.aliens.countActive() === 0) return;
 
     // Pick a random alien to fire
-    const activeAliens = this.aliens.children.entries.filter((a) => a.active);
+    const activeAliens = this.aliens.getChildren().filter((a) => a.active);
     if (activeAliens.length === 0) return;
 
     const randomAlien = Phaser.Utils.Array.GetRandom(activeAliens) as Phaser.GameObjects.Sprite;
@@ -303,7 +303,7 @@ export default class CosmicClashGame extends Phaser.Scene {
     const moveAmount = this.alienSpeed * deltaFactor;
     let shouldMoveDown = false;
 
-    this.aliens.children.entries.forEach((alien) => {
+    this.aliens.getChildren().forEach((alien) => {
       const sprite = alien as Phaser.GameObjects.Sprite;
       const nextX = sprite.x + moveAmount * this.alienDirection;
       if (nextX <= 40 || nextX >= GAME_WIDTH - 40) {
@@ -313,7 +313,7 @@ export default class CosmicClashGame extends Phaser.Scene {
 
     if (shouldMoveDown) {
       this.alienDirection *= -1;
-      this.aliens.children.entries.forEach((alien) => {
+      this.aliens.getChildren().forEach((alien) => {
         const sprite = alien as Phaser.GameObjects.Sprite;
         sprite.y += 18;
         sprite.x = Phaser.Math.Clamp(
@@ -327,7 +327,7 @@ export default class CosmicClashGame extends Phaser.Scene {
         }
       });
     } else {
-      this.aliens.children.entries.forEach((alien) => {
+      this.aliens.getChildren().forEach((alien) => {
         const sprite = alien as Phaser.GameObjects.Sprite;
         sprite.x = Phaser.Math.Clamp(
           sprite.x + moveAmount * this.alienDirection,
@@ -340,11 +340,11 @@ export default class CosmicClashGame extends Phaser.Scene {
 
   private checkCollisions() {
     // Bullets hit aliens
-    this.bullets.children.entries.forEach((bullet) => {
+    this.bullets.getChildren().forEach((bullet) => {
       const bulletSprite = bullet as Phaser.GameObjects.Sprite;
       if (!bulletSprite.active) return;
 
-      this.aliens.children.entries.forEach((alien) => {
+      this.aliens.getChildren().forEach((alien) => {
         const alienSprite = alien as Phaser.GameObjects.Sprite;
         if (!alienSprite.active) return;
 
@@ -407,7 +407,7 @@ export default class CosmicClashGame extends Phaser.Scene {
     });
 
     // Check alien bullets hitting player
-    this.alienBullets.children.entries.forEach((bullet) => {
+    this.alienBullets.getChildren().forEach((bullet) => {
       const bulletSprite = bullet as Phaser.GameObjects.Sprite;
       if (!bulletSprite.active) return;
 
@@ -702,7 +702,7 @@ export default class CosmicClashGame extends Phaser.Scene {
     this.powerUps = this.powerUps.filter((p) => p.sprite.y <= GAME_HEIGHT);
 
     // Move and cleanup bullets
-    this.bullets.children.entries.forEach((bullet) => {
+    this.bullets.getChildren().forEach((bullet) => {
       const sprite = bullet as Phaser.GameObjects.Sprite;
       const velocity = sprite.getData("velocity") || 0;
       sprite.y += velocity * (delta / 1000);
@@ -714,7 +714,7 @@ export default class CosmicClashGame extends Phaser.Scene {
     });
 
     // Move and cleanup alien bullets
-    this.alienBullets.children.entries.forEach((bullet) => {
+    this.alienBullets.getChildren().forEach((bullet) => {
       const sprite = bullet as Phaser.GameObjects.Sprite;
       const velocity = sprite.getData("velocity") || 0;
       sprite.y += velocity * (delta / 1000);

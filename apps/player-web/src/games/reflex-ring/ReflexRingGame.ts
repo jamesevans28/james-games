@@ -340,7 +340,7 @@ export default class ReflexRingGame extends Phaser.Scene {
   private spawnPowerup(): void {
     const type = POWERUP_TYPES[Phaser.Math.Between(0, POWERUP_TYPES.length - 1)];
     const config = POWERUP_CONFIG[type];
-    const angle = Phaser.Math.FloatBetween(0, Phaser.Math.PI2);
+    const angle = Phaser.Math.FloatBetween(0, Phaser.Math.TAU);
     const r = this.radius * 0.85;
     const x = this.centerX + Math.cos(angle) * r;
     const y = this.centerY + Math.sin(angle) * r;
@@ -726,12 +726,12 @@ export default class ReflexRingGame extends Phaser.Scene {
     const minSep = Phaser.Math.DegToRad(MIN_TARGET_SEPARATION_DEG);
     const maxSep = Phaser.Math.DegToRad(Math.min(MAX_TARGET_SEPARATION_DEG, 180));
 
-    let candidate = Phaser.Math.FloatBetween(0, Phaser.Math.PI2);
+    let candidate = Phaser.Math.FloatBetween(0, Phaser.Math.TAU);
     let tries = 0;
     while (tries++ < 60) {
       const delta = Math.abs(Phaser.Math.Angle.Wrap(candidate - avoidNear));
       if (delta >= minSep && delta <= maxSep) break;
-      candidate = Phaser.Math.FloatBetween(0, Phaser.Math.PI2);
+      candidate = Phaser.Math.FloatBetween(0, Phaser.Math.TAU);
     }
 
     this.targetAngle = candidate;
