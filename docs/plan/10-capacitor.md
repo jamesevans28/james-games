@@ -63,14 +63,14 @@ Done when: checked on both platforms.
 
 ## T10.6 Store accounts and listings (MANUAL, Claude-prepared)
 
-Status: todo
+Status: text prepared 2026-10-09 (docs/store/listing.md: name, description, keywords, privacy labels, rating answers); MANUAL: James enrols (Apple US$99/yr, Google US$25) and creates the draft listings; screenshots after Phase 8 art
 Depends on: Phase 7 complete, T8.4, T8.7
 MANUAL (James): enrol in the Apple Developer Program and Google Play Console. These accounts are also needed for in-app purchases (T12.3), so they pay for themselves if the supporter tier works; enrol once Phase 7 is done so the store review happens soon after the web relaunch. Claude prepares: app name, subtitle, description (family voice), keywords, category (Games › Family/Kids; Apple Kids category with age band 6–8), privacy nutrition labels (data: identifiers (uid), user content (screen name, scores); not used for tracking), content rating questionnaire answers, screenshots (generate 6.7" and 6.1" iPhone and Android phone sets from the Browser pane/simulator with the `scripts/art/store-shots.mjs` frame compositor), privacy policy URL (T7.8), support URL (parents page).
 Done when: both listings exist in draft with all assets uploaded.
 
 ## T10.7 Apple Kids category compliance checklist
 
-Status: todo
+Status: done in code 2026-10-09 (docs/store/kids-compliance.md; GrownUpLink parental gate; no analytics in the apps)
 Depends on: T10.6
 Steps: no third-party analytics SDK that tracks (web analytics snippet off in the native build, or Cloudflare analytics which is cookieless; if GA4 is kept, disable it natively); parental gate (simple arithmetic question) before external links (parents page, support email) and before any purchase; no ads; no social features that expose kids publicly (friends-only already); account deletion in-app (T7.8). Document in `docs/store/kids-compliance.md`.
 Done when: the checklist is complete with evidence links.

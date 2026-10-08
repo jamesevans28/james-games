@@ -30,7 +30,7 @@ export default defineConfig(({ command, mode }): UserConfig => {
     logLevel: isBuild ? "warn" : "info",
     server: { port: 3000 },
     plugins: [
-      brandHtml(env.VITE_ANALYTICS_ID),
+      brandHtml(),
       tailwindcss(),
       react(),
       VitePWA({
