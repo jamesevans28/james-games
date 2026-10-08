@@ -2,6 +2,7 @@
 import Phaser from "phaser";
 import { dispatchGameOver } from "../../utils/gameEvents";
 import { getBest, setBest } from "../../utils/bestScore";
+import { zoneIndex } from "../../platform/input/gestures";
 
 const GAME_WIDTH = 540;
 const GAME_HEIGHT = 960;
@@ -339,8 +340,7 @@ export default class BlockerGame extends Phaser.Scene {
     const isBottomHalf = pointer.y >= GAME_HEIGHT / 2;
     if (!isBottomHalf) return;
 
-    const isLeftHalf = pointer.x < GAME_WIDTH / 2;
-    const slotIndex = isLeftHalf ? 0 : 1;
+    const slotIndex = zoneIndex(pointer.x, GAME_WIDTH, 2);
     const slot = this.shapeSlots[slotIndex];
     if (!slot || !slot.shape || !slot.container) return;
 

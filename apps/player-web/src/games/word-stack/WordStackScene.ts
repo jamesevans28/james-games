@@ -4,7 +4,7 @@ import { dispatchGameOver } from "../../utils/gameEvents";
 import {
   createOnScreenKeyboard,
   type OnScreenKeyboardInstance,
-} from "../../game/ui/onScreenKeyboard";
+} from "../../platform/input/onScreenKeyboard";
 import { getFiveLetterWordSet } from "../../game/words/dictionary";
 import { SCRABBLE_LETTER_SCORES, scoreScrabbleWord } from "../../game/words/scrabble";
 

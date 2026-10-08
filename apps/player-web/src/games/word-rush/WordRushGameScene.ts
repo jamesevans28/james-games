@@ -5,7 +5,7 @@ import { getRandomCategory, getRandomWord, type Category } from "./data";
 import {
   createOnScreenKeyboard,
   type OnScreenKeyboardInstance,
-} from "../../game/ui/onScreenKeyboard";
+} from "../../platform/input/onScreenKeyboard";
 
 const PLAY_WIDTH = 540;
 const PLAY_HEIGHT = 960;

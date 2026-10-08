@@ -15,7 +15,7 @@ import { rasterizePolyline } from "../useCases/rasterize";
 import { applyCapture } from "../useCases/captureFill";
 import { computeBorderMask } from "../useCases/borderMask";
 import { pointsForCapture } from "../useCases/score";
-import { createDPad, type DPadDirection, type DPadInstance } from "../../../game/ui/dpad";
+import { createDPad, type DPadDirection, type DPadInstance } from "../../../platform/input/dpad";
 import { dispatchGameOver } from "../../../utils/gameEvents";
 import { getBest, setBest } from "../../../utils/bestScore";
 
