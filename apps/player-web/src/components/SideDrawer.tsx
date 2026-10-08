@@ -309,6 +309,7 @@ export default function SideDrawer({
               {[
                 { to: "/about", label: "About us" },
                 { to: "/parents", label: "For grown-ups" },
+                { to: "/support", label: "Support us" },
                 { to: "/privacy", label: "Privacy" },
               ].map((l) => (
                 <Link
