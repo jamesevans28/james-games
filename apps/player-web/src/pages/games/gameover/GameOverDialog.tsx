@@ -145,6 +145,14 @@ function GameOverPanel({
               Close
             </button>
           </div>
+          {!showNudge && (
+            <p className="-mb-2 pt-1 text-center text-xs text-ink-2">
+              Made by a family.{" "}
+              <Link to="/support" className="font-bold underline underline-offset-4">
+                Support us
+              </Link>
+            </p>
+          )}
           {showNudge && (
             <Link
               to="/login"

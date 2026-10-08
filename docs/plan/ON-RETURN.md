@@ -19,6 +19,8 @@ Claude kept this list while working through the phases unattended (started 9 Oct
 6. **Branch protection (T9.2).** GitHub → Settings → Branches → protect `main`: require the `CI / ci` check, require a pull request, no force-push.
 7. **Backups (T9.6).** Create the S3 bucket and policy and add the `BACKUP_BUCKET` repo variable ([docs/runbooks/database-backup.md](../runbooks/database-backup.md)), then run it once and test a restore.
 
+8. **Ko-fi (T12.1).** Create a Ko-fi page called `games4james`, so `https://ko-fi.com/games4james` works (or tell Claude the real URL for `brand.json` `supportUrl`). Use the brand logo and a two-line blurb. Then check the costs table on `/support` ([config/costs.ts](../../apps/player-web/src/config/costs.ts)); Claude guessed the AWS and tools amounts.
+
 ## Questions (Claude picked a default so work could continue; change it if you disagree)
 
 - **Screen names (T6.7).** Generated names look like `bouncy-otter-42`. Kids can't use "James", "Tilly", "Harvey", "admin" or "official" inside a name, so nobody can pretend to be you. Rude words are filtered with the `obscenity` word list. Is that OK?

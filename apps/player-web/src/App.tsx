@@ -24,6 +24,7 @@ const NotificationsPage = lazy(() => import("./pages/notifications"));
 const PrivacyPage = lazy(() => import("./pages/privacy"));
 const AboutPage = lazy(() => import("./pages/about"));
 const ParentsPage = lazy(() => import("./pages/parents"));
+const SupportPage = lazy(() => import("./pages/support"));
 
 function AppRoutes() {
   const location = useLocation();
@@ -38,6 +39,7 @@ function AppRoutes() {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/parents" element={<ParentsPage />} />
+            <Route path="/support" element={<SupportPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<LoginPage />} />
             <Route

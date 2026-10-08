@@ -6,7 +6,7 @@ Expectations: with a small audience this is tens of dollars a month at best for 
 
 ## T12.1 Support page and link (before relaunch)
 
-Status: todo
+Status: done in code 2026-10-09 (`/support` with a costs table from `config/costs.ts`, linked from the drawer, About and the game-over small print); MANUAL: create the Ko-fi page at the URL in `brand.json` `supportUrl`
 Depends on: T7.8 (about/privacy pages), T8.7 (brand assets)
 Goal: one page that explains who makes the games, what it costs to run, and how to help, with zero compliance burden.
 Files: `apps/player-web/src/pages/support.tsx` (new), `components/SideDrawer.tsx`, `pages/about.tsx`, `src/config/brand.ts` (`supportUrl`)

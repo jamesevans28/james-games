@@ -69,7 +69,7 @@ const sitemapUrls = [
     changefreq: "monthly",
     priority: "0.3",
   },
-  ...["/about", "/parents"].map((page) => ({
+  ...["/about", "/parents", "/support"].map((page) => ({
     loc: `${domain}${page}`,
     lastmod: now,
     changefreq: "monthly",
