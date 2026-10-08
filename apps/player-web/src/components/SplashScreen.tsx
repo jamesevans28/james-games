@@ -28,7 +28,7 @@ export default function SplashScreen() {
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-paper">
       <div className="relative flex flex-col items-center gap-4 animate-bounce-in">
         <img src={brand.logoMark} alt="" className="w-32 h-32 animate-float" />
-        <Wordmark className="text-4xl" />
+        <Wordmark className="h-14" />
         <span className="text-sm font-semibold text-ink-2">by {makersLine()}</span>
       </div>
     </div>

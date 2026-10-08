@@ -357,7 +357,7 @@ export default function PlayGame() {
         image={
           meta?.thumbnail
             ? `${SITE_URL}${meta.thumbnail}`
-            : `${SITE_URL}/assets/shared/logo_square.png`
+            : `${SITE_URL}${brand.ogImage}`
         }
         keywords={seoKeywords}
         ogType="game"

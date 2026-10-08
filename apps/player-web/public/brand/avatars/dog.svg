@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="dog">
+<!-- Placeholder avatar until the Phase 8 AI set (T8.x). -->
+<circle cx="50" cy="54" r="30" fill="#D9A066" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M24 36c-12 4-12 26-4 32 6-6 8-20 4-32z" fill="#8B5E3C" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M76 36c12 4 12 26 4 32-6-6-8-20-4-32z" fill="#8B5E3C" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="50" cy="66" rx="15" ry="11" fill="#FFF3E2" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="39" cy="50" r="4.5" fill="#2B2118"/><circle cx="61" cy="50" r="4.5" fill="#2B2118"/><circle cx="40.5" cy="48.5" r="1.4" fill="#fff"/><circle cx="62.5" cy="48.5" r="1.4" fill="#fff"/><ellipse cx="50" cy="61" rx="5" ry="3.6" fill="#2B2118"/><path d="M45 69q5 4 10 0" fill="none" stroke="#2B2118" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

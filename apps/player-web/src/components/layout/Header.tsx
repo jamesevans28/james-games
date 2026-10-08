@@ -29,7 +29,7 @@ export default function Header() {
               alt=""
               className="w-10 h-10 group-hover:animate-wiggle"
             />
-            <Wordmark className="text-xl sm:text-2xl" />
+            <Wordmark className="h-8 sm:h-9" />
           </Link>
         </div>
         <div className="flex items-center gap-2">
@@ -74,7 +74,7 @@ export default function Header() {
             aria-label="Account"
           >
             {isAuthenticated ? (
-              <ProfileAvatar user={user} size={40} borderWidth={0} strokeWidth={0} rounded={true} />
+              <ProfileAvatar user={user} size={40} borderWidth={2.5} />
             ) : (
               <svg
                 width="20"

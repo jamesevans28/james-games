@@ -176,7 +176,7 @@ export default function HomeFeed() {
         description={brand.description}
         url={`${SITE_URL}/`}
         canonical={`${SITE_URL}/`}
-        image={`${SITE_URL}/assets/shared/logo_square.png`}
+        image={`${SITE_URL}${brand.ogImage}`}
         keywords={SITE_KEYWORDS.join(", ")}
         jsonLd={[
           buildWebsiteJsonLd(),

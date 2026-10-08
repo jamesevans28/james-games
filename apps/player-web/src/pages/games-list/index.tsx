@@ -153,7 +153,7 @@ export default function GamesList() {
         description={`Every game on ${brand.name}: little arcade, word and puzzle games made by ${makersLine()}. Free, no ads, no download.`}
         url={`${SITE_URL}/games-list`}
         canonical={`${SITE_URL}/games-list`}
-        image={`${SITE_URL}/assets/shared/logo_square.png`}
+        image={`${SITE_URL}${brand.ogImage}`}
         keywords={[...SITE_KEYWORDS, "game catalog", "all games", "browse games"].join(", ")}
         jsonLd={[
           buildWebsiteJsonLd(),

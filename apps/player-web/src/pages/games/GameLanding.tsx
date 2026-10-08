@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { trackShare } from "../../utils/analytics";
 import { type GameMeta } from "../../games";
+import { brand } from "../../config/brand";
 import {
   getTopScores,
   fetchRatingSummary,
@@ -212,7 +213,7 @@ export default function GameLanding({ meta, onPlay }: Props) {
         {/* Hero image */}
         <div
           className="aspect-square w-full max-w-md mx-auto bg-cover bg-center rounded-2xl border border-line shadow-card overflow-hidden"
-          style={{ backgroundImage: `url(${meta.thumbnail || "/assets/shared/logo_square.png"})` }}
+          style={{ backgroundImage: `url(${meta.thumbnail || brand.logoSquare})` }}
           title={meta.title}
         />
 
@@ -642,8 +643,6 @@ function TopBox({
               size={tall ? 56 : 44}
               borderWidth={2}
               strokeWidth={2}
-              borderColor={"#ffffff"}
-              strokeColor={"#000000"}
               title={row?.screenName ?? "Player"}
             />
           </div>

@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import brand from "./src/config/brand.json" with { type: "json" };
-import { brandHtml } from "./vite/brandHtml";
+import { brandHtml } from "./vite/brandHtml.ts";
 
 /**
  * One config for dev and production (T2.3 merged vite/config.dev.mjs and

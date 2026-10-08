@@ -2,11 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ProfileAvatar } from "../../components/profile";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { updatePreferences } from "../../lib/api";
-
-const TOTAL = 89;
-
-// Avatar numbers to exclude from selection
-const EXCLUDED_AVATARS = [26];
+import { AVATARS, avatarFor } from "../../config/avatars";
 
 export default function AvatarSelectPage() {
   const { user } = useAuth();
@@ -19,11 +15,7 @@ export default function AvatarSelectPage() {
   useEffect(() => {
     // Only set once we have a user and only on initial load.
     if (!user || selected !== null) return;
-    const av = (user as any)?.avatar as number | undefined;
-    // If user's current avatar is excluded, default to 1, otherwise use their avatar or 1
-    const defaultAvatar =
-      typeof av === "number" && av >= 1 && av <= TOTAL && !EXCLUDED_AVATARS.includes(av) ? av : 1;
-    setSelected(defaultAvatar);
+    setSelected(avatarFor((user as { avatar?: unknown }).avatar).id);
   }, [user, selected]);
 
   const handleSelect = useCallback(
@@ -72,19 +64,17 @@ export default function AvatarSelectPage() {
       )}
 
       <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-        {Array.from({ length: TOTAL })
-          .map((_, i) => i + 1)
-          .filter((id) => !EXCLUDED_AVATARS.includes(id))
-          .map((id) => {
+        {AVATARS.map(({ id, name }) => {
             const isSelected = selected === id;
             return (
               <button
                 key={id}
                 onClick={() => handleSelect(id)}
-                className={`p-0 relative rounded-md focus:outline-none ${
+                className={`p-0 relative rounded-full focus:outline-none ${
                   isSelected ? "ring-4 ring-brand" : ""
                 }`}
                 aria-pressed={isSelected}
+                aria-label={name}
                 disabled={saving}
                 style={{ width: 72, height: 72 }}
               >
@@ -92,7 +82,7 @@ export default function AvatarSelectPage() {
                   user={{ avatar: id }}
                   size={72}
                   borderWidth={3}
-                  borderColor={isSelected ? "var(--color-brand)" : "var(--color-line)"}
+                  borderColor={isSelected ? "var(--color-brand)" : "var(--color-edge)"}
                 />
                 {isSelected && (
                   <span className="absolute -top-1 -right-1 bg-brand text-on-brand rounded-full px-1 text-xs shadow-sticker font-bold">

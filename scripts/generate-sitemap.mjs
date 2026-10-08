@@ -17,10 +17,13 @@ const root = process.cwd();
 const gamesIndex = path.join(root, "apps/player-web/src/games/index.ts");
 const seoKeywordsPath = path.join(root, "apps/player-web/src/utils/seoKeywords.ts");
 const publicDir = path.join(root, "apps/player-web/public");
+const brandJson = JSON.parse(
+  fs.readFileSync(path.join(root, "apps/player-web/src/config/brand.json"), "utf8")
+);
 
 await fs.promises.mkdir(publicDir, { recursive: true });
 
-const domain = process.env.SITE_ORIGIN || "https://flingo.fun";
+const domain = process.env.SITE_ORIGIN || brandJson.origin;
 const now = new Date().toISOString();
 
 // Parse games registry
@@ -208,7 +211,7 @@ for (const game of gameEntries) {
   <meta property="og:description" content="${seoDesc}">
   <meta property="og:url" content="${domain}/games/${game.id}">
   <meta property="og:image" content="${domain}${
-    game.thumbnail || "/assets/shared/logo_square.png"
+    game.thumbnail || brandJson.logoSquare
   }">
   <meta property="og:site_name" content="flingo.fun">
   
@@ -217,7 +220,7 @@ for (const game of gameEntries) {
   <meta name="twitter:title" content="${game.title} — Play Free at flingo.fun">
   <meta name="twitter:description" content="${seoDesc}">
   <meta name="twitter:image" content="${domain}${
-    game.thumbnail || "/assets/shared/logo_square.png"
+    game.thumbnail || brandJson.logoSquare
   }">
   
   <!-- JSON-LD Structured Data -->
@@ -228,7 +231,7 @@ for (const game of gameEntries) {
     "name": "${game.title}",
     "description": "${seoDesc.replace(/"/g, '\\"')}",
     "url": "${domain}/games/${game.id}",
-    "image": "${domain}${game.thumbnail || "/assets/shared/logo_square.png"}",
+    "image": "${domain}${game.thumbnail || brandJson.logoSquare}",
     "gamePlatform": ["Web Browser", "Mobile Browser", "PWA"],
     "applicationCategory": "Game",
     "operatingSystem": "Any",
@@ -285,7 +288,7 @@ const gamesListHtml = `<!DOCTYPE html>
   <meta property="og:title" content="All Free Online Games | flingo.fun">
   <meta property="og:description" content="Browse all free games at flingo.fun! Kid-friendly games for all ages.">
   <meta property="og:url" content="${domain}/">
-  <meta property="og:image" content="${domain}/assets/shared/logo_square.png">
+  <meta property="og:image" content="${domain}${brandJson.ogImage}">
   
   <style>
     body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }

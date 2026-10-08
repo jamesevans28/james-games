@@ -126,7 +126,7 @@ export default function ProfilePage() {
       return {
         ...entry,
         title: meta?.title ?? entry.gameId,
-        thumbnail: meta?.thumbnail ?? "/assets/shared/logo_square.png",
+        thumbnail: meta?.thumbnail ?? brand.logoSquare,
       };
     });
   }, [data?.recentGames, getGame]);

@@ -27,7 +27,11 @@
     "deps:check": "npm outdated --workspaces --include-workspace-root --long"
   },
   "devDependencies": {
+    "@fontsource/baloo-2": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0",
+    "opentype.js": "^2.0.0",
     "pureimage": "^0.3.17",
+    "sharp": "^0.35.5",
     "word-list": "^4.1.0"
   },
   "engines": {
