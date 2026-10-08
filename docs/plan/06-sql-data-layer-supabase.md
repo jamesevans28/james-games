@@ -10,7 +10,7 @@ Free-tier facts to design around (verify on supabase.com/pricing at the time):
 
 ## T6.0 New Firebase project `games4james` (Claude-scripted, MANUAL to finish)
 
-Status: todo
+Status: blocked (MANUAL: James runs `scripts/firebase-setup.sh`, then enables Google and brands the consent screen; see `docs/firebase-auth-setup.md`). Claude\'s part is done (2026-10-09): the script, with `--dry-run`, uses the Firebase CLI plus gcloud REST and pauses once for the console-only "Get started". There is a `scripts/lib/set-env.mjs` helper that writes `.env.local` keys without printing values, the doc is rewritten, and the flingo-data one-off scripts are deleted. The `migrated` account type goes with the DynamoDB code in T6.3. The local sign-in check runs once James has run the script.
 Depends on: nothing (do this first in Phase 6; Phase 7 auth work needs it)
 Goal: a clean Firebase project with no trace of flingo, used by local dev from now on and by production at relaunch.
 Files: `scripts/firebase-setup.sh` (new), `docs/firebase-auth-setup.md` (rewrite), `apps/player-web/.env.example`, `apps/admin-web/.env.example`, `apps/backend-api/.env.example`
