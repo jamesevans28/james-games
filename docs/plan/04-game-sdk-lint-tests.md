@@ -25,11 +25,16 @@ apps/player-web/src/games/<id>/
 
 ## T4.1 ESLint 10 flat config, Prettier, scripts
 
-Status: todo
-Depends on: Phase 2 complete
-Goal: `npm run lint` runs across all workspaces and is clean; formatting is automatic.
-Files: `eslint.config.js` (root), `.prettierrc`, `.prettierignore`, root and workspace `package.json`, `.vscode/settings.json` (optional), `.github/workflows/*` (gate added in Phase 9)
-Steps:
+Status: done (2026-10-08). The config is root `eslint.config.mjs`, plus Prettier with a format pass over the repo. Lint went from 1,022 problems to 0 errors.
+
+- Player-web app code, admin and the backend's non-`any` issues were fixed properly: typed API responses, `errorMessage` in the web app and `lib/errors.ts` in the backend, and admin 500s no longer echo raw messages.
+- Legacy games carry a file-level `eslint-disable … -- TODO T5.x` header. DynamoDB code carries `-- TODO T6.3`, and the one-off scripts `-- TODO T6.4`.
+- The React Compiler-era hooks rules are warnings (see DECISIONS).
+- Found while typing: `GET /auth/firebase/me` doesn't return `experience`, `betaTester` or `admin`, which `fetchProfile` reads. It belongs with the `/me` merge in T6.3.
+  Depends on: Phase 2 complete
+  Goal: `npm run lint` runs across all workspaces and is clean; formatting is automatic.
+  Files: `eslint.config.js` (root), `.prettierrc`, `.prettierignore`, root and workspace `package.json`, `.vscode/settings.json` (optional), `.github/workflows/*` (gate added in Phase 9)
+  Steps:
 
 1. `npm i -D eslint@latest typescript-eslint@latest eslint-plugin-react-hooks@latest eslint-plugin-react-refresh@latest eslint-config-prettier prettier globals -w .` (root).
 2. One root `eslint.config.js` using `typescript-eslint` recommended-type-checked for `apps/*/src/**/*.{ts,tsx}`, react-hooks for the two web apps, node globals for backend and scripts. Rules to add: `no-console` (`warn`/`error` allowed), `@typescript-eslint/no-explicit-any: error`, `no-restricted-imports` banning `../utils/gameEvents` and direct `localStorage` from `src/games/**` (games must use the host), `no-restricted-globals` for `window.location` in games.
@@ -39,7 +44,7 @@ Steps:
 
 ## T4.2 Vitest setup and first tests
 
-Status: todo
+Status: done (2026-10-08). Vitest 5 runs as one root `vitest.config.ts` with four `test.projects`: player-web and admin-web on jsdom, backend-api and infra on node. All node:test files were converted, and the new playHistory, scrabble, box-cutter captureFill/score and backend errors tests were added. `npm run test:coverage` writes `coverage/`. The 80% line threshold is enforced for `src/platform/**`; game use-cases join it per game in Phase 5.
 Depends on: T4.1
 Goal: `npm test` runs Vitest across workspaces with coverage on pure logic.
 Files: `vitest.workspace.ts` (root), `apps/*/vitest.config.ts`, `apps/*/src/**/*.test.ts`
