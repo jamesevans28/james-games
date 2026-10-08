@@ -28,6 +28,9 @@ export default defineConfig({
           root: "apps/backend-api",
           include: ["src/**/*.test.ts"],
           environment: "node",
+          // Each file boots an in-process Postgres (pglite, src/test/db.ts): ~1 s idle, more under load.
+          testTimeout: 20_000,
+          hookTimeout: 30_000,
         },
       },
       {

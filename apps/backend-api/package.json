@@ -12,7 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/migrate.ts",
     "db:seed": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/seed.ts",
-    "db:ping": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/ping.ts"
+    "db:ping": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/ping.ts",
+    "db:housekeeping": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/housekeeping.run.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1147.0",
