@@ -36,3 +36,7 @@ Decisions already made. Add new ones with a date. Do not reopen without James as
 - One prompt source (`docs/art/prompts/*.md`) for both generation routes: by hand (`generate.mjs --dry-run`, free) or the OpenAI Images API (`IMAGE_API_KEY`, a few cents an image, run only when James asks). Default is by hand until James adds a key.
 - Background removal is a flood fill from the image edges through paper-coloured pixels (`scripts/art/remove-bg.mjs`), not an ML model: our art is always drawn on plain paper with thick outlines, and this needs no 100 MB model download. If it struggles on real images, fall back to `@imgly/background-removal-node`.
 - Text on covers and OG cards is drawn by script in the brand fonts, never by the image model.
+
+## 2026-10-09: Analytics (T7.9)
+
+Cloudflare Web Analytics, not GA4. It is free and cookieless and collects no personal data, which is right for a kids' site and the App Store Kids category, and needs no consent banner. The beacon goes in production builds only, through `brand.analyticsId` (the site token) and the brand-html Vite plugin, never inline. Cloudflare has no custom events, so game plays are counted first-party in the `plays` table (admin dashboard); `utils/analytics.ts` keeps the SDK's event calls as dev-only logs. GA4 (`G-8EJGYV0500`) is no longer loaded.

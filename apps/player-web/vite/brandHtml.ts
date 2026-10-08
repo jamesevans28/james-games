@@ -32,16 +32,15 @@ function jsonLd(): string {
     .join("\n    ");
 }
 
-function analytics(id: string): string {
-  if (!id) return "";
-  const safe = encodeURIComponent(id);
-  return `<script async src="https://www.googletagmanager.com/gtag/js?id=${safe}"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() { dataLayer.push(arguments); }
-      gtag("js", new Date());
-      gtag("config", "${safe}");
-    </script>`;
+/**
+ * Cloudflare Web Analytics (T7.9, DECISIONS 2026-10-09): cookieless page views, no
+ * personal data. `token` is the site token from the Cloudflare dashboard. `spa: true`
+ * counts route changes. Production builds only.
+ */
+function analytics(token: string): string {
+  if (!/^[a-f0-9]{32}$/i.test(token)) return "";
+  const beacon = JSON.stringify({ token, spa: true });
+  return `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='${beacon}'></script>`;
 }
 
 /**
@@ -57,8 +56,12 @@ export function brandHtml(analyticsId: string | undefined): Plugin {
     ),
     makersLine: makersLine(brand.makers),
   };
+  let isBuild = false;
   return {
     name: "brand-html",
+    configResolved(config) {
+      isBuild = config.command === "build";
+    },
     transformIndexHtml(html) {
       return html
         .replace(/%BRAND\.([a-zA-Z]+)%/g, (match, key: string) => {
@@ -67,7 +70,10 @@ export function brandHtml(analyticsId: string | undefined): Plugin {
           return escapeHtml(value);
         })
         .replace("<!-- %BRAND_JSONLD% -->", jsonLd())
-        .replace("<!-- %BRAND_ANALYTICS% -->", analytics(analyticsId ?? brand.analyticsId));
+        .replace(
+          "<!-- %BRAND_ANALYTICS% -->",
+          isBuild ? analytics(analyticsId ?? brand.analyticsId) : "",
+        );
     },
   };
 }

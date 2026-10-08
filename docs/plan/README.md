@@ -84,7 +84,7 @@ Notes: risks, alternatives, references.
 - games4james.com and api.games4james.com are live (S3/CloudFront + Lambda). flingo.fun no longer resolves.
 - The live API still answers, with 5–12 players per game through Sept 2026. **This data is not kept** (full reset, 9 Oct 2026). The DynamoDB tables are deleted in Phase 13.
 - Firebase project `flingo-fun` is the prototype's; it is replaced by a new `games4james` project in T6.0 and deleted in Phase 13.
-- GA4 property `G-8EJGYV0500` belongs to the old setup; T7.9 picks the analytics for the relaunch.
+- Analytics is Cloudflare Web Analytics (cookieless, T7.9); the old GA4 property `G-8EJGYV0500` is no longer loaded and can be deleted.
 - Deploys stay manual (`workflow_dispatch`) until Phase 13 turns auto-deploy on.
 - Node on James's Mac: 22.14 at time of writing; target Node 24 LTS (Phase 2).
 - Latest package versions at time of writing are listed in Phase 2.
