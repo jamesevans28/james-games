@@ -5,7 +5,7 @@ The brand is Games4James, by James, Tilly and Harvey. flingo.fun is gone. The vi
 Good news already true: DynamoDB tables, the Lambda, the API domain and the home-screen icon are all Games4James. This phase deletes the flingo layer and makes one coherent identity.
 
 ## T3.1 `brand.ts` and the sticker-book token set
-Status: todo
+Status: done (2026-10-08). Brand values live in `src/config/brand.json` (so Vite and scripts can read them) and `brand.ts` re-exports them with `makersLine`, `siteUrl`, `BRAND_FONTS`, `BRAND_COLORS`. Extra tokens beyond the list: `card`, `edge`, `scrim`, `on-brand`, `on-accent`. The default Tailwind palette is off (`--color-*: initial`). The only remaining `flingo` strings under `apps/` are the legacy key names in `src/utils/storageKeys.ts` (remove after one release) and the real Firebase project id `flingo-fun`. A placeholder `public/brand/logo-mark.svg` ships now; T3.2 makes the full set. Meta keywords, the `@flingofun` handle and the WebSite SearchAction/alternateName were removed here (T3.4 steps 3 and 5 partly done).
 Depends on: Phase 2 complete
 Goal: one file owns every brand string, colour and asset path; the Tailwind theme uses semantic tokens.
 Files: `apps/player-web/src/config/brand.ts` (new), `apps/player-web/src/index.css` (`@theme` block), `apps/player-web/index.html`, `apps/player-web/vite.config.ts` (manifest), `apps/admin-web/src/**` (title only)
@@ -31,7 +31,7 @@ Steps:
 Done when: `git grep -i flingo -- apps ':!apps/player-web/public'` returns nothing; the app renders in the new palette in light and dark; `npm run typecheck` passes.
 
 ## T3.2 Logo, icons and share image
-Status: todo
+Status: done (2026-10-08) except the post-deploy checks (Lighthouse install audit, link-preview tester) that run in T3.6. Placeholder art: `logo-mark.svg` is a hand-written sticker game pad; `logo.svg` and the PNGs come from `node scripts/generate-brand-icons.mjs` (sharp + opentype.js, fonts from @fontsource, text converted to paths). Avatars are 8 placeholder SVG animals in `public/brand/avatars/`, defined in `src/config/avatars.ts`; old sprite-sheet numbers wrap onto them, so no data migration. player-web is now `"type": "module"`.
 Depends on: T3.1, T8.1 (style bible) for the final art; a placeholder set can ship first
 Goal: one logo system, a full icon set, a proper Open Graph image.
 Files: `apps/player-web/public/brand/` (new), `apps/player-web/public/favicon.svg`, `public/favicon.png`, `public/assets/shared/*`
@@ -44,7 +44,7 @@ Steps:
 Done when: Lighthouse PWA audit shows installable with maskable icon; sharing the home URL in a link-preview tester shows the new OG image; no file named `flingo*` remains in `public/`.
 
 ## T3.3 Copy and credits
-Status: todo
+Status: done (2026-10-08). Feed tiles show one plain status line ("Your best: N", "Played before", "Not played yet"); New/Updated/Continue stay as the feed badge. The PIN hint follows the real 4–8 digit rule rather than "6 numbers". Registry entries gained `makers`, `note` and `noteBy`. Puzzle answers like "TOM HANKS" in Word Rush's word lists are content, not the placeholder character, and stay until Word Rush is re-themed in Phase 5. Manifest screenshots (T3.2) were taken here.
 Depends on: T3.1
 Goal: the site reads as made by a family, not an app store.
 Files: `components/layout/Header.tsx`, `SideDrawer.tsx`, `pages/home/HomeFeed.tsx`, `pages/games/GameLanding.tsx`, `GameOver.tsx`, `pages/firebase-login.tsx`, `games/index.ts` (titles/descriptions), `utils/seoKeywords.ts` (`GAME_SEO_META`)
@@ -58,7 +58,7 @@ Steps:
 Done when: a read-through of every screen in the Browser pane finds no "flingo", "Tom", "For You", or emoji section markers; the landing page shows "Made by James, Tilly & Harvey".
 
 ## T3.4 SEO origin, static pages, sitemap, structured data
-Status: todo
+Status: done (2026-10-08) in code; MANUAL: attach the CloudFront Function (infra/cloudfront/README.md), then the curl and Rich Results checks run after the T3.6 deploy. The generator reads brand.json, asserts the parsed game count matches the registry's `load()` entries (not a fixed 16, so new games don't break it), skips beta and `status: "inactive"` games, and now actually reads GAME_SEO_META (the old parser never matched). Static pages use a raster `og:image` (SVG thumbnails fall back to the brand card), escape every value, and redirect people with a path-guarded script. Meta keywords and the keyword lists are gone. Found while here: the deploy marks everything under `dist/assets/` immutable, including un-hashed game art copied from `public/assets/` (see T3.6 step 5).
 Note (from T1.9): stop generating public/games-index.html in scripts/generate-sitemap.mjs and delete it (deleting the file alone just regenerates it).
 Depends on: T3.1
 Goal: every URL the site advertises is games4james.com, and each game has its own link preview.
@@ -72,7 +72,7 @@ Steps:
 Done when: `curl -A facebookexternalhit https://games4james.com/games/snapadile` returns the Snapadile static page with its own `og:image`; `sitemap.xml` has 0 flingo URLs; Google Rich Results test passes for the home page and one game page.
 
 ## T3.5 Firebase auth domain, authorised domains, OAuth consent
-Status: todo
+Status: blocked (MANUAL: James runs steps 1–4). Claude's part is done (2026-10-08): `docs/firebase-auth-setup.md` has a "Games4James domain setup" section with every value, and a placeholder `/privacy` page exists (linked from the side drawer and in the sitemap). The privacy page says follower presence is visible to anyone who follows you, because that is true today; T7.x makes it friends-only and must update the page.
 Depends on: T3.1
 Goal: the Google/Apple sign-in screens say Games4James, not flingo-fun.
 MANUAL (James) with Claude preparing the exact values:
@@ -84,7 +84,11 @@ MANUAL (James) with Claude preparing the exact values:
 Done when: signing in with Google from games4james.com shows "Games4James" on the consent screen and the redirect goes through `auth.games4james.com`.
 
 ## T3.6 Deploy the rebrand and move Search Console
-Status: todo
+Status: blocked (needs T3.5 MANUAL steps, James's OK to change repo variables, and a manual deploy run). Done so far (2026-10-08): step 5's header fix is in `deploy.yml`. Only Vite's hashed bundles (files directly in `dist/assets/`) are `immutable`. Game art in `dist/assets/<game>/` gets `max-age=86400`. `sw.js`, `registerSW.js` and `manifest.webmanifest` are `no-cache`, and `index.html` stays `no-store`.
+Repo variables on 2026-10-08:
+- `CORS_ALLOWED_ORIGINS` still lists the flingo origins. Proposed value: `https://games4james.com,https://admin.games4james.com`. The admin origin is needed by the admin app. Production does not need `localhost`, because local dev uses the local API.
+- `VITE_FIREBASE_AUTH_DOMAIN` is `flingo-fun.firebaseapp.com`. It becomes `auth.games4james.com` once T3.5 step 2 shows Connected.
+- `VITE_API_BASE_URL` is already correct.
 Depends on: T3.2, T3.3, T3.4, T3.5, Phase 9 pipeline or the existing one
 Goal: games4james.com serves the rebranded build; search engines know.
 Steps:

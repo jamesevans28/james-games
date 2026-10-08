@@ -68,15 +68,6 @@ export default class LetterSelectionScene extends Phaser.Scene {
         strokeThickness: 6,
       })
       .setOrigin(0.5);
-
-    this.add
-      .text(PLAY_WIDTH / 2, 110, "with Tom", {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "28px",
-        fontStyle: "italic",
-        color: "#fbbf24",
-      })
-      .setOrigin(0.5);
   }
 
   private createInstructions() {

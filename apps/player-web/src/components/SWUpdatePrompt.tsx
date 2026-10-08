@@ -147,18 +147,18 @@ export default function SWUpdatePrompt() {
   return (
     <>
       {show && (
-        <div className="fixed inset-x-0 bottom-3 mx-auto w-[92%] max-w-md rounded-xl bg-surface-card/95 backdrop-blur px-4 py-3 shadow-card-hover border border-flingo-200/30 text-sm z-50">
+        <div className="fixed inset-x-0 bottom-3 mx-auto w-[92%] max-w-md rounded-xl bg-card/95 backdrop-blur px-4 py-3 shadow-card-hover border border-line text-sm z-50">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-flingo-800">New version available</span>
+            <span className="text-ink">New version available</span>
             <div className="flex gap-2">
               <button
-                className="px-3 py-1.5 rounded-md bg-flingo-100 text-flingo-800"
+                className="px-3 py-1.5 rounded-md bg-paper-2 text-ink"
                 onClick={closeUpdate}
               >
                 Later
               </button>
               <button
-                className="px-3 py-1.5 rounded-md bg-neon-lime text-surface-dark font-bold"
+                className="px-3 py-1.5 rounded-md bg-brand text-on-brand font-bold"
                 onClick={reloadToUpdate}
               >
                 Reload
@@ -168,7 +168,7 @@ export default function SWUpdatePrompt() {
         </div>
       )}
       {isUpdating && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/70 text-white">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-scrim/70 text-white">
           <div className="animate-pulse text-sm tracking-[0.35em]">UPDATING</div>
           <p className="mt-4 text-center text-base font-semibold max-w-xs">
             Refreshing to the latest version… Stay put for just a moment.

@@ -10,6 +10,9 @@ export type GameMeta = {
   createdAt?: string; // ISO date
   updatedAt?: string; // ISO date
   betaOnly?: boolean; // true when the game is only visible to beta testers
+  makers?: string[]; // who made it; defaults to brand.makers
+  note?: string; // "Designer's note" from the kid who made it (written in Phase 11)
+  noteBy?: string; // which maker wrote the note
   load: () => Promise<{ mount: (container: HTMLElement) => { destroy: () => void } }>;
 };
 
@@ -157,7 +160,7 @@ export const games: GameMeta[] = [
   },
   {
     id: "word-rush",
-    title: "Word Rush with Tom",
+    title: "Word Rush",
     description: "Guess words and phrases with your selected letters. 2-minute timer per level!",
     objective: "Solve the word puzzle before time runs out.",
     controls: "Tap letters to guess the word.",

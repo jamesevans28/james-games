@@ -2,122 +2,56 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- SVG favicon (modern browsers) -->
     <!-- Ensure relative module imports resolve correctly on nested routes -->
     <base href="/" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <!-- PNG fallback for older browsers -->
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- iOS PWA meta -->
+    <!-- %BRAND.*% placeholders are filled from src/config/brand.json by the brand-html plugin in vite.config.ts -->
+    <link rel="icon" type="image/svg+xml" href="%BRAND.logoMark%" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/brand/icon-32.png" />
+    <link rel="apple-touch-icon" href="/brand/icon-180.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="flingo.fun" />
-    <!-- Apple Touch Icon for iOS Home Screen -->
-    <link rel="apple-touch-icon" href="/assets/shared/logo_square.png" />
-    <!-- The PWA plugin will inject the manifest link at build time -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="%BRAND.name%" />
+    <meta name="theme-color" content="%BRAND.themeColor%" />
+    <!-- The PWA plugin injects the manifest link at build time -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&family=Patrick+Hand&display=swap"
       rel="stylesheet"
     />
-    <title>Free Online Games for Kids & Families | Play Instantly at flingo.fun</title>
-    <meta
-      name="description"
-      content="Play free online games at flingo.fun! Kid-friendly arcade games, puzzles, and skill games. No download required - just tap and play instantly on any device!"
-    />
-    <!-- SEO Keywords -->
-    <meta
-      name="keywords"
-      content="free online games, free games, kid friendly games, family games, browser games, no download games, arcade games, puzzle games, skill games, mobile games, HTML5 games, instant play games, safe games for kids"
-    />
-    <meta name="author" content="flingo.fun" />
+    <title>%BRAND.name% | %BRAND.tagline%</title>
+    <meta name="description" content="%BRAND.description%" />
+    <meta name="author" content="%BRAND.makersLine%" />
     <meta
       name="robots"
       content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     />
-    <link rel="canonical" href="https://flingo.fun/" />
+    <link rel="canonical" href="%BRAND.origin%/" />
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="flingo.fun" />
-    <meta property="og:locale" content="en_US" />
-    <meta
-      property="og:title"
-      content="Free Online Games for Kids & Families | Play Instantly at flingo.fun"
-    />
-    <meta
-      property="og:description"
-      content="Play free kid-friendly games at flingo.fun! Arcade, puzzle, and skill games - no download, just instant fun on any device."
-    />
-    <meta property="og:url" content="https://flingo.fun/" />
-    <meta property="og:image" content="https://flingo.fun/assets/shared/logo_square.png" />
-    <meta property="og:image:width" content="512" />
-    <meta property="og:image:height" content="512" />
-    <meta property="og:image:alt" content="flingo.fun - Free Online Games" />
+    <meta property="og:site_name" content="%BRAND.name%" />
+    <meta property="og:locale" content="en_AU" />
+    <meta property="og:title" content="%BRAND.name% | %BRAND.tagline%" />
+    <meta property="og:description" content="%BRAND.description%" />
+    <meta property="og:url" content="%BRAND.origin%/" />
+    <meta property="og:image" content="%BRAND.origin%%BRAND.ogImage%" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="%BRAND.name%" />
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@flingofun" />
-    <meta name="twitter:title" content="Free Online Games for Kids & Families | flingo.fun" />
-    <meta
-      name="twitter:description"
-      content="Play free kid-friendly games at flingo.fun! No download, just instant fun on any device."
-    />
-    <meta name="twitter:image" content="https://flingo.fun/assets/shared/logo_square.png" />
-    <meta name="theme-color" content="#c8ff32" />
-    <!-- Structured Data: WebSite -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "flingo.fun",
-        "alternateName": "Flingo Games",
-        "url": "https://flingo.fun/",
-        "description": "Play free online games at flingo.fun! Kid-friendly browser-based games you can play instantly on any device.",
-        "publisher": {
-          "@type": "Organization",
-          "name": "flingo.fun",
-          "url": "https://flingo.fun/",
-          "logo": {
-            "@type": "ImageObject",
-            "url": "https://flingo.fun/assets/shared/logo_square.png"
-          }
-        }
-      }
-    </script>
-    <!-- Structured Data: Organization -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "flingo.fun",
-        "url": "https://flingo.fun/",
-        "logo": "https://flingo.fun/assets/shared/logo_square.png",
-        "sameAs": [],
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "contactType": "customer support",
-          "url": "https://flingo.fun/"
-        }
-      }
-    </script>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8EJGYV0500"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
-
-      gtag("config", "G-8EJGYV0500");
-    </script>
+    <meta name="twitter:title" content="%BRAND.name% | %BRAND.tagline%" />
+    <meta name="twitter:description" content="%BRAND.description%" />
+    <meta name="twitter:image" content="%BRAND.origin%%BRAND.ogImage%" />
+    <!-- Structured data: WebSite + Organization (brand-html plugin) -->
+    <!-- %BRAND_JSONLD% -->
+    <!-- Google Analytics, only when brand.analyticsId is set (brand-html plugin) -->
+    <!-- %BRAND_ANALYTICS% -->
   </head>
 
-  <body
-    class="min-h-screen bg-gradient-to-b from-flingo-50 via-orange-50 to-emerald-50 text-gray-800"
-  >
+  <body class="min-h-screen bg-paper text-ink">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

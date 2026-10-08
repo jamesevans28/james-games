@@ -30,7 +30,7 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 px-4 py-8 text-white">
       <div className="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-slate-950/70 p-8 shadow-2xl backdrop-blur">
-        <p className="text-xs uppercase tracking-[0.4em] text-slate-500">James Games</p>
+        <p className="text-xs uppercase tracking-[0.4em] text-slate-500">Games4James</p>
         <h1 className="mt-2 text-3xl font-semibold">Admin Access</h1>
         <p className="mt-2 text-sm text-slate-400">
           Sign in with your Google account. Only whitelisted administrators can access this portal.

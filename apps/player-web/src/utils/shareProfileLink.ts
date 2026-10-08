@@ -1,4 +1,6 @@
-const DEFAULT_BASE = "https://flingo.fun";
+import { brand } from "../config/brand";
+
+const DEFAULT_BASE = brand.origin;
 
 export function buildProfileLink(userId: string) {
   if (!userId) return DEFAULT_BASE;
@@ -14,12 +16,12 @@ export async function shareProfileLink(opts: {
   isSelf?: boolean;
 }) {
   const url = buildProfileLink(opts.userId);
-  const name = opts.screenName?.trim() || "flingo.fun player";
+  const name = opts.screenName?.trim() || `${brand.name} player`;
   const shareData = {
-    title: `${name} on flingo.fun`,
+    title: `${name} on ${brand.name}`,
     text: opts.isSelf
-      ? `Follow me on flingo.fun! Here's my link: ${url}`
-      : `Follow ${name} on flingo.fun: ${url}`,
+      ? `Follow me on ${brand.name}! Here's my link: ${url}`
+      : `Follow ${name} on ${brand.name}: ${url}`,
     url,
   };
 

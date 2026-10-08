@@ -14,6 +14,7 @@ import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { ExperienceBar } from "../../components/ExperienceBar";
 import Seo from "../../components/Seo";
 import { SITE_URL } from "../../utils/seoKeywords";
+import { brand } from "../../config/brand";
 
 interface ProfileResponse {
   profile: {
@@ -125,19 +126,19 @@ export default function ProfilePage() {
       return {
         ...entry,
         title: meta?.title ?? entry.gameId,
-        thumbnail: meta?.thumbnail ?? "/assets/shared/logo_square.png",
+        thumbnail: meta?.thumbnail ?? brand.logoSquare,
       };
     });
   }, [data?.recentGames, getGame]);
 
   if (loading) {
-    return <div className="p-4 text-flingo-700 font-medium">Loading profile…</div>;
+    return <div className="p-4 text-ink-2 font-medium">Loading profile…</div>;
   }
   if (notFound) {
     return (
       <div className="p-4">
-        <p className="text-lg font-bold text-flingo-900">Player not found.</p>
-        <Link to="/" className="text-flingo-700 hover:text-neon-lime font-medium">
+        <p className="text-lg font-bold text-ink">Player not found.</p>
+        <Link to="/" className="text-ink-2 hover:text-brand font-medium">
           ← Back to games
         </Link>
       </div>
@@ -145,7 +146,7 @@ export default function ProfilePage() {
   }
   if (!data) {
     return (
-      <div className="p-4 text-neon-pink font-medium">{error ?? "Failed to load profile."}</div>
+      <div className="p-4 text-grape font-medium">{error ?? "Failed to load profile."}</div>
     );
   }
 
@@ -154,10 +155,8 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
       <Seo
-        title={`${data.profile.screenName ?? "Player"} — Profile | flingo.fun`}
-        description={`Check out ${
-          data.profile.screenName ?? "Player"
-        }'s game stats and high scores on flingo.fun - free online games for everyone.`}
+        title={`${data.profile.screenName ?? "Player"} | ${brand.name}`}
+        description={`${data.profile.screenName ?? "Player"}'s scores on ${brand.name}.`}
         url={`${SITE_URL}/profile/${userId}`}
         canonical={`${SITE_URL}/profile/${userId}`}
         noindex={true}
@@ -167,7 +166,7 @@ export default function ProfilePage() {
           {data.isSelf ? (
             <Link
               to="/settings/avatar"
-              className="rounded-full focus:outline-none focus:ring-2 focus:ring-neon-lime/50"
+              className="rounded-full focus:outline-none focus:ring-2 focus:ring-brand/50"
               aria-label="Edit avatar"
             >
               <ProfileAvatar user={{ avatar: data.profile.avatar ?? 1 }} size={72} />
@@ -177,13 +176,13 @@ export default function ProfilePage() {
           )}
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-extrabold text-flingo-900">
+              <h1 className="text-2xl font-extrabold text-ink">
                 {data.profile.screenName ?? "Player"}
               </h1>
               {data.isSelf && (
                 <Link
                   to="/settings"
-                  className="p-1.5 rounded-full border border-flingo-200/30 text-flingo-600 hover:text-neon-lime hover:border-neon-lime/50 focus:outline-none focus:ring-2 focus:ring-neon-lime/50 transition-colors"
+                  className="p-1.5 rounded-full border border-line text-ink-2 hover:text-brand hover:border-brand/50 focus:outline-none focus:ring-2 focus:ring-brand/50 transition-colors"
                   aria-label="Edit screen name"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -206,13 +205,13 @@ export default function ProfilePage() {
                     progress={data.profile.experience.progress}
                     required={data.profile.experience.required}
                   />
-                  <p className="text-xs text-flingo-600 mt-1 font-medium">
+                  <p className="text-xs text-ink-2 mt-1 font-medium">
                     {Math.max(0, Math.round(data.profile.experience.remaining))} XP to level{" "}
                     {Math.min(100, data.profile.experience.level + 1)}
                   </p>
                 </div>
               ) : (
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-neon-lime bg-neon-lime/10 px-3 py-1.5 rounded-full mt-2 border border-neon-lime/30">
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-brand bg-brand/10 px-3 py-1.5 rounded-full mt-2 border border-brand/30">
                   ⭐ Level {data.profile.experience.level}
                 </span>
               ))}
@@ -222,8 +221,8 @@ export default function ProfilePage() {
           <button
             className={`px-5 py-2.5 rounded-full text-sm font-bold border transition-all active:scale-95 ${
               data.isFollowing
-                ? "border-flingo-200/30 text-flingo-800 bg-surface-card hover:bg-flingo-100"
-                : "border-neon-lime text-surface-dark bg-neon-lime shadow-neon-lime hover:shadow-neon-lime"
+                ? "border-line text-ink bg-card hover:bg-paper-2"
+                : "border-brand text-on-brand bg-brand shadow-sticker hover:shadow-sticker"
             }`}
             disabled={busy}
             onClick={handleFollowToggle}
@@ -268,27 +267,27 @@ export default function ProfilePage() {
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold text-flingo-900">Recent games</h2>
+          <h2 className="text-lg font-bold text-ink">Recent games</h2>
         </div>
         {recentGames.length === 0 ? (
-          <p className="text-sm text-flingo-600">No recent games to show.</p>
+          <p className="text-sm text-ink-2">No recent games to show.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {recentGames.map((entry) => (
               <div
                 key={entry.gameId}
-                className="border border-flingo-200/30 rounded-2xl overflow-hidden bg-surface-card hover:border-neon-lime/50 hover:shadow-card-hover transition-all"
+                className="border border-line rounded-2xl overflow-hidden bg-card hover:border-brand/50 hover:shadow-card-hover transition-all"
               >
                 <div
-                  className="aspect-[4/5] bg-cover bg-center bg-flingo-100"
+                  className="aspect-[4/5] bg-cover bg-center bg-paper-2"
                   style={{ backgroundImage: `url(${entry.thumbnail})` }}
                 />
                 <div className="p-3">
-                  <div className="text-sm font-bold text-flingo-900">{entry.title}</div>
-                  <div className="text-xs text-flingo-700 font-medium">
+                  <div className="text-sm font-bold text-ink">{entry.title}</div>
+                  <div className="text-xs text-ink-2 font-medium">
                     Best score: {entry.bestScore ?? "—"}
                   </div>
-                  <div className="text-xs text-flingo-500">
+                  <div className="text-xs text-ink-3">
                     Last played:{" "}
                     {entry.lastPlayedAt ? new Date(entry.lastPlayedAt).toLocaleDateString() : "—"}
                   </div>
@@ -310,9 +309,9 @@ export default function ProfilePage() {
         </section>
       )}
       {data.isSelf && (
-        <section className="border border-flingo-200/30 rounded-2xl p-4 bg-surface-card text-sm text-flingo-700">
+        <section className="border border-line rounded-2xl p-4 bg-card text-sm text-ink-2">
           Looking for the full list of people you follow? Head to the
-          <Link to="/followers" className="ml-1 text-neon-lime hover:text-neon-lime font-bold">
+          <Link to="/followers" className="ml-1 text-brand hover:text-brand font-bold">
             Followers page →
           </Link>
           to manage follow requests and follow codes.
@@ -327,11 +326,11 @@ function StatCard({ label, value, to }: { label: string; value: React.ReactNode;
     return (
       <Link
         to={to}
-        className="border border-flingo-200/30 rounded-2xl p-4 bg-surface-card hover:border-neon-lime/50 hover:shadow-card-hover focus:outline-none focus:ring-2 focus:ring-neon-lime/50 transition-all"
+        className="border border-line rounded-2xl p-4 bg-card hover:border-brand/50 hover:shadow-card-hover focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all"
       >
-        <p className="text-xs uppercase text-flingo-600 font-bold">{label}</p>
-        <p className="text-2xl font-extrabold text-flingo-900">{value}</p>
-        <span className="mt-2 text-xs text-neon-lime font-bold inline-flex items-center gap-1">
+        <p className="text-xs uppercase text-ink-2 font-bold">{label}</p>
+        <p className="text-2xl font-extrabold text-ink">{value}</p>
+        <span className="mt-2 text-xs text-brand font-bold inline-flex items-center gap-1">
           View {label.toLowerCase()}
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path
@@ -346,9 +345,9 @@ function StatCard({ label, value, to }: { label: string; value: React.ReactNode;
     );
   }
   return (
-    <div className="border border-flingo-200/30 rounded-2xl p-4 bg-surface-card">
-      <p className="text-xs uppercase text-flingo-600 font-bold">{label}</p>
-      <p className="text-2xl font-extrabold text-flingo-900">{value}</p>
+    <div className="border border-line rounded-2xl p-4 bg-card">
+      <p className="text-xs uppercase text-ink-2 font-bold">{label}</p>
+      <p className="text-2xl font-extrabold text-ink">{value}</p>
     </div>
   );
 }
@@ -363,15 +362,15 @@ function ConnectionsList({
   empty: string;
 }) {
   return (
-    <div className="border border-flingo-200/30 rounded-2xl bg-surface-card p-4">
+    <div className="border border-line rounded-2xl bg-card p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-bold text-flingo-900">{title}</h3>
-        <span className="text-xs text-flingo-700 font-bold bg-flingo-100 px-2 py-1 rounded-full">
+        <h3 className="text-lg font-bold text-ink">{title}</h3>
+        <span className="text-xs text-ink-2 font-bold bg-paper-2 px-2 py-1 rounded-full">
           {items.length}
         </span>
       </div>
       {items.length === 0 ? (
-        <p className="text-sm text-flingo-600">{empty}</p>
+        <p className="text-sm text-ink-2">{empty}</p>
       ) : (
         <ul className="space-y-3">
           {items.map((item) => (
@@ -379,7 +378,7 @@ function ConnectionsList({
               <ProfileAvatar user={{ avatar: item.avatar ?? 1 }} size={44} />
               <Link
                 to={`/profile/${item.userId}`}
-                className="text-sm font-bold text-flingo-900 hover:text-neon-lime"
+                className="text-sm font-bold text-ink hover:text-brand"
               >
                 {item.screenName ?? "Player"}
               </Link>

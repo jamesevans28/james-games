@@ -66,12 +66,12 @@ export default function AccountUpgradeBanner() {
 
   return (
     <div className="fixed bottom-4 inset-x-0 z-[10000] px-4">
-      <div className="mx-auto max-w-xl rounded-2xl border border-neon-yellow/30 bg-surface-card/95 shadow-card-hover backdrop-blur px-5 py-4">
+      <div className="mx-auto max-w-xl rounded-2xl border border-sun/30 bg-card/95 shadow-card-hover backdrop-blur px-5 py-4">
         <div className="flex items-start gap-3">
           <div className="text-2xl">🎮</div>
           <div className="flex-1">
-            <div className="font-bold text-flingo-900 text-sm">Save your progress!</div>
-            <div className="text-sm text-flingo-700 mt-1">
+            <div className="font-bold text-ink text-sm">Save your progress!</div>
+            <div className="text-sm text-ink-2 mt-1">
               Create a username to save your high scores and compete on leaderboards. It only takes
               a moment!
             </div>
@@ -79,13 +79,13 @@ export default function AccountUpgradeBanner() {
           <div className="flex flex-col gap-2 items-end">
             <button
               onClick={handleCreateAccount}
-              className="px-4 py-2 rounded-full bg-neon-yellow text-surface-dark text-sm font-bold whitespace-nowrap shadow-neon-lime hover:shadow-neon-lime transition-all"
+              className="px-4 py-2 rounded-full bg-sun text-on-accent border-2 border-edge text-sm font-bold whitespace-nowrap shadow-sticker hover:shadow-sticker transition-all"
             >
-              Create Account
+              Create account
             </button>
             <button
               onClick={handleDismiss}
-              className="text-xs text-flingo-600 hover:text-flingo-800 font-medium"
+              className="text-xs text-ink-2 hover:text-ink font-medium"
             >
               Maybe later
             </button>

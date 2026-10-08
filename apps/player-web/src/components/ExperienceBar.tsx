@@ -43,31 +43,31 @@ export function ExperienceBar({
 
   return (
     <div className="space-y-2">
-      {/* <div className="flex items-center justify-between text-xs uppercase tracking-wide text-gray-500">
+      {/* <div className="flex items-center justify-between text-xs uppercase tracking-wide text-ink-3">
         <span>{label ?? `Level ${level}`}</span>
         <span>
           {Math.round(progress)}/{safeRequired} XP
         </span>
       </div> */}
-      <div className="relative h-4 rounded-full bg-flingo-100 overflow-hidden border border-flingo-200/50">
+      <div className="relative h-4 rounded-full bg-paper-2 overflow-hidden border border-line">
         <div
           className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
           style={{
             width: `${fillPercent}%`,
             backgroundImage:
               "repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 8px, transparent 8px, transparent 16px)",
-            background: "linear-gradient(90deg, #c8ff32 0%, #32d4ff 50%, #ff3eb5 100%)",
+            background: "linear-gradient(90deg, var(--color-sun) 0%, var(--color-tomato) 50%, var(--color-grape) 100%)",
             boxShadow: celebrate
-              ? "0 0 18px rgba(200, 255, 50, 0.6)"
-              : "0 0 12px rgba(200, 255, 50, 0.3)",
+              ? "0 2px 0 0 var(--color-edge)"
+              : "none",
           }}
         />
         <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-white via-transparent to-white pointer-events-none" />
       </div>
-      <div className="flex items-center justify-between text-xs text-flingo-800 font-medium">
+      <div className="flex items-center justify-between text-xs text-ink font-medium">
         <span>Level {level}</span>
         {pendingText && (
-          <span className="text-neon-lime font-bold animate-bounce">{pendingText}</span>
+          <span className="text-brand font-bold animate-bounce">{pendingText}</span>
         )}
       </div>
     </div>

@@ -17,10 +17,11 @@ import { recordGamePlayed } from "../../utils/playHistory";
 import { getBest } from "../../utils/bestScore";
 import {
   buildGameJsonLd,
-  buildGameKeywords,
   getGameSeoDescription,
+  shareImageFor,
   SITE_URL,
 } from "../../utils/seoKeywords";
+import { brand } from "../../config/brand";
 
 const PLAY_COUNT_PREFIX = "rating:plays:";
 const RATING_PROMPT_INTERVAL = 10;
@@ -334,32 +335,22 @@ export default function PlayGame() {
 
   const seoDescription = useMemo(() => {
     if (!meta)
-      return "Play free online games at flingo.fun. Fun, fast, skill-based games you can play instantly on your phone or browser.";
+      return brand.description;
     return getGameSeoDescription(meta.id, meta.description);
   }, [meta]);
 
-  const seoKeywords = useMemo(() => {
-    return meta ? buildGameKeywords(meta.id) : "";
-  }, [meta]);
-
   return (
-    <div className="min-h-screen bg-surface-dark text-flingo-900 flex flex-col">
+    <div className="min-h-screen bg-paper text-ink flex flex-col">
       <Seo
         title={
           meta
-            ? `${meta.title} — Free Online Game | Play Now at flingo.fun`
-            : "Play Free Online Games at flingo.fun"
+            ? `${meta.title} | ${brand.name}`
+            : `${brand.name} | ${brand.tagline}`
         }
         description={seoDescription}
         url={`${SITE_URL}/games/${meta?.id ?? ""}`}
         canonical={`${SITE_URL}/games/${meta?.id ?? ""}`}
-        image={
-          meta?.thumbnail
-            ? `${SITE_URL}${meta.thumbnail}`
-            : `${SITE_URL}/assets/shared/logo_square.png`
-        }
-        keywords={seoKeywords}
-        ogType="game"
+        image={shareImageFor(meta?.thumbnail)}
         articlePublishedTime={meta?.createdAt}
         articleModifiedTime={meta?.updatedAt}
         jsonLd={jsonLd}
@@ -382,7 +373,7 @@ export default function PlayGame() {
         }}
       />
 
-      {error && <div className="p-4 text-neon-pink">{error}</div>}
+      {error && <div className="p-4 text-grape">{error}</div>}
       {meta && !error && (
         <div className="landing-panel" data-state={landingState} aria-hidden={playing}>
           <GameLanding meta={meta} onPlay={() => setPlaying(true)} />
@@ -392,7 +383,7 @@ export default function PlayGame() {
       {playing && (
         <div
           aria-hidden
-          className="fixed inset-x-0 bottom-0 z-0 pointer-events-none bg-gradient-to-br from-surface-dark via-flingo-100 to-surface-dark"
+          className="fixed inset-x-0 bottom-0 z-0 pointer-events-none bg-gradient-to-br from-paper via-paper-2 to-paper"
           style={{ top: "var(--header-h)" }}
         />
       )}
@@ -405,40 +396,40 @@ export default function PlayGame() {
         <div
           ref={containerRef}
           id="game-container"
-          className="relative w-full h-full overflow-hidden bg-surface-dark"
+          className="relative w-full h-full overflow-hidden bg-paper"
         />
         {mounting && playing && (
-          <div className="absolute inset-0 flex items-center justify-center bg-surface-dark/90 z-[1000]">
+          <div className="absolute inset-0 flex items-center justify-center bg-paper/90 z-[1000]">
             <div className="flex flex-col items-center">
               <img
-                src="/assets/shared/flingo-logo.svg"
+                src={brand.logoMark}
                 alt="Loading"
                 className="w-24 h-24 animate-glow-pulse"
               />
-              <div className="mt-4 text-neon-lime font-bold tracking-[0.35em] text-sm">LOADING</div>
+              <div className="mt-4 text-brand font-bold tracking-[0.35em] text-sm">LOADING</div>
             </div>
           </div>
         )}
       </div>
 
       {meta && (
-        <article className="prose prose-sm max-w-2xl mx-auto p-6 mt-8 mb-24 bg-surface-card border border-flingo-200/30 rounded-2xl">
-          <h1 className="text-2xl font-bold text-flingo-900 mb-4">{meta.title}</h1>
+        <article className="prose prose-sm max-w-2xl mx-auto p-6 mt-8 mb-24 bg-card border border-line rounded-2xl">
+          <h1 className="text-2xl font-bold text-ink mb-4">{meta.title}</h1>
 
           <section className="mb-6">
-            <h2 className="text-lg font-bold text-neon-lime mb-2">About this Game</h2>
-            <p className="text-flingo-700">{meta.description}</p>
+            <h2 className="text-lg font-bold text-brand mb-2">About this Game</h2>
+            <p className="text-ink-2">{meta.description}</p>
           </section>
 
           <section>
-            <h2 className="text-lg font-bold text-neon-blue mb-2">How to Play</h2>
-            <ul className="list-disc pl-5 text-flingo-700 space-y-2">
+            <h2 className="text-lg font-bold text-sky mb-2">How to Play</h2>
+            <ul className="list-disc pl-5 text-ink-2 space-y-2">
               <li>
-                <span className="font-medium text-flingo-900">Objective:</span>{" "}
+                <span className="font-medium text-ink">Objective:</span>{" "}
                 {meta.objective || "Score as high as possible."}
               </li>
               <li>
-                <span className="font-medium text-flingo-900">Controls:</span>{" "}
+                <span className="font-medium text-ink">Controls:</span>{" "}
                 {meta.controls || "Tap or click to interact."}
               </li>
             </ul>

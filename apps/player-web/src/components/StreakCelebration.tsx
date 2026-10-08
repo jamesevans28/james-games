@@ -303,7 +303,7 @@ export default function StreakCelebration() {
       onClick={handleClose}
     >
       {/* Backdrop with gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900/90 via-indigo-900/90 to-pink-900/90 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-gradient-to-br from-grape/90 via-sky/90 to-tomato/90 backdrop-blur-sm" />
 
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -330,13 +330,13 @@ export default function StreakCelebration() {
 
       {/* Celebration card */}
       <div
-        className={`relative bg-gradient-to-br from-surface-card via-surface-card to-flingo-100 rounded-3xl p-8 max-w-sm w-full shadow-2xl transform transition-all duration-500 ${
+        className={`relative bg-gradient-to-br from-card via-card to-paper-2 rounded-3xl p-8 max-w-sm w-full shadow-2xl transform transition-all duration-500 ${
           isAnimating ? "scale-100 translate-y-0" : "scale-90 translate-y-8"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Glow effect */}
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-neon-lime/20 via-transparent to-neon-pink/20 blur-xl" />
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-brand/20 via-transparent to-grape/20 blur-xl" />
 
         {/* Content */}
         <div className="relative text-center">
@@ -347,36 +347,36 @@ export default function StreakCelebration() {
 
           {/* Streak counter with animated ring */}
           <div className="relative inline-flex items-center justify-center mb-4">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-neon-lime to-neon-pink animate-spin-slow opacity-50 blur-md" />
-            <div className="relative bg-surface-dark text-white font-black text-4xl w-24 h-24 rounded-full flex items-center justify-center shadow-lg border-4 border-white/20">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-brand to-grape animate-spin-slow opacity-50 blur-md" />
+            <div className="relative bg-brand text-on-brand font-black text-4xl w-24 h-24 rounded-full flex items-center justify-center shadow-lg border-4 border-edge">
               {streakData.currentStreak}
             </div>
           </div>
 
           {/* Title */}
-          <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-neon-lime via-yellow-400 to-neon-pink mb-2 animate-pulse">
+          <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-brand via-sun to-grape mb-2 animate-pulse">
             {title}
           </h2>
 
           {/* Subtitle */}
-          <p className="text-flingo-700 font-semibold mb-6">{subtitle}</p>
+          <p className="text-ink-2 font-semibold mb-6">{subtitle}</p>
 
           {/* Longest streak info */}
           {streakData.longestStreak > streakData.currentStreak && (
-            <p className="text-sm text-flingo-500 mb-4">
+            <p className="text-sm text-ink-3 mb-4">
               Your best: {streakData.longestStreak} days
             </p>
           )}
           {streakData.longestStreak === streakData.currentStreak &&
             streakData.currentStreak >= 3 && (
-              <p className="text-sm text-neon-lime font-bold mb-4 animate-pulse">
+              <p className="text-sm text-brand font-bold mb-4 animate-pulse">
                 New personal best!
               </p>
             )}
 
           {/* Close button */}
           <button
-            className="w-full py-3 px-6 bg-gradient-to-r from-neon-lime to-emerald-400 text-surface-dark font-bold rounded-full shadow-lg hover:shadow-neon-lime transition-all active:scale-95"
+            className="w-full py-3 px-6 bg-gradient-to-r from-brand to-grass text-on-brand font-bold rounded-full shadow-lg hover:shadow-sticker transition-all active:scale-95"
             onClick={handleClose}
           >
             Keep Playing!

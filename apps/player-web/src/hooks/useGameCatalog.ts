@@ -22,9 +22,10 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { games as bundledGames, type GameMeta } from "../games";
 import { API_BASE_URL } from "../config/env";
+import { readMigrated, STORAGE_KEYS } from "../utils/storageKeys";
 
 const API_BASE = API_BASE_URL;
-const CACHE_KEY = "flingo_game_catalog_cache";
+const CACHE_KEY = STORAGE_KEYS.catalog;
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 // Extended game type with backend-managed fields
@@ -78,7 +79,7 @@ interface CatalogCache {
  */
 function loadCache(): CatalogCache | null {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = readMigrated("catalog");
     if (!raw) return null;
     const parsed = JSON.parse(raw) as CatalogCache;
     if (Date.now() - parsed.timestamp > CACHE_TTL_MS) {

@@ -11,9 +11,9 @@ import {
   buildWebsiteJsonLd,
   buildGameCollectionJsonLd,
   buildOrganizationJsonLd,
-  SITE_KEYWORDS,
   SITE_URL,
 } from "../../utils/seoKeywords";
+import { brand, makersLine } from "../../config/brand";
 
 export default function GamesList() {
   const navigate = useNavigate();
@@ -101,33 +101,33 @@ export default function GamesList() {
     const summary = ratings[game.id];
     return (
       <div
-        className="relative bg-surface-card rounded-2xl border border-flingo-200/30 overflow-hidden cursor-pointer hover:border-neon-lime/30 hover:shadow-card-hover transition-all active:scale-[0.98]"
+        className="relative bg-card rounded-2xl border border-line overflow-hidden cursor-pointer hover:border-brand/30 hover:shadow-card-hover transition-all active:scale-[0.98]"
         onClick={() => navigate(`/games/${game.id}`)}
       >
         {badge && (
-          <span className="absolute top-2 left-2 z-10 inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full bg-gradient-to-r from-neon-lime to-neon-blue text-surface-dark shadow-sm">
+          <span className="absolute top-2 left-2 z-10 inline-flex items-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full bg-gradient-to-r from-brand to-sky text-on-brand shadow-sm">
             {badge}
           </span>
         )}
         <div
-          className="aspect-square bg-cover bg-center bg-flingo-100"
-          style={{ backgroundImage: `url(${game.thumbnail || "/assets/shared/flingo-logo.svg"})` }}
+          className="aspect-square bg-cover bg-center bg-paper-2"
+          style={{ backgroundImage: `url(${game.thumbnail || brand.logoMark})` }}
           title={game.title}
         />
         <div className="px-3 py-3">
-          <h3 className="text-sm font-bold truncate text-flingo-900">{game.title}</h3>
+          <h3 className="text-sm font-bold truncate text-ink">{game.title}</h3>
           {metaLine && (
-            <p className="text-[11px] text-neon-lime uppercase tracking-wide mt-0.5 font-medium">
+            <p className="text-[11px] text-brand uppercase tracking-wide mt-0.5 font-medium">
               {metaLine}
             </p>
           )}
-          <div className="mt-1.5 flex items-center gap-1 text-xs text-flingo-600">
+          <div className="mt-1.5 flex items-center gap-1 text-xs text-ink-2">
             <svg
               width="14"
               height="14"
               viewBox="0 0 24 24"
-              fill={summary ? "#ffeb3b" : "none"}
-              stroke="#ffeb3b"
+              fill={summary ? "var(--color-sun)" : "none"}
+              stroke="var(--color-sun)"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -135,10 +135,10 @@ export default function GamesList() {
             >
               <path d="M12 2.5l3.09 6.26 6.91.99-5 4.87 1.18 6.88L12 17.77 5.82 21.5l1.18-6.88-5-4.87 6.91-.99L12 2.5z" />
             </svg>
-            <span className="font-bold text-flingo-900">
+            <span className="font-bold text-ink">
               {summary ? summary.avgRating.toFixed(1) : "—"}
             </span>
-            <span className="text-flingo-500">({summary?.ratingCount ?? 0})</span>
+            <span className="text-ink-3">({summary?.ratingCount ?? 0})</span>
           </div>
         </div>
       </div>
@@ -148,12 +148,11 @@ export default function GamesList() {
   return (
     <div className="min-h-screen flex flex-col">
       <Seo
-        title="All Games - Browse Free Online Games | flingo.fun"
-        description="Browse all free online games at flingo.fun! Kid-friendly, browser-based arcade and skill games. No download, no ads - just tap and play on any device!"
+        title={`All games | ${brand.name}`}
+        description={`Every game on ${brand.name}: little arcade, word and puzzle games made by ${makersLine()}. Free, no ads, no download.`}
         url={`${SITE_URL}/games-list`}
         canonical={`${SITE_URL}/games-list`}
-        image={`${SITE_URL}/assets/shared/logo_square.png`}
-        keywords={[...SITE_KEYWORDS, "game catalog", "all games", "browse games"].join(", ")}
+        image={`${SITE_URL}${brand.ogImage}`}
         jsonLd={[
           buildWebsiteJsonLd(),
           buildOrganizationJsonLd(),
@@ -162,13 +161,13 @@ export default function GamesList() {
       />
 
       {/* Page header */}
-      <section className="w-full bg-surface-dark border-b border-flingo-200/30 relative overflow-hidden">
+      <section className="w-full bg-paper border-b border-line relative overflow-hidden">
         {/* Decorative glow */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-neon-lime/10 rounded-full blur-[100px]" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-neon-pink/10 rounded-full blur-[80px]" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-brand/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-grape/10 rounded-full blur-[80px]" />
         <div className="max-w-6xl mx-auto px-4 py-6 relative z-10">
-          <h1 className="text-2xl font-extrabold text-neon-lime text-glow-lime">All Games</h1>
-          <p className="text-sm text-flingo-600 mt-1">
+          <h1 className="text-2xl font-extrabold text-brand">All Games</h1>
+          <p className="text-sm text-ink-2 mt-1">
             Browse our complete collection of {visibleGames.length} free games
           </p>
         </div>
@@ -217,8 +216,8 @@ function GamesSection({
   return (
     <section className="w-full max-w-6xl mx-auto px-4 py-6">
       <div className="mb-4">
-        <h2 className="text-xl font-bold text-flingo-900">{title}</h2>
-        {subtitle && <p className="text-sm text-flingo-600 mt-1">{subtitle}</p>}
+        <h2 className="text-xl font-bold text-ink">{title}</h2>
+        {subtitle && <p className="text-sm text-ink-2 mt-1">{subtitle}</p>}
       </div>
       {children}
     </section>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="owl">
+<!-- Placeholder avatar until the Phase 8 AI set (T8.x). -->
+<path d="M22 30l10 10M78 30L68 40" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M22 30c0 0 4 6 8 8M78 30c0 0-4 6-8 8" fill="none" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="50" cy="56" rx="31" ry="32" fill="#8E6CEF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><ellipse cx="50" cy="72" rx="18" ry="14" fill="#C9B8FA"/>
+<circle cx="37" cy="50" r="12" fill="#fff" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="63" cy="50" r="12" fill="#fff" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="38" cy="51" r="5.5" fill="#2B2118"/><circle cx="62" cy="51" r="5.5" fill="#2B2118"/><circle cx="40" cy="49" r="1.8" fill="#fff"/><circle cx="64" cy="49" r="1.8" fill="#fff"/>
+<path d="M45 60h10l-5 8z" fill="#FFC93C" stroke="#2B2118" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

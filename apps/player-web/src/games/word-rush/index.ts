@@ -4,7 +4,7 @@ import WordRushGameScene from "./WordRushGameScene";
 import { trackGameStart } from "../../utils/analytics";
 
 const GAME_ID = "word-rush";
-const GAME_TITLE = "Word Rush with Tom";
+const GAME_TITLE = "Word Rush";
 
 export function mount(container: HTMLElement) {
   trackGameStart(GAME_ID, GAME_TITLE);

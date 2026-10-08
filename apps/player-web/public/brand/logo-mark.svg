@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Games4James">
+  <!-- Sticker-book game pad: tomato body, thick ink outline, flat fills. Placeholder until the Phase 8 AI art. -->
+  <rect x="10" y="22" width="108" height="84" rx="34" fill="#2B2118"/>
+  <rect x="6" y="16" width="108" height="84" rx="34" fill="#FF5A4E" stroke="#2B2118" stroke-width="7"/>
+  <path d="M30 50h10V40h12v10h10v12H52v10H40V62H30z" fill="#FFF8EC" stroke="#2B2118" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="80" cy="50" r="8.5" fill="#FFC93C" stroke="#2B2118" stroke-width="4"/>
+  <circle cx="94" cy="66" r="8.5" fill="#3FA9F5" stroke="#2B2118" stroke-width="4"/>
+  <path d="M28 30q8-6 18-6" fill="none" stroke="#FFF8EC" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+</svg>

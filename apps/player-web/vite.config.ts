@@ -2,6 +2,8 @@ import { defineConfig, loadEnv, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
+import brand from "./src/config/brand.json" with { type: "json" };
+import { brandHtml } from "./vite/brandHtml.ts";
 
 /**
  * One config for dev and production (T2.3 merged vite/config.dev.mjs and
@@ -27,20 +29,21 @@ export default defineConfig(({ command, mode }): UserConfig => {
     logLevel: isBuild ? "warn" : "info",
     server: { port: 3000 },
     plugins: [
+      brandHtml(env.VITE_ANALYTICS_ID),
       tailwindcss(),
       react(),
       VitePWA({
         registerType: "autoUpdate",
         injectRegister: "auto",
         devOptions: { enabled: env.VITE_SW_DEV === "1" },
-        includeAssets: ["favicon.svg", "favicon.png"],
+        includeAssets: ["brand/logo-mark.svg", "brand/icon-32.png", "brand/icon-180.png"],
         workbox: {
           skipWaiting: false, // let the update prompt decide when to activate
           clientsClaim: false,
           // Dev precaches nothing; production precaches the app shell and game assets.
           globPatterns: isBuild ? ["**/*.{js,css,html,ico,png,svg,mp3,ogg,ttf,woff2}"] : [],
-          // Manifest icons are injected separately; avoid duplicate precache entries.
-          globIgnores: ["**/assets/shared/logo_square.png"],
+          // Manifest icons and the share image are fetched on demand, not precached.
+          globIgnores: ["**/brand/icon-512*.png", "**/brand/og-*.png", "**/brand/screenshot-*", "**/static-games/**"],
           maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
           runtimeCaching: [
             // Workbox serialises these functions into sw.js, so they must not reference
@@ -86,34 +89,34 @@ export default defineConfig(({ command, mode }): UserConfig => {
             },
           ],
         },
-        // Brand values move to src/config/brand.ts in T3.1/T3.2.
         manifest: {
-          name: "flingo.fun - Free Online Games",
-          short_name: "flingo",
-          description:
-            "Play free, kid-friendly browser games instantly! Arcade, puzzle, word games and more - no download required.",
-          theme_color: "#A855F7",
-          background_color: "#FFFFFF",
+          id: "/",
+          name: brand.name,
+          short_name: brand.name,
+          description: brand.description,
+          theme_color: brand.themeColor,
+          background_color: brand.backgroundColor,
           display: "standalone",
           orientation: "portrait",
           scope: "/",
           start_url: "/",
-          categories: ["games", "entertainment", "kids"],
-          lang: "en-US",
+          categories: ["games", "kids"],
+          lang: "en-AU",
           dir: "ltr",
           icons: [
-            { src: "/assets/shared/logo_square.png", sizes: "192x192", type: "image/png", purpose: "any" },
-            { src: "/assets/shared/logo_square.png", sizes: "512x512", type: "image/png", purpose: "any" },
-          ],
-          screenshots: [],
-          shortcuts: [
+            { src: "/brand/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+            { src: "/brand/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
             {
-              name: "Browse Games",
-              short_name: "Games",
-              description: "Browse all free games",
-              url: "/",
-              icons: [{ src: "/assets/shared/logo_square.png", sizes: "96x96" }],
+              src: "/brand/icon-512-maskable.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "maskable",
             },
+          ],
+          // Captured in the Browser pane at 375×812 @2x (T3.3). Retake after big UI changes.
+          screenshots: [
+            { src: "/brand/screenshot-home.jpg", sizes: "750x1624", type: "image/jpeg", form_factor: "narrow", label: "The games feed" },
+            { src: "/brand/screenshot-games.jpg", sizes: "750x1624", type: "image/jpeg", form_factor: "narrow", label: "Every game" },
           ],
         },
       }),

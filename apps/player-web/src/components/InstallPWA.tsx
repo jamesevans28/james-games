@@ -55,7 +55,7 @@ export default function InstallPWA() {
   return (
     <button
       onClick={install}
-      className="fixed right-3 bottom-16 z-40 rounded-full bg-neon-lime text-surface-dark px-5 py-3 shadow-neon-lime font-bold border border-neon-lime/50 hover:shadow-neon-lime transition-all"
+      className="fixed right-3 bottom-16 z-40 rounded-full bg-brand text-on-brand px-5 py-3 shadow-sticker font-bold border border-brand/50 hover:shadow-sticker transition-all"
       aria-label="Install app"
     >
       Install App

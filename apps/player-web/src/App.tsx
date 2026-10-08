@@ -24,6 +24,7 @@ const AvatarSelect = lazy(() => import("./pages/settings/AvatarSelect"));
 const FollowersPage = lazy(() => import("./pages/followers"));
 const ProfilePage = lazy(() => import("./pages/profile/[userId]"));
 const NotificationsPage = lazy(() => import("./pages/notifications"));
+const PrivacyPage = lazy(() => import("./pages/privacy"));
 
 function AppRoutes() {
   const location = useLocation();
@@ -35,6 +36,7 @@ function AppRoutes() {
         <Route element={<RootLayout />}>
           <Route path="/" element={<HomeFeed />} />
           <Route path="/games-list" element={<GamesList />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<LoginPage />} />
           <Route

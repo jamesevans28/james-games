@@ -1,3 +1,5 @@
+import { brand } from "../config/brand";
+
 export type SeoProps = {
   title?: string;
   description?: string;
@@ -6,11 +8,10 @@ export type SeoProps = {
   siteName?: string;
   noindex?: boolean;
   canonical?: string;
-  keywords?: string;
   author?: string;
   articlePublishedTime?: string;
   articleModifiedTime?: string;
-  ogType?: "website" | "article" | "game";
+  ogType?: "website" | "article";
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 };
 
@@ -19,10 +20,9 @@ export default function Seo({
   description,
   url,
   image,
-  siteName = "flingo.fun",
+  siteName = brand.name,
   noindex,
   canonical,
-  keywords,
   author,
   articlePublishedTime,
   articleModifiedTime,
@@ -38,7 +38,6 @@ export default function Seo({
       {title && <title>{title}</title>}
       {description && <meta name="description" content={description} />}
       {canonical && <link rel="canonical" href={canonical} />}
-      {keywords && <meta name="keywords" content={keywords} />}
       {author && <meta name="author" content={author} />}
       {noindex ? (
         <meta name="robots" content="noindex, nofollow" />
@@ -57,7 +56,7 @@ export default function Seo({
       <meta property="og:site_name" content={siteName} />
       {image && <meta property="og:image" content={image} />}
       {image && <meta property="og:image:alt" content={title || siteName} />}
-      <meta property="og:locale" content="en_US" />
+      <meta property="og:locale" content="en_AU" />
 
       {/* Article dates for Open Graph */}
       {articlePublishedTime && (
@@ -72,7 +71,6 @@ export default function Seo({
       {title && <meta name="twitter:title" content={title} />}
       {description && <meta name="twitter:description" content={description} />}
       {image && <meta name="twitter:image" content={image} />}
-      <meta name="twitter:site" content="@flingofun" />
 
       {/* JSON-LD - Support multiple schemas */}
       {jsonLdArray.map((schema, index) => (

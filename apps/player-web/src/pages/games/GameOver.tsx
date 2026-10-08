@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { postHighScore, type ExperienceSummary } from "../../lib/api";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { cheerFor } from "../../utils/cheer";
+import { BRAND_COLORS } from "../../config/brand";
 
 type Props = {
   open: boolean;
@@ -21,7 +22,7 @@ function LevelUpModal({ level, onClose }: { level: number; onClose: () => void }
     // Trigger confetti animation
     const duration = 3000;
     const animationEnd = Date.now() + duration;
-    const colors = ["#FFC700", "#FF0080", "#00D9FF", "#7928CA"];
+    const colors = [BRAND_COLORS.sun, BRAND_COLORS.tomato, BRAND_COLORS.sky, BRAND_COLORS.grape];
 
     const frame = () => {
       const timeLeft = animationEnd - Date.now();
@@ -73,14 +74,14 @@ function LevelUpModal({ level, onClose }: { level: number; onClose: () => void }
           50% { transform: translateY(-20px) scale(1.1); }
         }
         @keyframes glow-pulse-gold {
-          0%, 100% { box-shadow: 0 0 20px rgba(200, 255, 50, 0.3), 0 0 40px rgba(255, 235, 59, 0.2); }
-          50% { box-shadow: 0 0 40px rgba(200, 255, 50, 0.5), 0 0 60px rgba(255, 235, 59, 0.4); }
+          0%, 100% { box-shadow: 0 3px 0 0 var(--color-edge); }
+          50% { box-shadow: 0 6px 0 0 var(--color-edge); }
         }
       `}</style>
       <div className="fixed inset-0 z-[10001] flex items-center justify-center">
-        <div className="absolute inset-0 bg-surface-dark/90 backdrop-blur-sm" onClick={onClose} />
+        <div className="absolute inset-0 bg-paper/90 backdrop-blur-sm" onClick={onClose} />
         <div
-          className="relative bg-gradient-to-b from-neon-yellow/20 to-neon-lime/10 rounded-3xl p-8 max-w-sm mx-4 shadow-neon-lime border-2 border-neon-yellow/50 text-center bg-surface-card"
+          className="relative bg-gradient-to-b from-sun/20 to-brand/10 rounded-3xl p-8 max-w-sm mx-4 shadow-sticker border-2 border-sun/50 text-center bg-card"
           style={{ animation: "glow-pulse-gold 2s ease-in-out infinite" }}
         >
           <div
@@ -89,11 +90,11 @@ function LevelUpModal({ level, onClose }: { level: number; onClose: () => void }
           >
             🏆
           </div>
-          <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-neon-yellow to-neon-lime mb-2">
+          <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sun to-brand mb-2">
             LEVEL UP!
           </h2>
-          <p className="text-5xl font-extrabold text-flingo-900 mb-4">Level {level}</p>
-          <p className="text-flingo-700 mb-6">Congratulations! You've reached a new level!</p>
+          <p className="text-5xl font-extrabold text-ink mb-4">Level {level}</p>
+          <p className="text-ink-2 mb-6">Congratulations! You've reached a new level!</p>
           <button type="button" className="btn btn-primary px-8 py-3 text-lg" onClick={onClose}>
             Continue
           </button>
@@ -194,29 +195,29 @@ function AnimatedExperienceBar({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between text-xs uppercase tracking-wide text-flingo-600 font-semibold">
+      <div className="flex items-center justify-between text-xs uppercase tracking-wide text-ink-2 font-semibold">
         <span>Level {displayLevel}</span>
         <span>
           {Math.round(displayProgress)}/{safeRequired} XP
         </span>
       </div>
-      <div className="relative h-4 rounded-full bg-flingo-100 overflow-hidden border border-flingo-200/50">
+      <div className="relative h-4 rounded-full bg-paper-2 overflow-hidden border border-line">
         <div
           className="absolute inset-y-0 left-0 rounded-full"
           style={{
             width: `${displayPercent}%`,
             backgroundImage:
               "repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 8px, transparent 8px, transparent 16px)",
-            background: "linear-gradient(90deg, #c8ff32 0%, #32d4ff 50%, #ff3eb5 100%)",
+            background: "linear-gradient(90deg, var(--color-sun) 0%, var(--color-tomato) 50%, var(--color-grape) 100%)",
             boxShadow: isAnimating
-              ? "0 0 18px rgba(200, 255, 50, 0.6)"
-              : "0 0 12px rgba(200, 255, 50, 0.3)",
+              ? "0 2px 0 0 var(--color-edge)"
+              : "none",
             transition: "none",
           }}
         />
         <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-white via-transparent to-white pointer-events-none" />
       </div>
-      {awardedXp > 0 && <div className="text-xs text-neon-lime font-bold">+{awardedXp} XP</div>}
+      {awardedXp > 0 && <div className="text-xs text-brand font-bold">+{awardedXp} XP</div>}
     </div>
   );
 }
@@ -324,22 +325,22 @@ export default function GameOver({
   return (
     <>
       <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center">
-        <div className="absolute inset-0 bg-surface-dark/80 backdrop-blur-sm" onClick={onClose} />
-        <div className="relative w-full sm:w-auto sm:min-w-[320px] max-w-md mx-3 mb-6 sm:mb-0 rounded-3xl overflow-hidden border border-flingo-200/30 bg-surface-card shadow-card-hover">
-          <div className="px-5 py-4 border-b border-flingo-200/30">
-            <div className="text-lg font-extrabold text-neon-lime text-glow-lime">
+        <div className="absolute inset-0 bg-scrim/80 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative w-full sm:w-auto sm:min-w-[320px] max-w-md mx-3 mb-6 sm:mb-0 rounded-3xl overflow-hidden border border-line bg-card shadow-card-hover">
+          <div className="px-5 py-4 border-b border-line">
+            <div className="text-lg font-extrabold text-brand">
               {cheer.isNewBest ? "🏆 " : ""}
               {cheer.headline}
             </div>
-            <div className="text-flingo-600 text-sm font-medium">Your score</div>
+            <div className="text-ink-2 text-sm font-medium">Your score</div>
           </div>
           <div className="px-5 py-6">
-            <div className="text-5xl font-extrabold text-center text-flingo-900">{score ?? 0}</div>
+            <div className="text-5xl font-extrabold text-center text-ink">{score ?? 0}</div>
             {!cheer.isNewBest && previousBest > 0 && (
-              <p className="text-sm text-flingo-600 mt-1 text-center">Your best: {previousBest}</p>
+              <p className="text-sm text-ink-2 mt-1 text-center">Your best: {previousBest}</p>
             )}
             {scoreError && (
-              <p className="text-xs text-neon-orange mt-2 text-center flex items-center justify-center gap-1">
+              <p className="text-xs text-tomato mt-2 text-center flex items-center justify-center gap-1">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
@@ -353,15 +354,15 @@ export default function GameOver({
             )}
           </div>
           {user ? (
-            <div className="px-5 pb-5 border-t border-flingo-200/30">
+            <div className="px-5 pb-5 border-t border-line">
               <div className="flex items-center justify-between mb-2 pt-4">
-                <div className="text-sm font-bold text-flingo-900 flex items-center gap-1">
+                <div className="text-sm font-bold text-ink flex items-center gap-1">
                   <span role="img" aria-hidden>
                     ✨
                   </span>
                   Level progress
                 </div>
-                <div className="text-xs text-flingo-600">{xpPending ? "Adding XP…" : ""}</div>
+                <div className="text-xs text-ink-2">{xpPending ? "Adding XP…" : ""}</div>
               </div>
               {startExperience && endExperience ? (
                 <AnimatedExperienceBar
@@ -374,14 +375,14 @@ export default function GameOver({
                   awardedXp={xpAwarded ?? 0}
                 />
               ) : (
-                <p className="text-xs text-flingo-600">
+                <p className="text-xs text-ink-2">
                   Play more runs to unlock experience tracking.
                 </p>
               )}
-              {xpError && <p className="text-xs text-neon-pink mt-2">{xpError}</p>}
+              {xpError && <p className="text-xs text-grape mt-2">{xpError}</p>}
             </div>
           ) : (
-            <div className="px-5 pb-4 border-t border-flingo-200/30 text-xs text-flingo-600 pt-4">
+            <div className="px-5 pb-4 border-t border-line text-xs text-ink-2 pt-4">
               Sign in to earn experience, level up, and unlock a shiny progress bar!
             </div>
           )}
