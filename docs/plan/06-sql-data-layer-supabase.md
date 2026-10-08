@@ -25,7 +25,7 @@ Steps:
 
 ## T6.1 Supabase project (MANUAL, Claude-prepared)
 
-Status: todo
+Status: blocked on MANUAL steps 1–4 (Claude's part done 2026-10-09: `.env.example`, CLAUDE.md pooler notes, `npm run db:ping -w apps/backend-api`)
 Depends on: T6.0
 Goal: a Supabase project exists and Claude has what it needs to connect. One project serves both local development and, from relaunch, production: there is no old data to protect, and local dev stops using it once T13.2 flips it to prod (local then uses pglite or a local Postgres).
 MANUAL (James):
@@ -33,14 +33,14 @@ MANUAL (James):
 1. Create a free account at https://supabase.com (sign in with GitHub). Create an organisation (free plan).
 2. New project: name `games4james`, region closest to Australia (`ap-southeast-2` Sydney), a strong database password (store it in your password manager; Claude never needs it in chat).
 3. In the project: Settings → Database → Connection string. Copy both the **Transaction pooler** URI (port 6543; for Lambda) and the **Session pooler** URI (port 5432; for migrations). Also Settings → API → Project URL and the `service_role` key (only if T6.10 is ever done; not needed now).
-4. Put them locally in `apps/backend-api/.env.local` (gitignored). The GitHub secrets `DATABASE_URL` (transaction pooler, with `?pgbouncer=true`) and `DATABASE_URL_MIGRATIONS` (session pooler) are set at relaunch (T13.2).
+4. Put them locally in `apps/backend-api/.env.local` (gitignored). Also add both as GitHub repository secrets `DATABASE_URL` (transaction pooler) and `DATABASE_URL_MIGRATIONS` (session pooler) now: the daily housekeeping job (T6.9) needs `DATABASE_URL` to keep the free project awake. No `?pgbouncer=true`: that flag is for Prisma; our client sets `prepare: false` instead.
 5. Settings → General: note the project ref. Authentication is not used (Firebase); leave it default.
-   Claude's part: add `DATABASE_URL` and `DATABASE_URL_MIGRATIONS` to `apps/backend-api/.env.example` with comments; add the pooler notes to `apps/backend-api/CLAUDE.md`; add a `scripts/db-ping.mjs` that runs `select 1` so James can confirm connectivity.
-   Done when: `node scripts/db-ping.mjs` prints `ok` locally.
+   Claude's part: add `DATABASE_URL` and `DATABASE_URL_MIGRATIONS` to `apps/backend-api/.env.example` with comments; add the pooler notes to `apps/backend-api/CLAUDE.md`; add `npm run db:ping -w apps/backend-api` (checks both URLs, never prints them).
+   Done when: `npm run db:ping -w apps/backend-api` prints `ok` for both URLs locally; then run `npm run db:migrate -w apps/backend-api` and `npm run db:seed -w apps/backend-api` once.
 
 ## T6.2 Drizzle setup and schema
 
-Status: todo
+Status: done 2026-10-09 (migrations run against pglite in tests; first real `db:migrate` + `db:seed` after T6.1)
 Depends on: T6.1
 Goal: the full schema in code, migrations generated and applied.
 Files: `apps/backend-api/src/db/{client,schema}.ts`, `apps/backend-api/drizzle.config.ts`, `apps/backend-api/drizzle/` (migrations), `package.json` scripts
@@ -129,9 +129,10 @@ Done when: dashboard loads under 300 ms locally; moderation actions have tests a
 
 ## T6.9 Keep-alive and housekeeping
 
-Status: todo
+Status: done 2026-10-09 in code (one daily workflow, see Note); MANUAL: add the `DATABASE_URL` repo secret, then run it once from Actions
 Depends on: T6.3 (needed early: the free project pauses after 7 idle days, and it will often be idle before relaunch)
-Steps: GitHub Actions cron (weekly) runs `scripts/db-ping.mjs` against `DATABASE_URL` to stop the free-tier pause; a daily cron deletes presence rows older than 1 day and anonymous users with no plays older than 90 days (count logged, no identities).
+Note (2026-10-09): built as one daily workflow, `.github/workflows/db-housekeeping.yml` (`npm run db:housekeeping`): its daily queries already stop the 7-day pause, so a separate weekly ping would be redundant. It skips itself until the secret exists.
+Steps: GitHub Actions cron (weekly) runs a ping against `DATABASE_URL` to stop the free-tier pause; a daily cron deletes presence rows older than 1 day and anonymous users with no plays older than 90 days (count logged, no identities).
 Done when: both workflows run green once (trigger with `workflow_dispatch`).
 
 ## T6.10 Optional later: port the API to Supabase Edge Functions
