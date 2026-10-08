@@ -38,17 +38,13 @@ test("setBest only ever raises the best", () => {
   assert.equal(getBest("snapadile"), 40);
 });
 
-test("migrates the highest legacy key into the new key", () => {
+test("old per-game keys are not read", () => {
   localStorage.setItem("hoop-city-best", "90");
-  localStorage.setItem("hoop-city-best-score", "120");
-  localStorage.setItem("best_score_hoop-city", "15");
-  assert.equal(getBest("hoop-city"), 120);
-  assert.equal(localStorage.getItem("g4j:best:hoop-city"), "120");
+  assert.equal(getBest("hoop-city"), 0);
 });
 
 test("ignores junk values", () => {
   localStorage.setItem("g4j:best:blocker", "NaN");
-  localStorage.setItem("blocker-best", "-5");
   assert.equal(getBest("blocker"), 0);
 });
 

@@ -1,6 +1,7 @@
 node_modules
 **/dist
 **/dev-dist
+apps/backend-api/bundle
 coverage
 .npm-cache
 package-lock.json

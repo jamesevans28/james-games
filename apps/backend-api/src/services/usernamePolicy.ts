@@ -5,8 +5,8 @@
 
 /** Login names: 3-20 letters, digits or underscores. Stored lower-cased. */
 export const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
-/** PINs: 4-8 digits. */
-export const PIN_PATTERN = /^\d{4,8}$/;
+/** PINs: exactly 6 digits for every account (T6.5, T7.7). */
+export const PIN_PATTERN = /^\d{6}$/;
 
 export const SCREEN_NAME_MIN = 2;
 export const SCREEN_NAME_MAX = 32;

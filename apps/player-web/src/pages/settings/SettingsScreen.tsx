@@ -229,8 +229,8 @@ export default function SettingsScreen() {
       return;
     }
 
-    if (!/^\d{4,8}$/.test(newPin)) {
-      setPinError("New PIN must be 4-8 digits");
+    if (!/^\d{6}$/.test(newPin)) {
+      setPinError("New PIN must be 6 digits");
       return;
     }
 
@@ -433,10 +433,10 @@ export default function SettingsScreen() {
                   inputMode="numeric"
                   pattern="\d*"
                   value={currentPin}
-                  onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                  onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   className="w-full bg-paper-2 border border-line rounded-xl px-4 py-3 text-sm text-ink placeholder-ink-3 focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 transition-all"
                   placeholder="Enter current PIN"
-                  maxLength={8}
+                  maxLength={6}
                 />
               </div>
               <div>
@@ -446,10 +446,10 @@ export default function SettingsScreen() {
                   inputMode="numeric"
                   pattern="\d*"
                   value={newPin}
-                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   className="w-full bg-paper-2 border border-line rounded-xl px-4 py-3 text-sm text-ink placeholder-ink-3 focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 transition-all"
                   placeholder="4-8 digits"
-                  maxLength={8}
+                  maxLength={6}
                 />
               </div>
               <div>
@@ -459,10 +459,10 @@ export default function SettingsScreen() {
                   inputMode="numeric"
                   pattern="\d*"
                   value={confirmPin}
-                  onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                  onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   className="w-full bg-paper-2 border border-line rounded-xl px-4 py-3 text-sm text-ink placeholder-ink-3 focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 transition-all"
                   placeholder="Confirm new PIN"
-                  maxLength={8}
+                  maxLength={6}
                 />
               </div>
 

@@ -17,6 +17,7 @@ export default tseslint.config(
       "**/node_modules/**",
       "**/dist/**",
       "**/dev-dist/**",
+      "apps/backend-api/bundle/**",
       "**/.npm-cache/**",
       "apps/game-server/**",
       "apps/player-web/public/**",

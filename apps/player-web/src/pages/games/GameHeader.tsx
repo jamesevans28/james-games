@@ -6,7 +6,7 @@ interface Props {
   title: string;
   brand?: string;
   leaderboardTo?: string; // route to leaderboard page
-  /** Show the sound toggle (SDK games only: legacy games ignore the setting). */
+  /** Show the sound toggle (hidden on screens without a running game). */
   showMute?: boolean;
   onBack?: () => void;
 }

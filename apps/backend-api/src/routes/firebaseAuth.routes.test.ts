@@ -99,7 +99,7 @@ describe("/auth/firebase routes", () => {
     const reg = await api.request("POST", "/auth/firebase/register-username", {
       as: "kid-1",
       accountType: "anonymous",
-      body: { username: "Tilly_1", pin: "4321", screenName: "Tilly Rocket" },
+      body: { username: "Tilly_1", pin: "432100", screenName: "Tilly Rocket" },
     });
     expect(reg.status).toBe(200);
     expect(reg.body).toEqual({
@@ -115,21 +115,21 @@ describe("/auth/firebase routes", () => {
     const row = await getUserById("kid-1");
     expect(row).toMatchObject({ username: "tilly_1", accountType: "username_pin" });
     expect(row?.pinHash).toBeTruthy();
-    expect(row?.pinHash).not.toBe("4321");
+    expect(row?.pinHash).not.toBe("432100");
 
     // Wrong PIN and unknown username get the same 401.
     const wrong = await api.request("POST", "/auth/firebase/login-username", {
-      body: { username: "tilly_1", pin: "0000" },
+      body: { username: "tilly_1", pin: "000000" },
     });
     const unknown = await api.request("POST", "/auth/firebase/login-username", {
-      body: { username: "nobody_here", pin: "4321" },
+      body: { username: "nobody_here", pin: "432100" },
     });
     expect(wrong).toEqual({ status: 401, body: { error: "Invalid username or PIN" } });
     expect(unknown).toEqual(wrong);
 
     // Usernames are case-insensitive.
     const ok = await api.request("POST", "/auth/firebase/login-username", {
-      body: { username: "TILLY_1", pin: "4321" },
+      body: { username: "TILLY_1", pin: "432100" },
     });
     expect(ok.status).toBe(200);
     expect(ok.body).toEqual({
@@ -150,7 +150,7 @@ describe("/auth/firebase routes", () => {
     const taken = await api.request("POST", "/auth/firebase/register-username", {
       as: "thief",
       accountType: "anonymous",
-      body: { username: "Harvey_H", pin: "1234", screenName: "Someone" },
+      body: { username: "Harvey_H", pin: "123400", screenName: "Someone" },
     });
     expect(taken.status).toBe(409);
     expect(taken.body.code).toBe("username_taken");
@@ -163,7 +163,7 @@ describe("/auth/firebase routes", () => {
     expect(badPin.status).toBe(400);
     const badName = await api.request("POST", "/auth/firebase/register-username", {
       as: "thief",
-      body: { username: "no spaces", pin: "1234" },
+      body: { username: "no spaces", pin: "123400" },
     });
     expect(badName.status).toBe(400);
   });
@@ -181,16 +181,16 @@ describe("/auth/firebase routes", () => {
   it("change-pin checks the current PIN; admin reset-pin needs an admin", async () => {
     await api.request("POST", "/auth/firebase/register-username", {
       as: "pin-kid",
-      body: { username: "pin_kid", pin: "1111", screenName: "Pin Kid" },
+      body: { username: "pin_kid", pin: "111100", screenName: "Pin Kid" },
     });
     const wrong = await api.request("POST", "/auth/firebase/change-pin", {
       as: "pin-kid",
-      body: { currentPin: "9999", newPin: "2222" },
+      body: { currentPin: "999900", newPin: "222200" },
     });
     expect(wrong.status).toBe(401);
     const changed = await api.request("POST", "/auth/firebase/change-pin", {
       as: "pin-kid",
-      body: { currentPin: "1111", newPin: "2222" },
+      body: { currentPin: "111100", newPin: "222200" },
     });
     expect(changed).toEqual({ status: 200, body: { ok: true } });
 
@@ -199,17 +199,17 @@ describe("/auth/firebase routes", () => {
       (
         await api.request("POST", "/auth/firebase/admin/reset-pin", {
           as: "pin-kid",
-          body: { userId: "pin-kid", newPin: "3333" },
+          body: { userId: "pin-kid", newPin: "333300" },
         })
       ).status,
     ).toBe(403);
     const reset = await api.request("POST", "/auth/firebase/admin/reset-pin", {
       as: "boss",
-      body: { userId: "pin-kid", newPin: "3333" },
+      body: { userId: "pin-kid", newPin: "333300" },
     });
     expect(reset.status).toBe(200);
     const login = await api.request("POST", "/auth/firebase/login-username", {
-      body: { username: "pin_kid", pin: "3333" },
+      body: { username: "pin_kid", pin: "333300" },
     });
     expect(login.status).toBe(200);
   });

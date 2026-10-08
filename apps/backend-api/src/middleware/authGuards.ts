@@ -121,6 +121,3 @@ export async function requireAdmin(req: Request, res: Response, next: NextFuncti
     return res.status(500).json({ error: "admin_check_failed" });
   }
 }
-
-// Legacy export for backwards compatibility during migration
-export const requireValidatedEmail = requireVerifiedEmail;
