@@ -27,6 +27,9 @@ export default defineConfig(({ command, mode }): UserConfig => {
   return {
     // Absolute asset URLs work for deep links on the web and for capacitor://localhost (T10.2).
     base: "/",
+    // One Firebase for everything, including @capacitor-firebase/authentication's web
+    // fallback, which otherwise looks for its own (missing, older) copy (T10.3).
+    resolve: { dedupe: ["firebase"] },
     logLevel: isBuild ? "warn" : "info",
     server: { port: 3000 },
     plugins: [
