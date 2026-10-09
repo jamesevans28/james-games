@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ProfileAvatar } from "../../components/profile";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { updatePreferences } from "../../lib/api";
-import { AVATARS, avatarFor } from "../../config/avatars";
+import { AVATARS, SUPPORTER_AVATARS, avatarFor } from "../../config/avatars";
+import { useSupporter } from "../../hooks/useSupporter";
 
 export default function AvatarSelectPage() {
   const { user } = useAuth();
@@ -10,6 +11,7 @@ export default function AvatarSelectPage() {
   const [selected, setSelected] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const supporter = useSupporter();
   const toastTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export default function AvatarSelectPage() {
       )}
 
       <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-        {AVATARS.map(({ id, name }) => {
+        {[...AVATARS, ...(supporter ? SUPPORTER_AVATARS : [])].map(({ id, name }) => {
           const isSelected = selected === id;
           return (
             <button
@@ -93,6 +95,12 @@ export default function AvatarSelectPage() {
           );
         })}
       </div>
+      {!supporter && (
+        <p className="mt-6 text-sm text-ink-2">
+          Gold avatars are a thank-you for families who support us. A grown-up can find out more in
+          Settings → For grown-ups.
+        </p>
+      )}
     </div>
   );
 }

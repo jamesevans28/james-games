@@ -54,6 +54,9 @@ export function pointsFor(combo: number, quality: PassQuality): number {
   }
 }
 
+/** A remix multiplier, or 1 when it is missing or nonsense. */
+const positive = (n: number): number => (Number.isFinite(n) && n > 0 ? n : 1);
+
 export const GRAVITY_START = 680;
 export const GRAVITY_PER_SECOND = 90;
 export const GRAVITY_MAX = 1100;
@@ -61,11 +64,11 @@ export const GRAVITY_MAX = 1100;
 /**
  * Gravity in px/s² after `elapsedMs` of play (counted from the first tap, pauses
  * excluded). It strengthens so the player has to keep tapping, and tops out after
- * about 4.7 s.
+ * about 4.7 s. `scale` is the remix "Gravity" knob (T11.2); 1 is the normal game.
  */
-export function gravityAt(elapsedMs: number): number {
+export function gravityAt(elapsedMs: number, scale = 1): number {
   const seconds = Math.max(0, elapsedMs) / 1000;
-  return Math.min(GRAVITY_MAX, GRAVITY_START + GRAVITY_PER_SECOND * seconds);
+  return Math.min(GRAVITY_MAX, GRAVITY_START + GRAVITY_PER_SECOND * seconds) * positive(scale);
 }
 
 /** Hoops slide left at a steady speed (px/s). */
@@ -83,9 +86,12 @@ export function between(rng: () => number, min: number, max: number): number {
   return min + Math.floor(r * (max - min + 1));
 }
 
-/** Where the next hoop goes: how far past the right edge (`gap`) and at what height (`y`). */
-export function nextHoop(rng: () => number): { gap: number; y: number } {
-  const gap = between(rng, HOOP_GAP_MIN, HOOP_GAP_MAX);
+/**
+ * Where the next hoop goes: how far past the right edge (`gap`) and at what height (`y`).
+ * `gapScale` is the remix "Space between hoops" knob (T11.2); 1 is the normal game.
+ */
+export function nextHoop(rng: () => number, gapScale = 1): { gap: number; y: number } {
+  const gap = Math.round(between(rng, HOOP_GAP_MIN, HOOP_GAP_MAX) * positive(gapScale));
   const y = between(rng, HOOP_Y_MIN, HOOP_Y_MAX);
   return { gap, y };
 }

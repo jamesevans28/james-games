@@ -93,6 +93,7 @@ export default class StackScene extends BasePlatformScene {
 | `colors`                                         | `paper`, `ink`, `tomato`, `sun`, `grass`, `sky`, `grape` as **CSS hex strings** (`"#FF5A4E"`). Use them as-is for text colours. For Graphics fills and strokes convert with `hexToNumber()` from `platform/hud/format`. |
 | `isPaused()`                                     | true while the platform has the run paused                                                                                                                                                                              |
 | `reducedMotion()`                                | true when the player asked for less motion; skip shakes, flashes and big zooms (`BasePlatformScene.shakeCamera`/`flashCamera` already do)                                                                               |
+| `remix.get(key)`                                 | remix mode (T11.2): this run's knob value, from the remix being played or the manifest default. Read it in `startRun()`, e.g. `host.remix.get("gravity")`; defaults must be the normal game.                            |
 
 In a scene, `this.host` (BasePlatformScene) or `getHost(this)` (from `mount.ts`) returns it. The host lives in the game registry, so it isn't available in the constructor or in field initialisers.
 
@@ -166,6 +167,7 @@ The types are in `sdk.ts` (`GameManifest`), and validation is the zod schema in 
 | `scoring`                              | server-side anti-cheat limits and XP rate (the backend uses them from T6.6, and too-low values reject real scores). `perSecondMax` ≈ 2× the fastest real scoring rate; `max` well above a great run. |
 | `cover`                                | a square png, jpg, webp or svg under `/assets/`. An SVG placeholder until the Phase 8 art; link previews then use the brand card.                                                                    |
 | `sfx`                                  | optional effect names (`[a-z0-9-]`)                                                                                                                                                                  |
+| `remix`                                | optional knobs `{ key, label, min, max, step, default }` (T11.2): one landing-page slider each; the server checks saved remixes against the exported ranges.                                         |
 | `design`, `orientation`                | `{ w: 540, h: 960 }`, `"portrait"`                                                                                                                                                                   |
 
 After changing manifests, `npm run generate-seo -w apps/player-web` re-exports `public/game-meta.json` (via `scripts/export-manifests.mts`) and regenerates the sitemap and static preview pages. The production build does this automatically.

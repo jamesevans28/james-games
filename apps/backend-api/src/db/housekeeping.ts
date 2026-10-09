@@ -1,6 +1,6 @@
 import { and, lt, notExists, eq, sql } from "drizzle-orm";
 import type { Db } from "./client.js";
-import { authAttempts, plays, presence, users } from "./schema.js";
+import { authAttempts, familyCodes, plays, presence, users } from "./schema.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -18,6 +18,8 @@ export async function runHousekeeping(db: Db, now = new Date()) {
     .delete(authAttempts)
     .where(lt(authAttempts.attemptedAt, new Date(now.getTime() - DAY_MS)))
     .returning({ id: authAttempts.id });
+
+  await db.delete(familyCodes).where(lt(familyCodes.expiresAt, now));
 
   const cutoff = new Date(now.getTime() - 90 * DAY_MS);
   const idleGuests = await db

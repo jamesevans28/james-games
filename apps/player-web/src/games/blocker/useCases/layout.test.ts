@@ -7,6 +7,7 @@ import {
   slotCentres,
   snapToGrid,
   TRAY_SLOTS,
+  traySlotsFor,
   type GridGeometry,
   type TraySlot,
 } from "./layout";
@@ -101,4 +102,13 @@ test("cell and placed centres", () => {
   const t = placedCentre(tee, { row: 2, col: 2 }, GRID);
   expect(t.x).toBeCloseTo(GRID.x + 3.5 * 50);
   expect(t.y).toBeCloseTo(GRID.y + (2.5 * 3 + 3.5 + 4.5) * 10);
+});
+
+test("the remix tray size is 1 to 4 slots, 3 by default (T11.2)", () => {
+  expect(traySlotsFor(3)).toBe(TRAY_SLOTS);
+  expect(traySlotsFor(1)).toBe(1);
+  expect(traySlotsFor(4)).toBe(4);
+  expect(traySlotsFor(9)).toBe(4);
+  expect(traySlotsFor(0)).toBe(1);
+  expect(traySlotsFor(Number.NaN)).toBe(TRAY_SLOTS);
 });

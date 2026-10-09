@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="hoop sticker">
+<!-- Placeholder achievement sticker until the Phase 8 art (T11.4). -->
+<circle cx="50" cy="50" r="45" fill="#FFFFFF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="44" cy="52" r="22" fill="#FF8A3D" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M22 52h44M44 30v44M29 36q10 16 0 32M59 36q-10 16 0 32" fill="none" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M60 26h22" stroke="#FF5A4E" stroke-width="5" stroke-linecap="round"/>
+<path d="M62 28l4 14h10l4-14M66 42l4-14l6 14" fill="none" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M20 22l2 5l5 2l-5 2l-2 5l-2-5l-5-2l5-2z" fill="#FFC93C" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

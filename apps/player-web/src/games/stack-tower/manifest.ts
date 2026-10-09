@@ -9,6 +9,9 @@ export default defineGame({
   objective: "Build the tallest tower you can.",
   controls: "Tap anywhere to drop the block.",
   makers: ["Harvey"],
+  // TODO note: James to replace with the real one (draft by Claude).
+  note: "Drop each block right on top so it doesn't get smaller. How high can you go?",
+  noteBy: "Harvey",
   status: "beta",
   orientation: "portrait",
   design: { w: 540, h: 960 },

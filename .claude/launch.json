@@ -42,6 +42,21 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "local:admin"],
       "port": 3100
+    },
+    {
+      "name": "web-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "preview",
+        "--workspace",
+        "apps/player-web",
+        "--",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "port": 4173
     }
   ]
 }

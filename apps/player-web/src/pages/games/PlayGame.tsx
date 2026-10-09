@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { allGames } from "../../games";
 import { createHost } from "../../platform/host";
 import { onMutedChange } from "../../platform/audio";
@@ -24,6 +24,18 @@ import {
 import { brand } from "../../config/brand";
 import { adapters } from "../../platform/adapters";
 import { useBackHandler } from "../../platform/backButton";
+import { dailyRunFor } from "../daily/dailyRules";
+import PassAndPlayScreen from "./passandplay/PassAndPlayScreen";
+import {
+  passAndPlayReducer,
+  readPassAndPlay,
+  type PassAndPlayAction,
+  type PassAndPlayState,
+} from "./passandplay/passAndPlay";
+import { remixBestId } from "../../platform/remix";
+import RemixSection from "./remix/RemixSection";
+import { remixBoardPath } from "./remix/remixLinks";
+import { useActiveRemix } from "./remix/useActiveRemix";
 
 export default function PlayGame() {
   const { gameId } = useParams();
@@ -31,6 +43,20 @@ export default function PlayGame() {
   // Deliberately the bundled registry, not the live catalog: the mount effect depends
   // on `meta`, so a new object when catalog data arrives would remount a running game.
   const meta = useMemo(() => allGames.find((g) => g.id === gameId), [gameId]);
+  // Today's challenge (T11.3): `?daily=<today>` seeds host.rng() with the day's seed.
+  const [searchParams] = useSearchParams();
+  const dailyParam = searchParams.get("daily");
+  const daily = useMemo(() => dailyRunFor(dailyParam), [dailyParam]);
+  // Remix mode (T11.2): `?remix=<id>` or slider values; never on a daily-challenge run.
+  const remix = useActiveRemix(daily ? undefined : meta?.id);
+  const activeRemix = remix.active;
+  // Read when the host is made; synced before the mount effect below runs.
+  const remixRef = useRef(activeRemix);
+  useEffect(() => {
+    remixRef.current = activeRemix;
+  }, [activeRemix]);
+  const bestId = meta && activeRemix ? remixBestId(meta.id, activeRemix.id) : meta?.id;
+  const remixBoard = meta && activeRemix?.id ? remixBoardPath(meta.id, activeRemix.id) : null;
   const { user, ensureSession } = useAuth();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const destroyRef = useRef<null | (() => void)>(null);
@@ -42,6 +68,10 @@ export default function PlayGame() {
   const [finishedRun, setFinishedRun] = useState<{ score: number; durationMs?: number } | null>(
     null,
   );
+  // Pass-and-play (T11.6): two turns on one phone. Those runs skip GameOver, so never post.
+  const [passPlay, setPassPlay] = useState<PassAndPlayState | null>(null);
+  const passPlayDo = (action: PassAndPlayAction) =>
+    setPassPlay((s) => passAndPlayReducer(s, action));
 
   const mountingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,8 +86,8 @@ export default function PlayGame() {
   // For the page's structured data only; the landing page owns rating UI and the prompt (T7.4).
   const { summary: ratingSummary } = useGameRatings(meta?.id);
   useEffect(() => {
-    if (!showScore && meta) setPreviousBest(getBest(meta.id));
-  }, [showScore, meta]);
+    if (!showScore && bestId) setPreviousBest(getBest(bestId));
+  }, [showScore, bestId]);
 
   const presenceStatus = showScore
     ? "in_score_dialog"
@@ -107,6 +137,10 @@ export default function PlayGame() {
       }
       const host = createHost(mod.manifest, {
         onGameOver: ({ score, durationMs }) => setFinishedRun({ score, durationMs }),
+        daily,
+        ...(remixRef.current
+          ? { remix: remixRef.current.values, bestId: remixBestId(meta.id, remixRef.current.id) }
+          : {}),
       });
       const instance = mod.create(host, containerRef.current);
       instanceRef.current = instance;
@@ -129,7 +163,7 @@ export default function PlayGame() {
       mountingRef.current = false;
       setMounting(false);
     }
-  }, [meta]);
+  }, [meta, daily]);
 
   const handleCloseScore = () => {
     setShowScore(false);
@@ -156,17 +190,35 @@ export default function PlayGame() {
     void mountGame();
   };
 
+  const passPlayNextRun = (type: "next" | "again") => {
+    passPlayDo({ type });
+    setPaused(false);
+    if (!instanceRef.current) return void mountGame();
+    instanceRef.current.restart();
+    recordGamePlayed(meta?.id ?? "");
+  };
+  const passPlayDone = () => {
+    setPassPlay(null);
+    handleCloseScore();
+  };
+
   useEffect(() => {
     if (!meta || !finishedRun) return;
     setFinishedRun(null);
     setRunsFinished((n) => n + 1);
+    if (passPlay) {
+      // Not submitted: two players' runs would mix under one account.
+      setPassPlay((s) => passAndPlayReducer(s, { type: "finish", score: finishedRun.score }));
+      recordPlay(meta.id);
+      return;
+    }
     // Keep the game mounted so it's visible in the background
     setLastScore(finishedRun.score);
     setLastDurationMs(finishedRun.durationMs);
     setShowScore(true);
     // Counted for the rating prompt, which only ever asks on the landing page (T7.4).
     recordPlay(meta.id);
-  }, [finishedRun, meta]);
+  }, [finishedRun, meta, passPlay]);
 
   // Hiding the tab pauses an SDK game; the player resumes from the Paused overlay.
   useEffect(() => {
@@ -220,7 +272,9 @@ export default function PlayGame() {
   // Android back (T10.5): game over → close it; running → pause (the Paused screen is
   // the "are you sure?"); paused → leave the game for the landing page.
   useBackHandler(playing, () => {
-    if (showScore) {
+    if (passPlay && passPlay.stage !== "turn") {
+      passPlayDone();
+    } else if (showScore) {
       handleCloseScore();
     } else if (!paused) {
       instanceRef.current?.pause();
@@ -272,7 +326,7 @@ export default function PlayGame() {
 
       <GameHeader
         title={meta?.title ?? "Unknown Game"}
-        leaderboardTo={meta ? `/leaderboard/${meta.id}` : undefined}
+        leaderboardTo={remixBoard ?? (meta ? `/leaderboard/${meta.id}` : undefined)}
         showMute={playing}
         onBack={() => {
           if (playing) {
@@ -301,8 +355,14 @@ export default function PlayGame() {
         <div className="landing-panel" data-state={landingState} aria-hidden={playing}>
           <GameLanding
             meta={meta}
-            onPlay={() => setPlaying(true)}
+            onPlay={() => {
+              setPassPlay(passAndPlayReducer(null, { type: "start", setup: readPassAndPlay() }));
+              setPlaying(true);
+            }}
             canPromptRating={!playing && runsFinished === 0}
+            renderRemix={(play) => (
+              <RemixSection gameId={meta.id} gameTitle={meta.title} remix={remix} onPlay={play} />
+            )}
           />
         </div>
       )}
@@ -357,8 +417,21 @@ export default function PlayGame() {
         durationMs={lastDurationMs}
         onClose={handleCloseScore}
         onPlayAgain={handlePlayAgain}
-        onViewLeaderboard={meta ? () => navigate(`/leaderboard/${meta.id}`) : undefined}
+        onViewLeaderboard={
+          meta ? () => navigate(remixBoard ?? `/leaderboard/${meta.id}`) : undefined
+        }
+        daily={Boolean(daily)}
+        remixId={activeRemix?.id ?? null}
+        unsavedRemix={Boolean(activeRemix && !activeRemix.id)}
       />
+      {playing && passPlay && (
+        <PassAndPlayScreen
+          state={passPlay}
+          onReady={() => passPlayNextRun("next")}
+          onPlayAgain={() => passPlayNextRun("again")}
+          onDone={passPlayDone}
+        />
+      )}
     </div>
   );
 }

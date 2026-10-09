@@ -11,6 +11,9 @@ export default defineGame({
   controls:
     "Swipe up, down, left or right to steer, or tap the arrow pad under the board. Arrow keys or WASD on a keyboard.",
   makers: [...brand.makers],
+  // TODO note: James to replace with the real one (draft by Claude).
+  note: "Snakes are cool. Eat everything you can, but don't bite your own tail!",
+  noteBy: "Harvey",
   status: "active",
   orientation: "portrait",
   design: { w: 540, h: 960 },

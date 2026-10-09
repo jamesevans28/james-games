@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { loseLife, MAX_LIVES, pickSpawn, scoreFor, spawnSchedule } from "./rules";
+import { livesFor, loseLife, MAX_LIVES, pickSpawn, scoreFor, spawnSchedule } from "./rules";
 import { mulberry32 } from "../../../platform/rng";
 
 test("starts gentle", () => {
@@ -44,4 +44,24 @@ test("spawns only on free points, repeatably by seed", () => {
   const seq = (rng: () => number) =>
     Array.from({ length: 10 }, () => pickSpawn(points, new Set(), rng)?.id);
   expect(seq(a)).toEqual(seq(b));
+});
+
+test("the remix speed knob makes crocs arrive and swim faster (T11.2)", () => {
+  expect(spawnSchedule(20_000, 1)).toEqual(spawnSchedule(20_000));
+  const normal = spawnSchedule(20_000);
+  const fast = spawnSchedule(20_000, 2);
+  expect(fast.intervalMs).toBe(normal.intervalMs / 2);
+  expect(fast.crocSpeed).toBe(normal.crocSpeed * 2);
+  expect(fast.maxConcurrent).toBe(normal.maxConcurrent);
+  expect(spawnSchedule(0, 0)).toEqual(spawnSchedule(0));
+  expect(spawnSchedule(0, Number.NaN)).toEqual(spawnSchedule(0));
+});
+
+test("remix lives are a whole number from 1 to 9", () => {
+  expect(livesFor(3)).toBe(MAX_LIVES);
+  expect(livesFor(5)).toBe(5);
+  expect(livesFor(0)).toBe(1);
+  expect(livesFor(2.6)).toBe(3);
+  expect(livesFor(99)).toBe(9);
+  expect(livesFor(Number.NaN)).toBe(MAX_LIVES);
 });

@@ -14,3 +14,4 @@ docs/archive
 apps/player-web/src/game/words/*.txt
 *.min.js
 .npm-cache
+apps/backend-api/drizzle/meta

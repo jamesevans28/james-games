@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="calendar sticker">
+<!-- Placeholder achievement sticker until the Phase 8 art (T11.4). -->
+<circle cx="50" cy="50" r="45" fill="#FFFFFF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="24" y="26" width="52" height="50" rx="8" fill="#FFFFFF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M24 34q0-8 8-8h36q8 0 8 8v6h-52z" fill="#FF5A4E" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M36 20v12M64 20v12" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M30 56l4 4l7-8M46 56l4 4l7-8M62 56l4 4l7-8" fill="none" stroke="#3DBE6B" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M31 68h38" stroke="#E8DCC8" stroke-width="3" stroke-linecap="round"/>
+</svg>

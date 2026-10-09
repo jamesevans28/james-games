@@ -15,13 +15,22 @@ export type SpawnSchedule = {
  * Difficulty as a function of time played (pauses excluded). Every 4 s the gap
  * between crocs shrinks by 80 ms down to 300 ms; roughly every 9 s one more croc
  * may swim at once, up to 6; faster spawns mean faster crocs.
+ *
+ * `speed` is the remix "Croc speed" knob (T11.2): crocs swim and arrive that many
+ * times faster. 1 is the normal game.
  */
-export function spawnSchedule(elapsedMs: number): SpawnSchedule {
+export function spawnSchedule(elapsedMs: number, speed = 1): SpawnSchedule {
   const t = Math.max(0, elapsedMs);
+  const s = Number.isFinite(speed) && speed > 0 ? speed : 1;
   const intervalMs = Math.max(300, 1000 - 80 * Math.floor(t / 4000));
   const maxConcurrent = Math.min(6, 1 + Math.floor(t / 9000));
   const crocSpeed = 200 + (1000 - intervalMs) * 0.2;
-  return { intervalMs, maxConcurrent, crocSpeed };
+  return { intervalMs: intervalMs / s, maxConcurrent, crocSpeed: crocSpeed * s };
+}
+
+/** Lives for a run from the remix "Lives" knob: a whole number from 1 to 9. */
+export function livesFor(remixLives: number): number {
+  return Number.isFinite(remixLives) ? Math.min(9, Math.max(1, Math.round(remixLives))) : MAX_LIVES;
 }
 
 /** One point per croc scared away. */

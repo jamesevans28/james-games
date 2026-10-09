@@ -1,6 +1,13 @@
 import InfoPage, { ContactEmail, InfoList, InfoSection } from "../components/InfoPage";
 import { Link } from "react-router";
 import { brand, makersLine } from "../config/brand";
+import { games } from "../games";
+import { gamesByMaker } from "../utils/gamesByMaker";
+
+const byMaker = gamesByMaker(
+  games.filter((g) => g.status === "active"),
+  brand.makers,
+);
 
 /** About us (T7.8): who makes the games and what the site is. */
 export default function AboutPage() {
@@ -25,6 +32,29 @@ export default function AboutPage() {
           We think up the ideas together, try them out on each other, and keep the ones that make us
           laugh.
         </p>
+      </InfoSection>
+
+      <InfoSection id="games" title="Our games, by maker">
+        <p>Everyone helps with every game. These are the ones each of us dreamed up.</p>
+        {byMaker.map((group) => (
+          <div key={group.maker ?? "everyone"}>
+            <h3 className="kid-note mt-3 text-brand">
+              {group.maker ? `${group.maker}’s games` : "Made by all of us"}
+            </h3>
+            <ul className="mt-1 flex flex-wrap gap-2">
+              {group.games.map((g) => (
+                <li key={g.id}>
+                  <Link
+                    to={`/games/${g.id}`}
+                    className="inline-flex min-h-11 items-center rounded-full border border-line bg-paper-2 px-4 font-bold text-ink"
+                  >
+                    {g.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </InfoSection>
 
       <InfoSection title="Free, with no ads">

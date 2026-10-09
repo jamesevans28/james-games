@@ -15,6 +15,7 @@ import {
   updateUser,
 } from "../repos/usersRepo.js";
 import { buildSummary, type ExperienceSummary } from "./experienceService.js";
+import { canUseAvatar } from "./supporterService.js";
 import { SCREEN_NAME_MESSAGES, checkScreenName, generateScreenName } from "./screenNames.js";
 import {
   checkEmailVerified,
@@ -362,7 +363,12 @@ export async function updatePreferences(
   patch: { avatar?: number; preferences?: Record<string, unknown> },
 ): Promise<void> {
   const set: Partial<NewUser> = {};
-  if (patch.avatar !== undefined) set.avatar = patch.avatar;
+  if (patch.avatar !== undefined) {
+    if (!(await canUseAvatar(uid, patch.avatar))) {
+      throw new UserError(403, "supporter_only", "That avatar is a thank-you for supporters.");
+    }
+    set.avatar = patch.avatar;
+  }
   if (patch.preferences !== undefined) set.prefs = patch.preferences;
   if (!(await updateUser(uid, set))) throw notFound();
 }

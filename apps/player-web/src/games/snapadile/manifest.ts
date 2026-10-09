@@ -9,6 +9,9 @@ export default defineGame({
   objective: "Prevent crocodiles from reaching your raft by tapping them.",
   controls: "Tap on the crocodiles to scare them away.",
   makers: [...brand.makers],
+  // TODO note: James to replace with the real one (draft by Claude).
+  note: "The crocs aren't mean, they just want a ride on the raft! Tap them fast so they swim away.",
+  noteBy: "Tilly",
   status: "active",
   orientation: "portrait",
   design: { w: 540, h: 960 },
@@ -23,4 +26,10 @@ export default defineGame({
       "Crocs are swimming for your raft! Tap them before they snap. Free, no ads, and great for small fingers.",
     category: "reflex",
   },
+  // Remix mode (T11.2). The defaults are the normal game.
+  remix: [
+    { key: "speed", label: "Croc speed", min: 0.5, max: 2.5, step: 0.25, default: 1 },
+    { key: "lives", label: "Lives", min: 1, max: 5, step: 1, default: 3 },
+    { key: "crocSize", label: "Croc size", min: 0.6, max: 1.4, step: 0.1, default: 1 },
+  ],
 });

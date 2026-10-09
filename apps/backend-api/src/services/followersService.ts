@@ -28,6 +28,7 @@ import {
 } from "../repos/blocksRepo.js";
 import { deletePresence, upsertOnline } from "../repos/presenceRepo.js";
 import { normalizeFriendCode } from "./friendCode.js";
+import { awardFriendStickers } from "./achievements.js";
 
 /** A rule broken by the request: the controller replies `status` with `{ error: code }`. */
 export class FollowersError extends Error {
@@ -160,6 +161,7 @@ export async function sendFriendRequest(
   }
   if (incoming?.status === "pending") {
     await acceptRequest(userId, target.id);
+    await awardFriendStickers(userId, target.id); // T11.4: mutual requests become friends here too
     return { ok: true, status: "friends" };
   }
   if (outgoing) throw new FollowersError("request_already_sent", 409);
@@ -178,6 +180,7 @@ export async function acceptFriendRequest(
   if (!(await acceptRequest(userId, requesterId))) {
     throw new FollowersError("request_not_found", 404);
   }
+  await awardFriendStickers(userId, requesterId); // T11.4
   return { ok: true };
 }
 

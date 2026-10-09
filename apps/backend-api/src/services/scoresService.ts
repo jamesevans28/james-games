@@ -22,13 +22,11 @@ import {
   loadExperienceLevels,
   type ExperienceSummary,
 } from "./experienceService.js";
-import {
-  applyDailyStreak,
-  streakOf,
-  applyWeeklySticker,
-  type StickerEarned,
-  type StreakResult,
-} from "./streakService.js";
+import { applyDailyStreak, streakOf, type StreakResult } from "./streakService.js";
+import { awardRunStickers, type StickerEarned } from "./achievements.js";
+import { recordDailyRun, type DailyRunResult } from "./dailyService.js";
+import { remixForRun } from "./remixService.js";
+import { bestOnRemix } from "../repos/remixesRepo.js";
 
 export interface PublicScoreRow {
   userId?: string;
@@ -37,6 +35,7 @@ export interface PublicScoreRow {
   score: number;
   createdAt: string;
   level?: number | null;
+  supporter?: boolean;
 }
 
 export type ScoreSubmission = {
@@ -49,8 +48,14 @@ export type ScoreSubmission = {
   newLevel?: number;
   summary: ExperienceSummary;
   streak: StreakResult["streak"] & { extended: boolean; isNewStreak: boolean };
-  /** Only when this run collected the weekly sticker (T7.5). */
+  /** The first sticker this run collected (kept for older apps; T7.5). */
   stickerEarned?: StickerEarned;
+  /** Every sticker this run collected, the weekly one first (T11.4). */
+  stickersEarned?: StickerEarned[];
+  /** Only when the run was sent as a daily-challenge run (T11.3). */
+  daily?: DailyRunResult;
+  /** The saved play (share links, T11.5). */
+  playId: string;
   /** True when this play id was already saved (an offline-queue resend). */
   duplicate?: true;
 };
@@ -59,7 +64,7 @@ export type ScoreSubmission = {
  * Saves one run in a single transaction: check the game and the player, validate
  * the score against the game's own limits, insert the play, raise the best score,
  * add XP (score × the game's multiplier from the database), count today's streak,
- * collect the weekly sticker and update the per-game stats. Throws ScoreRejected for anything refused.
+ * save a daily-challenge run, collect stickers and update the per-game stats. Throws ScoreRejected for anything refused.
  */
 export async function submitScore(
   userId: string,
@@ -69,6 +74,9 @@ export async function submitScore(
     durationMs?: unknown;
     tzOffsetMinutes?: unknown;
     playId?: unknown;
+    daily?: unknown;
+    /** A saved remix (T11.2): checked here, and the run goes on that remix's board. */
+    remixId?: unknown;
   },
   nowMs: number = Date.now(),
 ): Promise<ScoreSubmission> {
@@ -94,6 +102,7 @@ export async function submitScore(
         return {
           gameId,
           score: earlier.score,
+          playId: earlier.id,
           createdAt: earlier.createdAt.toISOString(),
           xpAwarded: earlier.xpAwarded,
           newBest: false,
@@ -105,6 +114,10 @@ export async function submitScore(
     }
 
     const valid = validateScoreSubmission(body, limitsFor(game));
+    // A remix run (T11.2) earns XP and counts for the streak, but has its own board:
+    // it never raises the game's best (an easy remix mustn't top the normal board).
+    const remixId = await remixForRun(tx, body.remixId, gameId);
+    const remixBestBefore = remixId ? await bestOnRemix(tx, userId, remixId) : 0;
 
     const xpAwarded = xpForScore(valid.score, multiplierFor(game));
     const now = new Date(nowMs);
@@ -115,14 +128,17 @@ export async function submitScore(
       score: valid.score,
       durationMs: valid.durationMs ?? null,
       xpAwarded,
+      remixId,
     });
-    const best = await upsertBestScore(tx, {
-      userId,
-      gameId,
-      score: valid.score,
-      playId: play.id,
-      achievedAt: play.createdAt,
-    });
+    const best = remixId
+      ? null
+      : await upsertBestScore(tx, {
+          userId,
+          gameId,
+          score: valid.score,
+          playId: play.id,
+          achievedAt: play.createdAt,
+        });
 
     const xp = addExperience(
       levels,
@@ -139,19 +155,43 @@ export async function submitScore(
         : player;
 
     const streak = await applyDailyStreak(tx, player, body.tzOffsetMinutes, nowMs);
-    const sticker = await applyWeeklySticker(tx, userId, body.tzOffsetMinutes, nowMs);
+    // A remix run is never the daily run: its knobs could make the game easier.
+    const daily =
+      body.daily === true && !remixId
+        ? await recordDailyRun(tx, {
+            userId,
+            gameId,
+            score: valid.score,
+            playId: play.id,
+            tzOffsetMinutes: body.tzOffsetMinutes,
+            nowMs,
+          })
+        : undefined;
+    const stickers = await awardRunStickers(tx, {
+      userId,
+      gameId,
+      score: valid.score,
+      newBest: best !== null,
+      onRemix: Boolean(remixId),
+      tzOffsetMinutes: body.tzOffsetMinutes,
+      nowMs,
+    });
     await recordGamePlay(tx, { userId, gameId, score: valid.score, playedAt: now });
 
     return {
       gameId,
       score: valid.score,
+      playId: play.id,
       createdAt: play.createdAt.toISOString(),
       xpAwarded,
-      newBest: best !== null,
+      // On a remix: the player's best on that remix.
+      newBest: remixId ? valid.score > remixBestBefore : best !== null,
       ...(xp.level > player.xpLevel ? { newLevel: xp.level } : {}),
       summary: buildSummary(updated ?? player),
       streak: { ...streak.streak, extended: streak.extended, isNewStreak: streak.isNewStreak },
-      ...(sticker ? { stickerEarned: sticker } : {}),
+      ...(stickers[0] ? { stickerEarned: stickers[0] } : {}),
+      stickersEarned: stickers,
+      ...(daily ? { daily } : {}),
     };
   });
 }
@@ -174,6 +214,7 @@ export async function getLeaderboard(
     score: r.score,
     createdAt: r.achievedAt.toISOString(),
     level: r.level,
+    ...(r.supporter ? { supporter: true } : {}),
   }));
 }
 

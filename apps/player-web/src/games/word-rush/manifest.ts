@@ -12,6 +12,9 @@ export default defineGame({
   controls:
     "Tap 4 consonants and 2 vowels, then Start. Type the answer on the on-screen keyboard (or a real keyboard) and tap Submit. Buy Letter shows a hidden letter for 30 seconds; Give Up ends the game.",
   makers: [...brand.makers],
+  // TODO note: James to replace with the real one (draft by Claude).
+  note: "We made this one together. Guess the words before the clock runs out. Little words count too!",
+  noteBy: "Tilly",
   status: "active",
   orientation: "portrait",
   design: { w: 540, h: 960 },

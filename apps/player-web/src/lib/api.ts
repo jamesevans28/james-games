@@ -98,6 +98,8 @@ export type ScoreEntry = {
   score: number;
   createdAt?: string;
   level?: number | null;
+  /** A family supporter (T12.2): a star next to the name. */
+  supporter?: boolean;
 };
 
 /** Body of mutations that only acknowledge success (friends, preferences). */
@@ -154,9 +156,13 @@ function emptySummary(gameId: string): RatingSummary {
   return { gameId, avgRating: 0, ratingCount: 0 };
 }
 
+export type EarnedSticker = { id: string; kind: "weekly" | "achievement" };
+
 export type ScoreSubmissionResult = {
   ok: boolean;
   gameId: string;
+  /** The saved play, for its share link (T11.5). Missing from older servers. */
+  playId?: string;
   score: number;
   createdAt: string;
   awardedXp: number;
@@ -166,8 +172,12 @@ export type ScoreSubmissionResult = {
   /** Present only when the run levelled the player up. */
   newLevel?: number;
   streak?: StreakData & { extended: boolean; isNewStreak: boolean };
-  /** Present only when this run collected the weekly sticker (T7.5). */
-  stickerEarned?: { id: string; kind: "weekly" };
+  /** The first sticker this run collected (T7.5); read `stickersEarned` instead. */
+  stickerEarned?: EarnedSticker;
+  /** Every sticker this run collected, the weekly one first (T11.4). */
+  stickersEarned?: EarnedSticker[];
+  /** Only for a run sent as today's challenge: whether it was the day's scored run (T11.3). */
+  daily?: { day: string; counted: boolean };
   /** True when the server had already saved this play id (an offline-queue resend). */
   duplicate?: boolean;
 };
@@ -195,6 +205,10 @@ export async function postHighScore(args: {
   playId?: string;
   /** Kept from when the run was played, for queued resends. */
   tzOffsetMinutes?: number;
+  /** Played as today's challenge (T11.3); the server decides whether it counts. */
+  daily?: boolean;
+  /** The saved remix the run was played on (T11.2); its own board, not the game's. */
+  remixId?: string;
 }): Promise<ScoreSubmissionResult | undefined> {
   if (!API_BASE) return;
   const tzOffsetMinutes = args.tzOffsetMinutes ?? -new Date().getTimezoneOffset(); // minutes east of UTC
@@ -405,6 +419,15 @@ export async function reportPresence(): Promise<void> {
   if (!res.ok) throw await apiErrorFrom(res, "Failed to update presence");
 }
 
+/** The game a shared score was played on (T11.5), or null when the link has no card. */
+export async function fetchSharedPlay(playId: string): Promise<{ gameId: string } | null> {
+  if (!API_BASE) return null;
+  const res = await fetch(`${API_BASE}/share/${encodeURIComponent(playId)}.json`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to load shared score");
+  return (await res.json()) as { gameId: string };
+}
+
 /** A public profile, or null when there is no such player (or a block between you). */
 export async function fetchUserProfile(userId: string): Promise<ProfileResponse | null> {
   if (!API_BASE) return null;
@@ -461,6 +484,37 @@ export async function fetchStreakData(): Promise<StreakData | null> {
 }
 
 // ============================================================================
+// Daily challenge (T11.3)
+// ============================================================================
+
+export type DailyBoardEntry = {
+  userId: string;
+  screenName: string;
+  avatar: number;
+  level: number;
+  score: number;
+};
+
+export type DailyChallenge = {
+  /** The player's local day (YYYY-MM-DD). */
+  day: string;
+  gameId: string | null;
+  seed: number;
+  /** Your scored run today, when signed in and played. */
+  myRun?: { score: number };
+  board: DailyBoardEntry[];
+};
+
+/** GET /daily: today's game and board for this device's day. Null without an API. */
+export async function fetchDaily(): Promise<DailyChallenge | null> {
+  if (!API_BASE) return null;
+  const tz = -new Date().getTimezoneOffset(); // minutes east of UTC
+  const res = await fetchWithAuth(`${API_BASE}/daily?tz=${tz}`);
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to load today's challenge");
+  return (await res.json()) as DailyChallenge;
+}
+
+// ============================================================================
 // Stickers (T7.5)
 // ============================================================================
 
@@ -474,4 +528,122 @@ export async function fetchMyStickers(): Promise<CollectedSticker[]> {
   if (!res.ok) throw new Error(`Failed to load stickers: ${res.status}`);
   const body = (await res.json()) as { stickers?: CollectedSticker[] };
   return body.stickers ?? [];
+}
+
+// ============================================================================
+// Family (T11.7): a grown-up links to a kid's account with a code
+// ============================================================================
+
+export type FamilyMember = { userId: string; screenName: string; avatar: number };
+export type FamilyDay = { day: string; plays: number; playMs: number };
+export type FamilyKid = FamilyMember & {
+  linkedAt: string;
+  /** The last 7 days in the viewer's time zone, oldest first. */
+  days: FamilyDay[];
+  totalPlays: number;
+  totalPlayMs: number;
+};
+export type FamilySummary = {
+  kids: FamilyKid[];
+  grownUps: (FamilyMember & { linkedAt: string })[];
+};
+
+async function familyCall<T>(method: string, path: string, body?: unknown): Promise<T> {
+  if (!API_BASE) throw new ApiError(0, "api_unavailable", "api_unavailable");
+  const res = await fetchWithAuth(`${API_BASE}/family${path}`, {
+    method,
+    ...(body === undefined
+      ? {}
+      : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
+  });
+  // The server's `{ error }` code (e.g. code_expired) becomes the ApiError message.
+  if (!res.ok) throw await apiErrorFrom(res, "Family request failed");
+  return (await res.json()) as T;
+}
+
+/** GET /family: your kids' last 7 days (in this device's time zone) and your grown-ups. */
+export function fetchFamily(): Promise<FamilySummary> {
+  const tzOffsetMinutes = -new Date().getTimezoneOffset(); // minutes east of UTC
+  return familyCall("GET", `?tzOffsetMinutes=${tzOffsetMinutes}`);
+}
+
+/** A grown-up's 6-character code, valid 15 minutes; making a new one cancels the old. */
+export function createFamilyCode(): Promise<{ code: string; expiresAt: string }> {
+  return familyCall("POST", "/codes");
+}
+
+/** The kid's account joins the grown-up who made this code. */
+export function joinFamily(code: string): Promise<{ grownUp: FamilyMember }> {
+  return familyCall("POST", "/join", { code });
+}
+
+export function unlinkFamilyKid(childId: string): Promise<{ ok: true }> {
+  return familyCall("DELETE", `/kids/${encodeURIComponent(childId)}`);
+}
+
+// ============================================================================
+// Remixes (T11.2): a game with its knobs turned, saved and shared by link
+// ============================================================================
+
+export type Remix = {
+  id: string;
+  gameId: string;
+  name: string;
+  knobs: Record<string, number>;
+  createdAt: string;
+  /** The maker's public name (null on your own just-saved remix and your list). */
+  owner: { screenName: string; avatar: number } | null;
+  isMine: boolean;
+};
+
+/** GET /remixes/:id (public, for shared links); null when there's no such remix. */
+export async function fetchRemix(id: string): Promise<Remix | null> {
+  if (!API_BASE) return null;
+  const res = await fetchWithAuth(`${API_BASE}/remixes/${encodeURIComponent(id)}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to load remix");
+  return ((await res.json()) as { remix: Remix }).remix;
+}
+
+/** POST /remixes (registered accounts). Throws an ApiError with a friendly message. */
+export async function saveRemix(body: {
+  gameId: string;
+  name: string;
+  knobs: Record<string, number>;
+}): Promise<Remix> {
+  if (!API_BASE) throw new ApiError(0, "api_unavailable", "Saving remixes needs the internet.");
+  const res = await fetchWithAuth(`${API_BASE}/remixes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw await apiErrorFrom(res, "Couldn't save your remix");
+  return ((await res.json()) as { remix: Remix }).remix;
+}
+
+/** GET /remixes/mine?gameId=: your own remixes, newest first. */
+export async function fetchMyRemixes(gameId: string): Promise<Remix[]> {
+  if (!API_BASE) return [];
+  const res = await fetchWithAuth(`${API_BASE}/remixes/mine?gameId=${encodeURIComponent(gameId)}`);
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to load your remixes");
+  return ((await res.json()) as { remixes: Remix[] }).remixes;
+}
+
+/** GET /remixes/:id/scores: best per player on a remix, same rows as a game's board. */
+export async function getRemixScores(remixId: string, limit = 10): Promise<ScoreEntry[]> {
+  if (!API_BASE) return [];
+  const res = await fetch(
+    `${API_BASE}/remixes/${encodeURIComponent(remixId)}/scores?limit=${limit}`,
+  );
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to load the remix board");
+  return (await res.json()) as ScoreEntry[];
+}
+
+/** GET /billing/supporter: whether this player or their family supports us (T12.2). */
+export async function fetchSupporterStatus(): Promise<{ supporter: boolean }> {
+  if (!API_BASE) return { supporter: false };
+  const res = await fetchWithAuth(`${API_BASE}/billing/supporter`);
+  if (res.status === 401) return { supporter: false };
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to load supporter status");
+  return (await res.json()) as { supporter: boolean };
 }

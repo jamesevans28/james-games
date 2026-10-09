@@ -15,6 +15,20 @@
       "when": 1791493890520,
       "tag": "0001_unique_surge",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791505641745,
+      "tag": "0002_illegal_puppet_master",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791507014152,
+      "tag": "0003_flat_silver_fox",
+      "breakpoints": true
     }
   ]
 }

@@ -20,7 +20,7 @@ Steps:
 
 ## T12.2 Supporter perks (cosmetic, bought by a grown-up)
 
-Status: todo
+Status: done in code 2026-10-09 (supporters table, signed webhook without the Stripe SDK, idempotent, family inherits perks, gold avatars, star on boards, admin grant/revoke, gated Grown-ups section); MANUAL: Stripe account, Payment Link, webhook secret (docs/stripe-setup.md), after relaunch
 Depends on: T6.3, T8.6 (avatar and sticker sets), T11.4 (stickers), T12.1, relaunch done (T13)
 Goal: a one-off "Family supporter" purchase that unlocks cosmetics for every account in the family, nothing that affects scores.
 Files: backend `services/supporterService.ts`, `routes/billing.routes.ts`, schema `supporters` (user_id, source enum('stripe','apple','google'), external_id, granted_at), frontend `pages/settings/SettingsScreen.tsx` ("Grown-ups" section), `config/avatars.ts` (packs)
@@ -34,7 +34,7 @@ Steps:
 
 ## T12.3 In-app purchase in the store builds
 
-Status: todo
+Status: done in code 2026-10-09 (@revenuecat/purchases-capacitor 13.6.0, gated purchase + restore in Grown-ups, RevenueCat webhook grants the supporter); MANUAL: store products, RevenueCat project, keys, webhook secret (docs/stripe-setup.md); test once the apps are live (T10.8)
 Depends on: T10.8 (apps live), T12.2
 Goal: the same supporter purchase inside the iOS and Android apps, as the stores require for digital goods.
 Steps: RevenueCat (free under US$2.5k/month revenue) with `@revenuecat/purchases-capacitor`, one non-consumable product `family_supporter` in App Store Connect and Play Console, server-side entitlement check from RevenueCat's webhook into `supporters` (source `apple`/`google`), restore purchases, and the Kids-category parental gate before the purchase sheet. Family Sharing on. No subscription until there is a reason for one.
@@ -42,13 +42,13 @@ Done when: sandbox purchases on both platforms grant the perks; restore works; t
 
 ## T12.4 Merch (optional)
 
-Status: todo (only if the kids want it)
+Status: optional, not started (only if the kids want it; needs Phase 8 character art)
 Steps: print-on-demand stickers of the Phase 8 characters (Redbubble or Printful, no stock), linked from the support page. More brand than income.
 Done when: a sticker sheet is orderable and one is on the fridge.
 
 ## T12.5 Cost and income hygiene
 
-Status: todo
+Status: set up 2026-10-09 (docs/money.md); MANUAL: AWS budget alert; rows start the first month after relaunch
 Depends on: T13 (so the real bills exist)
 Steps: AWS budget alert at A$5/month (MANUAL: James, Billing → Budgets); Supabase and Ko-fi/Stripe dashboards bookmarked in `docs/money.md`; a monthly line in that file: hosting cost, Ko-fi, Stripe, store income, what was spent. Claude updates the support page's cost table from it. Consider a separate bank account or Stripe payout schedule (James's call; outside this repo).
 Done when: `docs/money.md` has three monthly rows.

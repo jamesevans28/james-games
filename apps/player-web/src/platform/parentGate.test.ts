@@ -19,3 +19,15 @@ test("only the exact product passes", () => {
   expect(isCorrect(c, "forty-two")).toBe(false);
   expect(isCorrect(c, "")).toBe(false);
 });
+
+test("a request waits for the modal's answer, and is refused without a modal", async () => {
+  const { requestGrownUp, settleGrownUp, onGrownUpRequest } = await import("./parentGate");
+  expect(await requestGrownUp()).toBe(false);
+  const opened: boolean[] = [];
+  const off = onGrownUpRequest((open) => opened.push(open));
+  const answer = requestGrownUp();
+  settleGrownUp(true);
+  expect(await answer).toBe(true);
+  expect(opened).toEqual([true, false]);
+  off();
+});

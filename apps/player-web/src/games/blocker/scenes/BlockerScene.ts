@@ -24,6 +24,7 @@ import {
   placedCentre,
   slotCentres,
   snapToGrid,
+  traySlotsFor,
   type GridGeometry,
   type Point,
 } from "../useCases/layout";
@@ -91,7 +92,8 @@ export default class BlockerScene extends BasePlatformScene {
     this.lineGfx = this.add.graphics().setDepth(19);
     this.previewGfx = this.add.graphics().setDepth(20);
 
-    this.slots = slotCentres(WIDTH).map((x) => ({
+    const traySlots = traySlotsFor(this.host.remix.get("traySize")); // remix knob (T11.2)
+    this.slots = slotCentres(WIDTH, traySlots).map((x) => ({
       piece: null,
       view: null,
       home: { x, y: TRAY_Y },

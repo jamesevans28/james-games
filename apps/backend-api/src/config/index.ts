@@ -11,6 +11,15 @@ export const config = {
     .map((s: string) => s.trim())
     .filter(Boolean),
   appBaseUrl: process.env.APP_BASE_URL || "http://localhost:8787",
+  /** The public site, for share links and redirects (T11.5). No trailing slash. */
+  publicSiteOrigin: (process.env.PUBLIC_SITE_ORIGIN || "https://games4james.com").replace(
+    /\/+$/,
+    "",
+  ),
+  /** Stripe webhook signing secret (whsec_…), T12.2. Empty: every webhook is rejected. */
+  stripeWebhookSecret: (process.env.STRIPE_WEBHOOK_SECRET || "").trim(),
+  /** The Authorization value RevenueCat sends (we check "Bearer <this>"), T12.3. */
+  revenueCatWebhookAuth: (process.env.REVENUECAT_WEBHOOK_AUTH || "").trim(),
   // Firebase configuration
   firebase: {
     projectId: (process.env.FIREBASE_PROJECT_ID || "").trim(),

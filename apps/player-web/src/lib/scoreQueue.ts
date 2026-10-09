@@ -14,6 +14,8 @@ export type QueuedRun = {
   durationMs?: number;
   /** The player's UTC offset when they played, so the streak counts the right day. */
   tzOffsetMinutes: number;
+  /** The saved remix the run was played on (T11.2), sent along when the run is. */
+  remixId?: string;
   queuedAt: number;
 };
 

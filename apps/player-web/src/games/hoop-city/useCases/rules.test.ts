@@ -111,3 +111,14 @@ test("approach eases the same distance whatever the frame rate", () => {
   expect(approach(100, 0, 0.08, 0)).toBe(100);
   expect(approach(100, 0, 1, 1 / 60)).toBe(0);
 });
+
+test("remix knobs scale gravity and the space between hoops (T11.2)", () => {
+  expect(gravityAt(2_000, 1)).toBe(gravityAt(2_000));
+  expect(gravityAt(2_000, 0.5)).toBe(gravityAt(2_000) / 2);
+  expect(gravityAt(2_000, 0)).toBe(gravityAt(2_000));
+  const normal = nextHoop(mulberry32(7));
+  expect(nextHoop(mulberry32(7), 1)).toEqual(normal);
+  const wide = nextHoop(mulberry32(7), 1.5);
+  expect(wide.gap).toBe(Math.round(normal.gap * 1.5));
+  expect(wide.y).toBe(normal.y);
+});

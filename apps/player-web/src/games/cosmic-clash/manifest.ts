@@ -12,6 +12,9 @@ export default defineGame({
   controls:
     "Hold left or right to move; tap a side to nudge. Your ship fires by itself. On a keyboard, use the arrow keys or A and D.",
   makers: [...brand.makers],
+  // TODO note: James to replace with the real one (draft by Claude).
+  note: "I love space. The aliens come faster and faster, so keep moving and keep blasting!",
+  noteBy: "Harvey",
   status: "active",
   orientation: "portrait",
   design: { w: 540, h: 960 },

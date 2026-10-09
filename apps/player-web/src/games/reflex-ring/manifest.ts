@@ -10,6 +10,9 @@ export default defineGame({
   controls:
     "Tap anywhere when the arrow is over the coloured wedge. Collect power-ups with the arrow tip.",
   makers: [...brand.makers],
+  // TODO note: James to replace with the real one (draft by Claude).
+  note: "Tap right when the arrow lands on the bright bit. It gets faster and faster, so get ready!",
+  noteBy: "Tilly",
   status: "active",
   orientation: "portrait",
   design: { w: 540, h: 960 },

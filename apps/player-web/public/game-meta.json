@@ -11,6 +11,8 @@
       "Tilly",
       "Harvey"
     ],
+    "note": "Fitting the blocks in is my favourite bit. When you clear two lines at once it feels SO good.",
+    "noteBy": "Harvey",
     "status": "active",
     "orientation": "portrait",
     "design": {
@@ -32,7 +34,17 @@
     "seo": {
       "description": "Drop blocks, clear lines, chain combos. Easy to start, hard to stop. Free puzzle game, no ads.",
       "category": "puzzle"
-    }
+    },
+    "remix": [
+      {
+        "key": "traySize",
+        "label": "Pieces to pick from",
+        "min": 1,
+        "max": 4,
+        "step": 1,
+        "default": 3
+      }
+    ]
   },
   {
     "id": "box-cutter",
@@ -46,6 +58,8 @@
       "Tilly",
       "Harvey"
     ],
+    "note": "The fireball is sneaky! My trick is to draw lots of short lines and box it in bit by bit.",
+    "noteBy": "Harvey",
     "status": "active",
     "orientation": "portrait",
     "design": {
@@ -70,6 +84,60 @@
     }
   },
   {
+    "id": "colour-sort",
+    "title": "Colour Sort",
+    "tagline": "Pour the balls between tubes until every tube is one colour.",
+    "description": "Each tube holds four balls. Pick up the top balls of a tube and pour them onto the same colour or into an empty tube. Sort every tube to clear the level. Each colour has its own pattern too, so you can play by shape.",
+    "objective": "Sort every tube to a single colour, in as few moves as you can. 20 levels.",
+    "controls": "Tap a tube to pick up its top balls, then tap another tube to pour them in. Tap the same tube to put them back. Keys 1 to 9 pick tubes on a keyboard. Stuck? Tap Give up to end the run.",
+    "makers": [
+      "James",
+      "Tilly",
+      "Harvey"
+    ],
+    "note": "Look at the top balls first and keep one tube empty for as long as you can!",
+    "noteBy": "Tilly",
+    "status": "beta",
+    "orientation": "portrait",
+    "design": {
+      "w": 540,
+      "h": 960
+    },
+    "input": [
+      "tap"
+    ],
+    "scoring": {
+      "max": 3000,
+      "perSecondMax": 150,
+      "xpMultiplier": 0.5
+    },
+    "cover": "/assets/colour-sort/cover.svg",
+    "createdAt": "2026-10-09T00:00:00.000Z",
+    "updatedAt": "2026-10-09T00:00:00.000Z",
+    "seo": {
+      "description": "Pour the balls between tubes until each one is a single colour. Patterns on every ball, so it works by shape too. Free, no ads.",
+      "category": "puzzle"
+    },
+    "remix": [
+      {
+        "key": "colours",
+        "label": "Most colours",
+        "min": 2,
+        "max": 6,
+        "step": 1,
+        "default": 6
+      },
+      {
+        "key": "spare",
+        "label": "Empty tubes",
+        "min": 1,
+        "max": 3,
+        "step": 1,
+        "default": 2
+      }
+    ]
+  },
+  {
     "id": "cosmic-clash",
     "title": "Cosmic Clash",
     "tagline": "Blast the space invaders and survive the waves.",
@@ -81,6 +149,8 @@
       "Tilly",
       "Harvey"
     ],
+    "note": "I love space. The aliens come faster and faster, so keep moving and keep blasting!",
+    "noteBy": "Harvey",
     "status": "active",
     "orientation": "portrait",
     "design": {
@@ -117,6 +187,8 @@
       "Tilly",
       "Harvey"
     ],
+    "note": "Watch really carefully and say the pattern in your head. That's how I remember it.",
+    "noteBy": "Tilly",
     "status": "active",
     "orientation": "portrait",
     "design": {
@@ -151,6 +223,8 @@
       "Tilly",
       "Harvey"
     ],
+    "note": "I wanted it to feel like flying over the city. Try to go right through the middle of the hoops!",
+    "noteBy": "Tilly",
     "status": "active",
     "orientation": "portrait",
     "design": {
@@ -171,7 +245,25 @@
     "seo": {
       "description": "Tap to float the ball through hoops as the city scrolls past. Free, no ads, one more go guaranteed.",
       "category": "arcade"
-    }
+    },
+    "remix": [
+      {
+        "key": "gravity",
+        "label": "Gravity",
+        "min": 0.5,
+        "max": 1.5,
+        "step": 0.1,
+        "default": 1
+      },
+      {
+        "key": "ringGap",
+        "label": "Space between hoops",
+        "min": 0.6,
+        "max": 1.6,
+        "step": 0.1,
+        "default": 1
+      }
+    ]
   },
   {
     "id": "paddle-pop",
@@ -185,6 +277,8 @@
       "Tilly",
       "Harvey"
     ],
+    "note": "Don't let the marble fall! Grab the power-ups, they're the best bit.",
+    "noteBy": "Harvey",
     "status": "active",
     "orientation": "portrait",
     "design": {
@@ -219,6 +313,8 @@
       "Tilly",
       "Harvey"
     ],
+    "note": "Tap right when the arrow lands on the bright bit. It gets faster and faster, so get ready!",
+    "noteBy": "Tilly",
     "status": "active",
     "orientation": "portrait",
     "design": {
@@ -253,6 +349,8 @@
       "Tilly",
       "Harvey"
     ],
+    "note": "Snakes are cool. Eat everything you can, but don't bite your own tail!",
+    "noteBy": "Harvey",
     "status": "active",
     "orientation": "portrait",
     "design": {
@@ -289,6 +387,8 @@
       "Tilly",
       "Harvey"
     ],
+    "note": "We made this one together. Guess the words before the clock runs out. Little words count too!",
+    "noteBy": "Tilly",
     "status": "active",
     "orientation": "portrait",
     "design": {
@@ -324,6 +424,8 @@
       "Tilly",
       "Harvey"
     ],
+    "note": "Change one letter at a time, like CAT to COT to DOT. It's like climbing a word ladder!",
+    "noteBy": "Tilly",
     "status": "active",
     "orientation": "portrait",
     "design": {
@@ -356,6 +458,8 @@
     "makers": [
       "Harvey"
     ],
+    "note": "Drop each block right on top so it doesn't get smaller. How high can you go?",
+    "noteBy": "Harvey",
     "status": "beta",
     "orientation": "portrait",
     "design": {
@@ -560,6 +664,8 @@
       "Tilly",
       "Harvey"
     ],
+    "note": "The crocs aren't mean, they just want a ride on the raft! Tap them fast so they swim away.",
+    "noteBy": "Tilly",
     "status": "active",
     "orientation": "portrait",
     "design": {
@@ -580,6 +686,32 @@
     "seo": {
       "description": "Crocs are swimming for your raft! Tap them before they snap. Free, no ads, and great for small fingers.",
       "category": "reflex"
-    }
+    },
+    "remix": [
+      {
+        "key": "speed",
+        "label": "Croc speed",
+        "min": 0.5,
+        "max": 2.5,
+        "step": 0.25,
+        "default": 1
+      },
+      {
+        "key": "lives",
+        "label": "Lives",
+        "min": 1,
+        "max": 5,
+        "step": 1,
+        "default": 3
+      },
+      {
+        "key": "crocSize",
+        "label": "Croc size",
+        "min": 0.6,
+        "max": 1.4,
+        "step": 0.1,
+        "default": 1
+      }
+    ]
   }
 ]

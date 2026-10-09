@@ -3,6 +3,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { getDb, type Db } from "../db/client.js";
 import { bestScores, follows, games, plays, users, type Game, type Play } from "../db/schema.js";
 import { blockedEitherWay } from "./blocksRepo.js";
+import { supporterCondition } from "./supportersRepo.js";
 
 /** Pure data access for plays, best scores and the leaderboards. Services own the rules. */
 
@@ -26,6 +27,8 @@ export async function insertPlay(
     score: number;
     durationMs: number | null;
     xpAwarded: number;
+    /** The saved remix the run was played on (T11.2). */
+    remixId?: string | null;
   },
 ): Promise<Play> {
   const [play] = await db.insert(plays).values(row).returning();
@@ -63,6 +66,8 @@ export type LeaderboardRow = {
   level: number;
   score: number;
   achievedAt: Date;
+  /** A family supporter (T12.2): shown with a gold name. */
+  supporter: boolean;
 };
 
 /**
@@ -109,6 +114,7 @@ export async function listLeaderboard(
       level: users.xpLevel,
       score: bestScores.score,
       achievedAt: bestScores.achievedAt,
+      supporter: sql<boolean>`${supporterCondition(bestScores.userId)}`,
     })
     .from(bestScores)
     .innerJoin(users, eq(users.id, bestScores.userId))

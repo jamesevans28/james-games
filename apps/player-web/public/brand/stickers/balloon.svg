@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="balloon sticker">
+<!-- Placeholder achievement sticker until the Phase 8 art (T11.4). -->
+<circle cx="50" cy="50" r="45" fill="#FFFFFF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M66 26q10 2 10 14q0 12-10 16l2 4h-6l2-4q-8-6-6-18q2-12 8-12z" fill="#FFC93C" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M44 18q16 0 16 20q0 18-14 24l2 5h-8l2-5q-14-6-14-24q0-20 16-20z" fill="#FF5A4E" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M44 67q-4 8 2 14q4 4 0 8M68 60q2 6-2 10" fill="none" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M34 28q3-4 7-5" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="39" cy="40" r="2.6" fill="#2B2118"/><circle cx="49" cy="40" r="2.6" fill="#2B2118"/>
+<path d="M40 47q4 4 8 0" fill="none" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M20 70l3 3M18 60h4M80 72l-3 3" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

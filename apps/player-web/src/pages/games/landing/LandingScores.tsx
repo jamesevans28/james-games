@@ -1,3 +1,4 @@
+import SupporterStar from "../../../components/SupporterStar";
 import { Link } from "react-router";
 import { ProfileAvatar } from "../../../components/profile";
 import { useLeaderboard } from "../../../hooks/useLeaderboard";
@@ -57,6 +58,7 @@ export default function LandingScores({ gameId }: { gameId: string }) {
                   className="min-w-0 flex-1 truncate text-base font-bold text-ink"
                 >
                   {row.screenName}
+                  {row.supporter && <SupporterStar />}
                 </Link>
               ) : (
                 <span className="min-w-0 flex-1 truncate text-base font-bold text-ink">

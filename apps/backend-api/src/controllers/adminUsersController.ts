@@ -10,6 +10,9 @@ import {
   updateAdminUser,
 } from "../services/adminUserService.js";
 import { sendServerError } from "../lib/http.js";
+import { getUserById } from "../repos/usersRepo.js";
+import { revokeSupporter } from "../repos/supportersRepo.js";
+import { grant } from "../services/supporterService.js";
 
 function fail(res: Response, event: string, err: unknown) {
   if (err instanceof AdminError) return res.status(err.status).json({ error: err.code });
@@ -93,5 +96,26 @@ export async function removePlay(req: Request, res: Response) {
     res.json(await deletePlay(playId));
   } catch (err) {
     fail(res, "admin_delete_play_failed", err);
+  }
+}
+
+/** POST /admin/users/:userId/supporter: a manual grant (Ko-fi supporters, T12.1/T12.2). */
+export async function grantSupport(req: Request, res: Response) {
+  try {
+    const userId = String(req.params.userId);
+    if (!(await getUserById(userId))) return res.status(404).json({ error: "user_not_found" });
+    const outcome = await grant(userId, "manual", `admin:${new Date().toISOString().slice(0, 10)}`);
+    res.json({ ok: true, outcome });
+  } catch (err) {
+    fail(res, "admin_grant_supporter_failed", err);
+  }
+}
+
+/** DELETE /admin/users/:userId/supporter */
+export async function revokeSupport(req: Request, res: Response) {
+  try {
+    res.json({ ok: await revokeSupporter(String(req.params.userId)) });
+  } catch (err) {
+    fail(res, "admin_revoke_supporter_failed", err);
   }
 }

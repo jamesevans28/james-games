@@ -43,3 +43,24 @@ The first should print the Snapadile image. The second should print `0`, meaning
 ### Updating the function
 
 Edit `bot-rewrite.js`, run the tests, then paste and publish again (steps 2–4). Phase 9 may move this into infrastructure-as-code.
+
+## Share cards (T11.5): the `/s/*` behaviour
+
+**What it does.** A shared score link is `https://games4james.com/s/<playId>`. The page and its 1200×630 image are made by the API on the fly (`GET /s/:playId` and `GET /s/:playId.png`, the same as `/share/...`), because they depend on data in the database. The bot rewrite above can only swap a path on the S3 site, so instead `/s/*` gets its own cache behaviour pointing at the API. Everyone (bots and people) gets the API's small page: bots read its `og:` tags and image; people's browsers run its one-line script and land on `/games/<gameId>`.
+
+Why not the alternatives: sharing `https://api.games4james.com/share/<id>` works with no setup but shows "api." in every chat bubble, and switching origins inside a CloudFront Function per user agent needs origin modification plus S3 OAC exceptions, which is harder to test. Until this behaviour exists, `/s/<id>` links still work for people (the app has a `/s/:playId` route that looks the play up and opens the game); previews just show the general site card.
+
+### MANUAL (James): add the behaviour once
+
+1. AWS console → CloudFront → the games4james.com distribution → **Origins** → **Create origin**. Origin domain `api.games4james.com` (type it; it is not in the list), protocol **HTTPS only**, minimum SSL **TLSv1.2**, name `g4j-api`. No origin path, no custom headers → **Create origin**.
+2. **Behaviors** → **Create behavior**. Path pattern `/s/*`, origin `g4j-api`, viewer protocol policy **Redirect HTTP to HTTPS**, allowed methods **GET, HEAD**, cache policy **CachingOptimized** (it keeps the API's `Cache-Control`: a day for images, an hour for pages), origin request policy **None** (so the API gets its own Host header), no function associations → **Create behavior**. CloudFront puts it above _Default (\*)_.
+3. Wait for _Deployed_. Nothing else changes: the bot rewrite stays on the default behaviour.
+
+### Check it works
+
+```bash
+curl -s -A WhatsApp/2 https://games4james.com/s/<a real play id> | grep -o '<meta property="og:[a-z:]*" content="[^"]*">'
+curl -sI https://games4james.com/s/<a real play id>.png | grep -i -E '^(content-type|cache-control|x-cache)'
+```
+
+The first prints the title ("Tilly scored 120 on Snapadile!") and the image URL; the second shows `image/png` and, on a second run, `Hit from cloudfront`. To re-check how WhatsApp or Facebook see a link, paste it into the Facebook Sharing Debugger and press **Scrape again**.

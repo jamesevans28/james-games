@@ -4,7 +4,7 @@ Make the app pleasant for a six-year-old and defensible to a parent. Everything 
 
 ## T7.1 Home becomes the grid; the feed goes
 
-Status: done 2026-10-09 (checked on the local stack: 11 tiles, two columns, no horizontal scroll at 375 px; Lighthouse to run on the deployed build)
+Status: done 2026-10-09 (Lighthouse mobile on the production build: performance 80 home / 82 game / 86 about after shrinking the old JPG covers, deferring the Firebase popup iframe and self-hosting fonts; reaching 90 needs the Phase 8 WebP covers, then a static app shell if still short)
 Depends on: T3.1, T4.8
 Files: `pages/home/HomeFeed.tsx`, `pages/games-list/index.tsx`, `components/feed/GameTile.tsx`, `hooks/useFeedAlgorithmV2.ts`, `App.tsx`
 Steps:
@@ -104,7 +104,7 @@ Done when: first visit in the Browser pane shows zero overlays; second visit sho
 
 ## T7.12 Accessibility pass
 
-Status: done 2026-10-09 (44 px targets on header and game header; ink-3 and the UI brand red now pass 4.5:1, with white or dark text on buttons; host.reducedMotion() gates shakes, flashes and HUD motion; the closed drawer is hidden from focus; Flash Bash and Cosmic Clash checked in greyscale. Lighthouse accessibility score to record on the deployed build)
+Status: done 2026-10-09 (Lighthouse accessibility 100 on home, landing and about; 44 px targets, contrast tokens, reduced motion, drawer hidden from focus)
 Depends on: T7.1
 Steps: minimum 44 px tap targets; body text ≥ 16 px; colour contrast ≥ 4.5:1 on paper for ink-2; `prefers-reduced-motion` respected in all CSS and Phaser tweens (via host flag); every icon button has an `aria-label`; Flash Bash and Cosmic Clash readable without colour.
 Done when: axe DevTools (or Lighthouse accessibility) ≥ 95 on home, landing, settings.

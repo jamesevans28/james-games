@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { type GameMeta } from "../../games";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { useGameRatings } from "../../hooks/useGameRatings";
@@ -8,12 +9,15 @@ import LandingHero from "./landing/LandingHero";
 import HowToPlay from "./landing/HowToPlay";
 import LandingScores from "./landing/LandingScores";
 import LandingRating from "./landing/LandingRating";
+import PassAndPlayToggle from "./passandplay/PassAndPlayToggle";
 
 type Props = {
   meta: GameMeta;
   onPlay: () => void;
   /** False while playing and once a run has finished on this visit (no prompt in a replay loop). */
   canPromptRating?: boolean;
+  /** The remix button or card under Play (T11.2); gets this page's own Play. */
+  renderRemix?: (onPlay: () => void) => ReactNode;
 };
 
 /**
@@ -21,7 +25,7 @@ type Props = {
  * your best and the top 5, and stars after your 3rd play. Works with the API offline:
  * everything server-side has an empty state.
  */
-export default function GameLanding({ meta, onPlay, canPromptRating = false }: Props) {
+export default function GameLanding({ meta, onPlay, canPromptRating = false, renderRemix }: Props) {
   const { user } = useAuth();
   const ratings = useGameRatings(meta.id);
   // Read on every render: PlayGame re-renders this page after each run.
@@ -47,6 +51,8 @@ export default function GameLanding({ meta, onPlay, canPromptRating = false }: P
       <button type="button" className="btn btn-primary mt-5 w-full py-4 text-2xl" onClick={onPlay}>
         Play
       </button>
+      {renderRemix?.(onPlay)}
+      <PassAndPlayToggle />
 
       <HowToPlay meta={meta} />
       <LandingScores gameId={meta.id} />

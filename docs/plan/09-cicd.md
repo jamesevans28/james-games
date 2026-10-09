@@ -64,7 +64,7 @@ Done when: PRs show the artifact link.
 
 ## T9.8 Capacitor builds in CI (groundwork)
 
-Status: todo
+Status: done 2026-10-09 (build-android.yml: debug APK + unsigned AAB, green on GitHub; release signing with T10.8)
 Depends on: T10.2
 Steps: `build-android.yml` on `workflow_dispatch` and tags `v*`: build web, `npx cap sync android`, Gradle assembleRelease (unsigned or with a signing key in secrets), upload the APK/AAB artifact. iOS builds need macOS runners (10× minutes on private repos; free on public) or local Xcode; document the local `npx cap open ios` → Archive flow for James instead, and add the CI job only if the repo is public.
 Done when: an Android AAB artifact is produced from a tag.

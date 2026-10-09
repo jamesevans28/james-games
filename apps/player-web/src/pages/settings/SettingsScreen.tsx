@@ -7,6 +7,8 @@ import { OfflineBanner } from "../../components/OfflineBanner";
 import { errorMessage } from "../../utils/errorCode";
 import DeleteAccountSection from "./DeleteAccountSection";
 import FriendsPrivacySection from "./FriendsPrivacySection";
+import FamilySection from "./FamilySection";
+import GrownUpsSection from "./GrownUpsSection";
 
 export default function SettingsScreen() {
   const {
@@ -370,6 +372,8 @@ export default function SettingsScreen() {
 
       {/* Friends & privacy (T7.6) */}
       <FriendsPrivacySection />
+      <FamilySection />
+      <GrownUpsSection />
 
       {/* Email Section */}
       <div className="p-5 bg-card rounded-2xl border border-line mb-6">

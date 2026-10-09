@@ -89,6 +89,8 @@ jobs:
               "Variables": {
                 "NODE_OPTIONS": "--enable-source-maps",
                 "DATABASE_URL": "'"${{ secrets.DATABASE_URL }}"'",
+                "STRIPE_WEBHOOK_SECRET": "'"${{ secrets.STRIPE_WEBHOOK_SECRET }}"'",
+                "REVENUECAT_WEBHOOK_AUTH": "'"${{ secrets.REVENUECAT_WEBHOOK_AUTH }}"'",
                 "FIREBASE_PROJECT_ID": "'"${{ secrets.FIREBASE_PROJECT_ID }}"'",
                 "FIREBASE_CLIENT_EMAIL": "'"${{ secrets.FIREBASE_CLIENT_EMAIL }}"'",
                 "FIREBASE_PRIVATE_KEY": "'"${{ secrets.FIREBASE_PRIVATE_KEY }}"'",
