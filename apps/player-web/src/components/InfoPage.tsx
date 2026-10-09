@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import Seo from "./Seo";
+import GrownUpLink from "./GrownUpLink";
 import { brand, siteUrl } from "../config/brand";
 
 /**
@@ -70,9 +71,9 @@ export function InfoList({ children }: { children: ReactNode }) {
 export function ContactEmail({ subject }: { subject?: string }) {
   const href = `mailto:${brand.contactEmail}${subject ? `?subject=${encodeURIComponent(subject)}` : ""}`;
   return (
-    <a href={href} className="font-bold text-brand underline break-all">
+    <GrownUpLink href={href} className="font-bold text-brand underline break-all">
       {brand.contactEmail}
-    </a>
+    </GrownUpLink>
   );
 }
 

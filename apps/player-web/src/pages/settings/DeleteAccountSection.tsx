@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../context/FirebaseAuthProvider";
+import { adapters } from "../../platform/adapters";
 import { errorMessage } from "../../utils/errorCode";
 
 const CONFIRM_WORD = "DELETE";
@@ -28,7 +29,7 @@ export default function DeleteAccountSection() {
   async function handleDelete(e: React.FormEvent) {
     e.preventDefault();
     if (!confirmed || busy) return;
-    if (!navigator.onLine) {
+    if (!adapters.network.isOnline()) {
       setError("You're offline. Connect to the internet first.");
       return;
     }

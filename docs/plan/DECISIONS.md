@@ -52,3 +52,10 @@ Cloudflare Web Analytics, not GA4. It is free and cookieless and collects no per
 - The UI `--color-brand` is a deeper tomato (`#d23a2e`) so white text on buttons and red text on paper pass 4.5:1. The crayon `--color-tomato` stays `#ff5a4e` for art, canvas and logos. In dark mode the brand stays bright and button text is dark.
 - One overlay at a time (`lib/overlays.ts`): the update prompt, then the install hints. Install hints wait for the 2nd visit, never show on game pages, and stay away for 14 days after "Not now". "Later" on the update prompt lasts the session, because hiding updates for 14 days would strand players on old builds.
 - No sign-up nag banners. The only nudge is the small "Save your progress" link on game over, at most once a day (T7.3).
+
+## 2026-10-09: Native apps (Phase 10)
+
+- Capacitor 8.5.2, pinned exactly, with versions at least two weeks old when added. Storage stays synchronous for the app: Preferences is mirrored into memory before the first render and written through.
+- Native Google and Apple sign-in use `@capacitor-firebase/authentication` with `skipNativeAuth`. The credential goes to the web Firebase SDK, so the backend sees the same tokens as on the web. The plugin declares Firebase 12 as a peer, but we only call its native methods; an npm override keeps the app on Firebase 13.
+- The analytics beacon loads from `src/lib/webAnalytics.ts` rather than the HTML, so the native apps leave it out (Kids category).
+- External links and email inside the apps go through a parental gate (a multiplication written in words). On the web they are plain links.

@@ -1,6 +1,7 @@
 import { BRAND_COLORS, BRAND_FONTS } from "../config/brand";
 import { gaEvent, trackGameStart } from "../utils/analytics";
 import { createAudioKit } from "./audio";
+import { adapters } from "./adapters";
 import { mulberry32, randomSeed } from "./rng";
 import type { AudioKit, GameHost, GameManifest, GameResult, Haptics, SafeArea } from "./sdk";
 import { getBest, setBest } from "./storage/bestScore";
@@ -23,32 +24,37 @@ export type PlatformHost = GameHost & {
   setPaused(paused: boolean): void;
 };
 
+/** Delegates to the platform adapter (vibration on the web, Haptics natively). */
 const haptics: Haptics = {
-  tap: () => vibrate(10),
-  success: () => vibrate([20, 40, 20]),
-  fail: () => vibrate(60),
+  tap: () => adapters.haptics.tap(),
+  success: () => adapters.haptics.success(),
+  fail: () => adapters.haptics.fail(),
 };
 
-function vibrate(pattern: number | number[]): void {
-  try {
-    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-      navigator.vibrate(pattern);
-    }
-  } catch {
-    // unsupported: ignore
-  }
-}
+let safeAreaProbe: HTMLDivElement | null = null;
 
-/** Reads the safe-area insets published as CSS variables in index.css. */
+/**
+ * The device's safe-area insets in CSS pixels. A custom property holding env() can't
+ * be read back as a number, so measure a hidden element padded by the insets.
+ */
 function readSafeArea(): SafeArea {
   if (typeof document === "undefined") return { top: 0, right: 0, bottom: 0, left: 0 };
-  const style = getComputedStyle(document.documentElement);
-  const px = (name: string) => Number.parseFloat(style.getPropertyValue(name)) || 0;
+  if (!safeAreaProbe) {
+    safeAreaProbe = document.createElement("div");
+    safeAreaProbe.setAttribute("aria-hidden", "true");
+    safeAreaProbe.style.cssText =
+      "position:fixed;visibility:hidden;pointer-events:none;top:0;left:0;" +
+      "padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) " +
+      "env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);";
+    document.body.appendChild(safeAreaProbe);
+  }
+  const style = getComputedStyle(safeAreaProbe);
+  const px = (v: string) => Number.parseFloat(v) || 0;
   return {
-    top: px("--safe-top"),
-    right: px("--safe-right"),
-    bottom: px("--safe-bottom"),
-    left: px("--safe-left"),
+    top: px(style.paddingTop),
+    right: px(style.paddingRight),
+    bottom: px(style.paddingBottom),
+    left: px(style.paddingLeft),
   };
 }
 

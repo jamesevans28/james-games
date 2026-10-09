@@ -1,4 +1,5 @@
 // Firebase configuration for the player-web frontend
+import { adapters } from "../platform/adapters";
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import {
   connectAuthEmulator,
@@ -67,25 +68,28 @@ export async function signInWithToken(customToken: string): Promise<UserCredenti
   return signInWithCustomToken(auth, customToken);
 }
 
-// Google sign-in
+// Google and Apple: popups on the web, the native sheet inside the app (T10.3).
+const nativeAuth = () => import("../platform/adapters/nativeAuth");
+
 export async function signInWithGoogle(): Promise<UserCredential> {
   const auth = getFirebaseAuth();
+  if (adapters.app.isNative) return (await nativeAuth()).nativeSignIn(auth, "google");
   return signInWithPopup(auth, googleProvider);
 }
 
-// Apple sign-in
 export async function signInWithApple(): Promise<UserCredential> {
   const auth = getFirebaseAuth();
+  if (adapters.app.isNative) return (await nativeAuth()).nativeSignIn(auth, "apple");
   return signInWithPopup(auth, appleProvider);
 }
 
-// Link Google account
 export async function linkWithGoogle(user: User): Promise<UserCredential> {
+  if (adapters.app.isNative) return (await nativeAuth()).nativeLink(user, "google");
   return linkWithPopup(user, googleProvider);
 }
 
-// Link Apple account
 export async function linkWithApple(user: User): Promise<UserCredential> {
+  if (adapters.app.isNative) return (await nativeAuth()).nativeLink(user, "apple");
   return linkWithPopup(user, appleProvider);
 }
 

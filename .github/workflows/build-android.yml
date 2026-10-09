@@ -1,0 +1,64 @@
+name: Build Android
+
+# T9.8. An Android build from the same web build: a debug APK to sideload and an
+# unsigned release AAB (signing comes with the Play Console setup, T10.8). Runs by
+# hand or on a version tag. iOS builds stay local in Xcode (docs/native-setup.md).
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: "npm"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build player web
+        run: npm run web:build
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://api.games4james.com' }}
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+
+      - name: Sync Capacitor
+        working-directory: apps/player-web
+        run: npx cap sync android
+
+      - name: Gradle build
+        working-directory: apps/player-web/android
+        run: ./gradlew --no-daemon assembleDebug bundleRelease
+
+      - name: Upload builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: games4james-android
+          path: |
+            apps/player-web/android/app/build/outputs/apk/debug/*.apk
+            apps/player-web/android/app/build/outputs/bundle/release/*.aab
+          retention-days: 14

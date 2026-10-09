@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { useOverlaySlot } from "../lib/overlays";
+import { adapters } from "../platform/adapters";
 
 export default function SWUpdatePrompt() {
   const [show, setShow] = useState(false);
@@ -11,29 +12,17 @@ export default function SWUpdatePrompt() {
   const promptedKey = "pwa:updatePrompted";
 
   const setSuppressionWindow = useCallback((ms: number) => {
-    try {
-      localStorage.setItem("pwa:updateSuppressUntil", String(Date.now() + ms));
-    } catch {
-      // ignore storage errors
-    }
+    adapters.storage.set("pwa:updateSuppressUntil", String(Date.now() + ms));
   }, []);
 
   const shouldSuppress = useCallback(() => {
-    if (sessionStorage.getItem("pwa:updateDismissed") === "1") return true;
+    if (adapters.session.get("pwa:updateDismissed") === "1") return true;
     if (skipUpdateOnce) return true;
-    try {
-      // If we've already shown the banner for the currently-waiting SW, don't show it again
-      // on every fresh app launch.
-      if (localStorage.getItem(promptedKey) === "1") return true;
-    } catch {
-      /* ignore */
-    }
-    try {
-      const until = Number(localStorage.getItem("pwa:updateSuppressUntil") || "0");
-      if (until > Date.now()) return true;
-    } catch {
-      /* ignore */
-    }
+    // If we've already shown the banner for the currently-waiting SW, don't show it again
+    // on every fresh app launch.
+    if (adapters.storage.get(promptedKey) === "1") return true;
+    const until = Number(adapters.storage.get("pwa:updateSuppressUntil") || "0");
+    if (until > Date.now()) return true;
     return false;
   }, [skipUpdateOnce, promptedKey]);
 
@@ -42,11 +31,7 @@ export default function SWUpdatePrompt() {
     const now = Date.now();
     if (now - lastUpdateCheck.current < 30000) return;
     lastUpdateCheck.current = now;
-    try {
-      localStorage.setItem(promptedKey, "1");
-    } catch {
-      /* ignore */
-    }
+    adapters.storage.set(promptedKey, "1");
     setShow(true);
   }, [shouldSuppress, promptedKey]);
 
@@ -77,19 +62,15 @@ export default function SWUpdatePrompt() {
 
   // If we just clicked Reload for an update, suppress the update banner once after reload
   useEffect(() => {
-    if (sessionStorage.getItem("pwa:updateReloading") === "1") {
-      sessionStorage.removeItem("pwa:updateReloading");
+    if (adapters.session.get("pwa:updateReloading") === "1") {
+      adapters.session.remove("pwa:updateReloading");
       setSkipUpdateOnce(true);
     }
     const onControllerChange = () => {
       setShow(false);
       setSuppressionWindow(15000);
-      try {
-        // A new SW took control; allow prompting again for future updates.
-        localStorage.removeItem(promptedKey);
-      } catch {
-        /* ignore */
-      }
+      // A new SW took control; allow prompting again for future updates.
+      adapters.storage.remove(promptedKey);
       if (updatingRef.current) {
         window.location.reload();
       }
@@ -101,14 +82,14 @@ export default function SWUpdatePrompt() {
   }, [setSuppressionWindow]);
 
   const closeUpdate = () => {
-    sessionStorage.setItem("pwa:updateDismissed", "1");
+    adapters.session.set("pwa:updateDismissed", "1");
     setSuppressionWindow(15000);
     setShow(false);
   };
 
   const reloadToUpdate = () => {
     if (isUpdating) return;
-    sessionStorage.setItem("pwa:updateReloading", "1");
+    adapters.session.set("pwa:updateReloading", "1");
     setSuppressionWindow(15000);
     setShow(false);
     setIsUpdating(true);
@@ -132,7 +113,7 @@ export default function SWUpdatePrompt() {
           window.clearTimeout(fallbackReload);
           updatingRef.current = false;
           setIsUpdating(false);
-          sessionStorage.removeItem("pwa:updateReloading");
+          adapters.session.remove("pwa:updateReloading");
           setShow(false);
         });
     } catch (err) {
@@ -140,7 +121,7 @@ export default function SWUpdatePrompt() {
       window.clearTimeout(fallbackReload);
       updatingRef.current = false;
       setIsUpdating(false);
-      sessionStorage.removeItem("pwa:updateReloading");
+      adapters.session.remove("pwa:updateReloading");
     }
   };
 

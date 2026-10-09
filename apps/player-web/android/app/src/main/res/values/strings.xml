@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Games4James</string>
+    <string name="title_activity_main">Games4James</string>
+    <string name="package_name">com.games4james.app</string>
+    <string name="custom_url_scheme">com.games4james.app</string>
+</resources>

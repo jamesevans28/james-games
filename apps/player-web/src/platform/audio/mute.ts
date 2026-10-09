@@ -1,13 +1,11 @@
+import { adapters } from "../adapters";
+
 /** Global mute, remembered on this device under `g4j:muted`. */
 const KEY = "g4j:muted";
 const listeners = new Set<(muted: boolean) => void>();
 
 function read(): boolean {
-  try {
-    return localStorage.getItem(KEY) === "1";
-  } catch {
-    return false;
-  }
+  return adapters.storage.get(KEY) === "1";
 }
 
 let muted = read();
@@ -18,11 +16,7 @@ export function isMuted(): boolean {
 
 export function setMuted(next: boolean): void {
   muted = next;
-  try {
-    localStorage.setItem(KEY, next ? "1" : "0");
-  } catch {
-    // storage unavailable: the setting just won't persist
-  }
+  adapters.storage.set(KEY, next ? "1" : "0"); // may not persist if storage is blocked
   listeners.forEach((fn) => fn(next));
 }
 

@@ -16,7 +16,7 @@ export default function Header() {
   const { hasUnread, markRead } = useNotificationsIndicator();
 
   return (
-    <header className="w-full bg-paper/95 backdrop-blur-xl sticky top-0 z-40 border-b border-line">
+    <header className="w-full bg-paper/95 backdrop-blur-xl sticky top-0 z-40 border-b border-line pt-safe">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link

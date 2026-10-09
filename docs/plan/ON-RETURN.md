@@ -21,6 +21,8 @@ Claude kept this list while working through the phases unattended (started 9 Oct
 
 8. **Ko-fi (T12.1).** Create a Ko-fi page called `games4james`, so `https://ko-fi.com/games4james` works (or tell Claude the real URL for `brand.json` `supportUrl`). Use the brand logo and a two-line blurb. Then check the costs table on `/support` ([config/costs.ts](../../apps/player-web/src/config/costs.ts)); Claude guessed the AWS and tools amounts.
 
+9. **Native apps (Phase 10).** Install Xcode and Android Studio, add the Firebase iOS and Android apps, then build and try them ([docs/native-setup.md](../native-setup.md)). The code, the native projects, icons and splash screens are ready; none of it has run on a device yet.
+
 ## Questions (Claude picked a default so work could continue; change it if you disagree)
 
 - **Screen names (T6.7).** Generated names look like `bouncy-otter-42`. Kids can't use "James", "Tilly", "Harvey", "admin" or "official" inside a name, so nobody can pretend to be you. Rude words are filtered with the `obscenity` word list. Is that OK?

@@ -6,7 +6,7 @@ Costs: Apple Developer Program US$99/year (MANUAL, James decides when); Google P
 
 ## T10.1 Platform adapters in the SDK
 
-Status: todo
+Status: done 2026-10-09 (platform/adapters: storage, session, network, share, haptics, app; web + Capacitor; the grep in Done-when is empty)
 Depends on: T4.4
 Goal: every native-sensitive capability goes through an adapter with a web implementation now and a Capacitor implementation later.
 Files: `apps/player-web/src/platform/adapters/{storage,network,share,haptics,analytics,auth,app}.ts`, `platform/host.ts`, `context/FirebaseAuthProvider.tsx`
@@ -20,7 +20,7 @@ Steps:
 
 ## T10.2 Capacitor project scaffold
 
-Status: todo
+Status: done in code 2026-10-09 (Capacitor 8.5.2, ios/ and android/ generated, icons and splash from scripts/generate-app-assets.mjs, base "/", no SW or install hints natively, safe areas); MANUAL: install Xcode and Android Studio, then `npx cap run ios` / `android` to check (this Mac has neither)
 Depends on: T10.1, T3.2 (icons)
 Files: `apps/player-web/capacitor.config.ts`, `apps/player-web/ios/`, `apps/player-web/android/`, `.gitignore` updates, `package.json` scripts
 Steps:
@@ -37,7 +37,7 @@ Steps:
 
 ## T10.3 Native auth
 
-Status: todo
+Status: done in code 2026-10-09 (@capacitor-firebase/authentication 8.5.2; native sheet → credential → web SDK sign-in/link, so the backend flow is unchanged); MANUAL: Firebase iOS/Android apps, plist/json, URL scheme, Apple capability (docs/native-setup.md)
 Depends on: T10.2
 Files: `platform/adapters/auth.capacitor.ts`, Firebase console (MANUAL), `ios/App/App/Info.plist`, `android/app/google-services.json`
 Steps:
@@ -49,28 +49,28 @@ Steps:
 
 ## T10.4 Offline queue and native storage
 
-Status: todo
+Status: done 2026-10-09 (lib/scoreQueue.ts through the storage adapter; client play ids make POST /scores idempotent; checked on the local stack: offline run queued, sent on reconnect, on the leaderboard once)
 Depends on: T10.1, T6.3
 Steps: score/sticker submissions are queued in `StorageAdapter` when offline and flushed on reconnect (idempotency key = play id; backend accepts duplicates idempotently). Best scores and play history live in Preferences on native.
 Done when: play offline on the simulator, reconnect, see the score on the leaderboard; a test covers the queue logic.
 
 ## T10.5 Haptics, status bar, back button, keep-awake
 
-Status: todo
+Status: done in code 2026-10-09 (new-best haptic, keep-awake while a run is live (Wake Lock on the web too), back-button stack: game over → close, running → pause, paused → leave; exit only from home; status bar from capacitor.config); MANUAL: feel it on a device
 Depends on: T10.2
 Steps: haptic tick on perfect/best; status bar colour from brand; Android hardware back = pause/close dialog, never exit mid-game without confirm; keep the screen awake during play (`@capacitor-community/keep-awake`).
 Done when: checked on both platforms.
 
 ## T10.6 Store accounts and listings (MANUAL, Claude-prepared)
 
-Status: todo
+Status: text prepared 2026-10-09 (docs/store/listing.md: name, description, keywords, privacy labels, rating answers); MANUAL: James enrols (Apple US$99/yr, Google US$25) and creates the draft listings; screenshots after Phase 8 art
 Depends on: Phase 7 complete, T8.4, T8.7
 MANUAL (James): enrol in the Apple Developer Program and Google Play Console. These accounts are also needed for in-app purchases (T12.3), so they pay for themselves if the supporter tier works; enrol once Phase 7 is done so the store review happens soon after the web relaunch. Claude prepares: app name, subtitle, description (family voice), keywords, category (Games › Family/Kids; Apple Kids category with age band 6–8), privacy nutrition labels (data: identifiers (uid), user content (screen name, scores); not used for tracking), content rating questionnaire answers, screenshots (generate 6.7" and 6.1" iPhone and Android phone sets from the Browser pane/simulator with the `scripts/art/store-shots.mjs` frame compositor), privacy policy URL (T7.8), support URL (parents page).
 Done when: both listings exist in draft with all assets uploaded.
 
 ## T10.7 Apple Kids category compliance checklist
 
-Status: todo
+Status: done in code 2026-10-09 (docs/store/kids-compliance.md; GrownUpLink parental gate; no analytics in the apps)
 Depends on: T10.6
 Steps: no third-party analytics SDK that tracks (web analytics snippet off in the native build, or Cloudflare analytics which is cookieless; if GA4 is kept, disable it natively); parental gate (simple arithmetic question) before external links (parents page, support email) and before any purchase; no ads; no social features that expose kids publicly (friends-only already); account deletion in-app (T7.8). Document in `docs/store/kids-compliance.md`.
 Done when: the checklist is complete with evidence links.

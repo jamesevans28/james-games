@@ -6,6 +6,7 @@
  * State lives on this device under STORAGE_KEYS.ratingPrompt as
  * `{ [gameId]: { plays, lastPromptAt } }`.
  */
+import { adapters } from "../platform/adapters";
 import { readStored, STORAGE_KEYS } from "../utils/storageKeys";
 
 export const PROMPT_AFTER_PLAYS = 3;
@@ -37,11 +38,8 @@ function readAll(): Stored {
 }
 
 function writeAll(all: Stored): void {
-  try {
-    localStorage.setItem(STORAGE_KEYS.ratingPrompt, JSON.stringify(all));
-  } catch {
-    // storage full or blocked: the prompt just won't be remembered
-  }
+  // If storage is full or blocked the prompt just won't be remembered.
+  adapters.storage.set(STORAGE_KEYS.ratingPrompt, JSON.stringify(all));
 }
 
 export function readRatingPromptState(gameId: string): RatingPromptState {

@@ -1,4 +1,5 @@
 import InfoPage, { ContactEmail, InfoList, InfoSection } from "../components/InfoPage";
+import GrownUpLink from "../components/GrownUpLink";
 import { brand, makersLine } from "../config/brand";
 import { COSTS, COSTS_UPDATED, totalPerYear } from "../config/costs";
 
@@ -73,14 +74,12 @@ export default function SupportPage() {
           Ko-fi handles the payment, so we never see card details. You&rsquo;ll get a receipt from
           them by email.
         </p>
-        <a
+        <GrownUpLink
           href={brand.supportUrl}
-          target="_blank"
-          rel="noopener noreferrer"
           className="btn btn-primary inline-flex min-h-11 w-full items-center justify-center py-3.5"
         >
           Support us on Ko-fi
-        </a>
+        </GrownUpLink>
         <p className="text-sm text-ink-2">
           If you tell us your player&rsquo;s screen name when you support us (
           <ContactEmail subject={`Supporter: ${brand.name}`} />

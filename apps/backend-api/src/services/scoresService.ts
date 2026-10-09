@@ -1,5 +1,11 @@
 import { getDb } from "../db/client.js";
-import { getGameById, insertPlay, listLeaderboard, upsertBestScore } from "../repos/playsRepo.js";
+import {
+  getGameById,
+  getPlayById,
+  insertPlay,
+  listLeaderboard,
+  upsertBestScore,
+} from "../repos/playsRepo.js";
 import { lockUser, recordGamePlay, updateUserProgress } from "../repos/statsRepo.js";
 import {
   ScoreRejected,
@@ -18,6 +24,7 @@ import {
 } from "./experienceService.js";
 import {
   applyDailyStreak,
+  streakOf,
   applyWeeklySticker,
   type StickerEarned,
   type StreakResult,
@@ -44,6 +51,8 @@ export type ScoreSubmission = {
   streak: StreakResult["streak"] & { extended: boolean; isNewStreak: boolean };
   /** Only when this run collected the weekly sticker (T7.5). */
   stickerEarned?: StickerEarned;
+  /** True when this play id was already saved (an offline-queue resend). */
+  duplicate?: true;
 };
 
 /**
@@ -54,7 +63,13 @@ export type ScoreSubmission = {
  */
 export async function submitScore(
   userId: string,
-  body: { gameId?: unknown; score?: unknown; durationMs?: unknown; tzOffsetMinutes?: unknown },
+  body: {
+    gameId?: unknown;
+    score?: unknown;
+    durationMs?: unknown;
+    tzOffsetMinutes?: unknown;
+    playId?: unknown;
+  },
   nowMs: number = Date.now(),
 ): Promise<ScoreSubmission> {
   if (!isValidGameId(body.gameId)) throw new ScoreRejected("gameId_invalid");
@@ -66,11 +81,35 @@ export async function submitScore(
     const game = await getGameById(gameId, tx);
     const user = await lockUser(tx, userId);
     const player = assertCanSubmit(game, user);
+
+    // A resend from the offline queue (T10.4): same id, already saved → answer
+    // without counting it twice.
+    const playId = parsePlayId(body.playId);
+    if (playId) {
+      const earlier = await getPlayById(tx, playId);
+      if (earlier) {
+        if (earlier.userId !== userId || earlier.gameId !== gameId) {
+          throw new ScoreRejected("play_id_conflict", 409);
+        }
+        return {
+          gameId,
+          score: earlier.score,
+          createdAt: earlier.createdAt.toISOString(),
+          xpAwarded: earlier.xpAwarded,
+          newBest: false,
+          summary: buildSummary(player),
+          streak: { ...streakOf(player), extended: false, isNewStreak: false },
+          duplicate: true,
+        };
+      }
+    }
+
     const valid = validateScoreSubmission(body, limitsFor(game));
 
     const xpAwarded = xpForScore(valid.score, multiplierFor(game));
     const now = new Date(nowMs);
     const play = await insertPlay(tx, {
+      ...(playId ? { id: playId } : {}),
       userId,
       gameId,
       score: valid.score,
@@ -136,4 +175,11 @@ export async function getLeaderboard(
     createdAt: r.achievedAt.toISOString(),
     level: r.level,
   }));
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** A client-generated play id (a v4-style UUID), or null when absent or malformed. */
+function parsePlayId(value: unknown): string | null {
+  return typeof value === "string" && UUID.test(value) ? value.toLowerCase() : null;
 }

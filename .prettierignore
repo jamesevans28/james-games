@@ -2,6 +2,8 @@ node_modules
 **/dist
 **/dev-dist
 apps/backend-api/bundle
+apps/player-web/ios
+apps/player-web/android
 coverage
 .npm-cache
 package-lock.json

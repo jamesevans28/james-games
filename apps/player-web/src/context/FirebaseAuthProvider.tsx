@@ -24,6 +24,7 @@ import {
   type User as FirebaseUser,
 } from "../lib/firebase";
 import { setAuthTokenGetter, type ExperienceSummary, type MeResponse } from "../lib/api";
+import { adapters } from "../platform/adapters";
 import { errorCode } from "../utils/errorCode";
 import { API_BASE_URL } from "../config/env";
 
@@ -147,36 +148,32 @@ type CachedSession = {
   timestamp: number;
 };
 
-// Persist session to localStorage for offline support
+// Persist session to device storage for offline support
 function persistSession(user: AuthUser | null) {
   if (!isBrowser) return;
   if (!user) {
-    window.localStorage.removeItem(SESSION_CACHE_KEY);
+    adapters.storage.remove(SESSION_CACHE_KEY);
     return;
   }
-  try {
-    const payload: CachedSession = { user, timestamp: Date.now() };
-    window.localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(payload));
-  } catch (err) {
-    console.warn("FirebaseAuthProvider: unable to persist session", errorCode(err));
-  }
+  const payload: CachedSession = { user, timestamp: Date.now() };
+  adapters.storage.set(SESSION_CACHE_KEY, JSON.stringify(payload));
 }
 
-// Read cached session from localStorage
+// Read cached session from device storage
 function readCachedSession(maxAgeMs: number = 24 * 60 * 60 * 1000): AuthUser | null {
   if (!isBrowser) return null;
   try {
-    const raw = window.localStorage.getItem(SESSION_CACHE_KEY);
+    const raw = adapters.storage.get(SESSION_CACHE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as CachedSession;
     if (!parsed?.user) return null;
     if (Date.now() - parsed.timestamp > maxAgeMs) {
-      window.localStorage.removeItem(SESSION_CACHE_KEY);
+      adapters.storage.remove(SESSION_CACHE_KEY);
       return null;
     }
     return parsed.user;
   } catch {
-    window.localStorage.removeItem(SESSION_CACHE_KEY);
+    adapters.storage.remove(SESSION_CACHE_KEY);
     return null;
   }
 }
