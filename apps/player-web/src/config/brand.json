@@ -3,7 +3,11 @@
   "shortName": "G4J",
   "tagline": "Little games made by James, Tilly and Harvey",
   "description": "Free little games for phones and tablets, made by James and his kids Tilly and Harvey. No downloads, no ads: tap and play.",
-  "makers": ["James", "Tilly", "Harvey"],
+  "makers": [
+    "James",
+    "Tilly",
+    "Harvey"
+  ],
   "origin": "https://games4james.com",
   "apiOrigin": "https://api.games4james.com",
   "contactEmail": "hello@games4james.com",
@@ -22,5 +26,7 @@
   },
   "supportUrl": "https://ko-fi.com/games4james",
   "supporterPaymentLink": "",
-  "supporterPrice": "A$9"
+  "supporterPrice": "A$9",
+  "revenueCatAppleKey": "",
+  "revenueCatGoogleKey": ""
 }

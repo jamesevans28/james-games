@@ -72,3 +72,39 @@ export async function supporterStatus(userId: string): Promise<{ supporter: bool
 export async function canUseAvatar(userId: string, avatar: number): Promise<boolean> {
   return avatar < SUPPORTER_AVATAR_MIN || isSupporter(userId);
 }
+
+type RevenueCatEvent = {
+  event?: {
+    type?: string;
+    app_user_id?: string;
+    product_id?: string;
+    store?: string;
+    transaction_id?: string;
+  };
+};
+
+const RC_PURCHASES = new Set(["INITIAL_PURCHASE", "NON_RENEWING_PURCHASE"]);
+export const SUPPORTER_PRODUCT_ID = "family_supporter";
+
+/**
+ * RevenueCat's webhook (T12.3): a store purchase of the supporter product. The app
+ * sets RevenueCat's app user id to our Firebase uid, so app_user_id is the player.
+ */
+export async function handleRevenueCatEvent(body: RevenueCatEvent): Promise<WebhookOutcome> {
+  const e = body.event;
+  if (!e?.type || !RC_PURCHASES.has(e.type) || e.product_id !== SUPPORTER_PRODUCT_ID) {
+    return "ignored";
+  }
+  const source = e.store === "APP_STORE" ? "apple" : e.store === "PLAY_STORE" ? "google" : null;
+  if (!source || !e.app_user_id || !e.transaction_id) return "ignored";
+  if (!(await getUserById(e.app_user_id))) return "unknown_user";
+  return grant(e.app_user_id, source, e.transaction_id);
+}
+
+/** RevenueCat sends the Authorization header we configure in its dashboard. */
+export function revenueCatAuthorized(header: string | undefined, secret: string): boolean {
+  if (!secret || !header) return false;
+  const a = Buffer.from(header);
+  const b = Buffer.from(`Bearer ${secret}`);
+  return a.length === b.length && timingSafeEqual(a, b);
+}

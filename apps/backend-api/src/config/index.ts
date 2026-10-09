@@ -18,6 +18,8 @@ export const config = {
   ),
   /** Stripe webhook signing secret (whsec_…), T12.2. Empty: every webhook is rejected. */
   stripeWebhookSecret: (process.env.STRIPE_WEBHOOK_SECRET || "").trim(),
+  /** The Authorization value RevenueCat sends (we check "Bearer <this>"), T12.3. */
+  revenueCatWebhookAuth: (process.env.REVENUECAT_WEBHOOK_AUTH || "").trim(),
   // Firebase configuration
   firebase: {
     projectId: (process.env.FIREBASE_PROJECT_ID || "").trim(),

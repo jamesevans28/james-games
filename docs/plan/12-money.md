@@ -34,7 +34,7 @@ Steps:
 
 ## T12.3 In-app purchase in the store builds
 
-Status: todo
+Status: done in code 2026-10-09 (@revenuecat/purchases-capacitor 13.6.0, gated purchase + restore in Grown-ups, RevenueCat webhook grants the supporter); MANUAL: store products, RevenueCat project, keys, webhook secret (docs/stripe-setup.md); test once the apps are live (T10.8)
 Depends on: T10.8 (apps live), T12.2
 Goal: the same supporter purchase inside the iOS and Android apps, as the stores require for digital goods.
 Steps: RevenueCat (free under US$2.5k/month revenue) with `@revenuecat/purchases-capacitor`, one non-consumable product `family_supporter` in App Store Connect and Play Console, server-side entitlement check from RevenueCat's webhook into `supporters` (source `apple`/`google`), restore purchases, and the Kids-category parental gate before the purchase sheet. Family Sharing on. No subscription until there is a reason for one.
@@ -42,7 +42,7 @@ Done when: sandbox purchases on both platforms grant the perks; restore works; t
 
 ## T12.4 Merch (optional)
 
-Status: todo (only if the kids want it)
+Status: optional, not started (only if the kids want it; needs Phase 8 character art)
 Steps: print-on-demand stickers of the Phase 8 characters (Redbubble or Printful, no stock), linked from the support page. More brand than income.
 Done when: a sticker sheet is orderable and one is on the fridge.
 

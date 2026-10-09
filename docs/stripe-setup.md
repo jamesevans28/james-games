@@ -16,3 +16,21 @@ There's no Stripe code in the app. A grown-up opens a Stripe **Payment Link** (a
 6. **Go live.** Switch to live mode, repeat steps 2–4 with live keys (a new link and a new secret), and redeploy.
 
 Ko-fi supporters: admin → user → "Make supporter" (or `POST /admin/users/:id/supporter`) grants the same extras by hand.
+
+## In the store apps (T12.3, after the apps are live)
+
+Apple and Google require their own in-app purchase for digital extras, so the apps use RevenueCat (free under US$2.5k a month) instead of the Stripe link. **MANUAL (James):**
+
+1. **The product in each store.**
+   - App Store Connect: In-App Purchases → a **non-consumable** product `family_supporter`, "Family supporter", same price tier.
+   - Play Console: Monetize → Products → In-app products → `family_supporter`.
+   - Turn **Family Sharing** on for the Apple product.
+2. **RevenueCat** (app.revenuecat.com). Create a project "Games4James" and add the iOS app (App Store Connect shared secret / API key) and the Android app (a Play service-account JSON). Then:
+   - Create an entitlement `supporter` with product `family_supporter`.
+   - Create an offering `default` with one package containing it.
+   - Copy the **public** SDK keys (Apple `appl_...`, Google `goog_...`) into `apps/player-web/src/config/brand.json` as `revenueCatAppleKey` and `revenueCatGoogleKey`. These keys are meant to ship in the app.
+3. **Webhook.** RevenueCat → Integrations → Webhooks:
+   - URL: `https://api.games4james.com/billing/revenuecat/webhook`
+   - Authorization header: `Bearer <a long random string>`
+   - Put the same random string (without "Bearer ") in the GitHub secret `REVENUECAT_WEBHOOK_AUTH`, then run **Deploy API**.
+4. **Test.** Use sandbox testers (Apple) and licence testers (Google): Settings → For grown-ups → answer the gate → Become a family supporter. The extras appear within a few seconds, and "Restore purchases" works after a reinstall.

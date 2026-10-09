@@ -11,6 +11,7 @@ let api: TestApp;
 
 beforeAll(async () => {
   (config as { stripeWebhookSecret: string }).stripeWebhookSecret = SECRET;
+  (config as { revenueCatWebhookAuth: string }).revenueCatWebhookAuth = "rc_secret";
   api = await startTestApp();
 });
 afterAll(() => api.close());
@@ -92,5 +93,29 @@ describe("Stripe supporter webhook (T12.2)", () => {
     expect(
       (await api.request("POST", "/admin/users/kofi-fan/supporter", { as: "kofi-fan" })).status,
     ).toBe(403);
+  });
+
+  test("RevenueCat store purchases grant the supporter once; bad auth is refused", async () => {
+    await api.addUser({ id: "app-dad" });
+    const event = {
+      event: {
+        type: "NON_RENEWING_PURCHASE",
+        app_user_id: "app-dad",
+        product_id: "family_supporter",
+        store: "APP_STORE",
+        transaction_id: "tx-1",
+      },
+    };
+    const post = (auth: string) =>
+      fetch(`${api.base}/billing/revenuecat/webhook`, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: auth },
+        body: JSON.stringify(event),
+      }).then((r) => r.status);
+    expect(await post("Bearer wrong")).toBe(401);
+    expect(await post("Bearer rc_secret")).toBe(200);
+    expect(await post("Bearer rc_secret")).toBe(200);
+    const rows = await api.db.select().from(supporters).where(eq(supporters.userId, "app-dad"));
+    expect(rows).toEqual([expect.objectContaining({ source: "apple", externalId: "tx-1" })]);
   });
 });

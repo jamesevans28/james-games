@@ -33,6 +33,7 @@
     "@capacitor/share": "8.0.2",
     "@capacitor/splash-screen": "8.0.2",
     "@capacitor/status-bar": "8.0.3",
+    "@revenuecat/purchases-capacitor": "13.6.0",
     "@tanstack/react-query": "^5.104.1",
     "firebase": "^13.0.0",
     "phaser": "^4.2.1",
