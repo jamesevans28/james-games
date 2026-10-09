@@ -104,7 +104,8 @@ export const plays = pgTable(
     score: integer("score").notNull(),
     durationMs: integer("duration_ms"),
     xpAwarded: integer("xp_awarded").notNull().default(0),
-    remixId: uuid("remix_id"),
+    /** Set when the run was played on a saved remix (T11.2); that remix has its own board. */
+    remixId: uuid("remix_id").references(() => remixes.id, { onDelete: "set null" }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -114,6 +115,76 @@ export const plays = pgTable(
     index("plays_created_idx").on(t.createdAt),
   ],
 );
+
+/**
+ * A saved remix (T11.2): a game with its knobs turned ("Tilly's super-fast crocs").
+ * Knob values are checked against the manifest's ranges by the server.
+ */
+export const remixes = pgTable(
+  "remixes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    gameId: text("game_id")
+      .notNull()
+      .references(() => games.id),
+    name: text("name").notNull(),
+    knobs: jsonb("knobs").$type<Record<string, number>>().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("remixes_game_idx").on(t.gameId), index("remixes_owner_idx").on(t.ownerId)],
+);
+
+/** One scored daily-challenge run per player per day (T11.3). */
+export const dailyRuns = pgTable(
+  "daily_runs",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** The challenge day (YYYY-MM-DD, the player's local day). */
+    day: date("day", { mode: "string" }).notNull(),
+    gameId: text("game_id")
+      .notNull()
+      .references(() => games.id),
+    score: integer("score").notNull(),
+    playId: uuid("play_id").references(() => plays.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.day] }),
+    index("daily_runs_board_idx").on(t.day, t.score.desc()),
+  ],
+);
+
+/** A grown-up's account linked to a kid's (T11.7), so the grown-up can see play time. */
+export const familyLinks = pgTable(
+  "family_links",
+  {
+    parentUserId: text("parent_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    childUserId: text("child_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.parentUserId, t.childUserId] }),
+    index("family_links_child_idx").on(t.childUserId),
+  ],
+);
+
+/** Short-lived codes a grown-up makes and a kid types in to link accounts (T11.7). */
+export const familyCodes = pgTable("family_codes", {
+  code: text("code").primaryKey(),
+  parentUserId: text("parent_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
 
 /** One row per (player, game): the leaderboards read only this. */
 export const bestScores = pgTable(
