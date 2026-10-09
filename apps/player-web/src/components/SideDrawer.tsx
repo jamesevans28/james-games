@@ -20,7 +20,13 @@ export default function SideDrawer({
   hasUnreadNotifications,
   onNotificationsOpen,
 }: Props) {
-  const buildLabel = import.meta.env.DEV ? "local" : import.meta.env.VITE_BUILD_NUMBER || "unknown";
+  // "v1.3.0 · abc1234" from the release tag and commit (T9.9); "local" in dev.
+  const sha = import.meta.env.VITE_GIT_SHA?.slice(0, 7);
+  const buildLabel = import.meta.env.DEV
+    ? "local"
+    : [import.meta.env.VITE_APP_VERSION || import.meta.env.VITE_BUILD_NUMBER, sha]
+        .filter(Boolean)
+        .join(" · ") || "unknown";
   const { user } = useAuth();
   const profilePath = user?.userId ? `/profile/${user.userId}` : "/profile";
   const linkClass =

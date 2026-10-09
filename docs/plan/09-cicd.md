@@ -71,7 +71,7 @@ Done when: an Android AAB artifact is produced from a tag.
 
 ## T9.9 Release tagging and changelog
 
-Status: todo
+Status: done in code 2026-10-09 (release.yml by hand → tag + grouped notes; the drawer shows "vX.Y.Z · sha"); first release when James runs it (suggest v1.0.0 at relaunch)
 Depends on: T9.1
 Steps: adopt conventional commits (already in CLAUDE.md); add `release-please` (free GitHub app) or a simple `npm version` + tag workflow that generates `CHANGELOG.md` and a GitHub release per merge batch; the version shows in the drawer ("Build 1.3.0 · abc123") via `VITE_BUILD_NUMBER` + `VITE_GIT_SHA`.
 Done when: a release exists with notes; the drawer shows the version.
