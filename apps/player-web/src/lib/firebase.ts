@@ -2,8 +2,11 @@
 import { adapters } from "../platform/adapters";
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import {
+  browserLocalPersistence,
+  browserPopupRedirectResolver,
   connectAuthEmulator,
-  getAuth,
+  indexedDBLocalPersistence,
+  initializeAuth,
   signInAnonymously,
   signInWithCustomToken,
   signInWithPopup,
@@ -39,7 +42,11 @@ let auth: Auth | null = null;
 export function initializeFirebase(): { app: FirebaseApp; auth: Auth } {
   if (!app) {
     app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
+    // No popup resolver at start-up: getAuth() would load Firebase's 90 KB auth
+    // iframe on every page. The resolver is passed only when a popup is used.
+    auth = initializeAuth(app, {
+      persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+    });
     if (emulatorUrl) connectAuthEmulator(auth, emulatorUrl, { disableWarnings: true });
   }
   return { app, auth: auth! };
@@ -74,23 +81,23 @@ const nativeAuth = () => import("../platform/adapters/nativeAuth");
 export async function signInWithGoogle(): Promise<UserCredential> {
   const auth = getFirebaseAuth();
   if (adapters.app.isNative) return (await nativeAuth()).nativeSignIn(auth, "google");
-  return signInWithPopup(auth, googleProvider);
+  return signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
 }
 
 export async function signInWithApple(): Promise<UserCredential> {
   const auth = getFirebaseAuth();
   if (adapters.app.isNative) return (await nativeAuth()).nativeSignIn(auth, "apple");
-  return signInWithPopup(auth, appleProvider);
+  return signInWithPopup(auth, appleProvider, browserPopupRedirectResolver);
 }
 
 export async function linkWithGoogle(user: User): Promise<UserCredential> {
   if (adapters.app.isNative) return (await nativeAuth()).nativeLink(user, "google");
-  return linkWithPopup(user, googleProvider);
+  return linkWithPopup(user, googleProvider, browserPopupRedirectResolver);
 }
 
 export async function linkWithApple(user: User): Promise<UserCredential> {
   if (adapters.app.isNative) return (await nativeAuth()).nativeLink(user, "apple");
-  return linkWithPopup(user, appleProvider);
+  return linkWithPopup(user, appleProvider, browserPopupRedirectResolver);
 }
 
 // Sign out

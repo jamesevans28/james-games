@@ -27,6 +27,7 @@ export default function GameTile({ game, badge, eager = false }: GameTileProps) 
           width={512}
           height={512}
           loading={eager ? "eager" : "lazy"}
+          fetchPriority={eager ? "high" : "auto"}
           decoding="async"
           className="w-full h-full object-contain"
         />
