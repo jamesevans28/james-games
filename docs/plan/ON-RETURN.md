@@ -23,6 +23,8 @@ Claude kept this list while working through the phases unattended (started 9 Oct
 
 9. **Native apps (Phase 10).** Install Xcode and Android Studio, add the Firebase iOS and Android apps, then build and try them ([docs/native-setup.md](../native-setup.md)). The code, the native projects, icons and splash screens are ready; none of it has run on a device yet.
 
+10. **AWS budget alert (T12.5).** Billing → Budgets → a monthly budget of A$5 with email alerts ([docs/money.md](../money.md)).
+
 ## Questions (Claude picked a default so work could continue; change it if you disagree)
 
 - **Screen names (T6.7).** Generated names look like `bouncy-otter-42`. Kids can't use "James", "Tilly", "Harvey", "admin" or "official" inside a name, so nobody can pretend to be you. Rude words are filtered with the `obscenity` word list. Is that OK?
@@ -30,3 +32,4 @@ Claude kept this list while working through the phases unattended (started 9 Oct
 - **Contact email.** The privacy and parents pages use `hello@games4james.com` (`brand.json` `contactEmail`). Does that inbox exist? If not, set one up (for example forwarding through your domain registrar or Route 53 + SES), or tell Claude which address to use.
 - **Deleted accounts.** They disappear from leaderboards entirely rather than showing as "Deleted player". Is that OK?
 - **Weekly stickers.** The weekly sticker needs 3 different days in one week (Monday to Sunday, the player's local time). It replaces the old streak celebration, and the day count still runs quietly. Is that OK?
+- **Designer's notes to check (T11.1).** Claude drafted a short note for each game in a kid's voice, and guessed who dreamed each one up (`noteBy`, which also decides where it sits on the About page's "Our games, by maker" list). Please rewrite them with Tilly and Harvey and fix the names, then delete the `// TODO note` comment above each: Snapadile (Tilly), Blocker (Harvey), Box Cutter (Harvey), Cosmic Clash (Harvey), Flash Bash (Tilly), Hoop City (Tilly), Paddle Pop (Harvey), Reflex Ring (Tilly), Serpento (Harvey), Word Rush (Tilly), Word Stack (Tilly), and Stack Tower (Harvey, still beta). They live in `apps/player-web/src/games/<id>/manifest.ts`.

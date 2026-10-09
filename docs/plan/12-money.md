@@ -48,7 +48,7 @@ Done when: a sticker sheet is orderable and one is on the fridge.
 
 ## T12.5 Cost and income hygiene
 
-Status: todo
+Status: set up 2026-10-09 (docs/money.md); MANUAL: AWS budget alert; rows start the first month after relaunch
 Depends on: T13 (so the real bills exist)
 Steps: AWS budget alert at A$5/month (MANUAL: James, Billing → Budgets); Supabase and Ko-fi/Stripe dashboards bookmarked in `docs/money.md`; a monthly line in that file: hosting cost, Ko-fi, Stripe, store income, what was spent. Claude updates the support page's cost table from it. Consider a separate bank account or Stripe payout schedule (James's call; outside this repo).
 Done when: `docs/money.md` has three monthly rows.
