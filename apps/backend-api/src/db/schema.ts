@@ -28,6 +28,7 @@ const updatedAt = () => timestamp("updated_at", { withTimezone: true }).notNull(
 export const accountType = pgEnum("account_type", ["anonymous", "username_pin", "linked"]);
 export const gameStatus = pgEnum("game_status", ["active", "beta", "inactive"]);
 export const followStatus = pgEnum("follow_status", ["pending", "accepted"]);
+export const supporterSource = pgEnum("supporter_source", ["stripe", "apple", "google", "manual"]);
 
 export const users = pgTable(
   "users",
@@ -185,6 +186,24 @@ export const familyCodes = pgTable("family_codes", {
     .references(() => users.id, { onDelete: "cascade" }),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
 });
+
+/**
+ * Family supporters (T12.2): a grown-up's one-off purchase, or a manual grant for
+ * Ko-fi supporters. Perks are cosmetic and reach kids linked through family_links.
+ */
+export const supporters = pgTable(
+  "supporters",
+  {
+    userId: text("user_id")
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    source: supporterSource("source").notNull(),
+    /** Stripe checkout session id, store transaction id, or a note for manual grants. */
+    externalId: text("external_id").notNull(),
+    grantedAt: timestamp("granted_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("supporters_external_key").on(t.source, t.externalId)],
+);
 
 /** One row per (player, game): the leaderboards read only this. */
 export const bestScores = pgTable(

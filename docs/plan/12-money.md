@@ -20,7 +20,7 @@ Steps:
 
 ## T12.2 Supporter perks (cosmetic, bought by a grown-up)
 
-Status: todo
+Status: done in code 2026-10-09 (supporters table, signed webhook without the Stripe SDK, idempotent, family inherits perks, gold avatars, star on boards, admin grant/revoke, gated Grown-ups section); MANUAL: Stripe account, Payment Link, webhook secret (docs/stripe-setup.md), after relaunch
 Depends on: T6.3, T8.6 (avatar and sticker sets), T11.4 (stickers), T12.1, relaunch done (T13)
 Goal: a one-off "Family supporter" purchase that unlocks cosmetics for every account in the family, nothing that affects scores.
 Files: backend `services/supporterService.ts`, `routes/billing.routes.ts`, schema `supporters` (user_id, source enum('stripe','apple','google'), external_id, granted_at), frontend `pages/settings/SettingsScreen.tsx` ("Grown-ups" section), `config/avatars.ts` (packs)

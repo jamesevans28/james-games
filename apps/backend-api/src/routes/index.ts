@@ -1,4 +1,5 @@
 import { Router } from "express";
+import billingRoutes from "./billing.routes.js";
 import firebaseAuthRoutes from "./firebaseAuth.routes.js";
 import usersRoutes from "./users.routes.js";
 import scoresRoutes from "./scores.routes.js";
@@ -35,6 +36,7 @@ router.use("/games", gamesRoutes);
 router.use("/family", familyRoutes); // T11.7
 router.use("/remixes", remixRoutes); // T11.2
 router.use("/daily", dailyRoutes); // T11.3
+router.use("/billing", billingRoutes);
 // T11.5 share cards; /s is the same, for the site's /s/* CloudFront behaviour.
 router.use("/share", shareRoutes);
 router.use("/s", shareRoutes);

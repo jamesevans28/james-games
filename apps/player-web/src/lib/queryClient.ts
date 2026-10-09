@@ -24,6 +24,7 @@ export const queryClient = new QueryClient({
  * scope and limit of that game's board.
  */
 export const queryKeys = {
+  supporter: ["supporter"] as const,
   catalog: ["catalog"] as const,
   ratings: (gameId: string) => ["ratings", gameId] as const,
   leaderboard: (gameId: string) => ["leaderboard", gameId] as const,

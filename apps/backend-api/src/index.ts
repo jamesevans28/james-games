@@ -5,6 +5,7 @@ import express from "express";
 import cors from "cors";
 
 import routes from "./routes/index.js";
+import { stripeWebhook } from "./controllers/billingController.js";
 import { attachUser } from "./middleware/authGuards.js";
 import { errorHandler } from "./lib/http.js";
 import { config } from "./config/index.js";
@@ -31,6 +32,12 @@ const corsOptions: cors.CorsOptions = {
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 };
 app.use(cors(corsOptions));
+// Stripe signs the exact bytes it sent, so its webhook reads the raw body (T12.2).
+app.post(
+  "/billing/stripe/webhook",
+  express.raw({ type: "*/*", limit: "256kb" }),
+  (req, res) => void stripeWebhook(req, res),
+);
 app.use(express.json());
 app.use(attachUser);
 app.use(routes);

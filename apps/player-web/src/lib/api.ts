@@ -98,6 +98,8 @@ export type ScoreEntry = {
   score: number;
   createdAt?: string;
   level?: number | null;
+  /** A family supporter (T12.2): a star next to the name. */
+  supporter?: boolean;
 };
 
 /** Body of mutations that only acknowledge success (friends, preferences). */
@@ -635,4 +637,13 @@ export async function getRemixScores(remixId: string, limit = 10): Promise<Score
   );
   if (!res.ok) throw await apiErrorFrom(res, "Failed to load the remix board");
   return (await res.json()) as ScoreEntry[];
+}
+
+/** GET /billing/supporter: whether this player or their family supports us (T12.2). */
+export async function fetchSupporterStatus(): Promise<{ supporter: boolean }> {
+  if (!API_BASE) return { supporter: false };
+  const res = await fetchWithAuth(`${API_BASE}/billing/supporter`);
+  if (res.status === 401) return { supporter: false };
+  if (!res.ok) throw await apiErrorFrom(res, "Failed to load supporter status");
+  return (await res.json()) as { supporter: boolean };
 }

@@ -16,6 +16,8 @@ export const config = {
     /\/+$/,
     "",
   ),
+  /** Stripe webhook signing secret (whsec_…), T12.2. Empty: every webhook is rejected. */
+  stripeWebhookSecret: (process.env.STRIPE_WEBHOOK_SECRET || "").trim(),
   // Firebase configuration
   firebase: {
     projectId: (process.env.FIREBASE_PROJECT_ID || "").trim(),

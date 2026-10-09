@@ -43,9 +43,12 @@ export function UserDrawer({ userId, onClose }: { userId: string | null; onClose
   });
 
   const moderationMutation = useMutation({
-    mutationFn: (action: "reset-name" | "disable" | "enable") => {
+    mutationFn: (action: "reset-name" | "disable" | "enable" | "supporter") => {
       if (!userId) return Promise.reject(new Error("no-user"));
       if (action === "reset-name") return adminApi.resetScreenName(userId);
+      if (action === "supporter") {
+        return adminApi.setSupporter(userId, true).then(() => adminApi.getUser(userId));
+      }
       return adminApi.setUserEnabled(userId, action === "enable");
     },
     onSuccess: onUserChanged,
@@ -171,6 +174,19 @@ export function UserDrawer({ userId, onClose }: { userId: string | null; onClose
                     className={`${buttonClass} bg-amber-600`}
                   >
                     Reset Screen Name
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (
+                        confirm("Give this player's family the supporter extras (Ko-fi supporter)?")
+                      ) {
+                        moderationMutation.mutate("supporter");
+                      }
+                    }}
+                    disabled={busy}
+                    className={`${buttonClass} bg-yellow-600`}
+                  >
+                    Make supporter
                   </button>
                   {user.enabled === false ? (
                     <button

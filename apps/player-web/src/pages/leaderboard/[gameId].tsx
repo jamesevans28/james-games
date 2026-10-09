@@ -1,3 +1,4 @@
+import SupporterStar from "../../components/SupporterStar";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useCatalog } from "../../context/GameCatalogProvider";
@@ -163,6 +164,7 @@ export default function LeaderboardPage() {
                       className={`block truncate text-base font-bold ${isMe ? "text-brand" : "text-ink"}`}
                     >
                       {r.screenName}
+                      {r.supporter && <SupporterStar />}
                       {medal && <span className="sr-only"> ({medal.label})</span>}
                     </span>
                     {typeof r.level === "number" && (

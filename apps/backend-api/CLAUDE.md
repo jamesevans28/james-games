@@ -61,7 +61,7 @@ Supabase Postgres (project in ap-southeast-2) through Drizzle ORM (Phase 6). The
 
 ## Environment variables (names only)
 
-`DATABASE_URL`, `DATABASE_URL_MIGRATIONS` (migrations only), `APP_BASE_URL`, `PUBLIC_SITE_ORIGIN` (share links; defaults to https://games4james.com), `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `CORS_ALLOWED_ORIGINS`. Production values are set by `deploy-api.yml` from GitHub secrets.
+`DATABASE_URL`, `DATABASE_URL_MIGRATIONS` (migrations only), `STRIPE_WEBHOOK_SECRET` (T12.2), `APP_BASE_URL`, `PUBLIC_SITE_ORIGIN` (share links; defaults to https://games4james.com), `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `CORS_ALLOWED_ORIGINS`. Production values are set by `deploy-api.yml` from GitHub secrets.
 
 ## Deploy
 

@@ -177,6 +177,11 @@ export const adminApi = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  /** Ko-fi supporters get the family supporter extras by hand (T12.2). */
+  setSupporter: (userId: string, on: boolean) =>
+    request<{ ok: boolean }>(`/admin/users/${userId}/supporter`, {
+      method: on ? "POST" : "DELETE",
+    }),
   resetScreenName: (userId: string) =>
     request<AdminUserDetail>(`/admin/users/${userId}/reset-screen-name`, { method: "POST" }),
   setUserEnabled: (userId: string, enabled: boolean) =>

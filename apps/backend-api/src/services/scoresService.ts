@@ -35,6 +35,7 @@ export interface PublicScoreRow {
   score: number;
   createdAt: string;
   level?: number | null;
+  supporter?: boolean;
 }
 
 export type ScoreSubmission = {
@@ -213,6 +214,7 @@ export async function getLeaderboard(
     score: r.score,
     createdAt: r.achievedAt.toISOString(),
     level: r.level,
+    ...(r.supporter ? { supporter: true } : {}),
   }));
 }
 
