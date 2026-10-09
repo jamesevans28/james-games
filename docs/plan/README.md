@@ -27,6 +27,10 @@ Nobody is using the site, so this is a **full reset for a summer 2026/27 relaunc
 - **Manual steps are labelled `MANUAL (James)`.** Claude prepares everything around them and tells James exactly what to click.
 - **Nothing is deleted that might be wanted later** (games go `inactive`; old assets move to `archive/`), except dead code and secrets handling.
 
+## Start here after 9 Oct 2026
+
+James: read [ON-RETURN.md](ON-RETURN.md) first. It has what's done, what only you can do (in order), and the questions waiting for you.
+
 ## Phase index and status
 
 | Phase | File                                                               | Purpose                                                                                  | Status                                                                                                                           |
