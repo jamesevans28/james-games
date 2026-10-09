@@ -25,7 +25,7 @@ Claude kept this list while working through the phases unattended (started 9 Oct
 
 10. **AWS budget alert (T12.5).** Billing → Budgets → a monthly budget of A$5 with email alerts ([docs/money.md](../money.md)).
 
-11. **Stripe (T12.2, after relaunch).** Set up the family supporter Payment Link and webhook ([docs/stripe-setup.md](../stripe-setup.md)). Until then, Settings → For grown-ups points to Ko-fi.
+11. **Stripe (T12.2, after relaunch).** Set up the family supporter Payment Link and webhook ([docs/stripe-setup.md](../stripe-setup.md)). Until then, Settings → For grown-ups points to Ko-fi. Once the apps are live (T10.8), also set up the store product and RevenueCat (same doc, "In the store apps").
 
 ## Questions (Claude picked a default so work could continue; change it if you disagree)
 
