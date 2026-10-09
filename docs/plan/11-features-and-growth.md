@@ -65,7 +65,7 @@ Done when: a new `active` game exists with cover, note, SFX, tests and a share c
 
 ## T11.9 Reactivate reworked games
 
-Status: todo
+Status: todo (on demand: pick from docs/plan/backlog-inactive-games.md when the family wants one back)
 Depends on: `docs/plan/backlog-inactive-games.md`
 Steps: pick from the backlog when a rework is wanted; follow the migration recipe from Phase 5; flip `status` to `beta` then `active`.
 
