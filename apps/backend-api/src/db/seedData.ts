@@ -10,6 +10,18 @@ export type ManifestRow = {
   tagline?: string;
   status: "active" | "beta" | "inactive";
   scoring: { max: number; perSecondMax: number; xpMultiplier: number };
+  /** Remix knobs (T11.2). Not stored in games: the API bundles game-meta.json (data/remixKnobs.ts). */
+  remix?: RemixKnob[];
+};
+
+/** One remix knob as the manifest declares it (player-web platform/sdk.ts RemixKnob). */
+export type RemixKnob = {
+  key: string;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  default: number;
 };
 
 /**

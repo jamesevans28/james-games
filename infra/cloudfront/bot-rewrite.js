@@ -5,6 +5,8 @@
 // /static-games/:id.html (built by scripts/generate-sitemap.mjs), which carries
 // that game's title, description and og:image. Everyone else gets the SPA.
 // Attach steps: infra/cloudfront/README.md. Tests: bot-rewrite.test.mjs.
+// Share links (/s/:playId, T11.5) never reach this function: they have their own
+// cache behaviour that forwards to the API, for bots and people alike (README.md).
 
 var BOT_UA =
   /facebookexternalhit|facebot|twitterbot|whatsapp|slackbot|discordbot|telegrambot|linkedinbot|googlebot|bingbot|applebot|pinterest|redditbot|embedly|skypeuripreview|iframely/i;

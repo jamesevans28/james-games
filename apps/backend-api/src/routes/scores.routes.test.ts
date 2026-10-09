@@ -311,6 +311,10 @@ describe("weekly stickers", () => {
     return days;
   }
 
+  /** The weekly sticker in a POST /scores answer (achievement stickers may come too, T11.4). */
+  const weekly = (body: { stickersEarned?: Array<{ kind: string }> }) =>
+    body.stickersEarned?.find((s) => s.kind === "weekly");
+
   async function addPlays(userId: string, when: Date[]) {
     for (const createdAt of when) {
       await api.db.insert(plays).values({ userId, gameId: "test-game", score: 10, createdAt });
@@ -325,16 +329,18 @@ describe("weekly stickers", () => {
     const first = await submit("sticky", { gameId: "test-game", score: 20 });
     expect(first.status).toBe(200);
     expect(first.body.stickerEarned).toEqual({ id: week.stickerId, kind: "weekly" });
+    expect(weekly(first.body)).toEqual({ id: week.stickerId, kind: "weekly" });
 
     const again = await submit("sticky", { gameId: "test-game", score: 30 });
     expect(again.status).toBe(200);
-    expect(again.body.stickerEarned).toBeUndefined();
+    expect(weekly(again.body)).toBeUndefined();
 
     const list = await api.request("GET", "/users/stickers", { as: "sticky" });
     expect(list.status).toBe(200);
-    expect(list.body.stickers).toHaveLength(1);
-    expect(list.body.stickers[0]).toMatchObject({ id: week.stickerId });
-    expect(typeof list.body.stickers[0].earnedAt).toBe("string");
+    const weeklies = list.body.stickers.filter((s: { id: string }) => s.id.startsWith("week-"));
+    expect(weeklies).toHaveLength(1);
+    expect(weeklies[0]).toMatchObject({ id: week.stickerId });
+    expect(typeof weeklies[0].earnedAt).toBe("string");
   });
 
   test("two days, or many plays on one day, are not enough", async () => {
@@ -342,18 +348,17 @@ describe("weekly stickers", () => {
     await addPlays("twice", otherDaysThisWeek(0, 1));
     const a = await submit("twice", { gameId: "test-game", score: 20 });
     const b = await submit("twice", { gameId: "test-game", score: 25 });
-    expect(a.body.stickerEarned).toBeUndefined();
-    expect(b.body.stickerEarned).toBeUndefined();
-    expect((await api.request("GET", "/users/stickers", { as: "twice" })).body).toEqual({
-      stickers: [],
-    });
+    expect(weekly(a.body)).toBeUndefined();
+    expect(weekly(b.body)).toBeUndefined();
+    const list = await api.request("GET", "/users/stickers", { as: "twice" });
+    expect(list.body.stickers.filter((s: { id: string }) => s.id.startsWith("week-"))).toEqual([]);
   });
 
   test("days are counted in the player's own time zone", async () => {
     await api.addUser({ id: "sydney" });
     await addPlays("sydney", otherDaysThisWeek(660, 2));
     const res = await submit("sydney", { gameId: "test-game", score: 20, tzOffsetMinutes: 660 });
-    expect(res.body.stickerEarned).toEqual({
+    expect(weekly(res.body)).toEqual({
       id: localWeekFor(Date.now(), 660).stickerId,
       kind: "weekly",
     });
@@ -364,7 +369,7 @@ describe("weekly stickers", () => {
     const start = localWeekFor(Date.now(), 0).startMs;
     await addPlays("lastweek", [new Date(start - 86_400_000), new Date(start - 2 * 86_400_000)]);
     const res = await submit("lastweek", { gameId: "test-game", score: 20 });
-    expect(res.body.stickerEarned).toBeUndefined();
+    expect(weekly(res.body)).toBeUndefined();
   });
 
   test("the sticker list needs sign-in", async () => {

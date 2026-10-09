@@ -7,7 +7,7 @@ import { sendServerError } from "../lib/http.js";
 
 /**
  * POST /scores — the only way a run earns anything. The client sends
- * { gameId, score, durationMs?, tzOffsetMinutes? }; the server validates the
+ * { gameId, score, durationMs?, tzOffsetMinutes?, playId?, daily? }; the server validates the
  * score against the game's limits and awards XP from the game's multiplier.
  */
 export async function createScore(req: Request, res: Response) {
@@ -19,12 +19,15 @@ export async function createScore(req: Request, res: Response) {
     durationMs?: unknown;
     tzOffsetMinutes?: unknown;
     playId?: unknown;
+    daily?: unknown;
+    remixId?: unknown; // T11.2
   };
   try {
     const result = await submitScore(userId, body);
     res.json({
       ok: true,
       gameId: result.gameId,
+      playId: result.playId, // T11.5 share link
       score: result.score,
       createdAt: result.createdAt,
       // `awardedXp` is the name the player app reads; `xpAwarded` matches the plan (T6.3).
@@ -35,6 +38,8 @@ export async function createScore(req: Request, res: Response) {
       summary: result.summary,
       streak: result.streak,
       ...(result.stickerEarned ? { stickerEarned: result.stickerEarned } : {}),
+      stickersEarned: result.stickersEarned ?? [],
+      ...(result.daily ? { daily: result.daily } : {}),
       ...(result.duplicate ? { duplicate: true } : {}),
     });
   } catch (e) {

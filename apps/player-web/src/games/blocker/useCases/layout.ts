@@ -16,6 +16,14 @@ export type GridGeometry = {
 };
 
 export const TRAY_SLOTS = 3;
+/** Most tray slots that fit: four 3-wide pieces at the tray scale still clear each other. */
+export const TRAY_SLOTS_MAX = 4;
+
+/** Tray slots for a run from the remix "Pieces to pick from" knob (T11.2): 1 to 4. */
+export function traySlotsFor(remixValue: number): number {
+  if (!Number.isFinite(remixValue)) return TRAY_SLOTS;
+  return Math.min(TRAY_SLOTS_MAX, Math.max(1, Math.round(remixValue)));
+}
 
 /** The x centre of each tray slot when `count` slots share `width`. */
 export function slotCentres(width: number, count = TRAY_SLOTS): number[] {

@@ -11,6 +11,9 @@ export default defineGame({
   controls:
     "Use the on-screen arrow pad (or swipe, or the arrow keys) to move along the edge and draw a line across the board. Grab the clock to slow the fireball for 5 seconds. Tap Next level when a level is done.",
   makers: [...brand.makers],
+  // TODO note: James to replace with the real one (draft by Claude).
+  note: "The fireball is sneaky! My trick is to draw lots of short lines and box it in bit by bit.",
+  noteBy: "Harvey",
   status: "active",
   orientation: "portrait",
   design: { w: 540, h: 960 },

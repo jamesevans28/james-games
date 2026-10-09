@@ -31,6 +31,8 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 | `/ratings`       | GET /, GET :gameId, POST :gameId                                                                                                                                                                   |
 | `/followers`     | GET summary, GET requests, POST request {friendCode}, POST requests/:id/accept, DELETE requests/:id, DELETE friends/:id, POST/DELETE block/:id, POST status (stored only with prefs.sharePresence) |
 | `/games`         | GET config, GET config/:gameId                                                                                                                                                                     |
+| `/daily`         | GET / ?tz= (today's game, seed, your run, top 20; runs are saved by POST /scores `daily: true`)                                                                                                    |
+| `/remixes`       | POST / (save, registered only), GET mine?gameId=, GET :id (public), GET :id/scores (its board); remix runs: POST /scores `remixId`                                                                 |
 | `/admin`         | users list/get/update, users/:id reset-screen-name/disable/enable, DELETE plays/:playId, GET screen-names, games list/get/stats/update (metadata only), metrics/dashboard                          |
 
 ## Data layer
@@ -59,7 +61,7 @@ Supabase Postgres (project in ap-southeast-2) through Drizzle ORM (Phase 6). The
 
 ## Environment variables (names only)
 
-`DATABASE_URL`, `DATABASE_URL_MIGRATIONS` (migrations only), `APP_BASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `CORS_ALLOWED_ORIGINS`. Production values are set by `deploy-api.yml` from GitHub secrets.
+`DATABASE_URL`, `DATABASE_URL_MIGRATIONS` (migrations only), `APP_BASE_URL`, `PUBLIC_SITE_ORIGIN` (share links; defaults to https://games4james.com), `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `CORS_ALLOWED_ORIGINS`. Production values are set by `deploy-api.yml` from GitHub secrets.
 
 ## Deploy
 

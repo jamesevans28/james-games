@@ -15,6 +15,7 @@ import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
 import { Network } from "@capacitor/network";
 import { Preferences } from "@capacitor/preferences";
 import { Share } from "@capacitor/share";
+import { requestGrownUp } from "../parentGate";
 import type { Adapters, StorageAdapter } from "./types";
 
 async function preferencesMirror(): Promise<StorageAdapter> {
@@ -79,12 +80,14 @@ export async function createNativeAdapters(): Promise<Adapters> {
     },
     share: {
       async share(data) {
+        // Sharing leaves the app: grown-ups only (Apple Kids category, T10.7).
+        if (!(await requestGrownUp())) return "cancelled";
         try {
           await Share.share({ title: data.title, text: data.text, url: data.url });
           return "shared";
         } catch {
           // The user closed the sheet, or sharing isn't available.
-          return (await copy(data.url)) ? "copied" : "cancelled";
+          return "cancelled";
         }
       },
       copy,
@@ -97,7 +100,12 @@ export async function createNativeAdapters(): Promise<Adapters> {
     app: {
       isNative: true,
       platform,
-      openUrl: (url) => void Browser.open({ url }),
+      openUrl: (url) =>
+        void requestGrownUp().then((ok) => {
+          if (!ok) return;
+          if (url.startsWith("mailto:")) window.location.href = url;
+          else void Browser.open({ url });
+        }),
       keepAwake: (on) => void (on ? KeepAwake.keepAwake() : KeepAwake.allowSleep()),
       onBackButton(handler) {
         const listener = App.addListener("backButton", handler);

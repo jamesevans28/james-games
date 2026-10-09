@@ -26,6 +26,8 @@ export async function insertPlay(
     score: number;
     durationMs: number | null;
     xpAwarded: number;
+    /** The saved remix the run was played on (T11.2). */
+    remixId?: string | null;
   },
 ): Promise<Play> {
   const [play] = await db.insert(plays).values(row).returning();

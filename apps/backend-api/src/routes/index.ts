@@ -7,6 +7,10 @@ import ratingsRoutes from "./ratings.routes.js";
 import experienceRoutes from "./experience.routes.js";
 import adminRoutes from "./admin.routes.js";
 import gamesRoutes from "./games.routes.js";
+import familyRoutes from "./family.routes.js";
+import remixRoutes from "./remix.routes.js";
+import dailyRoutes from "./daily.routes.js";
+import shareRoutes from "./share.routes.js";
 import { requireAuth } from "../middleware/authGuards.js";
 import { changeScreenName, me } from "../controllers/usersController.js";
 import { deleteMe } from "../controllers/firebaseAuthController.js";
@@ -28,5 +32,11 @@ router.use("/ratings", ratingsRoutes);
 router.use("/experience", experienceRoutes);
 router.use("/admin", adminRoutes);
 router.use("/games", gamesRoutes);
+router.use("/family", familyRoutes); // T11.7
+router.use("/remixes", remixRoutes); // T11.2
+router.use("/daily", dailyRoutes); // T11.3
+// T11.5 share cards; /s is the same, for the site's /s/* CloudFront behaviour.
+router.use("/share", shareRoutes);
+router.use("/s", shareRoutes);
 
 export default router;

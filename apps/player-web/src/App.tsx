@@ -8,6 +8,7 @@ import InstallPWA from "./components/InstallPWA";
 import IOSInstallHint from "./components/IOSInstallHint";
 import SplashScreen from "./components/SplashScreen";
 import { adapters } from "./platform/adapters";
+import { GrownUpGateHost } from "./components/GrownUpLink";
 import { useScoreQueueFlusher } from "./hooks/useScoreQueueFlusher";
 import { useNativeBackButton } from "./platform/backButton";
 import { AuthProvider } from "./context/FirebaseAuthProvider";
@@ -28,6 +29,8 @@ const PrivacyPage = lazy(() => import("./pages/privacy"));
 const AboutPage = lazy(() => import("./pages/about"));
 const ParentsPage = lazy(() => import("./pages/parents"));
 const SupportPage = lazy(() => import("./pages/support"));
+const DailyPage = lazy(() => import("./pages/daily/DailyPage"));
+const SharedPlay = lazy(() => import("./pages/share/SharedPlay"));
 
 const isHomePath = () => window.location.pathname === "/";
 
@@ -83,6 +86,8 @@ function AppRoutes() {
             />
             <Route path="/profile/:userId" element={<ProfilePage />} />
             <Route path="/games/:gameId" element={<PlayGame />} />
+            <Route path="/daily" element={<DailyPage />} />
+            <Route path="/s/:playId" element={<SharedPlay />} />
             <Route path="/leaderboard/:gameId" element={<LeaderboardPage />} />
           </Route>
         </Routes>
@@ -106,6 +111,7 @@ export default function App() {
             </>
           )}
           <AppRoutes />
+          <GrownUpGateHost />
         </BrowserRouter>
       </GameCatalogProvider>
     </AuthProvider>

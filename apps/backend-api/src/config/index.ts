@@ -11,6 +11,11 @@ export const config = {
     .map((s: string) => s.trim())
     .filter(Boolean),
   appBaseUrl: process.env.APP_BASE_URL || "http://localhost:8787",
+  /** The public site, for share links and redirects (T11.5). No trailing slash. */
+  publicSiteOrigin: (process.env.PUBLIC_SITE_ORIGIN || "https://games4james.com").replace(
+    /\/+$/,
+    "",
+  ),
   // Firebase configuration
   firebase: {
     projectId: (process.env.FIREBASE_PROJECT_ID || "").trim(),

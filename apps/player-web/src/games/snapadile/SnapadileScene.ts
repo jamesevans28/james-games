@@ -1,6 +1,13 @@
 import Phaser from "phaser";
 import { BasePlatformScene } from "../../platform/scenes/BasePlatformScene";
-import { loseLife, MAX_LIVES, pickSpawn, scoreFor, spawnSchedule } from "./useCases/rules";
+import {
+  livesFor,
+  loseLife,
+  MAX_LIVES,
+  pickSpawn,
+  scoreFor,
+  spawnSchedule,
+} from "./useCases/rules";
 
 interface Croc extends Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
   sourceId: string;
@@ -11,6 +18,10 @@ export default class SnapadileScene extends BasePlatformScene {
   private center!: Phaser.Math.Vector2;
   private raftRadius = 60; // pixels around center to count as hit
   private lives = MAX_LIVES;
+  /** Remix knobs (T11.2), read each run; the defaults are the normal game. */
+  private maxLives = MAX_LIVES;
+  private speed = 1;
+  private crocSize = 1;
   private score = 0;
   /** Scene-clock time when the crocs started (after the countdown); null before. */
   private runStart: number | null = null;
@@ -35,7 +46,10 @@ export default class SnapadileScene extends BasePlatformScene {
 
   protected startRun() {
     // The scene object survives restarts: reset per-run fields first.
-    this.lives = MAX_LIVES;
+    this.maxLives = livesFor(this.host.remix.get("lives"));
+    this.speed = this.host.remix.get("speed");
+    this.crocSize = this.host.remix.get("crocSize");
+    this.lives = this.maxLives;
     this.score = 0;
     this.runStart = null;
     this.rng = this.host.rng();
@@ -59,7 +73,7 @@ export default class SnapadileScene extends BasePlatformScene {
 
     this.hud.setScore(0);
     this.hud.setBest(this.host.best.get());
-    this.hud.setHearts(this.lives, MAX_LIVES);
+    this.hud.setHearts(this.lives, this.maxLives);
 
     // Spawn points: 3 per side, centers top/bottom, 4 corners
     this.computeSpawnPoints(width, height);
@@ -85,7 +99,7 @@ export default class SnapadileScene extends BasePlatformScene {
   private scheduleSpawn() {
     if (this.runEnded || this.runStart === null) return;
     this.trySpawn();
-    const { intervalMs } = spawnSchedule(this.time.now - this.runStart);
+    const { intervalMs } = spawnSchedule(this.time.now - this.runStart, this.speed);
     this.time.delayedCall(intervalMs, () => this.scheduleSpawn());
   }
 
@@ -114,7 +128,7 @@ export default class SnapadileScene extends BasePlatformScene {
 
   private trySpawn() {
     if (this.isGameOver() || this.runStart === null) return;
-    const { maxConcurrent, crocSpeed } = spawnSchedule(this.time.now - this.runStart);
+    const { maxConcurrent, crocSpeed } = spawnSchedule(this.time.now - this.runStart, this.speed);
     if (this.crocs.countActive(true) >= maxConcurrent) return;
 
     const point = pickSpawn(this.spawnPoints, this.occupiedSpawns, this.rng);
@@ -129,7 +143,7 @@ export default class SnapadileScene extends BasePlatformScene {
     this.occupiedSpawns.add(point.id);
 
     // Make croc large and easy to tap: big relative to viewport width
-    const targetWidth = Math.min(this.scale.width, this.scale.height) * 0.44; // ~80% of previous
+    const targetWidth = Math.min(this.scale.width, this.scale.height) * 0.44 * this.crocSize;
     const s = targetWidth / croc.width;
     croc.setScale(s);
 
@@ -234,7 +248,7 @@ export default class SnapadileScene extends BasePlatformScene {
     croc.destroy();
     if (this.lives <= 0) return;
     this.lives = loseLife(this.lives);
-    this.hud.setHearts(this.lives, MAX_LIVES);
+    this.hud.setHearts(this.lives, this.maxLives);
 
     // Camera shake for feedback (match ReflexRing feel)
     this.shakeCamera(250, 0.01);

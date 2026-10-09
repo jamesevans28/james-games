@@ -72,6 +72,9 @@ export default class HoopCityScene extends BasePlatformScene {
   private hoops: Hoop[] = [];
   private score = 0;
   private combo = 1;
+  /** Remix knobs (T11.2), read each run; 1 is the normal game. */
+  private gravityScale = 1;
+  private gapScale = 1;
 
   constructor() {
     super("HoopCityScene");
@@ -85,6 +88,8 @@ export default class HoopCityScene extends BasePlatformScene {
   protected startRun() {
     // The scene object survives restarts: reset every per-run field first.
     this.rng = this.host.rng();
+    this.gravityScale = this.host.remix.get("gravity");
+    this.gapScale = this.host.remix.get("ringGap");
     this.velocityY = 0;
     this.elapsedMs = 0;
     this.idleMs = 0;
@@ -255,7 +260,7 @@ export default class HoopCityScene extends BasePlatformScene {
   }
 
   private spawnHoop(offsetX: number) {
-    const { gap, y } = nextHoop(this.rng);
+    const { gap, y } = nextHoop(this.rng, this.gapScale);
     const x = GAME_WIDTH + (offsetX || gap);
     const back = this.add
       .image(x, y, "hoop-city-ring-back")
@@ -281,7 +286,7 @@ export default class HoopCityScene extends BasePlatformScene {
   // --- Per frame ----------------------------------------------------------
 
   private updateBall(dt: number) {
-    this.velocityY += gravityAt(this.elapsedMs) * dt;
+    this.velocityY += gravityAt(this.elapsedMs, this.gravityScale) * dt;
     this.ball.y += this.velocityY * dt;
 
     // A rim bounce can nudge the ball sideways; drift back once no ring is near.

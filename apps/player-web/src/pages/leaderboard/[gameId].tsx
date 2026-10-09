@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useCatalog } from "../../context/GameCatalogProvider";
 import { getUserName } from "../../utils/user";
 import Seo from "../../components/Seo";
@@ -12,8 +12,12 @@ import { adapters } from "../../platform/adapters";
 import { readStored, STORAGE_KEYS } from "../../utils/storageKeys";
 import { SITE_URL, shareImageFor } from "../../utils/seoKeywords";
 import { brand } from "../../config/brand";
+import { useRemixInfo, useRemixLeaderboard } from "../games/remix/useRemixLeaderboard";
 
-const TABS: ReadonlyArray<{ id: LeaderboardScope; label: string }> = [
+/** "remix" is a saved remix's own board (T11.2), shown when the link has `?remix=<id>`. */
+type Tab = LeaderboardScope | "remix";
+
+const TABS: ReadonlyArray<{ id: Tab; label: string }> = [
   { id: "overall", label: "Everyone" },
   { id: "following", label: "Friends" },
 ];
@@ -36,25 +40,33 @@ export default function LeaderboardPage() {
   const meta = useMemo(() => (gameId ? getGame(gameId) : undefined), [gameId, getGame]);
   const myName = useMemo(() => getUserName() || "", []);
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<LeaderboardScope>(storedTab);
+  const [searchParams] = useSearchParams();
+  const remixId = searchParams.get("remix");
+  const [activeTab, setActiveTab] = useState<Tab>(() => (remixId ? "remix" : storedTab()));
   const needsSignIn = activeTab === "following" && !user;
-  const board = useLeaderboard(gameId, {
+  const gameBoard = useLeaderboard(gameId, {
     limit: 25,
-    scope: activeTab,
+    scope: activeTab === "following" ? "following" : "overall",
     viewerId: user?.userId,
-    enabled: !needsSignIn,
+    enabled: !needsSignIn && activeTab !== "remix",
   });
+  const remixBoard = useRemixLeaderboard(gameId, remixId, { enabled: activeTab === "remix" });
+  const remixInfo = useRemixInfo(remixId);
+  const board = activeTab === "remix" ? remixBoard : gameBoard;
+  const tabs = remixId ? [{ id: "remix" as const, label: "This remix" }, ...TABS] : TABS;
   usePresenceReporter({ status: "browsing_leaderboard", gameId: meta?.id, enabled: !!meta });
 
-  function handleTabChange(next: LeaderboardScope) {
+  function handleTabChange(next: Tab) {
     setActiveTab(next);
-    adapters.storage.set(STORAGE_KEYS.leaderboardTab, next);
+    if (next !== "remix") adapters.storage.set(STORAGE_KEYS.leaderboardTab, next);
   }
 
   const rows = board.data ?? [];
   let message: string | null = null;
   if (needsSignIn || isSigninRequired(board.error)) {
     message = "Sign in to see scores from people you follow.";
+  } else if (activeTab === "remix" && remixInfo.isSuccess && !remixInfo.data) {
+    message = "We couldn't find that remix.";
   } else if (board.fetchStatus === "paused" || (board.isError && rows.length === 0)) {
     message = "Scores will show up here when you're online.";
   } else if (board.isSuccess && rows.length === 0) {
@@ -99,7 +111,7 @@ export default function LeaderboardPage() {
 
       <div className="pt-16 pb-6 px-4 max-w-xl w-full mx-auto">
         <div className="flex gap-2 mb-4" role="tablist" aria-label="Whose scores">
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
@@ -117,6 +129,13 @@ export default function LeaderboardPage() {
           ))}
         </div>
 
+        {activeTab === "remix" && remixInfo.data && (
+          <p className="mb-4 text-base text-ink-2">
+            Best scores on{" "}
+            <span className="font-bold text-ink">&ldquo;{remixInfo.data.name}&rdquo;</span>
+            {remixInfo.data.owner && <>, a remix by {remixInfo.data.owner.screenName}</>}.
+          </p>
+        )}
         {board.isPending && board.fetchStatus === "fetching" && (
           <p className="text-base text-ink-2">Loading…</p>
         )}

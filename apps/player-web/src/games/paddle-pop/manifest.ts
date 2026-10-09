@@ -11,6 +11,9 @@ export default defineGame({
   controls:
     "Hold the left or right side of the screen to slide the paddle (arrow keys or A/D on a keyboard). Hit power-ups with the ball to collect them.",
   makers: [...brand.makers],
+  // TODO note: James to replace with the real one (draft by Claude).
+  note: "Don't let the marble fall! Grab the power-ups, they're the best bit.",
+  noteBy: "Harvey",
   status: "active",
   orientation: "portrait",
   design: { w: 540, h: 960 },

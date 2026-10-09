@@ -42,3 +42,9 @@ test("only single game pages are rewritten", () => {
   assert.equal(run("/games/../secret", bot), "/games/../secret");
   assert.equal(run("/leaderboard/snapadile", bot), "/leaderboard/snapadile");
 });
+
+test("share links are left alone (their /s/* behaviour goes to the API)", () => {
+  const id = "3f2b8c1e-7a4d-4c6b-9e2f-1a2b3c4d5e6f";
+  assert.equal(run(`/s/${id}`, "WhatsApp/2.23.20.0"), `/s/${id}`);
+  assert.equal(run(`/s/${id}.png`, "Twitterbot/1.0"), `/s/${id}.png`);
+});

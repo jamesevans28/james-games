@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="croc sticker">
+<!-- Placeholder achievement sticker until the Phase 8 art (T11.4). -->
+<circle cx="50" cy="50" r="45" fill="#FFFFFF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M18 52q0-16 18-18h28q18 0 18 10v4h-64z" fill="#3DBE6B" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M18 52h64v4q0 10-18 10h-28q-18-2-18-14z" fill="#3DBE6B" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M30 48l3 5l3-5l3 5l3-5l3 5l3-5l3 5l3-5l3 5l3-5" fill="#FFFFFF" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="38" cy="30" r="8" fill="#FFFFFF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="56" cy="30" r="8" fill="#FFFFFF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="39" cy="31" r="3" fill="#2B2118"/><circle cx="57" cy="31" r="3" fill="#2B2118"/>
+<circle cx="74" cy="42" r="1.6" fill="#2B2118"/><circle cx="78" cy="43" r="1.6" fill="#2B2118"/>
+</svg>

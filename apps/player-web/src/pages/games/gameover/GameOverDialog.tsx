@@ -3,10 +3,11 @@ import { Link } from "react-router";
 import { adapters } from "../../../platform/adapters";
 import { useAuth } from "../../../context/FirebaseAuthProvider";
 import { cheerFor } from "../../../utils/cheer";
-import StreakCelebration from "../../../components/StreakCelebration";
+import StickerMoment from "../../../components/stickers/StickerMoment";
 import Confetti from "./Confetti";
 import LevelUpBurst from "./LevelUpBurst";
 import XpBar from "./XpBar";
+import ShareScoreButton from "./ShareScoreButton";
 import { useRunSubmission } from "./useRunSubmission";
 import { markSaveNudgeShown, readSaveNudgeShownAt, shouldShowSaveNudge } from "./saveNudge";
 
@@ -22,6 +23,12 @@ export type GameOverProps = {
   /** Restarts the game through the host. Called straight from the button: one tap. */
   onPlayAgain?: () => void;
   onViewLeaderboard?: () => void;
+  /** Played as today's challenge (T11.3): sent with `daily: true`. */
+  daily?: boolean;
+  /** The saved remix this run was played on (T11.2). */
+  remixId?: string | null;
+  /** Remix sliders not saved yet: the run isn't posted (T11.2). */
+  unsavedRemix?: boolean;
 };
 
 /**
@@ -41,6 +48,9 @@ function GameOverPanel({
   onClose,
   onPlayAgain,
   onViewLeaderboard,
+  daily,
+  remixId,
+  unsavedRemix,
 }: Omit<GameOverProps, "open">) {
   const { user } = useAuth();
   // XP before this run, so the bar can fill from here once the server answers.
@@ -52,7 +62,16 @@ function GameOverPanel({
       now: Date.now(),
     }),
   );
-  const { status, result, error } = useRunSubmission({ gameId, score, durationMs });
+  const { status, result, error } = useRunSubmission({
+    gameId,
+    score,
+    durationMs,
+    remixId,
+    unsavedRemix,
+    daily,
+  });
+  // Older servers send only `stickerEarned`.
+  const stickers = result?.stickersEarned ?? (result?.stickerEarned ? [result.stickerEarned] : []);
   // A little buzz for a new best (T10.5); haptics are a no-op where unsupported.
   const newBest = Boolean(result?.newBest);
   useEffect(() => {
@@ -108,9 +127,18 @@ function GameOverPanel({
             <p className="mt-2 text-sm font-semibold text-ink-2">Your best: {previousBest}</p>
           )}
           {error && <p className="mt-2 text-sm text-ink-3">{error}</p>}
+          {result?.daily?.counted && (
+            <p className="mt-2 text-sm font-bold text-ink-2">
+              That&apos;s your score for{" "}
+              <Link to="/daily" className="text-brand underline underline-offset-4">
+                today&apos;s challenge
+              </Link>
+              !
+            </p>
+          )}
         </div>
 
-        {(showXp || result?.newLevel || result?.stickerEarned) && (
+        {(showXp || result?.newLevel || stickers.length > 0) && (
           <div className="border-t-2 border-line px-5 py-4">
             {showXp && (
               <XpBar
@@ -121,12 +149,10 @@ function GameOverPanel({
               />
             )}
             {result?.newLevel !== undefined && <LevelUpBurst level={result.newLevel} />}
-            {result?.stickerEarned && (
-              <StreakCelebration
-                stickerId={result.stickerEarned.id}
-                delayS={result.newLevel !== undefined ? 2.8 : 1.2}
-              />
-            )}
+            <StickerMoment
+              stickers={stickers}
+              delayS={result?.newLevel !== undefined ? 2.8 : 1.2}
+            />
           </div>
         )}
 
@@ -151,6 +177,9 @@ function GameOverPanel({
               Close
             </button>
           </div>
+          {result?.playId && (
+            <ShareScoreButton playId={result.playId} score={result.score} gameId={gameId} />
+          )}
           {!showNudge && (
             <p className="-mb-2 pt-1 text-center text-xs text-ink-2">
               Made by a family.{" "}

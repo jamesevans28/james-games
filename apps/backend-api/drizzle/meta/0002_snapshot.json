@@ -136,12 +136,8 @@
           "name": "best_scores_user_id_users_id_fk",
           "tableFrom": "best_scores",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -149,12 +145,8 @@
           "name": "best_scores_game_id_games_id_fk",
           "tableFrom": "best_scores",
           "tableTo": "games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -162,12 +154,8 @@
           "name": "best_scores_play_id_plays_id_fk",
           "tableFrom": "best_scores",
           "tableTo": "plays",
-          "columnsFrom": [
-            "play_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["play_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -175,10 +163,7 @@
       "compositePrimaryKeys": {
         "best_scores_user_id_game_id_pk": {
           "name": "best_scores_user_id_game_id_pk",
-          "columns": [
-            "user_id",
-            "game_id"
-          ]
+          "columns": ["user_id", "game_id"]
         }
       },
       "uniqueConstraints": {},
@@ -232,12 +217,8 @@
           "name": "blocks_user_id_users_id_fk",
           "tableFrom": "blocks",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -245,12 +226,8 @@
           "name": "blocks_blocked_user_id_users_id_fk",
           "tableFrom": "blocks",
           "tableTo": "users",
-          "columnsFrom": [
-            "blocked_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["blocked_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -258,10 +235,7 @@
       "compositePrimaryKeys": {
         "blocks_user_id_blocked_user_id_pk": {
           "name": "blocks_user_id_blocked_user_id_pk",
-          "columns": [
-            "user_id",
-            "blocked_user_id"
-          ]
+          "columns": ["user_id", "blocked_user_id"]
         }
       },
       "uniqueConstraints": {},
@@ -339,12 +313,8 @@
           "name": "daily_runs_user_id_users_id_fk",
           "tableFrom": "daily_runs",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -352,12 +322,8 @@
           "name": "daily_runs_game_id_games_id_fk",
           "tableFrom": "daily_runs",
           "tableTo": "games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -365,12 +331,8 @@
           "name": "daily_runs_play_id_plays_id_fk",
           "tableFrom": "daily_runs",
           "tableTo": "plays",
-          "columnsFrom": [
-            "play_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["play_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -378,10 +340,7 @@
       "compositePrimaryKeys": {
         "daily_runs_user_id_day_pk": {
           "name": "daily_runs_user_id_day_pk",
-          "columns": [
-            "user_id",
-            "day"
-          ]
+          "columns": ["user_id", "day"]
         }
       },
       "uniqueConstraints": {},
@@ -449,12 +408,8 @@
           "name": "family_codes_parent_user_id_users_id_fk",
           "tableFrom": "family_codes",
           "tableTo": "users",
-          "columnsFrom": [
-            "parent_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -511,12 +466,8 @@
           "name": "family_links_parent_user_id_users_id_fk",
           "tableFrom": "family_links",
           "tableTo": "users",
-          "columnsFrom": [
-            "parent_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -524,12 +475,8 @@
           "name": "family_links_child_user_id_users_id_fk",
           "tableFrom": "family_links",
           "tableTo": "users",
-          "columnsFrom": [
-            "child_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["child_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -537,10 +484,7 @@
       "compositePrimaryKeys": {
         "family_links_parent_user_id_child_user_id_pk": {
           "name": "family_links_parent_user_id_child_user_id_pk",
-          "columns": [
-            "parent_user_id",
-            "child_user_id"
-          ]
+          "columns": ["parent_user_id", "child_user_id"]
         }
       },
       "uniqueConstraints": {},
@@ -602,12 +546,8 @@
           "name": "follows_user_id_users_id_fk",
           "tableFrom": "follows",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -615,12 +555,8 @@
           "name": "follows_target_user_id_users_id_fk",
           "tableFrom": "follows",
           "tableTo": "users",
-          "columnsFrom": [
-            "target_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["target_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -628,10 +564,7 @@
       "compositePrimaryKeys": {
         "follows_user_id_target_user_id_pk": {
           "name": "follows_user_id_target_user_id_pk",
-          "columns": [
-            "user_id",
-            "target_user_id"
-          ]
+          "columns": ["user_id", "target_user_id"]
         }
       },
       "uniqueConstraints": {},
@@ -837,12 +770,8 @@
           "name": "plays_user_id_users_id_fk",
           "tableFrom": "plays",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -850,12 +779,8 @@
           "name": "plays_game_id_games_id_fk",
           "tableFrom": "plays",
           "tableTo": "games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -863,12 +788,8 @@
           "name": "plays_remix_id_remixes_id_fk",
           "tableFrom": "plays",
           "tableTo": "remixes",
-          "columnsFrom": [
-            "remix_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["remix_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -915,12 +836,8 @@
           "name": "presence_user_id_users_id_fk",
           "tableFrom": "presence",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -990,12 +907,8 @@
           "name": "ratings_user_id_users_id_fk",
           "tableFrom": "ratings",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1003,12 +916,8 @@
           "name": "ratings_game_id_games_id_fk",
           "tableFrom": "ratings",
           "tableTo": "games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1016,10 +925,7 @@
       "compositePrimaryKeys": {
         "ratings_user_id_game_id_pk": {
           "name": "ratings_user_id_game_id_pk",
-          "columns": [
-            "user_id",
-            "game_id"
-          ]
+          "columns": ["user_id", "game_id"]
         }
       },
       "uniqueConstraints": {},
@@ -1107,12 +1013,8 @@
           "name": "remixes_owner_id_users_id_fk",
           "tableFrom": "remixes",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1120,12 +1022,8 @@
           "name": "remixes_game_id_games_id_fk",
           "tableFrom": "remixes",
           "tableTo": "games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1201,12 +1099,8 @@
           "name": "screen_name_history_user_id_users_id_fk",
           "tableFrom": "screen_name_history",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1290,12 +1184,8 @@
           "name": "user_game_stats_user_id_users_id_fk",
           "tableFrom": "user_game_stats",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1303,12 +1193,8 @@
           "name": "user_game_stats_game_id_games_id_fk",
           "tableFrom": "user_game_stats",
           "tableTo": "games",
-          "columnsFrom": [
-            "game_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["game_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1316,10 +1202,7 @@
       "compositePrimaryKeys": {
         "user_game_stats_user_id_game_id_pk": {
           "name": "user_game_stats_user_id_game_id_pk",
-          "columns": [
-            "user_id",
-            "game_id"
-          ]
+          "columns": ["user_id", "game_id"]
         }
       },
       "uniqueConstraints": {},
@@ -1379,12 +1262,8 @@
           "name": "user_stickers_user_id_users_id_fk",
           "tableFrom": "user_stickers",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1392,10 +1271,7 @@
       "compositePrimaryKeys": {
         "user_stickers_user_id_sticker_id_pk": {
           "name": "user_stickers_user_id_sticker_id_pk",
-          "columns": [
-            "user_id",
-            "sticker_id"
-          ]
+          "columns": ["user_id", "sticker_id"]
         }
       },
       "uniqueConstraints": {},
@@ -1621,28 +1497,17 @@
     "public.account_type": {
       "name": "account_type",
       "schema": "public",
-      "values": [
-        "anonymous",
-        "username_pin",
-        "linked"
-      ]
+      "values": ["anonymous", "username_pin", "linked"]
     },
     "public.follow_status": {
       "name": "follow_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "accepted"
-      ]
+      "values": ["pending", "accepted"]
     },
     "public.game_status": {
       "name": "game_status",
       "schema": "public",
-      "values": [
-        "active",
-        "beta",
-        "inactive"
-      ]
+      "values": ["active", "beta", "inactive"]
     }
   },
   "schemas": {},

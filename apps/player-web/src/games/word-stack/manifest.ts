@@ -12,6 +12,9 @@ export default defineGame({
   controls:
     "Drag a green or blue letter tile onto a letter of the word to swap it. Press Finish when you want to stop.",
   makers: [...brand.makers],
+  // TODO note: James to replace with the real one (draft by Claude).
+  note: "Change one letter at a time, like CAT to COT to DOT. It's like climbing a word ladder!",
+  noteBy: "Tilly",
   status: "active",
   orientation: "portrait",
   design: { w: 540, h: 960 },

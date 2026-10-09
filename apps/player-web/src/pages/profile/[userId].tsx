@@ -5,6 +5,7 @@ import {
   acceptFriendRequest,
   blockPlayer,
   declineFriendRequest,
+  fetchMyStickers,
   fetchUserProfile,
   type ProfileResponse,
 } from "../../lib/api";
@@ -12,6 +13,7 @@ import { queryKeys } from "../../lib/queryClient";
 import { ProfileAvatar } from "../../components/profile";
 import ShareFollowCodeCard from "../../components/ShareFollowCodeCard";
 import Sticker from "../../components/stickers/Sticker";
+import StickerBook from "../../components/stickers/StickerBook";
 import { ExperienceBar } from "../../components/ExperienceBar";
 import Seo from "../../components/Seo";
 import { useAuth } from "../../context/FirebaseAuthProvider";
@@ -40,6 +42,13 @@ export default function ProfilePage() {
     queryKey: [...queryKeys.profile(userId), user?.userId ?? null],
     queryFn: () => fetchUserProfile(userId),
     enabled: Boolean(userId),
+  });
+  // Your own sticker book needs every sticker, not just the newest on the profile.
+  const isSelf = Boolean(data?.isSelf);
+  const mine = useQuery({
+    queryKey: [...queryKeys.stickers, user?.userId ?? null],
+    queryFn: fetchMyStickers,
+    enabled: isSelf,
   });
 
   const act = async (action: () => Promise<unknown>) => {
@@ -137,24 +146,27 @@ export default function ProfilePage() {
         {actionError}
       </p>
 
-      <section className="border border-line rounded-2xl bg-card shadow-card p-5">
-        <h2 className="text-lg font-bold text-ink mb-3">Stickers</h2>
-        {data.stickers.length === 0 ? (
-          <p className="text-base text-ink-2">
-            {data.isSelf
-              ? "No stickers yet. Play on 3 different days in a week to collect one!"
-              : "No stickers yet."}
-          </p>
-        ) : (
-          <ul className="flex flex-wrap gap-3">
-            {data.stickers.map((id) => (
-              <li key={id}>
-                <Sticker id={id} size={48} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {data.isSelf ? (
+        <section className="border border-line rounded-2xl bg-card shadow-card p-5">
+          <h2 className="text-lg font-bold text-ink mb-3">Sticker book</h2>
+          <StickerBook collected={mine.data?.map((s) => s.id) ?? data.stickers} />
+        </section>
+      ) : (
+        <section className="border border-line rounded-2xl bg-card shadow-card p-5">
+          <h2 className="text-lg font-bold text-ink mb-3">Stickers</h2>
+          {data.stickers.length === 0 ? (
+            <p className="text-base text-ink-2">No stickers yet.</p>
+          ) : (
+            <ul className="flex flex-wrap gap-3">
+              {data.stickers.map((id) => (
+                <li key={id}>
+                  <Sticker id={id} size={48} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {data.isSelf && data.friendCode && (
         <ShareFollowCodeCard friendCode={data.friendCode}>

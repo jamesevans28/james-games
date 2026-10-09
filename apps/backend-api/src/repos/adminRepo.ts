@@ -5,7 +5,7 @@
  *
  * Functions that take `db` can run inside a transaction (`getDb().transaction(tx => …)`).
  */
-import { and, asc, count, desc, eq, gte, ilike, ne, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, isNull, ne, or, sql } from "drizzle-orm";
 import { getDb, type Db } from "../db/client.js";
 import {
   bestScores,
@@ -98,12 +98,15 @@ export async function deletePlayRow(db: Db, playId: string): Promise<Play | null
   return row ?? null;
 }
 
-/** The player's best remaining play for a game (earliest wins a tie), or null. */
+/**
+ * The player's best remaining play for a game (earliest wins a tie), or null.
+ * Remix runs have their own boards and never count for the game's best (T11.2).
+ */
 export async function bestPlayFor(db: Db, userId: string, gameId: string): Promise<Play | null> {
   const [row] = await db
     .select()
     .from(plays)
-    .where(and(eq(plays.userId, userId), eq(plays.gameId, gameId)))
+    .where(and(eq(plays.userId, userId), eq(plays.gameId, gameId), isNull(plays.remixId)))
     .orderBy(desc(plays.score), asc(plays.createdAt))
     .limit(1);
   return row ?? null;

@@ -281,7 +281,8 @@ describe("/followers (friends, T7.6)", () => {
     expect(asFriend.status).toBe(200);
     expect(asFriend.body).toEqual({
       profile: { userId: "ben", screenName: "ben-pal", avatar: 5, level: 2 },
-      stickers: ["week-2026-41", "week-2026-40"],
+      // friend-made: collected when ana accepted ben (T11.4), so newest.
+      stickers: ["friend-made", "week-2026-41", "week-2026-40"],
       isSelf: false,
       friendship: "friends",
       friendsSince: expect.any(String),

@@ -14,6 +14,7 @@ import {
   SITE_URL,
 } from "../../utils/seoKeywords";
 import { brand } from "../../config/brand";
+import TodayCard from "../daily/TodayCard";
 
 /** Tiles in the first row load their covers at once; everything else is lazy. */
 const EAGER_TILES = 2;
@@ -67,6 +68,7 @@ export default function HomeGrid() {
       />
       <h1 className="sr-only">{brand.name}</h1>
 
+      <TodayCard />
       {fresh.length > 0 && <Section title="New">{grid(fresh, 0, false)}</Section>}
       {playAgain.length > 0 && (
         <Section title="Play again">{grid(playAgain, fresh.length, false)}</Section>

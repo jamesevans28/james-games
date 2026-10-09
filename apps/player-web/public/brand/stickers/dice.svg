@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="dice sticker">
+<!-- Placeholder achievement sticker until the Phase 8 art (T11.4). -->
+<circle cx="50" cy="50" r="45" fill="#FFFFFF" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="26" y="26" width="48" height="48" rx="10" transform="rotate(-10 50 50)" fill="#3FA9F5" stroke="#2B2118" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<g transform="rotate(-10 50 50)" fill="#FFFFFF" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><circle cx="38" cy="38" r="4.5"/><circle cx="62" cy="38" r="4.5"/><circle cx="50" cy="50" r="4.5"/><circle cx="38" cy="62" r="4.5"/><circle cx="62" cy="62" r="4.5"/></g>
+<path d="M78 22l2 5l5 2l-5 2l-2 5l-2-5l-5-2l5-2z" fill="#FFC93C" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M18 74l3-3M16 66h4" stroke="#2B2118" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

@@ -93,8 +93,16 @@ export type GameHost = {
   best: { get(): number; submit(score: number): number };
   audio: AudioKit;
   haptics: Haptics;
-  /** Deterministic random numbers in [0, 1). Same seed, same sequence. */
+  /**
+   * Deterministic random numbers in [0, 1). Same seed, same sequence. With no seed: a
+   * fresh one, or the day's seed on a daily-challenge run.
+   */
   rng(seed?: number): () => number;
+  /**
+   * Set on a daily-challenge run (T11.3): the player's day and its seed. rng() with no
+   * seed already uses it, so every player gets the same sequence that day.
+   */
+  readonly daily?: { day: string; seed: number };
   /** Device safe-area insets in CSS pixels. */
   safeArea(): SafeArea;
   analytics: { event(name: string, params?: Record<string, string | number | boolean>): void };
@@ -106,6 +114,11 @@ export type GameHost = {
    * big zooms; BasePlatformScene's shakeCamera/flashCamera already do (T7.12).
    */
   reducedMotion(): boolean;
+  /**
+   * Remix mode (T11.2): a knob's value for this run, from the remix being played or the
+   * manifest default (the normal game). Read it in startRun(), e.g. `host.remix.get("gravity")`.
+   */
+  remix: { get(key: string): number };
 };
 
 /** A running game, controlled by the platform. */

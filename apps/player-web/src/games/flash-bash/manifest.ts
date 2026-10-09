@@ -12,6 +12,9 @@ export default defineGame({
   controls:
     "Watch the shapes flash in the middle, then tap the buttons with the same shapes in the same order before the bar runs out. Keys 1 to 6 work on a keyboard.",
   makers: [...brand.makers],
+  // TODO note: James to replace with the real one (draft by Claude).
+  note: "Watch really carefully and say the pattern in your head. That's how I remember it.",
+  noteBy: "Tilly",
   status: "active",
   orientation: "portrait",
   design: { w: 540, h: 960 },

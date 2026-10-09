@@ -12,6 +12,9 @@ export default defineGame({
   controls:
     "Drag a piece from the tray at the bottom onto the board. Tap the round button to turn all three pieces.",
   makers: [...brand.makers],
+  // TODO note: James to replace with the real one (draft by Claude).
+  note: "Fitting the blocks in is my favourite bit. When you clear two lines at once it feels SO good.",
+  noteBy: "Harvey",
   status: "active",
   orientation: "portrait",
   design: { w: 540, h: 960 },
@@ -30,4 +33,6 @@ export default defineGame({
       "Drop blocks, clear lines, chain combos. Easy to start, hard to stop. Free puzzle game, no ads.",
     category: "puzzle",
   },
+  // Remix mode (T11.2). The default is the normal game.
+  remix: [{ key: "traySize", label: "Pieces to pick from", min: 1, max: 4, step: 1, default: 3 }],
 });

@@ -5,6 +5,7 @@ import { adapters } from "./adapters";
 import { mulberry32, randomSeed } from "./rng";
 import type { AudioKit, GameHost, GameManifest, GameResult, Haptics, SafeArea } from "./sdk";
 import { getBest, setBest } from "./storage/bestScore";
+import { remixValue, type RemixValues } from "./remix";
 
 /** What the platform learns when a run ends. Duration is measured here, never by the game. */
 export type RunResult = GameResult & { durationMs: number };
@@ -15,6 +16,12 @@ export type HostOptions = {
   now?: () => number;
   audio?: AudioKit;
   analytics?: GameHost["analytics"];
+  /** A daily-challenge run (T11.3): rng() with no seed uses this day's seed. */
+  daily?: { day: string; seed: number };
+  /** Knob values for a remix run (T11.2); omitted for the normal game. */
+  remix?: RemixValues;
+  /** Device-best storage id; a remix keeps its own best apart from the game's (T11.2). */
+  bestId?: string;
 };
 
 /** The host plus the controls only the platform uses (mount and PlayGame). */
@@ -65,6 +72,8 @@ export function createHost(manifest: GameManifest, options: HostOptions): Platfo
     event: (name, params) => gaEvent(name, { game_id: manifest.id, ...params }),
   };
 
+  const bestId = options.bestId ?? manifest.id;
+  const remix = options.remix ?? null;
   let runStartedAt = now();
   let pausedAt: number | null = null;
   let pausedTotal = 0;
@@ -78,10 +87,12 @@ export function createHost(manifest: GameManifest, options: HostOptions): Platfo
     fonts: BRAND_FONTS,
     colors: BRAND_COLORS,
     best: {
-      get: () => getBest(manifest.id),
-      submit: (score) => setBest(manifest.id, score),
+      get: () => getBest(bestId),
+      submit: (score) => setBest(bestId, score),
     },
-    rng: (seed) => mulberry32(seed ?? randomSeed()),
+    remix: { get: (key) => remixValue(manifest.remix ?? [], remix, key) },
+    rng: (seed) => mulberry32(seed ?? options.daily?.seed ?? randomSeed()),
+    ...(options.daily ? { daily: options.daily } : {}),
     safeArea: readSafeArea,
     isPaused: () => pausedAt !== null,
     reducedMotion: () =>
@@ -109,7 +120,7 @@ export function createHost(manifest: GameManifest, options: HostOptions): Platfo
       const end = pausedAt ?? now();
       const durationMs = Math.max(0, Math.round(end - runStartedAt - pausedTotal));
       const score = Number.isFinite(result.score) ? Math.max(0, Math.floor(result.score)) : 0;
-      setBest(manifest.id, score);
+      setBest(bestId, score);
       options.onGameOver({ ...result, score, durationMs });
     },
   };

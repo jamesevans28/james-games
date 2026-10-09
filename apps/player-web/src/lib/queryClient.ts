@@ -33,6 +33,17 @@ export const queryKeys = {
   profile: (userId?: string) => (userId ? (["profile", userId] as const) : (["profile"] as const)),
   friends: ["friends"] as const,
   stickers: ["stickers"] as const,
+  /** A saved remix by id (T11.2). */
+  remix: (remixId: string) => ["remix", remixId] as const,
+  /** Your own remixes of a game (T11.2). */
+  myRemixes: (gameId: string) => ["remixes", "mine", gameId] as const,
+  /** A remix's board; under the game's leaderboard key, so a saved run refreshes it. */
+  remixBoard: (gameId: string, remixId: string) =>
+    ["leaderboard", gameId, "remix", remixId] as const,
+  /** Today's challenge and its board (T11.3). */
+  daily: ["daily"] as const,
+  /** Your family links and your kids' week (T11.7). */
+  family: ["family"] as const,
 };
 
 /** After a score is saved: boards, ratings (play counts), the player's profile, XP and stickers. */
