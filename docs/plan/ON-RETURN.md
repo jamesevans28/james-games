@@ -41,7 +41,7 @@ Things to try:
 1. **Node 24.** Run `nvm install 24`, so `npm` commands run without the `npx -p node@24` wrapper.
 2. **Supabase Auth (T14.0), about 5 minutes.** Firebase is gone (Phase 14, code done 11 Oct). Save a Supabase access token to `~/.config/games4james/supabase-access-token`, then run `node scripts/supabase-auth-setup.mjs --dry-run` and `node scripts/supabase-auth-setup.mjs` ([docs/supabase-auth-setup.md](../supabase-auth-setup.md)). It configures your `games4james` project (local development shares it until you make a `games4james-dev` one), moves it to ES256 signing keys and sets up the emailed sign-in codes. Then make yourself admin: add your email in the player app's Settings, set `admin` on your row, sign in to the admin with an emailed code. Before players add emails, set up a mail server (same doc, "Email delivery"). Then T14.8: the end-to-end check.
 3. ~~**Supabase project (T6.1).**~~ Done 11 Oct: connected, migrated and seeded. The strings are in `apps/backend-api/.env.local`.
-4. ~~**GitHub secrets.**~~ Done 11 Oct: `DATABASE_URL` and `DATABASE_URL_MIGRATIONS` set, housekeeping green.
+4. ~~**GitHub secrets.**~~ Done 11 Oct: `DATABASE_URL` and `DATABASE_URL_MIGRATIONS` set, housekeeping green. Add the variable `SUPABASE_URL` and secret `SUPABASE_SECRET_KEY` (same values as `apps/backend-api/.env.local`) when you can: the daily job then also deletes idle guests' Supabase auth users (T14.10). Deploy API needs them at relaunch anyway.
 5. **The art (Phase 8), the main thing blocking relaunch.** Make the covers using [docs/art/README.md](../art/README.md):
    ```bash
    node scripts/art/generate.mjs --dry-run covers

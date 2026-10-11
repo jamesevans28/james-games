@@ -178,6 +178,19 @@ Steps:
 4. Script: email settings and code-only templates, optional `SMTP_*`, single-project mode, token from `~/.config/games4james/supabase-access-token`, `--env-dir`.
    Done when: tests cover sync-email and the by-id mint; lint, typecheck, format pass; after the real run, James adds his email in Settings (code arrives), signs out, signs in with an email code, and signs in to the admin with an email code.
 
+## T14.10 Housekeeping deletes idle guests' Supabase auth users (added 2026-10-11)
+
+Status: done in code (2026-10-11). Tests on pglite with the recording fake admin (`listUsers` added to the fake). The daily job needs the `SUPABASE_URL` variable and `SUPABASE_SECRET_KEY` secret in GitHub (the ones `deploy-api.yml` uses); until then it logs `authSkipReason: "not_configured"` and does the database half only.
+Depends on: T6.9, T14.2
+Goal: every guest is a Supabase anonymous user, so deleting idle guests' rows (T6.9) is not enough; their auth users must go too, along with anonymous auth users that never got a row (the tab closed before `register-anonymous`).
+Files: `apps/backend-api/src/db/{housekeeping,housekeeping.run,url}.ts` (+ tests), `services/supabaseAuthService.ts` (`listUsers` on `AuthAdmin`, `listAuthUsers`), `src/test/app.ts`, `.github/workflows/db-housekeeping.yml`
+Steps:
+
+1. `AuthAdmin.listUsers(page, perPage)` returns id, `is_anonymous`, created and last-sign-in times only. Paged by count (a short page is the last), because auth-js 2.117.2 reads only the first digit of the `Link` header's page numbers.
+2. After the T6.9 deletes, read every page (1,000 per page, at most 100 pages; `authSweep: "truncated"` past that), then delete with `deleteAuthUser` (already gone counts as deleted): first the auth users of guests whose rows were just deleted, then anonymous auth users idle since the same 90-day cutoff (`last_sign_in_at`, else `created_at`) with no `users` row. Only users listed with `is_anonymous` are touched; at most 500 deletes per run; stop after 5 failures. A failed delete is retried the next day as an orphan.
+3. `housekeeping.run.ts` sweeps only when the Supabase URL and the database URL name the same project (`supabaseProjectRef`), so a mismatched `.env.local` can't make every guest look rowless. Exits 1 when listing or a delete failed. Logs counts only.
+   Done when: housekeeping tests cover both cases, the cap, paging and the page limit; lint, typecheck, tests, format pass.
+
 ## T14.8 End-to-end check and numbers
 
 Status: todo
@@ -196,7 +209,7 @@ Steps:
 - **`generateLink` for a user whose email provider sign-ups are disabled.** Disabling sign-ups stops `signUp()`; admin-created users and `generateLink` still work. If a project setting blocks it, the fallback is leaving email sign-ups on with "confirm email" on, which does not matter because nobody can reach a sign-up form.
 - **Magic-link tokens are single-use and expire (default 1 hour).** The client calls `verifyOtp` immediately; a slow network still has the hour.
 - **Redirect sign-in instead of popups on the web.** The user leaves the page and comes back. Sessions and the game state are already persisted (T10.4), and the callback route returns to the page they left.
-- **Anonymous sign-in abuse.** Supabase's per-IP limit (30/hour) plus our daily guest clean-up (T6.9) cover it. No CAPTCHA (kids).
+- **Anonymous sign-in abuse.** Supabase's per-IP limit (30/hour) plus our daily guest clean-up (T6.9, and T14.10 for the auth users) cover it. No CAPTCHA (kids).
 - **Google consent shows the Supabase domain** (only once social sign-in is on). Accepted; the US$10/month custom domain is the fix if James wants it.
 - **supabase-js version drift** (`linkIdentityWithIdToken`, new key names). T14.4 and T14.0 say what to check; pin exact versions at least two weeks old.
 - **Rollback.** Nothing is deployed. `git revert` of the phase's commits brings Firebase back; the plan files for it remain in history.

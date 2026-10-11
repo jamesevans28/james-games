@@ -9,7 +9,8 @@
  *   afterAll(() => api.close());
  *
  * `api.authAdmin.calls` lists the admin calls in order; `api.authAdmin.failNext(name)`
- * makes the next call of that name throw.
+ * makes the next call of that name throw. `api.authAdmin.authUsers` is what `listUsers`
+ * pages through (empty unless a test fills it).
  */
 import type { AddressInfo } from "node:net";
 import { app } from "../index.js";
@@ -18,6 +19,7 @@ import {
   setAuthAdminForTests,
   type AccessTokenClaims,
   type AuthAdmin,
+  type AuthUserSummary,
 } from "../services/supabaseAuthService.js";
 import { users, type NewUser } from "../db/schema.js";
 import type { Db } from "../db/client.js";
@@ -54,9 +56,13 @@ type AdminCall = {
   [K in keyof AuthAdmin]: { name: K; args: Parameters<AuthAdmin[K]> };
 }[keyof AuthAdmin];
 
-/** Records every admin call; `mintSignIn` returns `token-hash-for-<uid>`. */
+/**
+ * Records every admin call; `mintSignIn` returns `token-hash-for-<uid>`, `listUsers` pages
+ * through `authUsers`.
+ */
 export function fakeAuthAdmin() {
   const calls: AdminCall[] = [];
+  const authUsers: AuthUserSummary[] = [];
   const failing = new Set<keyof AuthAdmin>();
   const run = <K extends keyof AuthAdmin>(name: K, args: Parameters<AuthAdmin[K]>) => {
     calls.push({ name, args } as AdminCall);
@@ -68,10 +74,16 @@ export function fakeAuthAdmin() {
     mintSignIn: (...args) => run("mintSignIn", args).then(() => `token-hash-for-${args[0]}`),
     setAccountType: (...args) => run("setAccountType", args),
     deleteAuthUser: (...args) => run("deleteAuthUser", args),
+    listUsers: (...args) =>
+      run("listUsers", args).then(() => {
+        const [page, perPage] = args;
+        return authUsers.slice((page - 1) * perPage, page * perPage);
+      }),
   };
   return {
     admin,
     calls,
+    authUsers,
     failNext(name: keyof AuthAdmin) {
       failing.add(name);
     },

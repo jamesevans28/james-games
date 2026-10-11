@@ -4,6 +4,9 @@ name: Database housekeeping
 # free Supabase project from pausing (it pauses after 7 days with no queries).
 # Needs the repository secret DATABASE_URL (transaction pooler). Until that
 # secret exists the job skips itself instead of failing.
+# T14.10: with the SUPABASE_URL variable and SUPABASE_SECRET_KEY secret (the same
+# ones deploy-api uses) it also deletes idle guests' Supabase auth users; without
+# them that half is skipped.
 on:
   schedule:
     - cron: "17 16 * * *" # 02:17 AEST
@@ -17,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
     steps:
       - name: Skip when the database is not configured
         id: gate
