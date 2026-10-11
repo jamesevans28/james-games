@@ -1,6 +1,6 @@
 # Phase 6: Backend reset: new Firebase project, Supabase Postgres
 
-Decision: Supabase Postgres as the database, Drizzle ORM for schema and migrations, the existing Express API on Lambda as the only client (service connection through the Supabase connection pooler). Firebase stays for auth, in a **new project** (`games4james`, T6.0). **DynamoDB is not migrated: its code is deleted here and its tables at relaunch** (full reset, DECISIONS 2026-10-09). Cost: $0 on the Supabase free tier.
+Decision: Supabase Postgres as the database, Drizzle ORM for schema and migrations, the existing Express API on Lambda as the only client (service connection through the Supabase connection pooler). Firebase was to stay for auth in a new project (T6.0); that was superseded on 2026-10-11 by Phase 14, which moves auth to Supabase too. **DynamoDB is not migrated: its code is deleted here and its tables at relaunch** (full reset, DECISIONS 2026-10-09). Cost: $0 on the Supabase free tier.
 
 Free-tier facts to design around (verify on supabase.com/pricing at the time):
 
@@ -10,7 +10,7 @@ Free-tier facts to design around (verify on supabase.com/pricing at the time):
 
 ## T6.0 New Firebase project `games4james` (Claude-scripted, MANUAL to finish)
 
-Status: blocked (MANUAL: James runs `scripts/firebase-setup.sh`, then enables Google and brands the consent screen; see `docs/firebase-auth-setup.md`). Claude\'s part is done (2026-10-09): the script, with `--dry-run`, uses the Firebase CLI plus gcloud REST and pauses once for the console-only "Get started". There is a `scripts/lib/set-env.mjs` helper that writes `.env.local` keys without printing values, the doc is rewritten, and the flingo-data one-off scripts are deleted. The `migrated` account type goes with the DynamoDB code in T6.3. The local sign-in check runs once James has run the script.
+Status: superseded 2026-10-11 by Phase 14 (`14-supabase-auth.md`): auth moves to Supabase, so no Firebase project is created. The setup script and `docs/firebase-auth-setup.md` are deleted in T14.0. The rest of this task (the `migrated` account type, the flingo one-off scripts) was done 2026-10-09.
 Depends on: nothing (do this first in Phase 6; Phase 7 auth work needs it)
 Goal: a clean Firebase project with no trace of flingo, used by local dev from now on and by production at relaunch.
 Files: `scripts/firebase-setup.sh` (new), `docs/firebase-auth-setup.md` (rewrite), `apps/player-web/.env.example`, `apps/admin-web/.env.example`, `apps/backend-api/.env.example`
