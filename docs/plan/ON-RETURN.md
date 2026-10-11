@@ -1,14 +1,14 @@
 # On your return: questions and actions for James
 
-Claude worked through the plan unattended on 9 Oct 2026. **All code for Phases 6–13 is written, tested and merged to `main`.** That's about 640 automated tests, with CI green. What's left needs your accounts, your consoles, your art, or your say-so. Answer the questions inline or in chat; Claude reads this file at the start of the next session.
+Claude worked through the plan unattended on 9 Oct 2026, and Phase 14 (auth on Supabase, Firebase removed) landed on 11 Oct. **All code is written, tested and merged to `main`**: about 650 automated tests, CI green. What's left needs your accounts, your consoles, your art, or your say-so. Reviewed against every task file on 11 Oct 2026. Answer the questions inline or in chat; Claude reads this file at the start of the next session.
 
-## Try it first (10 minutes, after the T14.0 setup below)
+## Try it first (10 minutes)
 
 ```bash
 npm install
 ```
 
-Sign-in uses Supabase (your `games4james` project until a `games4james-dev` one exists), so run `node scripts/supabase-auth-setup.mjs` once first (see `docs/supabase-auth-setup.md`). Then run these three, each in its own terminal tab:
+Sign-in uses your `games4james` Supabase project (the setup script has run and the keys are in each app's `.env.local`). Run these three, each in its own terminal tab:
 
 ```bash
 npm run local:server
@@ -39,7 +39,10 @@ Things to try:
 ### Now (unblocks everything else)
 
 1. **Node 24.** Run `nvm install 24`, so `npm` commands run without the `npx -p node@24` wrapper.
-2. **Supabase Auth (T14.0), about 5 minutes.** Firebase is gone (Phase 14, code done 11 Oct). Save a Supabase access token to `~/.config/games4james/supabase-access-token`, then run `node scripts/supabase-auth-setup.mjs --dry-run` and `node scripts/supabase-auth-setup.mjs` ([docs/supabase-auth-setup.md](../supabase-auth-setup.md)). It configures your `games4james` project (local development shares it until you make a `games4james-dev` one), moves it to ES256 signing keys and sets up the emailed sign-in codes. Then make yourself admin: add your email in the player app's Settings, set `admin` on your row, sign in to the admin with an emailed code. Before players add emails, set up a mail server (same doc, "Email delivery"). Then T14.8: the end-to-end check.
+2. ~~**Supabase Auth (T14.0).**~~ Done 11 Oct: the script configured `games4james`, ES256 keys are on, and guest, username + PIN, sign-out, sign-in and delete were checked end to end against it.
+   - **Production secret.** Add the GitHub secret `SUPABASE_SECRET_KEY` (the deploy needs it; the variables are already set).
+   - **Mail server.** Pick Resend or Amazon SES, add its DNS records for `games4james.com`, and rerun the script with `SMTP_*` ([docs/supabase-auth-setup.md](../supabase-auth-setup.md), "Email delivery"). Until then nobody can sign in by emailed code, and that includes you in the admin console. Then make yourself admin: add your email in the player app's Settings and set `admin` on your row.
+   - **T14.8.** Claude finishes the end-to-end check (admin sign-in, numbers) once the mail server exists.
 3. ~~**Supabase project (T6.1).**~~ Done 11 Oct: connected, migrated and seeded. The strings are in `apps/backend-api/.env.local`.
 4. ~~**GitHub secrets.**~~ Done 11 Oct: `DATABASE_URL` and `DATABASE_URL_MIGRATIONS` set, housekeeping green. Add the variable `SUPABASE_URL` and secret `SUPABASE_SECRET_KEY` (same values as `apps/backend-api/.env.local`) when you can: the daily job then also deletes idle guests' Supabase auth users (T14.10). Deploy API needs them at relaunch anyway.
 5. **The art (Phase 8), the main thing blocking relaunch.** Make the covers using [docs/art/README.md](../art/README.md):
@@ -66,7 +69,6 @@ Things to try:
 12. Follow the runbook in [docs/relaunch-log.md](../relaunch-log.md):
     - GitHub variables;
     - the Deploy API, web and admin workflows;
-    - the `auth.games4james.com` custom domain;
     - the CloudFront link-preview function, plus the `/s/*` behaviour for share cards ([infra/cloudfront/README.md](../../infra/cloudfront/README.md));
     - Search Console.
 
@@ -82,14 +84,14 @@ Things to try:
     - Enrol in the Apple Developer Program (US$99/yr) and Google Play (US$25).
     - The listing text is drafted in [docs/store/listing.md](../store/listing.md), and the Kids-category checklist is [docs/store/kids-compliance.md](../store/kids-compliance.md).
     - When the apps are live, set up the store product and RevenueCat (stripe-setup.md, "In the store apps").
-16. **30 days after relaunch (T13.6).** Delete the old DynamoDB tables and the `flingo-fun` Firebase project (runbook step 6).
+16. **30 days after relaunch (T13.6).** Delete the old DynamoDB tables, the `flingo-fun` Firebase project, and the old GitHub `FIREBASE_*` secrets and `VITE_FIREBASE_*` variables (runbook step 6).
 
 ## Questions
 
 Claude picked a default for each so work could continue. Change any you disagree with.
 
 - **Screen names (T6.7).** Generated names look like `bouncy-otter-42`. Names can't contain "James", "Tilly", "Harvey", "admin" or "official", so nobody can pretend to be you. Rude words are filtered with the `obscenity` list, and players get 3 changes per 30 days. Is that OK?
-- **Daily clean-up (T6.9).** Guest accounts that never finished a game are deleted after 90 days without a visit. Is that OK?
+- **Daily clean-up (T6.9).** Guest accounts that never finished a game are deleted after 90 days without a visit, and (from the follow-up session) their Supabase sign-in users go with them. Is that OK?
 - **Contact email.** The pages use `hello@games4james.com` (`brand.json` `contactEmail`). Does that inbox exist? If not, set one up (for example forwarding through your domain registrar), or tell Claude which address to use.
 - **Deleted accounts.** They disappear from leaderboards entirely rather than showing as "Deleted player". Is that OK?
 - **Weekly stickers.** A sticker for playing on 3 different days in one week (Monday to Sunday, local time) replaces the old streak celebration. The day count still runs quietly. Is that OK?
@@ -100,3 +102,11 @@ Claude picked a default for each so work could continue. Change any you disagree
 - **Colour Sort (T11.8).** It's the new puzzle game, in beta. Have a play. Once the family has played it for a week, does it go active? It needs a real note, a cover and sounds first.
 - **Supporter price and perks (T12.2).** A one-off A$9 "family supporter" gives gold avatars, a Supporter sticker and a star by the name on leaderboards, for the grown-up and any linked kids. Nothing affects play. Is that the price and the set you want?
 - **Merch (T12.4).** Do you want sticker sheets of the characters (print on demand, no stock), once the Phase 8 art exists?
+- **Google and Apple sign-in** are hidden (`features.socialSignIn`). Turn them on later? That needs a Google Cloud OAuth client, and Apple's Services ID for the store apps.
+
+## Not yours, but not done (by design)
+
+- T6.10 (API on Supabase Edge Functions), T11.9 (reviving cut games), T11.11 (Games4[YourName]) and T12.4 (merch) are deferred or optional ideas.
+- T14.4 (native Google and Apple sign-in) waits for the social sign-in switch.
+- T10.8 (first store releases) waits for your developer accounts.
+- Browser-pane checks left for launch day: the sticker book (T11.4), pass-and-play (T11.6) and the family view (T11.7).
