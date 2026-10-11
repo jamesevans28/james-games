@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router";
+import { Link, Navigate, useNavigate, useLocation } from "react-router";
 import { useAuth } from "../context/AuthProvider";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { OfflineBanner } from "../components/OfflineBanner";
@@ -61,9 +61,8 @@ export default function LoginPage() {
   // If user is already signed in with a non-anonymous account, redirect
   if (user && !user.isAnonymous) {
     const params = new URLSearchParams(window.location.search);
-    const returnTo = params.get("state") || "/";
-    void navigate(returnTo, { replace: true });
-    return null;
+    // <Navigate> rather than navigate() during render (React warns about the latter).
+    return <Navigate to={params.get("state") || "/"} replace />;
   }
 
   const validate = () => {

@@ -93,6 +93,14 @@ const EMAIL_SETTINGS = {
   // can't receive mail: confirm the new address only, and send no "email changed" notice.
   mailer_secure_email_change_enabled: false,
   mailer_notifications_email_changed_enabled: false,
+};
+
+/**
+ * Code-only emails. Supabase only lets a project change its templates once it sends
+ * through its own mail server (custom SMTP); with the built-in sender the defaults stay,
+ * and they carry a link instead of the code.
+ */
+const EMAIL_TEMPLATES = {
   mailer_subjects_magic_link: `Your ${brand.name} sign-in code`,
   mailer_templates_magic_link_content: codeEmail(
     `Here is your code to sign in to ${brand.name}:`,
@@ -131,7 +139,7 @@ function authConfig(project, redirects) {
     // Sign-ups stay open: turning them off would block anonymous sign-ins too.
     disable_signup: false,
     ...EMAIL_SETTINGS,
-    ...(smtpSettings() ?? {}),
+    ...(smtpSettings() ? { ...smtpSettings(), ...EMAIL_TEMPLATES } : {}),
     external_google_enabled: google,
   };
   if (google) {
@@ -193,10 +201,18 @@ async function api(method, route, body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const text = await res.text();
-  // Never echo a response body: it can hold keys.
+  // Never echo a successful body: it can hold keys. A failure's `message` is a validation
+  // text, so it is shown (shortened) to say what went wrong.
   if (!res.ok) {
+    let reason = "";
+    try {
+      const message = JSON.parse(text)?.message;
+      if (typeof message === "string") reason = `: ${message.slice(0, 300)}`;
+    } catch {
+      // Not JSON: status only.
+    }
     throw new Error(
-      `${method} ${route.replace(/\/projects\/[a-z]+/, "/projects/<ref>")}: HTTP ${res.status}`,
+      `${method} ${route.replace(/\/projects\/[a-z]+/, "/projects/<ref>")}: HTTP ${res.status}${reason}`,
     );
   }
   return text ? JSON.parse(text) : null;
@@ -328,8 +344,10 @@ const prodUrl = `https://${refs.prod}.supabase.co`;
 console.log(`\n${dryRun ? "Dry run: nothing was changed." : "Done."}`);
 if (!smtpSettings()) {
   console.log(
-    "Email: Supabase's built-in sender only delivers to this project's team members (a few an hour).\n" +
-      "Set SMTP_* and rerun before real players add emails (docs/supabase-auth-setup.md).",
+    "Email: no mail server yet, so Supabase's built-in sender is used. It only delivers to this\n" +
+      "project's team members, a few an hour, and its emails keep Supabase's default templates\n" +
+      "(a link, not the 6-digit code our screens ask for). Set SMTP_* and rerun to fix both\n" +
+      '(docs/supabase-auth-setup.md, "Email delivery").',
   );
 }
 console.log(
