@@ -214,7 +214,20 @@ Without a Resend key this only describes the steps:
 const zoneId = hostedZoneId();
 console.log(`Route 53 zone found for ${DOMAIN}`);
 
-const listed = await resend("GET", "/domains");
+let listed;
+try {
+  listed = await resend("GET", "/domains");
+} catch (err) {
+  if (/restricted to only send/i.test(err.message)) {
+    fail(
+      "That Resend key is send-only. Adding the domain needs a Full access key: resend.com →\n" +
+        "API Keys → Create API key → Permission: Full access. Copy it, run\n" +
+        "`node scripts/save-key.mjs resend` (it replaces the old one), then this again.\n" +
+        "You can delete the send-only key in Resend; this script makes its own for Supabase.",
+    );
+  }
+  throw err;
+}
 let domain = (listed?.data ?? []).find((d) => d.name === DOMAIN);
 if (!domain) {
   if (dryRun) {
