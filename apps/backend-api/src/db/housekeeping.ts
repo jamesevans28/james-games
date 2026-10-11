@@ -27,7 +27,12 @@ export async function runHousekeeping(db: Db, now = new Date()) {
     .where(
       and(
         eq(users.accountType, "anonymous"),
-        lt(sql`coalesce(${users.lastSeenAt}, ${users.createdAt})`, cutoff),
+        // A raw SQL value isn't typed, so pass the cutoff as text: postgres-js can't
+        // serialise a Date here (pglite in the tests can, which hid this).
+        lt(
+          sql`coalesce(${users.lastSeenAt}, ${users.createdAt})`,
+          sql`${cutoff.toISOString()}::timestamptz`,
+        ),
         notExists(
           db
             .select({ one: sql`1` })
