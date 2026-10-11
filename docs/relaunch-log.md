@@ -29,16 +29,20 @@ Claude prepared everything below. Steps marked **James** need the consoles.
 
 1. **T13.1:** Claude reruns the table above on `main` and plays every active game. All green, or stop.
 2. **T13.2 production backend:**
-   - **James:** confirm the GitHub secrets `DATABASE_URL`, `DATABASE_URL_MIGRATIONS`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL` and `FIREBASE_PRIVATE_KEY` (the `games4james` project). Delete the old repo variable `TABLE_NAME` and any other `TABLE_*` ones.
+   - **James:** confirm the GitHub secrets `DATABASE_URL`, `DATABASE_URL_MIGRATIONS` and `SUPABASE_SECRET_KEY`, and the variable `SUPABASE_URL` (the `games4james` project). Delete the old repo variable `TABLE_NAME` and any other `TABLE_*` ones.
    - **James:** Actions → **Deploy API** → Run workflow (`migrate_only` unticked).
    - Check it:
      ```bash
      curl -s https://api.games4james.com/games/config | head -c 300
      ```
      This should list the manifest games, and leaderboards should be empty.
-3. **T13.3 Firebase production settings (James):** follow "At relaunch" in [firebase-auth-setup.md](firebase-auth-setup.md). That's the `auth.games4james.com` custom domain, the OAuth client origins and redirect, and Apple if it's on. Check `https://auth.games4james.com/__/auth/handler` loads.
+3. **T13.3 Supabase Auth production settings (James):** follow "At relaunch" in [supabase-auth-setup.md](supabase-auth-setup.md): run `node scripts/supabase-auth-setup.mjs --only prod --google` (the admin signs in with Google), the Google client's production redirect, Apple only if social sign-in is on. Check:
+   ```bash
+   curl -s https://<prod-ref>.supabase.co/auth/v1/.well-known/jwks.json
+   ```
+   This should list an ES256 key.
 4. **T13.4 web and admin:**
-   - **James:** set the GitHub variables `VITE_API_BASE_URL=https://api.games4james.com`, the six `VITE_FIREBASE_*` for `games4james` with `VITE_FIREBASE_AUTH_DOMAIN=auth.games4james.com`, and `CORS_ALLOWED_ORIGINS=https://games4james.com,https://admin.games4james.com`.
+   - **James:** set the GitHub variables `VITE_API_BASE_URL=https://api.games4james.com`, `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` for `games4james`, and `CORS_ALLOWED_ORIGINS=https://games4james.com,https://admin.games4james.com`.
    - **James:** CloudFront → Functions → attach `bot-rewrite` ([infra/cloudfront/README.md](../infra/cloudfront/README.md)).
    - **James:** run **Deploy player web** and **Deploy admin** once by hand.
    - **Claude:** uncomment the `push` triggers in `deploy-web.yml`, `deploy-admin.yml` and `deploy-api.yml`, and record "auto-deploy on" in DECISIONS.
@@ -58,7 +62,7 @@ Claude prepared everything below. Steps marked **James** need the consoles.
 5. **T13.5 launch-day checks**, on a phone in a private window:
    - [ ] play as a guest
    - [ ] create username + PIN
-   - [ ] Google sign-in shows "Games4James"
+   - [ ] admin: James signs in with Google and resets a test PIN
    - [ ] score, then the leaderboard
    - [ ] rating after 3 plays
    - [ ] install the PWA
@@ -69,5 +73,5 @@ Claude prepared everything below. Steps marked **James** need the consoles.
 6. **T13.6, 30 days later (James):**
    - AWS → DynamoDB → delete the ten `games4james-*` tables.
    - IAM → the Lambda role → remove the DynamoDB statement.
-   - Firebase → delete the `flingo-fun` project.
+   - Firebase → delete the `flingo-fun` project (and its Google Cloud project if it only existed for Firebase).
    - GitHub → delete any `flingo` variables.

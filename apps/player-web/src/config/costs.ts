@@ -10,7 +10,7 @@ export const COSTS: readonly CostRow[] = [
   { item: "Web address (games4james.com)", perYear: 25, note: "the domain name" },
   { item: "Hosting on AWS", perYear: 12, note: "the website and the game server" },
   { item: "Database (Supabase)", perYear: 0, note: "free plan for now" },
-  { item: "Sign-in (Firebase)", perYear: 0, note: "free plan" },
+  { item: "Sign-in (Supabase)", perYear: 0, note: "free plan, same as the database" },
   { item: "Apple App Store", perYear: 155, note: "needed for the iPhone app (US$99)" },
   { item: "Google Play", perYear: 8, note: "a one-off US$25, spread over five years" },
   { item: "Art and sound tools", perYear: 60, note: "making the pictures and sounds" },

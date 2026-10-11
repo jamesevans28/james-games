@@ -18,14 +18,13 @@ import { buildSummary, type ExperienceSummary } from "./experienceService.js";
 import { canUseAvatar } from "./supporterService.js";
 import { SCREEN_NAME_MESSAGES, checkScreenName, generateScreenName } from "./screenNames.js";
 import {
-  checkEmailVerified,
-  createCustomToken,
-  deleteFirebaseUser,
+  convertToPinAccount,
+  deleteAuthUser,
   hashPin,
-  setUserClaims,
-  updateFirebaseUserEmail,
+  mintSignIn,
+  setAccountType,
   verifyPin,
-} from "./firebaseAuthService.js";
+} from "./supabaseAuthService.js";
 import { toPublicProfile, type PublicProfile } from "./publicProfile.js";
 import { getFriendship, isBlockedEitherWay, type Friendship } from "./followersService.js";
 import { listStickers } from "../repos/stickersRepo.js";
@@ -157,7 +156,7 @@ export async function checkScreenNameFor(
 // Registration and sign-in
 // ---------------------------------------------------------------------------
 
-/** Creates the row for a newly signed-in anonymous Firebase user (idempotent). */
+/** Creates the row for a newly signed-in anonymous Supabase user (idempotent). */
 export async function registerAnonymous(uid: string): Promise<{ user: User; isNew: boolean }> {
   const existing = await getUserById(uid);
   if (existing) return { user: existing, isNew: false };
@@ -166,12 +165,15 @@ export async function registerAnonymous(uid: string): Promise<{ user: User; isNe
 
 /**
  * Gives the account a username and PIN (upgrading an anonymous account, or creating
- * the row), then sets the Firebase claims and mints a custom token for the client.
+ * the row), turns the Supabase user into a PIN account with the same id, and mints a
+ * one-time sign-in for the client's `verifyOtp`. The row is written in a transaction
+ * that the auth update must also pass, so a failed upgrade leaves nothing behind and
+ * a retry starts clean.
  */
 export async function registerUsername(
   uid: string,
   input: { username: string; pin: string; screenName?: string },
-): Promise<{ user: User; customToken: string }> {
+): Promise<{ user: User; tokenHash: string }> {
   const chosenName = input.screenName === undefined ? null : validChosenName(input.screenName);
   const username = normalizeUsername(input.username);
   const fields = {
@@ -181,32 +183,37 @@ export async function registerUsername(
   };
   const existing = await getUserById(uid);
 
-  let user: User | null;
+  let user: User;
   try {
-    if (existing && !chosenName) {
-      // Keep the current screen name: the login username is never shown publicly.
-      user = await updateUser(uid, fields);
-    } else {
-      const named = { ...fields, screenNameSetByUser: Boolean(chosenName) };
-      user = await withUniqueScreenName(
-        chosenName,
-        async (screenName) =>
-          (existing ? null : await insertUser({ ...named, id: uid, screenName })) ??
-          updateUser(uid, { ...named, screenName }),
-      );
-    }
+    user = await getDb().transaction(async (tx) => {
+      let written: User | null;
+      if (existing && !chosenName) {
+        // Keep the current screen name: the login username is never shown publicly.
+        written = await updateUser(uid, fields, tx);
+      } else {
+        const named = { ...fields, screenNameSetByUser: Boolean(chosenName) };
+        // Each try in a savepoint, so a screen-name clash doesn't abort the transaction.
+        written = await withUniqueScreenName(chosenName, (screenName) =>
+          tx.transaction(
+            async (sp) =>
+              (existing ? null : await insertUser({ ...named, id: uid, screenName }, sp)) ??
+              updateUser(uid, { ...named, screenName }, sp),
+          ),
+        );
+      }
+      if (!written) throw new Error("user_upsert_failed");
+      await convertToPinAccount(uid, username);
+      return written;
+    });
   } catch (err) {
     if (uniqueViolation(err) === USERNAME_KEY) {
       throw new UserError(409, "username_taken", "Username is already taken");
     }
     throw err;
   }
-  if (!user) throw new Error("user_upsert_failed");
 
-  const claims = { accountType: "username_pin", username };
-  await setUserClaims(uid, claims);
-  const customToken = await createCustomToken(uid, claims);
-  return { user, customToken };
+  const tokenHash = await mintSignIn(uid);
+  return { user, tokenHash };
 }
 
 let dummyHash: Promise<string> | null = null;
@@ -216,13 +223,13 @@ function dummyPinHash(): Promise<string> {
 }
 
 /**
- * Checks a username + PIN and mints a custom token. Null for an unknown username,
+ * Checks a username + PIN and mints a one-time sign-in. Null for an unknown username,
  * an account without a PIN, or a wrong PIN, so callers cannot tell them apart.
  */
 export async function loginWithUsername(
   username: string,
   pin: string,
-): Promise<{ user: User; customToken: string } | null> {
+): Promise<{ user: User; tokenHash: string } | null> {
   const user = await getUserByUsername(username);
   if (!user?.pinHash) {
     // Same bcrypt cost as a real check, so response time doesn't say whether the username exists.
@@ -230,11 +237,8 @@ export async function loginWithUsername(
     return null;
   }
   if (!(await verifyPin(pin, user.pinHash))) return null;
-  const customToken = await createCustomToken(user.id, {
-    accountType: user.accountType,
-    username: user.username,
-  });
-  return { user, customToken };
+  const tokenHash = await mintSignIn(user.id);
+  return { user, tokenHash };
 }
 
 /** Marks the account linked to a social provider (creating the row if it is new). */
@@ -247,7 +251,21 @@ export async function linkProvider(
     ...(token.email ? { email: token.email, emailVerified: Boolean(token.emailVerified) } : {}),
   };
   const user = (await updateUser(uid, patch)) ?? (await createWithGeneratedName(uid, patch)).user;
-  await setUserClaims(uid, { accountType: "linked" });
+  await setAccountType(uid, "linked");
+  return user;
+}
+
+/**
+ * POST /auth/sync-email: after a grown-up confirmed an email with Supabase's code, the
+ * fresh access token carries it (Supabase only puts confirmed addresses there). Copies
+ * it onto the row; the client never sends the address itself.
+ */
+export async function syncEmail(uid: string, token: { email?: string }): Promise<User> {
+  if (!token.email) {
+    throw new UserError(400, "no_email", "Confirm the email with its code first.");
+  }
+  const user = await updateUser(uid, { email: token.email, emailVerified: true });
+  if (!user) throw notFound();
   return user;
 }
 
@@ -275,39 +293,25 @@ export async function adminResetPin(userId: string, newPin: string): Promise<voi
  * DELETE /me (T7.8): removes the account for good. In one transaction the row goes
  * (plays stay, anonymised; best scores, friends, stickers and the rest cascade, so
  * the player leaves every leaderboard), along with any sign-in attempts naming the
- * account, and then the Firebase user is deleted. If Firebase fails the transaction
+ * account, and then the Supabase auth user is deleted. If that fails the transaction
  * rolls back and nothing is lost, so the player can simply try again.
  */
 export async function deleteAccount(uid: string): Promise<void> {
   await getDb().transaction(async (tx) => {
-    // No row (never registered, or a retry) still deletes the Firebase user.
+    // No row (never registered, or a retry) still deletes the auth user.
     const deleted = await deleteUserRow(tx, uid);
     const keys = [pinKey(uid)];
     if (deleted?.username) keys.push(userKey(deleted.username));
     await deleteAttempts(tx, keys);
-    await deleteFirebaseUser(uid);
+    await deleteAuthUser(uid);
   });
-}
-
-/** Sets an unverified email in Firebase and on the row. Firebase errors are thrown as-is. */
-export async function addEmail(uid: string, email: string): Promise<void> {
-  if (!(await getUserById(uid))) throw notFound();
-  await updateFirebaseUserEmail(uid, email);
-  await updateUser(uid, { email, emailVerified: false });
-}
-
-/** Reads Firebase's emailVerified and copies a `true` onto the row. */
-export async function syncEmailVerified(uid: string): Promise<boolean> {
-  const verified = await checkEmailVerified(uid);
-  if (verified) await updateUser(uid, { emailVerified: true });
-  return verified;
 }
 
 // ---------------------------------------------------------------------------
 // Profile, preferences
 // ---------------------------------------------------------------------------
 
-/** GET /me and GET /auth/firebase/me: the signed-in user's own account. */
+/** GET /me and GET /auth/me: the signed-in user's own account. */
 export type CurrentUser = {
   userId: string;
   username: string | null;
@@ -316,7 +320,7 @@ export type CurrentUser = {
   accountType: User["accountType"];
   email: string | null;
   emailVerified: boolean;
-  /** Linked sign-in providers, from the ID token. */
+  /** Linked sign-in providers, from the access token. */
   providers: string[];
   preferences: Record<string, unknown>;
   betaTester: boolean;

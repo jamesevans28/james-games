@@ -1,27 +1,19 @@
 import { useEffect, useState } from "react";
 import { checkScreenName, fetchMe, updateSettings, type ScreenNameCheck } from "../../lib/api";
-import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useAuth } from "../../context/AuthProvider";
 import { adapters } from "../../platform/adapters";
 import { features } from "../../config/features";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { OfflineBanner } from "../../components/OfflineBanner";
 import { errorMessage } from "../../utils/errorCode";
 import DeleteAccountSection from "./DeleteAccountSection";
+import EmailSection from "./EmailSection";
 import FriendsPrivacySection from "./FriendsPrivacySection";
 import FamilySection from "./FamilySection";
 import GrownUpsSection from "./GrownUpsSection";
 
 export default function SettingsScreen() {
-  const {
-    user,
-    linkGoogle,
-    linkApple,
-    refreshProfile,
-    changePin,
-    addEmail,
-    sendVerificationEmail,
-    checkEmailVerified,
-  } = useAuth();
+  const { user, linkGoogle, linkApple, refreshProfile, changePin } = useAuth();
 
   // Screen name state
   const [screenName, setScreenName] = useState("");
@@ -33,14 +25,6 @@ export default function SettingsScreen() {
   // Linking state
   const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
   const [linkError, setLinkError] = useState<string | null>(null);
-
-  // Email state
-  const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
-  const [addingEmail, setAddingEmail] = useState(false);
-  const [sendingVerification, setSendingVerification] = useState(false);
-  const [checkingVerification, setCheckingVerification] = useState(false);
 
   // PIN change state
   const [showPinChange, setShowPinChange] = useState(false);
@@ -129,8 +113,8 @@ export default function SettingsScreen() {
     }
     setLinkingProvider("google");
     try {
+      // Leaves for Google; /auth/callback finishes the link and comes back here.
       await linkGoogle();
-      await refreshProfile();
     } catch (e) {
       if (!adapters.network.isOnline()) {
         setLinkError("You're offline. Connect to link accounts.");
@@ -151,96 +135,10 @@ export default function SettingsScreen() {
     setLinkingProvider("apple");
     try {
       await linkApple();
-      await refreshProfile();
     } catch (e) {
       setLinkError(errorMessage(e, "Failed to link Apple account"));
     } finally {
       setLinkingProvider(null);
-    }
-  }
-
-  async function handleAddEmail(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError("Please enter a valid email address");
-      return;
-    }
-    if (!adapters.network.isOnline()) {
-      setEmailError("You're offline. Connect to add email.");
-      return;
-    }
-
-    setEmailError(null);
-    setEmailSuccess(null);
-    setAddingEmail(true);
-    try {
-      await addEmail(email);
-      setEmailSuccess("Email added! Check your inbox for a verification link.");
-      // Automatically send verification email
-      try {
-        await sendVerificationEmail();
-      } catch {
-        // Ignore if verification email fails - user can resend manually
-      }
-      setEmail("");
-    } catch (e) {
-      if (!adapters.network.isOnline()) {
-        setEmailError("You're offline. Connect to add email.");
-      } else {
-        setEmailError(errorMessage(e, "Failed to add email"));
-      }
-    } finally {
-      setAddingEmail(false);
-    }
-  }
-
-  async function handleSendVerification() {
-    setEmailError(null);
-    setEmailSuccess(null);
-    if (!adapters.network.isOnline()) {
-      setEmailError("You're offline. Connect to send verification email.");
-      return;
-    }
-    setSendingVerification(true);
-    try {
-      await sendVerificationEmail();
-      setEmailSuccess("Verification email sent! Check your inbox.");
-    } catch (e) {
-      if (!adapters.network.isOnline()) {
-        setEmailError("You're offline. Connect to send verification email.");
-      } else {
-        setEmailError(errorMessage(e, "Failed to send verification email"));
-      }
-    } finally {
-      setSendingVerification(false);
-    }
-  }
-
-  async function handleCheckVerification() {
-    setEmailError(null);
-    setEmailSuccess(null);
-    if (!adapters.network.isOnline()) {
-      setEmailError("You're offline. Connect to check verification status.");
-      return;
-    }
-    setCheckingVerification(true);
-    try {
-      const isVerified = await checkEmailVerified();
-      if (isVerified) {
-        setEmailSuccess("Email verified successfully!");
-      } else {
-        setEmailError(
-          "Email not yet verified. Please check your inbox and click the verification link.",
-        );
-      }
-    } catch (e) {
-      if (!adapters.network.isOnline()) {
-        setEmailError("You're offline. Connect to check verification status.");
-      } else {
-        setEmailError(errorMessage(e, "Failed to check verification status"));
-      }
-    } finally {
-      setCheckingVerification(false);
     }
   }
 
@@ -284,12 +182,10 @@ export default function SettingsScreen() {
     }
   }
 
-  const hasGoogle = user?.providers?.includes("google.com");
-  const hasApple = user?.providers?.includes("apple.com");
+  const hasGoogle = user?.providers?.includes("google");
+  const hasApple = user?.providers?.includes("apple");
   const isUsernamePin = user?.accountType === "username_pin";
   const isAnonymous = user?.accountType === "anonymous";
-  const hasEmail = !!user?.email;
-  const emailVerified = user?.emailVerified;
 
   return (
     <div className="max-w-xl mx-auto p-4">
@@ -376,78 +272,8 @@ export default function SettingsScreen() {
       <FamilySection />
       <GrownUpsSection />
 
-      {/* Email Section */}
-      <div className="p-5 bg-card rounded-2xl border border-line mb-6">
-        <h2 className="text-lg font-bold mb-4 text-ink">Email Address</h2>
-
-        {emailError && (
-          <div className="mb-3 p-3 bg-grape/10 border border-grape/30 text-grape text-sm rounded-xl font-medium">
-            {emailError}
-          </div>
-        )}
-        {emailSuccess && (
-          <div className="mb-3 p-3 bg-brand/10 border border-brand/30 text-brand text-sm rounded-xl font-medium">
-            {emailSuccess}
-          </div>
-        )}
-
-        {hasEmail ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-ink-2 font-medium">Email: </span>
-              <span className="text-sm text-ink font-bold">{user?.email}</span>
-              {emailVerified ? (
-                <span className="text-xs bg-brand/20 text-brand px-2 py-1 rounded-full font-bold border border-brand/30">
-                  ✓ Verified
-                </span>
-              ) : (
-                <span className="text-xs bg-sun/20 text-ink px-2 py-1 rounded-full font-bold border border-sun/50">
-                  Not verified
-                </span>
-              )}
-            </div>
-
-            {!emailVerified && (
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={handleSendVerification}
-                  disabled={sendingVerification}
-                  className="btn btn-primary text-sm"
-                >
-                  {sendingVerification ? "Sending..." : "Resend verification email"}
-                </button>
-                <button
-                  onClick={handleCheckVerification}
-                  disabled={checkingVerification}
-                  className="btn btn-outline text-sm"
-                >
-                  {checkingVerification ? "Checking..." : "I've verified my email"}
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <form onSubmit={handleAddEmail} className="space-y-3">
-            <p className="text-sm text-ink-2">Add an email address to help recover your account.</p>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="flex-1 bg-paper-2 border border-line rounded-xl px-4 py-2.5 text-sm text-ink placeholder-ink-3 focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 transition-all"
-              />
-              <button
-                type="submit"
-                disabled={addingEmail || !email}
-                className="btn btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {addingEmail ? "Adding..." : "Add"}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
+      {/* A grown-up's email (username + PIN accounts): sign-in codes if the PIN is lost */}
+      {isUsernamePin && <EmailSection />}
 
       {/* PIN Change Section (only for username+PIN accounts) */}
       {isUsernamePin && (

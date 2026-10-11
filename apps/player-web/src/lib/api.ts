@@ -2,18 +2,18 @@ import { API_BASE_URL } from "../config/env";
 import { ApiError, apiErrorFrom } from "./apiError";
 const API_BASE = API_BASE_URL;
 
-// Firebase token getter - set by FirebaseAuthProvider
+// Access-token getter - set by AuthProvider (Supabase session)
 let getAuthToken: (() => Promise<string | null>) | null = null;
 
 export function setAuthTokenGetter(getter: () => Promise<string | null>) {
   getAuthToken = getter;
 }
 
-// Helper to make authenticated API calls with Firebase token
+// Helper to make authenticated API calls with the Supabase access token
 async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
   const headers = new Headers(options.headers);
 
-  // Get Firebase token if available
+  // Get the access token if signed in
   if (getAuthToken) {
     const token = await getAuthToken();
     if (token) {
@@ -109,7 +109,7 @@ export type OkResponse = { ok: boolean };
 export type UpdateSettingsResponse = { ok: boolean; screenName?: string };
 
 /**
- * The signed-in user's own account. GET /me and GET /auth/firebase/me return the
+ * The signed-in user's own account. GET /me and GET /auth/me return the
  * same shape (backend userService.CurrentUser), or 404 before the account is registered.
  */
 export type MeUser = {
@@ -120,7 +120,7 @@ export type MeUser = {
   accountType: "anonymous" | "username_pin" | "linked";
   email: string | null;
   emailVerified: boolean;
-  /** Linked sign-in providers (from the ID token). */
+  /** Linked sign-in providers, "google" / "apple" (from the access token). */
   providers: string[];
   preferences: Record<string, unknown>;
   betaTester: boolean;
@@ -291,6 +291,15 @@ export async function fetchMe(): Promise<MeResponse> {
   if (res.status === 401 || res.status === 404) return { user: null };
   if (!res.ok) throw new Error(`Failed to load profile: ${res.status}`);
   return (await res.json()) as MeResponse;
+}
+
+/**
+ * POST /auth/link-provider: after a Google/Apple sign-in or link, the server marks the
+ * account linked (creating the row for a new player) from the fresh access token.
+ */
+export async function linkProvider(): Promise<void> {
+  const res = await fetchWithAuth(`${API_BASE}/auth/link-provider`, { method: "POST" });
+  if (!res.ok) throw await apiErrorFrom(res, "We couldn't finish signing in. Try again?");
 }
 
 // Update user preferences (e.g., avatar). Body can include { avatar: number } or { preferences: {...} }

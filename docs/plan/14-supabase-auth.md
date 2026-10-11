@@ -41,7 +41,7 @@ Ids: `users.id` stays `text` and now holds the Supabase user UUID. No foreign ke
 
 ## T14.0 Supabase Auth configuration (Claude-scripted, MANUAL to finish)
 
-Status: todo
+Status: done (2026-10-11). James saved an access token; the script ran on `games4james`, the only project for now (single-project mode): settings applied and verified through the API, the project already had an ES256 key (JWKS lists it), and the three `.env.local` files have their keys (in this worktree; rerun with `--env-dir` for another checkout). Email templates were refused (free tier needs custom SMTP for templates), so they wait for the mail server.
 Depends on: T6.1 (done)
 Goal: both projects (`games4james`, `games4james-dev`) accept anonymous sign-ins, manual linking, Google (Apple when Phase 10 needs it), issue ES256 tokens, and the keys are in `.env.local` files.
 Files: `scripts/supabase-auth-setup.mjs` (new), `docs/supabase-auth-setup.md` (new, replaces `docs/firebase-auth-setup.md`), `apps/*/.env.example`, `scripts/lib/set-env.mjs` (reuse)
@@ -55,7 +55,7 @@ Steps:
 
 ## T14.1 API: verify Supabase tokens, drop firebase-admin
 
-Status: todo
+Status: done in code (2026-10-11). `firebase-admin` gone; `jose` 6.2.12 and `@supabase/auth-js` 2.117.2 pinned (the auth half of supabase-js 2.117.2; the admin API is all the API needs). Bundle: `lambda.mjs` 1.97 MB → 1.47 MB, `bundle.zip` 2.06 MB → 1.74 MB (687 → 466 inputs; ~1.2 MB of the zip is the share-card wasm and fonts). The esbuild banner stays: express still calls `require()` on Node built-ins. Skipped until T14.8: the hand check with a real dev-project token (no dev project yet, T14.0).
 Depends on: T14.0 (the dev project's URL; tests do not need it)
 Goal: `attachUser` accepts Supabase access tokens and builds the same `AuthUser`; `firebase-admin` is gone from the API.
 Files: `apps/backend-api/src/middleware/authGuards.ts`, `src/services/supabaseAuthService.ts` (new, replaces `firebaseAuthService.ts`), `src/config/index.ts`, `src/test/app.ts`, `package.json`, `scripts/bundle.mjs`, `.env.example`
@@ -71,7 +71,7 @@ Steps:
 
 ## T14.2 API: account flows on Supabase
 
-Status: todo
+Status: done (2026-10-11). Routes at `/auth/*` (`authController.ts`, `auth.routes.ts`, `auth.routes.test.ts`); `registerUsername` writes the row in a transaction with savepoints per screen-name try, so a failed Supabase upgrade rolls it back (tested). The add-email routes are gone (404, tested). `scripts/view-auth-user.ts` (`npm run auth:view -w apps/backend-api`) prints counts or one user's type and providers, never emails. `git grep "auth/firebase"` now matches only the clients (T14.3, T14.5) and done plan history.
 Depends on: T14.1
 Goal: every `/auth/*` route works against Supabase Auth; the email feature is gone; routes lose the `/firebase` segment.
 Files: `src/services/userService.ts`, `src/controllers/authController.ts` (renamed from `firebaseAuthController.ts`), `src/routes/auth.routes.ts`, `src/routes/index.ts`, `src/routes/auth.routes.test.ts`, `src/services/throttle.ts` (unchanged), `docs/api.md` if present
@@ -89,7 +89,7 @@ Steps:
 
 ## T14.3 Player web: supabase-js client and the auth provider
 
-Status: todo
+Status: done in code (2026-10-11). The client is `@supabase/auth-js` 2.117.2 on its own (the auth half of supabase-js 2.117.2), loaded as a lazy chunk: the full supabase-js chunk was 214 kB (55 kB gzipped) against 99 kB (23 kB gzipped). Build: main chunk 305.34 kB → 304.06 kB (95.55 → 95.73 kB gzipped, flat), the auth chunk 123.25 kB Firebase (36.21 kB gzipped) → 99.46 kB (23.00 kB gzipped). `detectSessionInUrl` is off because friend links use `?code=`; `/auth/callback` exchanges the code itself. The Firebase-removal part of T14.4 is done here too (plugin, `capacitor.config.ts` block, Gradle/SPM entries, google-services, `build-android.yml`, `docs/native-setup.md`); the native sheets throw `social_sign_in_unavailable` until T14.4. Skipped until T14.8: the Browser-pane checks (guest, PIN sign-up keeps the best score, PIN sign-in, delete), which need the `games4james-dev` project from T14.0.
 Depends on: T14.2
 Goal: the app signs in through Supabase with the same screens and the same `useAuth()` surface, so pages and games do not change.
 Files: `src/lib/supabase.ts` (new, replaces `lib/firebase.ts`), `src/context/AuthProvider.tsx` (renamed from `FirebaseAuthProvider.tsx`; update every import), `src/pages/login.tsx` (renamed from `firebase-login.tsx`), `src/pages/auth/Callback.tsx` (new), `src/App.tsx`, `src/lib/api.ts`, `src/pages/settings/SettingsScreen.tsx`, `src/utils/errorCode.ts` (+ test), `src/platform/adapters/{web,native}.ts`, `vite.config.ts`, `vite-env.d.ts`, `.env.example`, `package.json`
@@ -126,7 +126,7 @@ Steps:
 
 ## T14.5 Admin web
 
-Status: todo
+Status: done in code (2026-10-11). `lib/supabase.ts` is an `@supabase/auth-js` client with `detectSessionInUrl` on (the admin has no `?code=` links of its own); Google is a redirect back to `/`, `onAuthStateChange` → `GET /me` → non-admins signed out; reset-pin calls `/auth/admin/reset-pin`; `.env.example` added. Skipped until T14.8: signing in with the dev project and bouncing a non-admin Google account (needs T14.0 and the Google provider, which stays off while social sign-in is hidden; until then the admin can only be checked once Google is configured on the dev project).
 Depends on: T14.2
 Goal: the admin console signs James in with Google through Supabase.
 Files: `apps/admin-web/src/lib/supabase.ts` (replaces `lib/firebase.ts`), `src/context/AdminAuthContext.tsx`, `src/lib/api.ts`, `src/pages/auth/Callback.tsx` or an in-place `detectSessionInUrl` handler, `.env.example`, `package.json`
@@ -138,7 +138,7 @@ Steps:
 
 ## T14.6 Local stack and environment
 
-Status: todo
+Status: done in code (2026-10-11). `local:auth`, its launch config and `firebase.json` are gone; `local:server` reads `SUPABASE_*` from `apps/backend-api/.env.local`, `local:web`/`local:admin` read `VITE_SUPABASE_*` from theirs (only `VITE_API_BASE_URL` stays inline); root, player, admin and API `CLAUDE.md` and `ON-RETURN.md` updated; offline `supabase start` documented in `docs/supabase-auth-setup.md`. Smoke check in the Browser pane (preview build, no keys): the app loads, signed-out pages render, `/auth/callback?error=access_denied` shows "Sign-in was cancelled." Skipped until T14.8: the T14.3 checks on the stack (needs the dev project). The remaining `emulator` matches are the Android emulator and the dated relaunch pre-flight record.
 Depends on: T14.3, T14.5
 Goal: `npm run local:*` works without the Firebase emulator or Java; the docs say what to put in `.env.local`.
 Files: root `package.json` scripts, `.claude/launch.json`, root `CLAUDE.md`, `apps/*/CLAUDE.md`, `apps/*/.env.example`, `docs/plan/ON-RETURN.md` "Try it first"
@@ -151,7 +151,7 @@ Steps:
 
 ## T14.7 CI/CD, relaunch runbook and the plan
 
-Status: todo
+Status: done in code (2026-10-11). Workflows use `SUPABASE_URL` (variable), `SUPABASE_SECRET_KEY` (secret), `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; Lambda stays 512 MB / 10 s (DECISIONS). Runbook T13.3 is "Supabase Auth production settings"; T13.6 also deletes the `flingo-fun` Google Cloud project; T10.3 points at T14.4; store docs, money, README and copilot instructions updated. The remaining `firebase` matches explain what was removed or are dated plan history. "CI green on `main`" happens when the PR merges.
 Depends on: T14.1–T14.6
 Goal: every pipeline, runbook and plan file says Supabase, and the Firebase leftovers are gone.
 Files: `.github/workflows/{deploy-api,deploy-web,deploy-admin,ci}.yml`, `docs/relaunch-log.md`, `docs/plan/13-relaunch.md`, `docs/plan/10-capacitor.md`, `docs/plan/06-sql-data-layer-supabase.md`, `docs/store/{kids-compliance,listing}.md`, `docs/money.md`, `.github/copilot-instructions.md`, `docs/plan/ON-RETURN.md`, `DECISIONS.md`
@@ -163,6 +163,20 @@ Steps:
 4. `ON-RETURN.md`: replace the Firebase action with the T14.0 manual steps; the "Try it first" section loses `local:auth`.
 5. DECISIONS: the dated entry for this phase (below) is already there; add any sub-decisions made on the way (`linkIdentityWithIdToken` vs merge, Lambda size).
    Done when: `git grep -n -i firebase -- ':!docs/plan/DECISIONS.md' ':!docs/plan/14-supabase-auth.md' ':!docs/archive' ':!docs/plan/06-sql-data-layer-supabase.md' ':!docs/plan/13-relaunch.md'` returns only lines that explain what was removed; CI green on `main`.
+
+## T14.9 Email through Supabase (added 2026-10-11 by James)
+
+Status: done in code (2026-10-11). Checked on the real `games4james` project from the local stack at 375×812: guest sign-in (ES256 token accepted), username + PIN sign-up keeps the guest's id and sets `account_type`, sign-out, PIN sign-in (any letter case), the Settings email section and its error message, account deletion (row and Supabase auth user both gone, `auth:view`), the admin email-code page (an unknown address gets the neutral answer; Supabase 422, nothing sent). Waiting on a mail server (SMTP): Supabase only lets free-tier projects use our code-only templates with custom SMTP, and its built-in sender only reaches team members; until then a real code can't be received.
+Depends on: T14.2, T14.3, T14.5
+Goal: a grown-up can attach an email to a username + PIN account and sign in with an emailed code; the admin console signs in with an emailed code; one Supabase project serves production and local development until a dev project exists.
+Files: `apps/backend-api/src/services/{supabaseAuthService,userService}.ts`, `controllers/authController.ts`, `routes/auth.routes.ts` (+ test), `apps/player-web/src/lib/supabase.ts`, `context/AuthProvider.tsx`, `pages/settings/EmailSection.tsx`, `pages/auth/EmailCodeSignIn.tsx`, `pages/login.tsx`, `pages/{privacy,parents}`, `utils/errorCode.ts`, `apps/admin-web/src/{config.ts,lib/supabase.ts,context/AdminAuthContext.tsx,pages/LoginPage.tsx}`, `scripts/supabase-auth-setup.mjs`, `docs/supabase-auth-setup.md`
+Steps:
+
+1. API: `mintSignIn(uid)` looks up the auth user's current email; `POST /auth/sync-email` (registered accounts) stores the confirmed email from the token.
+2. Player: Settings section (send code → confirm code → sync), login "Sign in with an email code", `useAuth()` gains `addEmail`, `confirmEmail`, `sendEmailCode`, `signInWithEmailCode`; friendly messages for the email error codes; privacy and parents text.
+3. Admin: emailed-code sign-in; Google hidden behind `adminConfig.googleSignIn`.
+4. Script: email settings and code-only templates, optional `SMTP_*`, single-project mode, token from `~/.config/games4james/supabase-access-token`, `--env-dir`.
+   Done when: tests cover sync-email and the by-id mint; lint, typecheck, format pass; after the real run, James adds his email in Settings (code arrives), signs out, signs in with an email code, and signs in to the admin with an email code.
 
 ## T14.8 End-to-end check and numbers
 

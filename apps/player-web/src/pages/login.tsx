@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router";
-import { useAuth } from "../context/FirebaseAuthProvider";
+import { Link, Navigate, useNavigate, useLocation } from "react-router";
+import { useAuth } from "../context/AuthProvider";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { brand } from "../config/brand";
 import { features } from "../config/features";
 import { adapters } from "../platform/adapters";
 import { errorMessage } from "../utils/errorCode";
+import EmailCodeSignIn from "./auth/EmailCodeSignIn";
 
 type AuthMode = "login" | "register";
 
-export default function FirebaseLoginPage() {
+export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -35,6 +36,8 @@ export default function FirebaseLoginPage() {
   const [screenName, setScreenName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [triedSubmit, setTriedSubmit] = useState(false);
+  // "Forgot your PIN?": sign in with a code emailed to the grown-up's address instead.
+  const [emailMode, setEmailMode] = useState(false);
   const { isOnline } = useOnlineStatus();
 
   // Update mode when route changes
@@ -42,7 +45,7 @@ export default function FirebaseLoginPage() {
     setMode(getInitialMode());
   }, [location.pathname]);
 
-  // Show loading while Firebase initializes
+  // Show loading while the sign-in service starts
   if (!initialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-paper">
@@ -58,9 +61,8 @@ export default function FirebaseLoginPage() {
   // If user is already signed in with a non-anonymous account, redirect
   if (user && !user.isAnonymous) {
     const params = new URLSearchParams(window.location.search);
-    const returnTo = params.get("state") || "/";
-    void navigate(returnTo, { replace: true });
-    return null;
+    // <Navigate> rather than navigate() during render (React warns about the latter).
+    return <Navigate to={params.get("state") || "/"} replace />;
   }
 
   const validate = () => {
@@ -207,16 +209,39 @@ export default function FirebaseLoginPage() {
           </div>
         </div>
 
-        {/* PIN recovery is an admin action (James resets it); the parents page explains how. */}
-        {mode === "login" && (
+        {/* PIN recovery: an emailed code if a grown-up added an email, otherwise James resets it. */}
+        {mode === "login" && !emailMode && (
           <p className="mb-5 text-sm text-ink-2">
+            Forgot your PIN?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setEmailMode(true);
+                setError(null);
+              }}
+              className="inline-flex min-h-11 items-center font-bold text-brand underline"
+            >
+              Sign in with an email code
+            </button>{" "}
+            if a grown-up added an email, or{" "}
             <Link
               to="/parents#forgot-pin"
               className="inline-flex min-h-11 items-center font-bold text-brand underline"
             >
-              Forgot your PIN?
-            </Link>{" "}
-            A grown-up can ask us to reset it.
+              ask us to reset it
+            </Link>
+            .
+          </p>
+        )}
+        {mode === "login" && emailMode && (
+          <p className="mb-5 text-sm text-ink-2">
+            <button
+              type="button"
+              onClick={() => setEmailMode(false)}
+              className="inline-flex min-h-11 items-center font-bold text-brand underline"
+            >
+              Use username and PIN instead
+            </button>
           </p>
         )}
 
@@ -240,69 +265,78 @@ export default function FirebaseLoginPage() {
           </div>
         )}
 
-        {/* Username + PIN Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block">
-            <div className="text-sm font-bold text-ink mb-1.5">Username</div>
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full p-3.5 bg-paper-2 border border-line rounded-2xl placeholder-ink-3 text-ink focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 transition-all"
-              placeholder="Enter your username"
-              autoComplete="username"
-            />
-            {triedSubmit && !username && (
-              <div className="text-grape text-xs mt-1 font-medium">Username is required</div>
-            )}
-          </label>
-
-          <label className="block">
-            <div className="text-sm font-bold text-ink mb-1.5">PIN (6 digits)</div>
-            <input
-              value={pin}
-              onChange={(e) => {
-                // Only allow digits
-                const val = e.target.value.replace(/\D/g, "").slice(0, 6);
-                setPin(val);
-              }}
-              type="password"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={6}
-              className="w-full p-3.5 bg-paper-2 border border-line rounded-2xl placeholder-ink-3 text-ink focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 font-mono text-xl tracking-widest transition-all"
-              placeholder="••••••"
-              autoComplete={mode === "register" ? "new-password" : "current-password"}
-            />
-            {triedSubmit && (!pin || pin.length !== 6) && (
-              <div className="text-grape text-xs mt-1 font-medium">PIN must be 6 digits</div>
-            )}
-            <div className="text-xs text-ink-2 mt-1.5">
-              {mode === "register"
-                ? "Pick 6 numbers you'll remember (not your birthday)."
-                : "Enter your 6-digit PIN"}
-            </div>
-          </label>
-
-          {mode === "register" && (
+        {/* Username + PIN Form, or the emailed-code sign-in */}
+        {mode === "login" && emailMode ? (
+          <EmailCodeSignIn
+            onSignedIn={() => {
+              const params = new URLSearchParams(window.location.search);
+              void navigate(params.get("state") || "/", { replace: true });
+            }}
+          />
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
             <label className="block">
-              <div className="text-sm font-bold text-ink mb-1.5">Screen name (optional)</div>
+              <div className="text-sm font-bold text-ink mb-1.5">Username</div>
               <input
-                value={screenName}
-                onChange={(e) => setScreenName(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="w-full p-3.5 bg-paper-2 border border-line rounded-2xl placeholder-ink-3 text-ink focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 transition-all"
-                placeholder="Your name on leaderboards"
-                maxLength={16}
+                placeholder="Enter your username"
+                autoComplete="username"
               />
-              <div className="text-xs text-ink-2 mt-1">
-                Leave it blank to keep your fun made-up name. Don&apos;t use your real name.
+              {triedSubmit && !username && (
+                <div className="text-grape text-xs mt-1 font-medium">Username is required</div>
+              )}
+            </label>
+
+            <label className="block">
+              <div className="text-sm font-bold text-ink mb-1.5">PIN (6 digits)</div>
+              <input
+                value={pin}
+                onChange={(e) => {
+                  // Only allow digits
+                  const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  setPin(val);
+                }}
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                className="w-full p-3.5 bg-paper-2 border border-line rounded-2xl placeholder-ink-3 text-ink focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 font-mono text-xl tracking-widest transition-all"
+                placeholder="••••••"
+                autoComplete={mode === "register" ? "new-password" : "current-password"}
+              />
+              {triedSubmit && (!pin || pin.length !== 6) && (
+                <div className="text-grape text-xs mt-1 font-medium">PIN must be 6 digits</div>
+              )}
+              <div className="text-xs text-ink-2 mt-1.5">
+                {mode === "register"
+                  ? "Pick 6 numbers you'll remember (not your birthday)."
+                  : "Enter your 6-digit PIN"}
               </div>
             </label>
-          )}
 
-          <button type="submit" disabled={loading} className="btn btn-primary w-full py-3.5">
-            {loading ? "Please wait..." : mode === "login" ? "Sign in" : "Create account"}
-          </button>
-        </form>
+            {mode === "register" && (
+              <label className="block">
+                <div className="text-sm font-bold text-ink mb-1.5">Screen name (optional)</div>
+                <input
+                  value={screenName}
+                  onChange={(e) => setScreenName(e.target.value)}
+                  className="w-full p-3.5 bg-paper-2 border border-line rounded-2xl placeholder-ink-3 text-ink focus:outline-none focus:ring-2 focus:ring-brand/50 focus:border-brand/50 transition-all"
+                  placeholder="Your name on leaderboards"
+                  maxLength={16}
+                />
+                <div className="text-xs text-ink-2 mt-1">
+                  Leave it blank to keep your fun made-up name. Don&apos;t use your real name.
+                </div>
+              </label>
+            )}
+
+            <button type="submit" disabled={loading} className="btn btn-primary w-full py-3.5">
+              {loading ? "Please wait..." : mode === "login" ? "Sign in" : "Create account"}
+            </button>
+          </form>
+        )}
 
         {/* Google and Apple: hidden until features.socialSignIn is on (code kept). */}
         {features.socialSignIn && (

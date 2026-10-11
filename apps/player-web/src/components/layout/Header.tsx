@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useAuth } from "../../context/AuthProvider";
 import SideDrawer from "../SideDrawer";
 import { ProfileAvatar } from "../profile";
 import { useNotificationsIndicator } from "../../hooks/useNotificationsIndicator";

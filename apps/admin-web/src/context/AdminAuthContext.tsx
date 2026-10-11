@@ -2,76 +2,99 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { adminApi, normalizeAccount, type AdminAccount } from "../lib/api";
 import {
   auth,
+  sendEmailCode,
   signInWithGoogle,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-} from "../lib/firebase";
-import type { User as FirebaseUser } from "firebase/auth";
+  signOut as supabaseSignOut,
+  verifyEmailCode,
+  type Session,
+} from "../lib/supabase";
 
 type AdminAuthContextType = {
   user: AdminAccount | null;
-  firebaseUser: FirebaseUser | null;
+  session: Session | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  /** Emails a 6-digit code (answers the same for unknown addresses). */
+  sendEmailCode: (email: string) => Promise<void>;
+  /** Signs in with the code; false when the account isn't an admin (it is signed out again). */
+  signInWithEmailCode: (email: string, code: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 };
+
+/** A loggable code for an error, never the error itself (no PII in logs). */
+function errorCode(err: unknown): string {
+  const code = err && typeof err === "object" ? (err as { code?: unknown }).code : undefined;
+  return typeof code === "string" ? code : "error";
+}
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AdminAccount | null>(null);
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const hydrate = useCallback(async () => {
+  const hydrate = useCallback(async (): Promise<boolean> => {
     try {
       const payload = await adminApi.fetchMe().catch(() => null);
       const account = normalizeAccount(payload);
       if (account?.admin) {
         setUser(account);
-      } else {
-        setUser(null);
-        // Not an admin, sign out
-        if (auth.currentUser) {
-          await firebaseSignOut();
-        }
+        return true;
       }
+      setUser(null);
+      // Not an admin, sign out
+      await supabaseSignOut();
+      return false;
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // Listen to Firebase auth state changes
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      setFirebaseUser(fbUser);
-
-      if (fbUser) {
-        await hydrate();
+    // Fires once with the restored session (INITIAL_SESSION), then on every change.
+    const { data } = auth.onAuthStateChange((event, next) => {
+      setSession(next);
+      if (event === "TOKEN_REFRESHED") return;
+      if (next) {
+        // Deferred: Supabase asks callbacks not to await other work.
+        setTimeout(() => void hydrate(), 0);
       } else {
         setUser(null);
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => data.subscription.unsubscribe();
   }, [hydrate]);
 
   const handleSignInWithGoogle = useCallback(async () => {
     try {
+      // Leaves for Google; onAuthStateChange picks it up when the page comes back.
       await signInWithGoogle();
-      // onAuthStateChanged will handle the rest
     } catch (error) {
-      console.error("Sign in error:", error);
+      console.error("Sign in error:", errorCode(error));
       throw error;
     }
   }, []);
 
+  const handleSendEmailCode = useCallback(async (email: string) => {
+    await sendEmailCode(email.trim());
+  }, []);
+
+  const handleSignInWithEmailCode = useCallback(
+    async (email: string, code: string) => {
+      await verifyEmailCode(email.trim(), code.trim());
+      return hydrate();
+    },
+    [hydrate],
+  );
+
   const handleSignOut = useCallback(async () => {
-    await firebaseSignOut();
+    await supabaseSignOut();
     setUser(null);
-    setFirebaseUser(null);
+    setSession(null);
   }, []);
 
   const refresh = useCallback(async () => {
@@ -81,13 +104,24 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       user,
-      firebaseUser,
+      session,
       loading,
       signInWithGoogle: handleSignInWithGoogle,
+      sendEmailCode: handleSendEmailCode,
+      signInWithEmailCode: handleSignInWithEmailCode,
       signOut: handleSignOut,
       refresh,
     }),
-    [user, firebaseUser, loading, handleSignInWithGoogle, handleSignOut, refresh],
+    [
+      user,
+      session,
+      loading,
+      handleSignInWithGoogle,
+      handleSendEmailCode,
+      handleSignInWithEmailCode,
+      handleSignOut,
+      refresh,
+    ],
   );
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;

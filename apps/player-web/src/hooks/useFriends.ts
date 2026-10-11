@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchFriendRequests, fetchFriendsSummary, fetchMe, updatePreferences } from "../lib/api";
 import { queryKeys } from "../lib/queryClient";
-import { useAuth } from "../context/FirebaseAuthProvider";
+import { useAuth } from "../context/AuthProvider";
 
 /**
  * Friends server state (T7.6). Every friends query key starts with queryKeys.friends,

@@ -14,15 +14,17 @@
     "db:seed": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/seed.ts",
     "db:ping": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/ping.ts",
     "db:housekeeping": "DOTENV_CONFIG_PATH=.env.local tsx --require dotenv/config src/db/housekeeping.run.ts",
-    "bundle": "node scripts/bundle.mjs"
+    "bundle": "node scripts/bundle.mjs",
+    "auth:view": "tsx scripts/view-auth-user.ts"
   },
   "dependencies": {
     "@resvg/resvg-wasm": "2.6.2",
+    "@supabase/auth-js": "2.117.2",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "drizzle-orm": "^0.45.4",
     "express": "^5.2.1",
-    "firebase-admin": "^14.5.0",
+    "jose": "6.2.12",
     "obscenity": "^0.4.6",
     "postgres": "^3.4.9",
     "serverless-http": "^4.0.0"

@@ -18,21 +18,21 @@ Depends on: T13.1
 Steps:
 
 1. Supabase: the T6.1 project becomes production. Run `npm run db:migrate` and `db:seed` against it one last time from the pipeline (T9.4) and confirm the schema is at the latest migration. Local development switches to pglite / a local Postgres (`apps/backend-api/CLAUDE.md` updated).
-2. GitHub secrets: `DATABASE_URL`, `DATABASE_URL_MIGRATIONS`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` for the `games4james` project, `STRIPE_WEBHOOK_SECRET` if T12.2 shipped. Remove the `TABLE_*` variables.
+2. GitHub secrets: `DATABASE_URL`, `DATABASE_URL_MIGRATIONS`, `SUPABASE_SECRET_KEY` (and the variable `SUPABASE_URL`) for the `games4james` project, `STRIPE_WEBHOOK_SECRET` if T12.2 shipped. Remove the `TABLE_*` variables.
 3. Lambda: T9.1's `deploy-api.yml` sets runtime `nodejs24.x`, memory and timeout, and the new env block. MANUAL (James): run it once with `workflow_dispatch` and check `GET /games/config` on api.games4james.com returns the manifest-seeded games.
    Done when: the live API serves the new backend with empty leaderboards.
 
-## T13.3 Firebase production settings (was T3.5)
+## T13.3 Supabase Auth production settings (was T3.5; rewritten for Phase 14)
 
 Status: todo
-Depends on: T6.0, T13.2
-MANUAL (James), on the `games4james` project, with values from `docs/firebase-auth-setup.md`:
+Depends on: T14.8, T13.2
+MANUAL (James), on the `games4james` Supabase project, with values from `docs/supabase-auth-setup.md`:
 
-1. Authentication → Settings → Authorised domains: `games4james.com`, `auth.games4james.com`, `localhost`.
-2. Hosting → custom domain `auth.games4james.com` (DNS TXT and A/CNAME records in Route 53). Wait for "Connected".
-3. Google Cloud → OAuth consent screen: name "Games4James", logo, home and privacy URLs; the web OAuth client gets `https://games4james.com` and `https://auth.games4james.com` as origins and `https://auth.games4james.com/__/auth/handler` as a redirect.
-4. Apple Services ID (if Apple sign-in is on): domain `auth.games4james.com`, return URL as above.
-   Done when: `https://auth.games4james.com/__/auth/handler` loads over HTTPS.
+1. `node scripts/supabase-auth-setup.mjs --only prod` (with `--google` and the Google client, because the admin console signs in with Google): site URL `https://games4james.com`, redirect URLs `https://games4james.com/auth/callback` and `https://admin.games4james.com/`, guests and manual linking on, an ES256 signing key.
+2. Google Cloud OAuth client (web): redirect URI `https://<prod-ref>.supabase.co/auth/v1/callback`; consent screen name "Games4James", logo, home and privacy URLs.
+3. Apple (only if social sign-in is on by then): the Services ID and key under Authentication → Providers → Apple.
+4. GitHub: variables `SUPABASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`; secret `SUPABASE_SECRET_KEY`.
+   Done when: `curl -s https://<prod-ref>.supabase.co/auth/v1/.well-known/jwks.json` lists an ES256 key and the GitHub names are set. (No `auth.games4james.com` and no `__/auth/handler`: those were Firebase's.)
 
 ## T13.4 Deploy the web and admin, turn auto-deploy on (was T3.6)
 
@@ -40,7 +40,7 @@ Status: todo
 Depends on: T13.3
 Steps:
 
-1. GitHub variables: `VITE_API_BASE_URL=https://api.games4james.com`, `VITE_FIREBASE_*` for the new project, `VITE_FIREBASE_AUTH_DOMAIN=auth.games4james.com`, `CORS_ALLOWED_ORIGINS=https://games4james.com,https://admin.games4james.com` (plus the Capacitor origins once Phase 10 ships), analytics id per T7.9. Remove every flingo value.
+1. GitHub variables: `VITE_API_BASE_URL=https://api.games4james.com`, `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (T13.3), `CORS_ALLOWED_ORIGINS=https://games4james.com,https://admin.games4james.com` (plus the Capacitor origins once Phase 10 ships), analytics id per T7.9. Remove every flingo value.
 2. MANUAL (James): CloudFront → attach the link-preview function (`infra/cloudfront/README.md`).
 3. Run `deploy-web.yml` and `deploy-admin.yml` by hand once; then Claude uncomments the `push` triggers in all three deploy workflows (T9.1) and updates DECISIONS: auto-deploy is on.
 4. Check headers on the live site: `index.html` `no-store`, hashed assets `immutable`, `sw.js` `no-cache`.
@@ -50,7 +50,7 @@ Steps:
 
 Status: todo
 Depends on: T13.4
-Steps: in a private window on a phone: anonymous play, create a username+PIN account, Google sign-in (the screen says Games4James), submit a score, see it on the leaderboard, rate a game, install the PWA (Lighthouse PWA audit passes, maskable icon shown), share a game link to WhatsApp (per-game card), open `/privacy` and `/support`. MANUAL (James): Google Search Console → add `games4james.com` (DNS verification) → submit `https://games4james.com/sitemap.xml`; Rich Results test on the home page and one game page. Analytics receiving page views (T7.9).
+Steps: in a private window on a phone: anonymous play, create a username+PIN account (and Google sign-in only if `features.socialSignIn` is on by then), submit a score, see it on the leaderboard, rate a game, install the PWA (Lighthouse PWA audit passes, maskable icon shown), share a game link to WhatsApp (per-game card), open `/privacy` and `/support`. MANUAL (James): Google Search Console → add `games4james.com` (DNS verification) → submit `https://games4james.com/sitemap.xml`; Rich Results test on the home page and one game page. Analytics receiving page views (T7.9).
 Done when: every item is ticked in `docs/relaunch-log.md` with the date.
 
 ## T13.6 Decommission the prototype
@@ -60,7 +60,7 @@ Depends on: T13.5, plus 30 days
 MANUAL (James), Claude lists the exact console paths:
 
 1. AWS: delete the ten `games4james-*` DynamoDB tables (no export; full reset). Remove the Lambda IAM policy's DynamoDB statement and the `Resource "*"` policy noted in Phase 1.
-2. Firebase: delete the `flingo-fun` project (30 days after relaunch, once nothing has pointed at it for a month).
+2. Firebase: delete the `flingo-fun` project (30 days after relaunch, once nothing has pointed at it for a month), and the Google Cloud project `flingo-fun` too if it only existed for Firebase. Nothing in the repo uses Firebase since Phase 14.
 3. GitHub: delete the `flingo-fun` repo variables and the old `deploy.yml` if T9.1 left it.
 4. Repo: archive `docs/followers-aws-setup.md` and any remaining flingo-era docs under `docs/archive/`; `git grep -i flingo` returns only DECISIONS and the plan history.
    Done when: the AWS and Firebase consoles show nothing from the prototype; DECISIONS has the date.

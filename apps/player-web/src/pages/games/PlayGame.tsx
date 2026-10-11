@@ -9,7 +9,7 @@ import GameHeader from "./GameHeader";
 import Seo from "../../components/Seo";
 import GameLanding from "./GameLanding";
 import GameOver from "./GameOver";
-import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useAuth } from "../../context/AuthProvider";
 import { useGameRatings } from "../../hooks/useGameRatings";
 import { recordPlay } from "../../lib/ratingPrompt";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";

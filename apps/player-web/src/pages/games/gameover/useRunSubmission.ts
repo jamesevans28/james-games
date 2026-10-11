@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { postHighScore, type ScoreSubmissionResult } from "../../../lib/api";
 import { enqueueRun, newPlayId, outcomeForError } from "../../../lib/scoreQueue";
-import { useAuth } from "../../../context/FirebaseAuthProvider";
+import { useAuth } from "../../../context/AuthProvider";
 import { queryClient, queryKeys } from "../../../lib/queryClient";
 
 /**

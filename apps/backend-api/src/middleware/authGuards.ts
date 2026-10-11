@@ -1,6 +1,10 @@
-// Auth guards and user attachment middleware (Firebase-based)
+// Auth guards and user attachment middleware (Supabase access tokens, Phase 14)
 import type { Request, Response, NextFunction } from "express";
-import { verifyIdToken as verifyFirebaseToken } from "../services/firebaseAuthService.js";
+import {
+  isSyntheticEmail,
+  verifyAccessToken,
+  type AccessTokenClaims,
+} from "../services/supabaseAuthService.js";
 import { getUserById } from "../repos/usersRepo.js";
 import { log } from "../lib/log.js";
 
@@ -11,56 +15,54 @@ export interface AuthUser {
   emailVerified?: boolean;
   isAnonymous: boolean;
   accountType: "anonymous" | "username_pin" | "linked";
-  displayName?: string;
   providers?: string[];
 }
 
-type DecodedToken = Awaited<ReturnType<typeof verifyFirebaseToken>>;
-let verifyToken: (token: string) => Promise<DecodedToken> = verifyFirebaseToken;
+let verifyToken: (token: string) => Promise<AccessTokenClaims> = verifyAccessToken;
 
 /** Route tests swap in a fake verifier (src/test/app.ts); production never calls this. */
 export function setTokenVerifierForTests(fn: typeof verifyToken | null): void {
-  verifyToken = fn ?? verifyFirebaseToken;
+  verifyToken = fn ?? verifyAccessToken;
 }
 
-/** The `accountType` custom claim, set by the backend when it mints or upgrades an account. */
+/** `app_metadata.account_type`, set by the API when it upgrades an account. */
 function accountTypeOf(claim: unknown): AuthUser["accountType"] {
   return claim === "username_pin" || claim === "linked" ? claim : "anonymous";
+}
+
+/** The AuthUser for a verified token, or null for a token that isn't a signed-in user's. */
+export function authUserFromClaims(claims: AccessTokenClaims): AuthUser | null {
+  if (claims.role !== "authenticated") return null;
+  // A PIN account's synthetic address is plumbing, never the player's email.
+  const email = claims.email && !isSyntheticEmail(claims.email) ? claims.email : undefined;
+  // Linked sign-in providers only: "email" is the PIN plumbing, not something to show.
+  const providers = claims.app_metadata?.providers;
+  return {
+    userId: claims.sub,
+    email,
+    // Google and Apple verify the emails they hand over; PIN accounts have none.
+    emailVerified: Boolean(email),
+    isAnonymous: claims.is_anonymous === true,
+    accountType: accountTypeOf(claims.app_metadata?.account_type),
+    providers: Array.isArray(providers)
+      ? providers.filter((p) => typeof p === "string" && p !== "email" && p !== "anonymous")
+      : [],
+  };
 }
 
 export async function attachUser(req: Request, res: Response, next: NextFunction) {
   req.user = undefined;
 
-  // Get token from Authorization header
   const bearer = req.headers.authorization?.toString();
-  let token: string | undefined;
-  if (bearer?.startsWith("Bearer ")) {
-    token = bearer.slice(7);
-  }
-
+  const token = bearer?.startsWith("Bearer ") ? bearer.slice(7) : undefined;
   if (!token) return next();
 
   try {
-    // Verify Firebase ID token
-    const decodedToken = await verifyToken(token);
-
-    // Build user object from token claims
-    const user: AuthUser = {
-      userId: decodedToken.uid,
-      email: decodedToken.email,
-      emailVerified: decodedToken.email_verified,
-      isAnonymous: decodedToken.firebase?.sign_in_provider === "anonymous",
-      accountType: accountTypeOf(decodedToken.accountType),
-      displayName: typeof decodedToken.name === "string" ? decodedToken.name : undefined,
-      providers: decodedToken.firebase?.identities
-        ? Object.keys(decodedToken.firebase.identities)
-        : [],
-    };
-
-    req.user = user;
+    const user = authUserFromClaims(await verifyToken(token));
+    if (user) req.user = user;
+    else log.warn("token_role_rejected");
   } catch (err) {
-    // Token verification failed - user remains undefined
-    // Firebase tokens are short-lived; client should refresh automatically
+    // Expired or forged: the user stays signed out. supabase-js refreshes tokens itself.
     log.warn("token_verification_failed", undefined, err);
   }
 
@@ -84,21 +86,6 @@ export function requireRegisteredAccount(req: Request, res: Response, next: Next
     return res.status(403).json({
       error: "account_upgrade_required",
       message: "Please create a username to access this feature",
-    });
-  }
-  next();
-}
-
-// Require a linked account with verified email
-export function requireVerifiedEmail(req: Request, res: Response, next: NextFunction) {
-  const user = req.user;
-  if (!user?.userId) {
-    return res.status(401).json({ error: "unauthorized" });
-  }
-  if (!user.email || !user.emailVerified) {
-    return res.status(403).json({
-      error: "email_not_verified",
-      message: "Please verify your email to access this feature",
     });
   }
   next();

@@ -37,7 +37,7 @@ Steps:
 
 ## T10.3 Native auth
 
-Status: done in code 2026-10-09 (@capacitor-firebase/authentication 8.5.2; native sheet → credential → web SDK sign-in/link, so the backend flow is unchanged); MANUAL: Firebase iOS/Android apps, plist/json, URL scheme, Apple capability (docs/native-setup.md)
+Status: superseded 2026-10-11 by Phase 14. Was done in code 2026-10-09 with @capacitor-firebase/authentication; that plugin and Firebase are removed (T14.3). Guest and username + PIN work in the apps through Supabase as on the web; native Google/Apple sheets are T14.4 in `14-supabase-auth.md` (deferred while social sign-in is hidden).
 Depends on: T10.2
 Files: `platform/adapters/auth.capacitor.ts`, Firebase console (MANUAL), `ios/App/App/Info.plist`, `android/app/google-services.json`
 Steps:

@@ -24,8 +24,9 @@ export default function ParentsPage() {
             and can play straight away. Progress stays with this device.
           </li>
           <li>
-            <strong>Username and PIN.</strong> A username and a 6-digit PIN, no email needed. Use it
-            to play on more than one device. Too many wrong PINs and sign-in pauses for a while.
+            <strong>Username and PIN.</strong> A username and a 6-digit PIN, no email needed (a
+            grown-up can add one later, for sign-in codes if the PIN is forgotten). Use it to play
+            on more than one device. Too many wrong PINs and sign-in pauses for a while.
           </li>
           {features.socialSignIn && (
             <li>
@@ -69,9 +70,11 @@ export default function ParentsPage() {
 
       <InfoSection id="forgot-pin" title="Forgot the PIN?">
         <p>
-          A grown-up can email <ContactEmail subject="PIN reset" /> with the username. James will
-          reset the PIN and reply with a new one. We may ask a question or two to check the account
-          is yours. Afterwards, pick a fresh PIN in Settings.
+          If you added your email in <strong>Settings → A grown-up&rsquo;s email</strong>, tap
+          &ldquo;Sign in with an email code&rdquo; on the sign-in page and we&rsquo;ll email you a
+          6-digit code. Otherwise, a grown-up can email <ContactEmail subject="PIN reset" /> with
+          the username. James will reset the PIN and reply with a new one. We may ask a question or
+          two to check the account is yours. Afterwards, pick a fresh PIN in Settings.
         </p>
       </InfoSection>
 

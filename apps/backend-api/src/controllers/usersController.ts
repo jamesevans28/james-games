@@ -27,7 +27,7 @@ export function bodyOf(req: Request): Record<string, unknown> {
 }
 
 /**
- * GET /me and GET /auth/firebase/me (one handler, one shape): `{ user: CurrentUser }`,
+ * GET /me and GET /auth/me (one handler, one shape): `{ user: CurrentUser }`,
  * or 404 when the account has no row yet (the client then registers it).
  */
 export async function me(req: Request, res: Response) {

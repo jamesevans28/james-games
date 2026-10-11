@@ -1,40 +1,25 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { eq, like } from "drizzle-orm";
 import { startTestApp, type TestApp } from "../test/app.js";
 import { getUserById } from "../repos/usersRepo.js";
-import * as firebase from "../services/firebaseAuthService.js";
 import { authAttempts, bestScores, follows, plays, userStickers } from "../db/schema.js";
 
-// Firebase Admin is faked: the harness verifies tokens, these stand in for the rest.
-vi.mock("../services/firebaseAuthService.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../services/firebaseAuthService.js")>();
-  return {
-    ...actual,
-    createCustomToken: vi.fn((uid: string) => Promise.resolve(`custom-token-for-${uid}`)),
-    setUserClaims: vi.fn(() => Promise.resolve()),
-    updateFirebaseUserEmail: vi.fn(() => Promise.resolve()),
-    checkEmailVerified: vi.fn(() => Promise.resolve(true)),
-    getFirebaseUser: vi.fn(() => Promise.resolve(null)),
-    deleteFirebaseUser: vi.fn(() => Promise.resolve()),
-  };
-});
-
-describe("/auth/firebase routes", () => {
+describe("/auth routes", () => {
   let api: TestApp;
   beforeAll(async () => {
     api = await startTestApp();
   });
   afterAll(() => api.close());
   beforeEach(async () => {
-    vi.clearAllMocks();
+    api.authAdmin.calls.length = 0;
     // Every request comes from 127.0.0.1, so start each test with a clean throttle.
     await api.db.delete(authAttempts);
   });
 
   it("register-anonymous creates the row once with a generated screen name", async () => {
-    expect((await api.request("POST", "/auth/firebase/register-anonymous")).status).toBe(401);
+    expect((await api.request("POST", "/auth/register-anonymous")).status).toBe(401);
 
-    const first = await api.request("POST", "/auth/firebase/register-anonymous", {
+    const first = await api.request("POST", "/auth/register-anonymous", {
       as: "anon-1",
       accountType: "anonymous",
     });
@@ -47,14 +32,14 @@ describe("/auth/firebase routes", () => {
     });
     expect(first.body.screenName).toMatch(/^[a-z]+-[a-z]+-\d{2}$/);
 
-    const again = await api.request("POST", "/auth/firebase/register-anonymous", {
+    const again = await api.request("POST", "/auth/register-anonymous", {
       as: "anon-1",
       accountType: "anonymous",
     });
     expect(again.body).toMatchObject({ isNew: false, screenName: first.body.screenName });
   });
 
-  it("GET /me and GET /auth/firebase/me return the same shape", async () => {
+  it("GET /me and GET /auth/me return the same shape", async () => {
     await api.addUser({
       id: "me-1",
       username: "harvey",
@@ -72,7 +57,7 @@ describe("/auth/firebase routes", () => {
       pinHash: "secret-hash",
     });
     const a = await api.request("GET", "/me", { as: "me-1" });
-    const b = await api.request("GET", "/auth/firebase/me", { as: "me-1" });
+    const b = await api.request("GET", "/auth/me", { as: "me-1" });
     expect(a.status).toBe(200);
     expect(b.body).toEqual(a.body);
     expect(a.body.user).toMatchObject({
@@ -93,16 +78,16 @@ describe("/auth/firebase routes", () => {
     expect(JSON.stringify(a.body)).not.toContain("secret-hash");
 
     expect((await api.request("GET", "/me")).status).toBe(401);
-    expect((await api.request("GET", "/auth/firebase/me", { as: "no-row" })).status).toBe(404);
+    expect((await api.request("GET", "/auth/me", { as: "no-row" })).status).toBe(404);
     expect((await api.request("GET", "/me", { as: "no-row" })).status).toBe(404);
   });
 
-  it("register-username upgrades an anonymous account; login-username mints a token", async () => {
-    await api.request("POST", "/auth/firebase/register-anonymous", {
+  it("register-username upgrades an anonymous account; login-username mints a sign-in", async () => {
+    await api.request("POST", "/auth/register-anonymous", {
       as: "kid-1",
       accountType: "anonymous",
     });
-    const reg = await api.request("POST", "/auth/firebase/register-username", {
+    const reg = await api.request("POST", "/auth/register-username", {
       as: "kid-1",
       accountType: "anonymous",
       body: { username: "Tilly_1", pin: "432100", screenName: "Rocket Star" },
@@ -110,64 +95,64 @@ describe("/auth/firebase routes", () => {
     expect(reg.status).toBe(200);
     expect(reg.body).toEqual({
       ok: true,
-      customToken: "custom-token-for-kid-1",
+      tokenHash: "token-hash-for-kid-1",
       screenName: "Rocket Star",
       accountType: "username_pin",
     });
-    expect(firebase.setUserClaims).toHaveBeenCalledWith("kid-1", {
-      accountType: "username_pin",
-      username: "tilly_1",
-    });
+    // The same auth user becomes the PIN account, then gets a one-time sign-in.
+    expect(api.authAdmin.calls).toEqual([
+      { name: "convertToPinAccount", args: ["kid-1", "tilly_1"] },
+      { name: "mintSignIn", args: ["kid-1"] },
+    ]);
     const row = await getUserById("kid-1");
     expect(row).toMatchObject({ username: "tilly_1", accountType: "username_pin" });
     expect(row?.pinHash).toBeTruthy();
     expect(row?.pinHash).not.toBe("432100");
 
     // Wrong PIN and unknown username get the same 401.
-    const wrong = await api.request("POST", "/auth/firebase/login-username", {
+    const wrong = await api.request("POST", "/auth/login-username", {
       body: { username: "tilly_1", pin: "000000" },
     });
-    const unknown = await api.request("POST", "/auth/firebase/login-username", {
+    const unknown = await api.request("POST", "/auth/login-username", {
       body: { username: "nobody_here", pin: "432100" },
     });
     expect(wrong).toEqual({ status: 401, body: { error: "That username and PIN don't match" } });
     expect(unknown).toEqual(wrong);
 
     // Usernames are case-insensitive.
-    const ok = await api.request("POST", "/auth/firebase/login-username", {
+    const ok = await api.request("POST", "/auth/login-username", {
       body: { username: "TILLY_1", pin: "432100" },
     });
     expect(ok.status).toBe(200);
     expect(ok.body).toEqual({
       ok: true,
-      customToken: "custom-token-for-kid-1",
+      tokenHash: "token-hash-for-kid-1",
       userId: "kid-1",
       screenName: "Rocket Star",
       accountType: "username_pin",
     });
-    expect(firebase.createCustomToken).toHaveBeenLastCalledWith("kid-1", {
-      accountType: "username_pin",
-      username: "tilly_1",
-    });
+    expect(api.authAdmin.callsTo("mintSignIn").at(-1)).toEqual(["kid-1"]);
+    // Failed sign-ins mint nothing.
+    expect(api.authAdmin.callsTo("mintSignIn")).toHaveLength(2);
   });
 
   it("register-username rejects a taken username (any case) and bad input", async () => {
     await api.addUser({ id: "owner", username: "harvey_h" });
-    const taken = await api.request("POST", "/auth/firebase/register-username", {
+    const taken = await api.request("POST", "/auth/register-username", {
       as: "thief",
       accountType: "anonymous",
       body: { username: "Harvey_H", pin: "123400", screenName: "Someone" },
     });
     expect(taken.status).toBe(409);
     expect(taken.body.code).toBe("username_taken");
-    expect(firebase.createCustomToken).not.toHaveBeenCalled();
+    expect(api.authAdmin.calls).toEqual([]);
 
-    const badPin = await api.request("POST", "/auth/firebase/register-username", {
+    const badPin = await api.request("POST", "/auth/register-username", {
       as: "thief",
       body: { username: "fine_name", pin: "12" },
     });
     expect(badPin.status).toBe(400);
-    const badName = await api.request("POST", "/auth/firebase/register-username", {
+    const badName = await api.request("POST", "/auth/register-username", {
       as: "thief",
       body: { username: "no spaces", pin: "123400" },
     });
@@ -176,7 +161,7 @@ describe("/auth/firebase routes", () => {
 
   it("register-username refuses a taken screen name", async () => {
     await api.addUser({ id: "first", screenName: "Rocket" });
-    const res = await api.request("POST", "/auth/firebase/register-username", {
+    const res = await api.request("POST", "/auth/register-username", {
       as: "second",
       body: { username: "second_kid", pin: "123456", screenName: "rocket" },
     });
@@ -185,16 +170,16 @@ describe("/auth/firebase routes", () => {
   });
 
   it("change-pin checks the current PIN; admin reset-pin needs an admin", async () => {
-    await api.request("POST", "/auth/firebase/register-username", {
+    await api.request("POST", "/auth/register-username", {
       as: "pin-kid",
       body: { username: "pin_kid", pin: "111100", screenName: "Pin Kid" },
     });
-    const wrong = await api.request("POST", "/auth/firebase/change-pin", {
+    const wrong = await api.request("POST", "/auth/change-pin", {
       as: "pin-kid",
       body: { currentPin: "999900", newPin: "222200" },
     });
     expect(wrong.status).toBe(401);
-    const changed = await api.request("POST", "/auth/firebase/change-pin", {
+    const changed = await api.request("POST", "/auth/change-pin", {
       as: "pin-kid",
       body: { currentPin: "111100", newPin: "222200" },
     });
@@ -203,25 +188,25 @@ describe("/auth/firebase routes", () => {
     await api.addUser({ id: "boss", admin: true });
     expect(
       (
-        await api.request("POST", "/auth/firebase/admin/reset-pin", {
+        await api.request("POST", "/auth/admin/reset-pin", {
           as: "pin-kid",
           body: { userId: "pin-kid", newPin: "333300" },
         })
       ).status,
     ).toBe(403);
-    const reset = await api.request("POST", "/auth/firebase/admin/reset-pin", {
+    const reset = await api.request("POST", "/auth/admin/reset-pin", {
       as: "boss",
       body: { userId: "pin-kid", newPin: "333300" },
     });
     expect(reset.status).toBe(200);
-    const login = await api.request("POST", "/auth/firebase/login-username", {
+    const login = await api.request("POST", "/auth/login-username", {
       body: { username: "pin_kid", pin: "333300" },
     });
     expect(login.status).toBe(200);
   });
 
   it("link-provider marks the account linked and stores the token's email", async () => {
-    const res = await api.request("POST", "/auth/firebase/link-provider", {
+    const res = await api.request("POST", "/auth/link-provider", {
       as: "google-kid",
       accountType: "linked",
       email: "family@example.com",
@@ -237,37 +222,18 @@ describe("/auth/firebase routes", () => {
       accountType: "linked",
       email: "family@example.com",
     });
-    expect(firebase.setUserClaims).toHaveBeenCalledWith("google-kid", { accountType: "linked" });
-  });
-
-  it("add-email and check-email-verified update the row", async () => {
-    await api.addUser({ id: "mail-kid" });
-    const added = await api.request("POST", "/auth/firebase/add-email", {
-      as: "mail-kid",
-      body: { email: "grownup@example.com" },
-    });
-    expect(added.body).toEqual({ ok: true, email: "grownup@example.com", emailVerified: false });
-    expect(firebase.updateFirebaseUserEmail).toHaveBeenCalledWith(
-      "mail-kid",
-      "grownup@example.com",
-    );
-    const checked = await api.request("POST", "/auth/firebase/check-email-verified", {
-      as: "mail-kid",
-    });
-    expect(checked.body).toEqual({ ok: true, emailVerified: true });
-    expect(await getUserById("mail-kid")).toMatchObject({
-      email: "grownup@example.com",
-      emailVerified: true,
-    });
+    expect(api.authAdmin.calls).toEqual([
+      { name: "setAccountType", args: ["google-kid", "linked"] },
+    ]);
   });
 
   it("login-username: 5 wrong PINs in 15 minutes, then 429 (even with the right PIN)", async () => {
-    await api.request("POST", "/auth/firebase/register-username", {
+    await api.request("POST", "/auth/register-username", {
       as: "lock-kid",
       body: { username: "lock_kid", pin: "246800", screenName: "Lock Kid" },
     });
     const login = (pin: string, username = "lock_kid") =>
-      fetch(`${api.base}/auth/firebase/login-username`, {
+      fetch(`${api.base}/auth/login-username`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ username, pin }),
@@ -294,7 +260,7 @@ describe("/auth/firebase routes", () => {
 
     // An admin PIN reset lifts the lockout straight away.
     await api.addUser({ id: "reset-boss", admin: true });
-    const reset = await api.request("POST", "/auth/firebase/admin/reset-pin", {
+    const reset = await api.request("POST", "/auth/admin/reset-pin", {
       as: "reset-boss",
       body: { userId: "lock-kid", newPin: "864200" },
     });
@@ -306,7 +272,7 @@ describe("/auth/firebase routes", () => {
     const tries = [];
     for (let i = 0; i < 6; i++) {
       tries.push(
-        await api.request("POST", "/auth/firebase/login-username", {
+        await api.request("POST", "/auth/login-username", {
           body: { username: "ghost_kid", pin: "123456" },
         }),
       );
@@ -316,7 +282,7 @@ describe("/auth/firebase routes", () => {
   });
 
   it("the count survives a cold start: it is read from the database, not memory", async () => {
-    await api.request("POST", "/auth/firebase/register-username", {
+    await api.request("POST", "/auth/register-username", {
       as: "cold-kid",
       body: { username: "cold_kid", pin: "135790", screenName: "Cold Kid" },
     });
@@ -327,7 +293,7 @@ describe("/auth/firebase routes", () => {
       .values(
         Array.from({ length: 5 }, () => ({ key: "user:cold_kid", ok: false, attemptedAt: at })),
       );
-    const res = await api.request("POST", "/auth/firebase/login-username", {
+    const res = await api.request("POST", "/auth/login-username", {
       body: { username: "cold_kid", pin: "135790" },
     });
     expect(res.status).toBe(429);
@@ -339,56 +305,133 @@ describe("/auth/firebase routes", () => {
       .update(authAttempts)
       .set({ attemptedAt: new Date(Date.now() - 16 * 60 * 1000) })
       .where(eq(authAttempts.key, "user:cold_kid"));
-    const later = await api.request("POST", "/auth/firebase/login-username", {
+    const later = await api.request("POST", "/auth/login-username", {
       body: { username: "cold_kid", pin: "135790" },
     });
     expect(later.status).toBe(200);
   });
 
   it("20 failures from one IP block every username from that IP", async () => {
-    await api.request("POST", "/auth/firebase/register-username", {
+    await api.request("POST", "/auth/register-username", {
       as: "ip-kid",
       body: { username: "ip_kid", pin: "112233", screenName: "Ip Kid" },
     });
     for (let i = 0; i < 20; i++) {
-      const res = await api.request("POST", "/auth/firebase/login-username", {
+      const res = await api.request("POST", "/auth/login-username", {
         body: { username: `guess_${i}`, pin: "000000" },
       });
       expect(res.status).toBe(401);
     }
-    const res = await api.request("POST", "/auth/firebase/login-username", {
+    const res = await api.request("POST", "/auth/login-username", {
       body: { username: "ip_kid", pin: "112233" },
     });
     expect(res.status).toBe(429);
   });
 
   it("change-pin: 5 wrong current PINs, then 429", async () => {
-    await api.request("POST", "/auth/firebase/register-username", {
+    await api.request("POST", "/auth/register-username", {
       as: "pin-lock",
       body: { username: "pin_lock", pin: "102030", screenName: "Pin Lock" },
     });
     for (let i = 0; i < 5; i++) {
-      const res = await api.request("POST", "/auth/firebase/change-pin", {
+      const res = await api.request("POST", "/auth/change-pin", {
         as: "pin-lock",
         body: { currentPin: "999999", newPin: "405060" },
       });
       expect(res.status).toBe(401);
     }
-    const res = await api.request("POST", "/auth/firebase/change-pin", {
+    const res = await api.request("POST", "/auth/change-pin", {
       as: "pin-lock",
       body: { currentPin: "102030", newPin: "405060" },
     });
     expect(res.status).toBe(429);
-    const bad = await api.request("POST", "/auth/firebase/change-pin", {
+    const bad = await api.request("POST", "/auth/change-pin", {
       as: "pin-lock",
       body: { currentPin: "102030", newPin: "1234" },
     });
     expect(bad).toMatchObject({ status: 400, body: { error: "New PIN must be 6 digits" } });
   });
 
-  it("DELETE /me removes the account, keeps plays anonymised, and deletes the Firebase user", async () => {
+  it("register-username leaves nothing behind when the Supabase upgrade fails", async () => {
+    // An existing guest keeps its row exactly as it was.
+    await api.request("POST", "/auth/register-anonymous", {
+      as: "flaky",
+      accountType: "anonymous",
+    });
+    const before = await getUserById("flaky");
+    api.authAdmin.failNext("convertToPinAccount");
+    const failed = await api.request("POST", "/auth/register-username", {
+      as: "flaky",
+      accountType: "anonymous",
+      body: { username: "flaky_kid", pin: "123456", screenName: "Flaky Kid" },
+    });
+    expect(failed.status).toBe(500);
+    expect(JSON.stringify(failed.body)).not.toContain("supabase_admin");
+    expect(await getUserById("flaky")).toEqual(before);
+    expect(api.authAdmin.callsTo("mintSignIn")).toEqual([]);
+
+    // A brand-new account has no row at all, and the username is free again.
+    api.authAdmin.failNext("convertToPinAccount");
+    await api.request("POST", "/auth/register-username", {
+      as: "fresh",
+      body: { username: "flaky_kid", pin: "123456" },
+    });
+    expect(await getUserById("fresh")).toBeNull();
+
+    const retry = await api.request("POST", "/auth/register-username", {
+      as: "flaky",
+      accountType: "anonymous",
+      body: { username: "flaky_kid", pin: "123456", screenName: "Flaky Kid" },
+    });
+    expect(retry.status).toBe(200);
+    expect(retry.body.tokenHash).toBe("token-hash-for-flaky");
+  });
+
+  it("sync-email copies the confirmed email from the token onto the row", async () => {
+    await api.addUser({ id: "mail-kid", username: "mail_kid" });
+    const noEmail = await api.request("POST", "/auth/sync-email", { as: "mail-kid" });
+    expect(noEmail).toMatchObject({ status: 400, body: { code: "no_email" } });
+    // A PIN account's synthetic address is never treated as an email.
+    const synthetic = await api.request("POST", "/auth/sync-email", {
+      as: "mail-kid",
+      email: "mail_kid@pin.games4james.com",
+    });
+    expect(synthetic.status).toBe(400);
+    const guest = await api.request("POST", "/auth/sync-email", {
+      as: "mail-kid",
+      accountType: "anonymous",
+      email: "grownup@example.com",
+    });
+    expect(guest.status).toBe(403);
+
+    const ok = await api.request("POST", "/auth/sync-email", {
+      as: "mail-kid",
+      email: "grownup@example.com",
+      body: { email: "ignored@example.com" },
+    });
+    expect(ok.body).toEqual({ ok: true, email: "grownup@example.com", emailVerified: true });
+    expect(await getUserById("mail-kid")).toMatchObject({
+      email: "grownup@example.com",
+      emailVerified: true,
+    });
+    const me = await api.request("GET", "/me", { as: "mail-kid", email: "grownup@example.com" });
+    expect(me.body.user).toMatchObject({ email: "grownup@example.com", emailVerified: true });
+  });
+
+  it("the old Firebase routes and the old email routes are gone", async () => {
+    for (const path of [
+      "/auth/firebase/register-anonymous",
+      "/auth/add-email",
+      "/auth/check-email-verified",
+      "/auth/firebase/sync-email",
+    ]) {
+      expect((await api.request("POST", path, { as: "anyone" })).status).toBe(404);
+    }
+  });
+
+  it("DELETE /me removes the account, keeps plays anonymised, and deletes the auth user", async () => {
     expect((await api.request("DELETE", "/me")).status).toBe(401);
-    await api.request("POST", "/auth/firebase/register-username", {
+    await api.request("POST", "/auth/register-username", {
       as: "bye-kid",
       body: { username: "bye_kid", pin: "121212", screenName: "Bye Kid" },
     });
@@ -406,7 +449,7 @@ describe("/auth/firebase routes", () => {
 
     const res = await api.request("DELETE", "/me", { as: "bye-kid" });
     expect(res).toEqual({ status: 200, body: { ok: true } });
-    expect(firebase.deleteFirebaseUser).toHaveBeenCalledWith("bye-kid");
+    expect(api.authAdmin.callsTo("deleteAuthUser")).toEqual([["bye-kid"]]);
 
     expect(await getUserById("bye-kid")).toBeNull();
     const [kept] = await api.db.select().from(plays).where(eq(plays.id, play!.id));
@@ -424,12 +467,12 @@ describe("/auth/firebase routes", () => {
     expect(await getUserById("pal")).not.toBeNull();
   });
 
-  it("DELETE /me keeps everything when Firebase can't delete the user", async () => {
+  it("DELETE /me keeps everything when Supabase can't delete the auth user", async () => {
     await api.addUser({ id: "stay-kid" });
-    vi.mocked(firebase.deleteFirebaseUser).mockRejectedValueOnce(new Error("firebase down"));
+    api.authAdmin.failNext("deleteAuthUser");
     const res = await api.request("DELETE", "/me", { as: "stay-kid" });
     expect(res.status).toBe(500);
-    expect(JSON.stringify(res.body)).not.toContain("firebase down");
+    expect(JSON.stringify(res.body)).not.toContain("supabase_admin");
     expect(await getUserById("stay-kid")).not.toBeNull();
   });
 });

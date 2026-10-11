@@ -15,4 +15,4 @@ Non-negotiables:
 3. **The server never trusts the client** for scores, XP, dates or multipliers.
 4. **No PII in logs.** Never log emails, usernames, user ids or raw auth-library error objects.
 
-Auth is Firebase: the client sends a Firebase ID token as a bearer token. There are no auth cookies.
+Auth is Supabase Auth: the client sends a Supabase access token as a bearer token, and the API verifies it with `jose` against the project JWKS. There are no auth cookies.

@@ -1,9 +1,8 @@
-// Firebase auth flows: anonymous, username + PIN, and linked (Google/Apple) accounts.
+// Auth flows on Supabase: anonymous, username + PIN, and linked (Google/Apple) accounts.
 // Every route that acts for the caller reads the uid from the verified bearer token
 // (req.user, set by attachUser); nothing trusts a uid from the body.
 import type { Request, Response } from "express";
 import {
-  addEmail as addEmailFor,
   adminResetPin,
   changePin as changePinFor,
   deleteAccount,
@@ -11,7 +10,7 @@ import {
   loginWithUsername as loginWithUsernameFor,
   registerAnonymous as registerAnonymousFor,
   registerUsername,
-  syncEmailVerified,
+  syncEmail as syncEmailFor,
   UserError,
 } from "../services/userService.js";
 import { isValidPin, isValidUsername } from "../services/usernamePolicy.js";
@@ -24,10 +23,8 @@ import {
   type ThrottleCheck,
 } from "../services/throttle.js";
 import { log } from "../lib/log.js";
-import { errorInfo } from "../lib/errors.js";
 import { bodyOf, replyWithError } from "./usersController.js";
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // One message for an unknown username, a username without a PIN and a wrong PIN (T7.7).
 const LOGIN_FAILED = { error: "That username and PIN don't match" };
 
@@ -42,7 +39,7 @@ function tooManyTries(res: Response, retryAfterSec: number) {
 }
 
 /**
- * POST /auth/firebase/register-anonymous (bearer: the anonymous user's ID token).
+ * POST /auth/register-anonymous (bearer: the anonymous user's ID token).
  * Creates the row with a generated screen name; idempotent.
  */
 export async function registerAnonymous(req: Request, res: Response) {
@@ -63,9 +60,9 @@ export async function registerAnonymous(req: Request, res: Response) {
 }
 
 /**
- * POST /auth/firebase/register-username { username, pin, screenName? }
- * (bearer: the current, usually anonymous, user). Returns a custom token with the
- * new claims for the client's signInWithCustomToken.
+ * POST /auth/register-username { username, pin, screenName? }
+ * (bearer: the current, usually anonymous, user). Returns a one-time `tokenHash` the
+ * client exchanges with `verifyOtp` for a session on the same user id.
  */
 export async function registerWithUsername(req: Request, res: Response) {
   const auth = req.user;
@@ -83,14 +80,14 @@ export async function registerWithUsername(req: Request, res: Response) {
   const screenName =
     typeof body.screenName === "string" && body.screenName.trim() ? body.screenName : undefined;
   try {
-    const { user, customToken } = await registerUsername(auth.userId, {
+    const { user, tokenHash } = await registerUsername(auth.userId, {
       username: body.username,
       pin: body.pin,
       screenName,
     });
     return res.json({
       ok: true,
-      customToken,
+      tokenHash,
       screenName: user.screenName,
       accountType: user.accountType,
     });
@@ -100,8 +97,8 @@ export async function registerWithUsername(req: Request, res: Response) {
 }
 
 /**
- * POST /auth/firebase/login-username { username, pin } (public).
- * Returns a Firebase custom token the client exchanges for an ID token.
+ * POST /auth/login-username { username, pin } (public).
+ * Returns a one-time `tokenHash` the client exchanges with `verifyOtp` for a session.
  */
 export async function loginWithUsername(req: Request, res: Response) {
   const { username, pin } = bodyOf(req);
@@ -124,7 +121,7 @@ export async function loginWithUsername(req: Request, res: Response) {
     if (!result) return res.status(401).json(LOGIN_FAILED);
     return res.json({
       ok: true,
-      customToken: result.customToken,
+      tokenHash: result.tokenHash,
       userId: result.user.id,
       screenName: result.user.screenName,
       accountType: result.user.accountType,
@@ -135,7 +132,7 @@ export async function loginWithUsername(req: Request, res: Response) {
 }
 
 /**
- * POST /auth/firebase/link-provider (bearer: the ID token issued after the client
+ * POST /auth/link-provider (bearer: the access token issued after the client
  * linked or signed in with Google/Apple). Providers and email come from that token.
  */
 export async function linkProvider(req: Request, res: Response) {
@@ -158,7 +155,7 @@ export async function linkProvider(req: Request, res: Response) {
   }
 }
 
-/** POST /auth/firebase/change-pin { currentPin, newPin } (username+PIN accounts). */
+/** POST /auth/change-pin { currentPin, newPin } (username+PIN accounts). */
 export async function changePin(req: Request, res: Response) {
   const auth = req.user;
   if (!auth) return res.status(401).json({ error: "unauthorized" });
@@ -189,46 +186,23 @@ export async function changePin(req: Request, res: Response) {
   }
 }
 
-/** POST /auth/firebase/add-email { email }: sets an unverified email. */
-export async function addEmail(req: Request, res: Response) {
-  const auth = req.user;
-  if (!auth) return res.status(401).json({ error: "unauthorized" });
-  const { email } = bodyOf(req);
-  if (typeof email !== "string" || !EMAIL_PATTERN.test(email)) {
-    return res.status(400).json({ error: "Valid email address required" });
-  }
-  try {
-    await addEmailFor(auth.userId, email);
-    return res.json({ ok: true, email, emailVerified: false });
-  } catch (e) {
-    const code = errorInfo(e).code;
-    if (code === "auth/email-already-exists") {
-      log.warn("auth_add_email_rejected", { code });
-      return res
-        .status(409)
-        .json({ error: "This email is already associated with another account" });
-    }
-    if (code === "auth/invalid-email") {
-      log.warn("auth_add_email_rejected", { code });
-      return res.status(400).json({ error: "Invalid email address format" });
-    }
-    return replyWithError(res, "auth_add_email_failed", e);
-  }
-}
-
-/** POST /auth/firebase/check-email-verified: copies Firebase's emailVerified onto the row. */
-export async function checkEmailVerifiedStatus(req: Request, res: Response) {
+/**
+ * POST /auth/sync-email (bearer: the access token issued after the client confirmed the
+ * grown-up's email with its code). The address comes from that token, never the body.
+ */
+export async function syncEmail(req: Request, res: Response) {
   const auth = req.user;
   if (!auth) return res.status(401).json({ error: "unauthorized" });
   try {
-    const emailVerified = await syncEmailVerified(auth.userId);
-    return res.json({ ok: true, emailVerified });
+    const user = await syncEmailFor(auth.userId, { email: auth.email });
+    log.info("auth_email_confirmed");
+    return res.json({ ok: true, email: user.email, emailVerified: user.emailVerified });
   } catch (e) {
-    return replyWithError(res, "auth_check_email_verified_failed", e);
+    return replyWithError(res, "auth_sync_email_failed", e);
   }
 }
 
-/** POST /auth/firebase/admin/reset-pin { userId, newPin } (requireAdmin). */
+/** POST /auth/admin/reset-pin { userId, newPin } (requireAdmin). */
 export async function adminResetUserPin(req: Request, res: Response) {
   const { userId, newPin } = bodyOf(req);
   if (typeof userId !== "string" || !userId || newPin === undefined) {
@@ -248,7 +222,7 @@ export async function adminResetUserPin(req: Request, res: Response) {
 
 /**
  * DELETE /me: deletes the caller's account for good (T7.8). Plays stay, anonymised;
- * everything else about the player goes, and so does the Firebase user.
+ * everything else about the player goes, and so does the Supabase auth user.
  */
 export async function deleteMe(req: Request, res: Response) {
   const auth = req.user;

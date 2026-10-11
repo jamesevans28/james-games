@@ -20,12 +20,6 @@
       "port": 3100
     },
     {
-      "name": "local-auth",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "local:auth"],
-      "port": 9099
-    },
-    {
       "name": "local-server",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "local:server"],

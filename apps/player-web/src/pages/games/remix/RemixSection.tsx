@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { useAuth } from "../../../context/FirebaseAuthProvider";
+import { useAuth } from "../../../context/AuthProvider";
 import type { Remix } from "../../../lib/api";
 import { adapters } from "../../../platform/adapters";
 import { defaultValues, formatKnob, type RemixValues } from "../../../platform/remix";

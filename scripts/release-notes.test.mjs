@@ -11,13 +11,13 @@ test("versions bump from the last tag (or from nothing)", () => {
 test("notes group conventional commits and skip merges and chores", () => {
   const notes = notesFrom([
     "feat(games): T11.8 Colour Sort (beta)",
-    "fix(build): dedupe firebase",
+    "fix(build): dedupe phaser",
     "ci: split workflows",
     "Merge branch 'x'",
     "docs: money log",
   ]);
   expect(notes).toContain("### New\n\n- **games:** T11.8 Colour Sort (beta)");
-  expect(notes).toContain("### Fixed\n\n- **build:** dedupe firebase");
+  expect(notes).toContain("### Fixed\n\n- **build:** dedupe phaser");
   expect(notes).toContain("### Docs");
   expect(notes).not.toContain("split workflows");
   expect(notes).not.toContain("Merge");

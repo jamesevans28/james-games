@@ -2,17 +2,13 @@
 
 Claude worked through the plan unattended on 9 Oct 2026. **All code for Phases 6–13 is written, tested and merged to `main`.** That's about 640 automated tests, with CI green. What's left needs your accounts, your consoles, your art, or your say-so. Answer the questions inline or in chat; Claude reads this file at the start of the next session.
 
-## Try it first (10 minutes, no accounts needed)
+## Try it first (10 minutes, after the T14.0 setup below)
 
 ```bash
 npm install
 ```
 
-Then run these four, each in its own terminal tab:
-
-```bash
-npm run local:auth
-```
+Sign-in uses Supabase (your `games4james` project until a `games4james-dev` one exists), so run `node scripts/supabase-auth-setup.mjs` once first (see `docs/supabase-auth-setup.md`). Then run these three, each in its own terminal tab:
 
 ```bash
 npm run local:server
@@ -26,7 +22,7 @@ npm run local:web
 npm run local:admin
 ```
 
-`local:auth` is a fake Firebase. `local:server` is the API on a local database. `local:web` is the app at http://localhost:3000, and `local:admin` is the admin at http://localhost:3100.
+`local:server` is the API on a local database (sign-in through Supabase). `local:web` is the app at http://localhost:3000, and `local:admin` is the admin at http://localhost:3100.
 
 Things to try:
 
@@ -43,7 +39,7 @@ Things to try:
 ### Now (unblocks everything else)
 
 1. **Node 24.** Run `nvm install 24`, so `npm` commands run without the `npx -p node@24` wrapper.
-2. ~~**Firebase project (T6.0).**~~ Dropped 11 Oct: auth moves to Supabase ([docs/plan/14-supabase-auth.md](14-supabase-auth.md)). Your part is T14.0: create the free `games4james-dev` project, a Supabase access token for the setup script, and switch both projects to ES256 JWT signing keys. Claude scripts the rest. Google and Apple sign-in are hidden for now (`features.socialSignIn`), so no Google Cloud work is needed.
+2. **Supabase Auth (T14.0), about 5 minutes.** Firebase is gone (Phase 14, code done 11 Oct). Save a Supabase access token to `~/.config/games4james/supabase-access-token`, then run `node scripts/supabase-auth-setup.mjs --dry-run` and `node scripts/supabase-auth-setup.mjs` ([docs/supabase-auth-setup.md](../supabase-auth-setup.md)). It configures your `games4james` project (local development shares it until you make a `games4james-dev` one), moves it to ES256 signing keys and sets up the emailed sign-in codes. Then make yourself admin: add your email in the player app's Settings, set `admin` on your row, sign in to the admin with an emailed code. Before players add emails, set up a mail server (same doc, "Email delivery"). Then T14.8: the end-to-end check.
 3. ~~**Supabase project (T6.1).**~~ Done 11 Oct: connected, migrated and seeded. The strings are in `apps/backend-api/.env.local`.
 4. ~~**GitHub secrets.**~~ Done 11 Oct: `DATABASE_URL` and `DATABASE_URL_MIGRATIONS` set, housekeeping green.
 5. **The art (Phase 8), the main thing blocking relaunch.** Make the covers using [docs/art/README.md](../art/README.md):
@@ -82,7 +78,7 @@ Things to try:
 
 14. **Stripe (T12.2).** Set up the family supporter Payment Link and webhook ([docs/stripe-setup.md](../stripe-setup.md)). Until then, "For grown-ups" points to Ko-fi.
 15. **Native apps (Phase 10).**
-    - Install Xcode and Android Studio and add the Firebase iOS and Android apps ([docs/native-setup.md](../native-setup.md)). The Android build already passes on GitHub (Actions → Build Android gives an APK).
+    - Install Xcode and Android Studio ([docs/native-setup.md](../native-setup.md)); no Firebase apps any more. The Android build already passes on GitHub (Actions → Build Android gives an APK).
     - Enrol in the Apple Developer Program (US$99/yr) and Google Play (US$25).
     - The listing text is drafted in [docs/store/listing.md](../store/listing.md), and the Kids-category checklist is [docs/store/kids-compliance.md](../store/kids-compliance.md).
     - When the apps are live, set up the store product and RevenueCat (stripe-setup.md, "In the store apps").

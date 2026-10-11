@@ -10,15 +10,7 @@ The iOS and Android apps are Capacitor 8 shells around the same web build (`apps
    ```
    Open Xcode once to install the iOS simulator.
 2. **Android Studio** from developer.android.com. In its setup wizard, install an SDK and create one emulator, for example a Pixel with the latest API.
-3. **Firebase apps (T10.3).** In the Firebase console, open the `games4james` project and go to Project settings → Your apps:
-   - **iOS app.** Bundle ID `com.games4james.app`. Download `GoogleService-Info.plist` into `apps/player-web/ios/App/App/`.
-   - **iOS Google sign-in.** In Xcode, open App → Info → URL Types, add one, and set its URL scheme to the `REVERSED_CLIENT_ID` value from that plist.
-   - **Android app.** Package `com.games4james.app`. Add the SHA-1 of your debug keystore, which you can get with:
-     ```bash
-     keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
-     ```
-     Later, add the release key's SHA-1 too. Download `google-services.json` into `apps/player-web/android/app/`.
-   - **Apple sign-in.** Firebase → Authentication → Sign-in method → Apple → enable. In Xcode, App → Signing & Capabilities → + Sign in with Apple. This needs the Apple Developer account (T10.6).
+3. **Sign-in.** The apps sign in through Supabase like the web (guest and username + PIN), so there is no Firebase app, `GoogleService-Info.plist` or `google-services.json`. Native Google and Apple sheets are T14.4, deferred while `features.socialSignIn` is off. When it is turned on: a Google Cloud iOS and an Android OAuth client id (added to the Supabase Google provider's "authorized client ids"), the Apple Services ID and key for the Supabase Apple provider, Sign in with Apple in Xcode (needs the Apple Developer account, T10.6), and the `com.games4james.app://auth/callback` scheme. See `docs/supabase-auth-setup.md`.
 4. **CORS.** At relaunch, add `capacitor://localhost,https://localhost` to the `CORS_ALLOWED_ORIGINS` variable (T13.4), so the apps can call the API.
 
 ## Build and run
@@ -50,7 +42,7 @@ Check these:
 - the screen stays on during a run;
 - a new best gives a little buzz;
 - turn on airplane mode, finish a run, turn it off, and the score appears on the leaderboard;
-- Google sign-in, then Apple on iOS.
+- guest play, then create a username + PIN, sign out and sign back in with it.
 
 ## Icons and splash
 

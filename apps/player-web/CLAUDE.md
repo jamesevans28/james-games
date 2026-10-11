@@ -14,18 +14,18 @@ Check UI in the Browser pane with the `player-web` launch config at a 375×812 v
 
 ## Folder map (`src/`)
 
-| Folder        | What lives there                                                                                                                                                                           |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `pages/`      | Route screens: `home/HomeFeed`, `games-list`, `games/` (PlayGame, GameLanding, GameOver, GameHeader), `leaderboard`, `profile`, `settings`, `followers`, `notifications`, `firebase-login` |
-| `components/` | Shared UI: layout (Header, RootLayout), SideDrawer, overlays (Splash, Install, SW update, Streak), `feed/GameTile`                                                                         |
-| `context/`    | `FirebaseAuthProvider.tsx`: auth state, profile, all auth flows                                                                                                                            |
-| `hooks/`      | Feed ordering (`useFeedAlgorithmV2`), catalog, presence, online status                                                                                                                     |
-| `lib/`        | `api.ts` (backend client, bearer token), `firebase.ts` (SDK init)                                                                                                                          |
-| `games/`      | One folder per game plus `index.ts`, the registry                                                                                                                                          |
-| `game/`       | Phaser-agnostic shared helpers: `ui/dpad.ts`, `ui/onScreenKeyboard.ts`, `words/` dictionary                                                                                                |
-| `utils/`      | Analytics, `playHistory.ts`, `errorCode.ts`, share links, SEO keywords                                                                                                                     |
-| `platform/`   | The Game SDK: `sdk.ts` (contract), `registry.ts`, `host.ts`, `mount.ts`, `scenes/`, `hud/`, `input/`, `audio/`, `storage/`. See its README                                                 |
-| `config/`     | `env.ts` (API origin), `brand.json` + `brand.ts` (every brand string, colour, path)                                                                                                        |
+| Folder        | What lives there                                                                                                                                                                                   |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pages/`      | Route screens: `home/HomeFeed`, `games-list`, `games/` (PlayGame, GameLanding, GameOver, GameHeader), `leaderboard`, `profile`, `settings`, `followers`, `notifications`, `login`, `auth/Callback` |
+| `components/` | Shared UI: layout (Header, RootLayout), SideDrawer, overlays (Splash, Install, SW update, Streak), `feed/GameTile`                                                                                 |
+| `context/`    | `AuthProvider.tsx`: auth state (Supabase session), profile, all auth flows                                                                                                                         |
+| `hooks/`      | Feed ordering (`useFeedAlgorithmV2`), catalog, presence, online status                                                                                                                             |
+| `lib/`        | `api.ts` (backend client, bearer token), `supabase.ts` (Supabase Auth client, lazy chunk)                                                                                                          |
+| `games/`      | One folder per game plus `index.ts`, the registry                                                                                                                                                  |
+| `game/`       | Phaser-agnostic shared helpers: `ui/dpad.ts`, `ui/onScreenKeyboard.ts`, `words/` dictionary                                                                                                        |
+| `utils/`      | Analytics, `playHistory.ts`, `errorCode.ts`, share links, SEO keywords                                                                                                                             |
+| `platform/`   | The Game SDK: `sdk.ts` (contract), `registry.ts`, `host.ts`, `mount.ts`, `scenes/`, `hud/`, `input/`, `audio/`, `storage/`. See its README                                                         |
+| `config/`     | `env.ts` (API origin), `brand.json` + `brand.ts` (every brand string, colour, path)                                                                                                                |
 
 Routes are defined in `src/App.tsx`.
 
@@ -39,11 +39,11 @@ A game is a folder `src/games/<id>/` with a `manifest.ts` (`defineGame`) and an 
 
 Copy `.env.example` to `.env.local` (gitignored). Never commit values.
 
-| Variable                                                                                                     | Meaning                                                                                                  |
-| ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `VITE_API_BASE_URL`                                                                                          | Backend origin. Local `http://localhost:8787`, prod `https://api.games4james.com`                        |
-| `VITE_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_STORAGE_BUCKET`, `_MESSAGING_SENDER_ID`, `_APP_ID` | Firebase web app config (project `games4james` from T6.0; the prototype's `flingo-fun` is being retired) |
-| `VITE_FIREBASE_MEASUREMENT_ID`                                                                               | Optional analytics id                                                                                    |
+| Variable                        | Meaning                                                                                            |
+| ------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `VITE_API_BASE_URL`             | Backend origin. Local `http://localhost:8787`, prod `https://api.games4james.com`                  |
+| `VITE_SUPABASE_URL`             | Supabase project URL (`games4james`; `games4james-dev` locally once it exists)                     |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | That project's publishable key (`sb_publishable_…`); `scripts/supabase-auth-setup.mjs` writes both |
 
 CI sets the same names from GitHub repo variables plus `VITE_BUILD_NUMBER`.
 

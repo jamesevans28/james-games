@@ -16,24 +16,25 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 
 - `index.ts` builds the Express app (CORS, JSON, `attachUser`, routes). `lambda.ts` wraps it with `serverless-http` and is the Lambda entry; `npm run bundle` makes `bundle/lambda.mjs` and the handler is `lambda.handler`. `dev-server.ts` runs it locally.
 - `routes/` → `controllers/` (HTTP only) → `services/` (rules) → `repos/` (Drizzle queries, one file per area) → Postgres.
-- `middleware/authGuards.ts`: verifies the Firebase ID token from `Authorization: Bearer …` and sets `req.user`. `requireAuth` and `requireAdmin` guard routes. Admin is a boolean on the user row.
+- `middleware/authGuards.ts`: verifies the Supabase access token from `Authorization: Bearer …` (ES256, checked with `jose` against the project JWKS) and sets `req.user`. `requireAuth` and `requireAdmin` guard routes. Admin is a boolean on the user row.
+- `services/supabaseAuthService.ts`: token verification, the Supabase admin calls (`convertToPinAccount`, `mintSignIn`, `setAccountType`, `deleteAuthUser`) and PIN hashing. A PIN account's auth user carries a synthetic `<username>@pin.games4james.com` that is never shown or returned.
 - `config/index.ts`: env. `data/experienceLevels.ts`: the XP curve (seeded into `experience_levels`). `db/`: schema, client, migrate/seed/housekeeping.
 
 ## Route map
 
-| Prefix           | Routes                                                                                                                                                                                             |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/me`            | GET current user, PATCH screen-name, DELETE (account)                                                                                                                                              |
-| `/auth/firebase` | register-anonymous, register-username, login-username, me (same as `/me`), link-provider, change-pin, add-email, check-email-verified, admin/reset-pin                                             |
-| `/users`         | GET screen-name/check, POST screen-name, POST preferences, PATCH settings, GET streak, POST streak/checkin, GET :userId                                                                            |
-| `/scores`        | GET :gameId (leaderboard), POST / (submit, auth)                                                                                                                                                   |
-| `/experience`    | GET summary (POST runs returns 410; XP comes from POST /scores)                                                                                                                                    |
-| `/ratings`       | GET /, GET :gameId, POST :gameId                                                                                                                                                                   |
-| `/followers`     | GET summary, GET requests, POST request {friendCode}, POST requests/:id/accept, DELETE requests/:id, DELETE friends/:id, POST/DELETE block/:id, POST status (stored only with prefs.sharePresence) |
-| `/games`         | GET config, GET config/:gameId                                                                                                                                                                     |
-| `/daily`         | GET / ?tz= (today's game, seed, your run, top 20; runs are saved by POST /scores `daily: true`)                                                                                                    |
-| `/remixes`       | POST / (save, registered only), GET mine?gameId=, GET :id (public), GET :id/scores (its board); remix runs: POST /scores `remixId`                                                                 |
-| `/admin`         | users list/get/update, users/:id reset-screen-name/disable/enable, DELETE plays/:playId, GET screen-names, games list/get/stats/update (metadata only), metrics/dashboard                          |
+| Prefix        | Routes                                                                                                                                                                                             |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/me`         | GET current user, PATCH screen-name, DELETE (account)                                                                                                                                              |
+| `/auth`       | register-anonymous, register-username, login-username (both return a one-time `tokenHash` for `verifyOtp`), me (same as `/me`), link-provider, change-pin, sync-email, admin/reset-pin             |
+| `/users`      | GET screen-name/check, POST screen-name, POST preferences, PATCH settings, GET streak, POST streak/checkin, GET :userId                                                                            |
+| `/scores`     | GET :gameId (leaderboard), POST / (submit, auth)                                                                                                                                                   |
+| `/experience` | GET summary (POST runs returns 410; XP comes from POST /scores)                                                                                                                                    |
+| `/ratings`    | GET /, GET :gameId, POST :gameId                                                                                                                                                                   |
+| `/followers`  | GET summary, GET requests, POST request {friendCode}, POST requests/:id/accept, DELETE requests/:id, DELETE friends/:id, POST/DELETE block/:id, POST status (stored only with prefs.sharePresence) |
+| `/games`      | GET config, GET config/:gameId                                                                                                                                                                     |
+| `/daily`      | GET / ?tz= (today's game, seed, your run, top 20; runs are saved by POST /scores `daily: true`)                                                                                                    |
+| `/remixes`    | POST / (save, registered only), GET mine?gameId=, GET :id (public), GET :id/scores (its board); remix runs: POST /scores `remixId`                                                                 |
+| `/admin`      | users list/get/update, users/:id reset-screen-name/disable/enable, DELETE plays/:playId, GET screen-names, games list/get/stats/update (metadata only), metrics/dashboard                          |
 
 ## Data layer
 
@@ -55,13 +56,13 @@ Supabase Postgres (project in ap-southeast-2) through Drizzle ORM (Phase 6). The
 ## Rules
 
 - **Never trust the client.** Scores, XP multipliers, streak dates and durations are validated or computed on the server (T1.4).
-- **No PII in logs.** No emails, usernames, user ids or raw Firebase error objects. Log an event name and a code.
+- **No PII in logs.** No emails, usernames, user ids, token hashes or raw auth-library error objects. Log an event name and a code.
 - Public responses must never include email, admin, preferences or last-login fields (T1.2).
 - Error responses must not echo raw `e.message` for server errors (T1.11).
 
 ## Environment variables (names only)
 
-`DATABASE_URL`, `DATABASE_URL_MIGRATIONS` (migrations only), `STRIPE_WEBHOOK_SECRET` (T12.2), `REVENUECAT_WEBHOOK_AUTH` (T12.3), `APP_BASE_URL`, `PUBLIC_SITE_ORIGIN` (share links; defaults to https://games4james.com), `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `CORS_ALLOWED_ORIGINS`. Production values are set by `deploy-api.yml` from GitHub secrets.
+`DATABASE_URL`, `DATABASE_URL_MIGRATIONS` (migrations only), `STRIPE_WEBHOOK_SECRET` (T12.2), `REVENUECAT_WEBHOOK_AUTH` (T12.3), `APP_BASE_URL`, `PUBLIC_SITE_ORIGIN` (share links; defaults to https://games4james.com), `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (Supabase Auth; local values come from `games4james`, or `games4james-dev` once it exists, via `scripts/supabase-auth-setup.mjs`), `CORS_ALLOWED_ORIGINS`. Production values are set by `deploy-api.yml` from GitHub secrets.
 
 ## Deploy
 
@@ -69,4 +70,4 @@ Manual until relaunch (GitHub → Actions → **Deploy API** → Run workflow; T
 
 ## Tests
 
-`createTestDb()` (src/test/db.ts) and `startTestApp()` (src/test/app.ts) give each test file its own in-process Postgres with the real migrations, three test games, and fake Firebase tokens (`test:<uid>[:<accountType>[:<email>]]`). Route tests live in `src/routes/*.routes.test.ts`; mock Firebase Admin calls other than token verification with `vi.mock`.
+`createTestDb()` (src/test/db.ts) and `startTestApp()` (src/test/app.ts) give each test file its own in-process Postgres with the real migrations, three test games, fake Supabase access tokens (`test:<uid>[:<accountType>[:<email>]]`) and a recording fake of the Supabase admin API (`api.authAdmin.calls`, `api.authAdmin.failNext(name)`). Route tests live in `src/routes/*.routes.test.ts`.

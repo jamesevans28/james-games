@@ -5,7 +5,7 @@ import { useCatalog } from "../../context/GameCatalogProvider";
 import { getUserName } from "../../utils/user";
 import Seo from "../../components/Seo";
 import { ProfileAvatar } from "../../components/profile";
-import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useAuth } from "../../context/AuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { useLeaderboard, type LeaderboardScope } from "../../hooks/useLeaderboard";
 import { isSigninRequired } from "../../lib/apiError";

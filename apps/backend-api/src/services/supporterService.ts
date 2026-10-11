@@ -88,7 +88,7 @@ export const SUPPORTER_PRODUCT_ID = "family_supporter";
 
 /**
  * RevenueCat's webhook (T12.3): a store purchase of the supporter product. The app
- * sets RevenueCat's app user id to our Firebase uid, so app_user_id is the player.
+ * sets RevenueCat's app user id to our Supabase user id, so app_user_id is the player.
  */
 export async function handleRevenueCatEvent(body: RevenueCatEvent): Promise<WebhookOutcome> {
   const e = body.event;

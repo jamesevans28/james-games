@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { ProfileAvatar } from "./profile";
-import { useAuth } from "../context/FirebaseAuthProvider";
+import { useAuth } from "../context/AuthProvider";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { brand } from "../config/brand";
