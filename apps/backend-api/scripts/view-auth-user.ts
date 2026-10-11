@@ -8,7 +8,7 @@
  * prints emails (real or synthetic), names or other user ids.
  */
 import path from "node:path";
-import { createClient, type User } from "@supabase/supabase-js";
+import { GoTrueAdminApi, type User } from "@supabase/auth-js";
 import dotenv from "dotenv";
 
 dotenv.config({ path: path.join(import.meta.dirname, "..", ".env.local"), quiet: true });
@@ -20,9 +20,10 @@ if (!url || !secretKey) {
   process.exit(1);
 }
 
-const admin = createClient(url, secretKey, {
-  auth: { persistSession: false, autoRefreshToken: false },
-}).auth.admin;
+const admin = new GoTrueAdminApi({
+  url: `${url.replace(/\/+$/, "")}/auth/v1`,
+  headers: { Authorization: `Bearer ${secretKey}`, apikey: secretKey },
+});
 
 function describe(user: User) {
   const meta = user.app_metadata as { account_type?: string; providers?: string[] };

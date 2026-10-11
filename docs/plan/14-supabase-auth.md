@@ -55,7 +55,7 @@ Steps:
 
 ## T14.1 API: verify Supabase tokens, drop firebase-admin
 
-Status: done in code (2026-10-11). `firebase-admin` gone; `jose` 6.2.12 and `@supabase/supabase-js` 2.117.2 pinned. Bundle: `lambda.mjs` 1.97 MB → 1.59 MB, `bundle.zip` 2.06 MB → 1.82 MB (687 → 490 inputs; ~1.2 MB of the zip is the share-card wasm and fonts). The esbuild banner stays: express still calls `require()` on Node built-ins. Skipped until T14.8: the hand check with a real dev-project token (no dev project yet, T14.0).
+Status: done in code (2026-10-11). `firebase-admin` gone; `jose` 6.2.12 and `@supabase/auth-js` 2.117.2 pinned (the auth half of supabase-js 2.117.2; the admin API is all the API needs). Bundle: `lambda.mjs` 1.97 MB → 1.47 MB, `bundle.zip` 2.06 MB → 1.74 MB (687 → 466 inputs; ~1.2 MB of the zip is the share-card wasm and fonts). The esbuild banner stays: express still calls `require()` on Node built-ins. Skipped until T14.8: the hand check with a real dev-project token (no dev project yet, T14.0).
 Depends on: T14.0 (the dev project's URL; tests do not need it)
 Goal: `attachUser` accepts Supabase access tokens and builds the same `AuthUser`; `firebase-admin` is gone from the API.
 Files: `apps/backend-api/src/middleware/authGuards.ts`, `src/services/supabaseAuthService.ts` (new, replaces `firebaseAuthService.ts`), `src/config/index.ts`, `src/test/app.ts`, `package.json`, `scripts/bundle.mjs`, `.env.example`

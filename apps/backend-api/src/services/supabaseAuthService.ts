@@ -2,7 +2,7 @@
 // flows need, and PIN hashing. Tokens are ES256 JWTs checked against the project's
 // published key set, so a request costs no network call once the keys are cached.
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { GoTrueAdminApi } from "@supabase/auth-js";
 import bcrypt from "bcryptjs";
 import { config } from "../config/index.js";
 
@@ -89,20 +89,23 @@ function check(error: AdminFailure): void {
   if (error) throw new SupabaseAdminError(error.code ?? "unknown", error.status);
 }
 
-let client: SupabaseClient | null = null;
+let client: GoTrueAdminApi | null = null;
 
-function adminClient(): SupabaseClient {
+/** Supabase Auth's admin API (`@supabase/auth-js`, the auth half of supabase-js). */
+function admin(): GoTrueAdminApi {
   if (client) return client;
-  if (!config.supabase.secretKey) throw new Error("SUPABASE_SECRET_KEY is not set");
-  client = createClient(supabaseUrl(), config.supabase.secretKey, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  const key = config.supabase.secretKey;
+  if (!key) throw new Error("SUPABASE_SECRET_KEY is not set");
+  client = new GoTrueAdminApi({
+    url: `${supabaseUrl()}/auth/v1`,
+    headers: { Authorization: `Bearer ${key}`, apikey: key },
   });
   return client;
 }
 
 const supabaseAdmin: AuthAdmin = {
   async convertToPinAccount(uid, username) {
-    const { error } = await adminClient().auth.admin.updateUserById(uid, {
+    const { error } = await admin().updateUserById(uid, {
       email: syntheticEmail(username),
       email_confirm: true,
       app_metadata: { account_type: "username_pin" },
@@ -110,7 +113,7 @@ const supabaseAdmin: AuthAdmin = {
     check(error);
   },
   async mintSignIn(email) {
-    const { data, error } = await adminClient().auth.admin.generateLink({
+    const { data, error } = await admin().generateLink({
       type: "magiclink",
       email,
     });
@@ -120,13 +123,13 @@ const supabaseAdmin: AuthAdmin = {
     return tokenHash;
   },
   async setAccountType(uid, accountType) {
-    const { error } = await adminClient().auth.admin.updateUserById(uid, {
+    const { error } = await admin().updateUserById(uid, {
       app_metadata: { account_type: accountType },
     });
     check(error);
   },
   async deleteAuthUser(uid) {
-    const { error } = await adminClient().auth.admin.deleteUser(uid);
+    const { error } = await admin().deleteUser(uid);
     if (error?.code === "user_not_found" || error?.status === 404) return;
     check(error);
   },
