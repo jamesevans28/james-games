@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { checkScreenName, fetchMe, updateSettings, type ScreenNameCheck } from "../../lib/api";
 import { useAuth } from "../../context/FirebaseAuthProvider";
 import { adapters } from "../../platform/adapters";
+import { features } from "../../config/features";
 import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { OfflineBanner } from "../../components/OfflineBanner";
 import { errorMessage } from "../../utils/errorCode";
@@ -534,80 +535,82 @@ export default function SettingsScreen() {
         </div>
       )}
 
-      {/* Linked Providers Section */}
-      <div className="p-5 bg-card rounded-2xl border border-line">
-        <h2 className="text-lg font-bold mb-4 text-ink">Linked Accounts</h2>
+      {/* Linked accounts: hidden until features.socialSignIn is on (code kept). */}
+      {features.socialSignIn && (
+        <div className="p-5 bg-card rounded-2xl border border-line">
+          <h2 className="text-lg font-bold mb-4 text-ink">Linked Accounts</h2>
 
-        {linkError && (
-          <div className="mb-3 p-3 bg-grape/10 border border-grape/30 text-grape text-sm rounded-xl font-medium">
-            {linkError}
+          {linkError && (
+            <div className="mb-3 p-3 bg-grape/10 border border-grape/30 text-grape text-sm rounded-xl font-medium">
+              {linkError}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-3">
+            {hasGoogle ? (
+              <div className="flex items-center gap-3 text-sm text-ink bg-brand/10 p-4 rounded-xl border border-brand/30">
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path
+                    fill="currentColor"
+                    d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
+                  />
+                </svg>
+                <span className="font-bold">Google connected</span>
+                <span className="ml-auto text-brand font-bold">✓</span>
+              </div>
+            ) : (
+              <button
+                onClick={handleLinkGoogle}
+                disabled={linkingProvider !== null}
+                className="flex items-center gap-3 text-sm text-ink bg-card border border-line p-4 rounded-xl hover:bg-paper-2 hover:border-line disabled:opacity-50 transition-all"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path
+                    fill="currentColor"
+                    d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
+                  />
+                </svg>
+                <span className="font-bold">
+                  {linkingProvider === "google" ? "Connecting..." : "Connect Google"}
+                </span>
+              </button>
+            )}
+
+            {hasApple ? (
+              <div className="flex items-center gap-3 text-sm text-ink bg-brand/10 p-4 rounded-xl border border-brand/30">
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path
+                    fill="currentColor"
+                    d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"
+                  />
+                </svg>
+                <span className="font-bold">Apple connected</span>
+                <span className="ml-auto text-brand font-bold">✓</span>
+              </div>
+            ) : (
+              <button
+                onClick={handleLinkApple}
+                disabled={linkingProvider !== null}
+                className="flex items-center gap-3 text-sm text-ink bg-card border border-line p-4 rounded-xl hover:bg-paper-2 hover:border-line disabled:opacity-50 transition-all"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path
+                    fill="currentColor"
+                    d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"
+                  />
+                </svg>
+                <span className="font-bold">
+                  {linkingProvider === "apple" ? "Connecting..." : "Connect Apple"}
+                </span>
+              </button>
+            )}
           </div>
-        )}
 
-        <div className="flex flex-col gap-3">
-          {hasGoogle ? (
-            <div className="flex items-center gap-3 text-sm text-ink bg-brand/10 p-4 rounded-xl border border-brand/30">
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
-                />
-              </svg>
-              <span className="font-bold">Google connected</span>
-              <span className="ml-auto text-brand font-bold">✓</span>
-            </div>
-          ) : (
-            <button
-              onClick={handleLinkGoogle}
-              disabled={linkingProvider !== null}
-              className="flex items-center gap-3 text-sm text-ink bg-card border border-line p-4 rounded-xl hover:bg-paper-2 hover:border-line disabled:opacity-50 transition-all"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
-                />
-              </svg>
-              <span className="font-bold">
-                {linkingProvider === "google" ? "Connecting..." : "Connect Google"}
-              </span>
-            </button>
-          )}
-
-          {hasApple ? (
-            <div className="flex items-center gap-3 text-sm text-ink bg-brand/10 p-4 rounded-xl border border-brand/30">
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"
-                />
-              </svg>
-              <span className="font-bold">Apple connected</span>
-              <span className="ml-auto text-brand font-bold">✓</span>
-            </div>
-          ) : (
-            <button
-              onClick={handleLinkApple}
-              disabled={linkingProvider !== null}
-              className="flex items-center gap-3 text-sm text-ink bg-card border border-line p-4 rounded-xl hover:bg-paper-2 hover:border-line disabled:opacity-50 transition-all"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"
-                />
-              </svg>
-              <span className="font-bold">
-                {linkingProvider === "apple" ? "Connecting..." : "Connect Apple"}
-              </span>
-            </button>
-          )}
+          <p className="text-xs text-ink-2 mt-4">
+            Link a social account to sign in more easily and access your account from any device.
+          </p>
         </div>
-
-        <p className="text-xs text-ink-2 mt-4">
-          Link a social account to sign in more easily and access your account from any device.
-        </p>
-      </div>
+      )}
 
       <DeleteAccountSection />
     </div>

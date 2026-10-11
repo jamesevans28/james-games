@@ -43,7 +43,7 @@ Things to try:
 ### Now (unblocks everything else)
 
 1. **Node 24.** Run `nvm install 24`, so `npm` commands run without the `npx -p node@24` wrapper.
-2. ~~**Firebase project (T6.0).**~~ Dropped 11 Oct: auth moves to Supabase ([docs/plan/14-supabase-auth.md](14-supabase-auth.md)). Your part is T14.0: create the free `games4james-dev` project, a Google OAuth client (web) in Google Cloud with the two Supabase callback URLs, a Supabase access token for the setup script, and switch both projects to ES256 JWT signing keys. Claude scripts the rest.
+2. ~~**Firebase project (T6.0).**~~ Dropped 11 Oct: auth moves to Supabase ([docs/plan/14-supabase-auth.md](14-supabase-auth.md)). Your part is T14.0: create the free `games4james-dev` project, a Supabase access token for the setup script, and switch both projects to ES256 JWT signing keys. Claude scripts the rest. Google and Apple sign-in are hidden for now (`features.socialSignIn`), so no Google Cloud work is needed.
 3. ~~**Supabase project (T6.1).**~~ Done 11 Oct: connected, migrated and seeded. The strings are in `apps/backend-api/.env.local`.
 4. ~~**GitHub secrets.**~~ Done 11 Oct: `DATABASE_URL` and `DATABASE_URL_MIGRATIONS` set, housekeeping green.
 5. **The art (Phase 8), the main thing blocking relaunch.** Make the covers using [docs/art/README.md](../art/README.md):

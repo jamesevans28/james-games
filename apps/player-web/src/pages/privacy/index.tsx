@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { features } from "../../config/features";
 import InfoPage, { ContactEmail, InfoList, InfoSection } from "../../components/InfoPage";
 import { brand, makersLine } from "../../config/brand";
 
@@ -31,8 +32,11 @@ export default function PrivacyPage() {
             even us.
           </li>
           <li>
-            An email address, only if you sign in with Google or Apple or add one yourself. We use
-            it for signing in. Other players never see it.
+            An email address, only if you{" "}
+            {features.socialSignIn
+              ? "sign in with Google or Apple or add one yourself"
+              : "add one yourself"}
+            . We use it for signing in. Other players never see it.
           </li>
           <li>Your friend code, your friends list and anyone you&rsquo;ve blocked.</li>
           <li>The stickers you&rsquo;ve collected.</li>

@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { features } from "../config/features";
 import InfoPage, { ContactEmail, InfoList, InfoSection } from "../components/InfoPage";
 import { brand, makersLine } from "../config/brand";
 
@@ -26,10 +27,12 @@ export default function ParentsPage() {
             <strong>Username and PIN.</strong> A username and a 6-digit PIN, no email needed. Use it
             to play on more than one device. Too many wrong PINs and sign-in pauses for a while.
           </li>
-          <li>
-            <strong>Google or Apple.</strong> You can sign in with a grown-up&rsquo;s account. We
-            only use the email to sign in; other players never see it.
-          </li>
+          {features.socialSignIn && (
+            <li>
+              <strong>Google or Apple.</strong> You can sign in with a grown-up&rsquo;s account. We
+              only use the email to sign in; other players never see it.
+            </li>
+          )}
         </InfoList>
         <p>
           Screen names are checked against a word list, and we ask kids not to use their real name.
