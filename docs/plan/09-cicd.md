@@ -43,7 +43,7 @@ Done when: a PR adding a column deploys and the column exists in Supabase.
 
 ## T9.5 Scheduled jobs
 
-Status: done 2026-10-09 as one daily `db-housekeeping.yml` (see T6.9); runs green once the DATABASE_URL secret exists
+Status: done 2026-10-11 (db-housekeeping.yml ran green)
 Depends on: T6.9
 Files: `.github/workflows/scheduled.yml`
 Steps: weekly `db-ping` (keep-alive), daily housekeeping (presence cleanup, stale anonymous users), weekly Dependabot is separate (T2.8). All with `workflow_dispatch`.

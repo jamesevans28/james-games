@@ -25,7 +25,7 @@ Steps:
 
 ## T6.1 Supabase project (MANUAL, Claude-prepared)
 
-Status: done 2026-10-11 (project `games4james` in ap-southeast-2, Postgres 17; db:ping ok on both poolers, all migrations applied, 18 games and 100 XP levels seeded). GitHub secrets still to add (ON-RETURN item 4)
+Status: done 2026-10-11 (project `games4james` in ap-southeast-2, Postgres 17, migrated and seeded; GitHub secrets set; pooler strings only, since the direct URL is IPv6-only and is now refused with a clear error)
 Depends on: T6.0
 Goal: a Supabase project exists and Claude has what it needs to connect. One project serves both local development and, from relaunch, production: there is no old data to protect, and local dev stops using it once T13.2 flips it to prod (local then uses pglite or a local Postgres).
 MANUAL (James):
@@ -129,7 +129,7 @@ Done when: dashboard loads under 300 ms locally; moderation actions have tests a
 
 ## T6.9 Keep-alive and housekeeping
 
-Status: done 2026-10-09 in code (one daily workflow, see Note); MANUAL: add the `DATABASE_URL` repo secret, then run it once from Actions
+Status: done 2026-10-11 (daily `db-housekeeping.yml` green against Supabase, which also keeps the free project awake)
 Depends on: T6.3 (needed early: the free project pauses after 7 idle days, and it will often be idle before relaunch)
 Note (2026-10-09): built as one daily workflow, `.github/workflows/db-housekeeping.yml` (`npm run db:housekeeping`): its daily queries already stop the 7-day pause, so a separate weekly ping would be redundant. It skips itself until the secret exists.
 Steps: GitHub Actions cron (weekly) runs a ping against `DATABASE_URL` to stop the free-tier pause; a daily cron deletes presence rows older than 1 day and anonymous users with no plays older than 90 days (count logged, no identities).
