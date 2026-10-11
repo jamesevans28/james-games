@@ -49,20 +49,36 @@ PIN accounts' auth users start with a synthetic email `<username>@pin.games4jame
 
 ## Email delivery
 
-Supabase sends every email (codes, email confirmations). Its **built-in sender only delivers to the project's team members**, a few an hour, and on the free plan it **won't take custom templates**, so its emails carry Supabase's default link instead of our 6-digit code. So the email features need a mail server before they work end to end, even for James. Before real players add emails (at the latest at relaunch), set up a mail server, for example Resend or Amazon SES (both have free tiers), and rerun the script with:
+Supabase sends every email (codes, email confirmations). Its **built-in sender only delivers to the project's team members**, a few an hour, and on the free plan it **won't take custom templates**, so its emails carry Supabase's default link instead of our 6-digit code. So the email features need a mail server before they work end to end, even for James.
 
-```bash
-SMTP_HOST=<host> SMTP_PORT=587 SMTP_USER=<user> SMTP_PASS=<password> SMTP_ADMIN_EMAIL=hello@games4james.com node scripts/supabase-auth-setup.mjs
-```
+The mail server is **Resend** (free: 3,000 emails a month, 100 a day, one domain), sending as `noreply@games4james.com`:
 
-The sender address needs the mail service's DNS records (SPF/DKIM) for `games4james.com` in Route 53. Until then, a player who tries to add an email sees "We can't send email to that address yet."
+1. Create a Resend account and an API key with **Full access** (resend.com → API Keys). Copy it, then from the repo root:
+
+   ```bash
+   node scripts/save-key.mjs resend
+   ```
+
+2. Run the Resend setup (needs the AWS CLI signed in to the account with the `games4james.com` Route 53 zone, and the Supabase access token from below):
+
+   ```bash
+   node scripts/resend-setup.mjs --dry-run
+   ```
+
+   ```bash
+   node scripts/resend-setup.mjs
+   ```
+
+   It adds the domain to Resend (region ap-northeast-1), writes Resend's DKIM record and the SPF/MX records on `send.games4james.com` into Route 53 (never replacing a different existing record), verifies the domain, creates a send-only key for Supabase (kept in `~/.config/games4james/resend-smtp-key`), and reruns `supabase-auth-setup.mjs` with Resend's SMTP settings. That also turns on the code-only templates and raises the email limit to 30 an hour. It is safe to rerun; if verification is slow, rerun it later.
+
+Another mail service works the same way: set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` and `SMTP_ADMIN_EMAIL` and run `supabase-auth-setup.mjs`.
 
 ## Set it up, MANUAL (James), about 5 minutes
 
-1. **Create a personal access token.** Supabase → Account → Access tokens → Generate, and copy it. Then save it from the clipboard, outside the repo and readable only by you (nothing prints it, and it stays out of your shell history):
+1. **Create a personal access token.** Supabase → Account → Access tokens → Generate, and copy it. Then save it from the clipboard (it checks the key, writes a file only you can read, prints nothing secret and clears the clipboard):
 
    ```bash
-   mkdir -p ~/.config/games4james && umask 077 && pbpaste > ~/.config/games4james/supabase-access-token
+   node scripts/save-key.mjs supabase
    ```
 
    (`export SUPABASE_ACCESS_TOKEN=…` in a terminal works too.)

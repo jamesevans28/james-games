@@ -125,6 +125,8 @@ function smtpSettings() {
     smtp_pass: env.SMTP_PASS,
     smtp_admin_email: env.SMTP_ADMIN_EMAIL,
     smtp_sender_name: brand.name,
+    // The built-in sender's limit is 2 an hour; with our own server, room for a family evening.
+    rate_limit_email_sent: 30,
   };
 }
 
