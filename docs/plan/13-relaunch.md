@@ -24,15 +24,15 @@ Steps:
 
 ## T13.3 Supabase Auth production settings (was T3.5; rewritten for Phase 14)
 
-Status: todo
+Status: in-progress (2026-10-11): the setup script already ran on `games4james` (single-project mode), the JWKS lists an ES256 key, and the GitHub variables `SUPABASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` and `CORS_ALLOWED_ORIGINS` (flingo origins removed) are set. Waiting on James: the secret `SUPABASE_SECRET_KEY`, and a mail server before anyone, including the admin, can sign in by email code.
 Depends on: T14.8, T13.2
 MANUAL (James), on the `games4james` Supabase project, with values from `docs/supabase-auth-setup.md`:
 
-1. `node scripts/supabase-auth-setup.mjs --only prod` (with `--google` and the Google client, because the admin console signs in with Google): site URL `https://games4james.com`, redirect URLs `https://games4james.com/auth/callback` and `https://admin.games4james.com/`, guests and manual linking on, an ES256 signing key.
-2. Google Cloud OAuth client (web): redirect URI `https://<prod-ref>.supabase.co/auth/v1/callback`; consent screen name "Games4James", logo, home and privacy URLs.
-3. Apple (only if social sign-in is on by then): the Services ID and key under Authentication → Providers → Apple.
-4. GitHub: variables `SUPABASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`; secret `SUPABASE_SECRET_KEY`.
-   Done when: `curl -s https://<prod-ref>.supabase.co/auth/v1/.well-known/jwks.json` lists an ES256 key and the GitHub names are set. (No `auth.games4james.com` and no `__/auth/handler`: those were Firebase's.)
+1. GitHub secret `SUPABASE_SECRET_KEY` (the project's `sb_secret_…` key).
+2. A mail server (Resend or Amazon SES) and a rerun of the script with the `SMTP_*` settings. The admin console signs in with an emailed code (T14.9), so the admin is unusable in production until this is done; players are not affected.
+3. If a `games4james-dev` project exists by then, rerun `node scripts/supabase-auth-setup.mjs --only prod` so production loses the localhost redirects.
+4. Google and Apple only if `features.socialSignIn` is turned on (Google Cloud OAuth client, Apple Services ID).
+   Done when: `curl -s https://<prod-ref>.supabase.co/auth/v1/.well-known/jwks.json` lists an ES256 key (done) and the GitHub names are set. (No `auth.games4james.com` and no `__/auth/handler`: those were Firebase's.)
 
 ## T13.4 Deploy the web and admin, turn auto-deploy on (was T3.6)
 

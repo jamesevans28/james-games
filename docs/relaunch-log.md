@@ -36,13 +36,13 @@ Claude prepared everything below. Steps marked **James** need the consoles.
      curl -s https://api.games4james.com/games/config | head -c 300
      ```
      This should list the manifest games, and leaderboards should be empty.
-3. **T13.3 Supabase Auth production settings (James):** follow "At relaunch" in [supabase-auth-setup.md](supabase-auth-setup.md): run `node scripts/supabase-auth-setup.mjs --only prod --google` (the admin signs in with Google), the Google client's production redirect, Apple only if social sign-in is on. Check:
+3. **T13.3 Supabase Auth production settings:** already applied by the setup script on `games4james`, and the JWKS lists an ES256 key (checked 2026-10-11). **James:** add the secret `SUPABASE_SECRET_KEY`. Before anyone signs in by email code, the admin included, set up the mail server ("Email delivery" in [supabase-auth-setup.md](supabase-auth-setup.md)). Check:
    ```bash
    curl -s https://<prod-ref>.supabase.co/auth/v1/.well-known/jwks.json
    ```
    This should list an ES256 key.
 4. **T13.4 web and admin:**
-   - **James:** set the GitHub variables `VITE_API_BASE_URL=https://api.games4james.com`, `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` for `games4james`, and `CORS_ALLOWED_ORIGINS=https://games4james.com,https://admin.games4james.com`.
+   - GitHub variables `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` and `CORS_ALLOWED_ORIGINS` are set (2026-10-11).
    - **James:** CloudFront → Functions → attach `bot-rewrite` ([infra/cloudfront/README.md](../infra/cloudfront/README.md)).
    - **James:** run **Deploy player web** and **Deploy admin** once by hand.
    - **Claude:** uncomment the `push` triggers in `deploy-web.yml`, `deploy-admin.yml` and `deploy-api.yml`, and record "auto-deploy on" in DECISIONS.
@@ -62,7 +62,7 @@ Claude prepared everything below. Steps marked **James** need the consoles.
 5. **T13.5 launch-day checks**, on a phone in a private window:
    - [ ] play as a guest
    - [ ] create username + PIN
-   - [ ] admin: James signs in with Google and resets a test PIN
+   - [ ] admin: James signs in with an emailed code and resets a test PIN (needs the mail server)
    - [ ] score, then the leaderboard
    - [ ] rating after 3 plays
    - [ ] install the PWA
