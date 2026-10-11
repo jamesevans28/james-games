@@ -126,7 +126,7 @@ Steps:
 
 ## T14.5 Admin web
 
-Status: todo
+Status: done in code (2026-10-11). `lib/supabase.ts` is an `@supabase/auth-js` client with `detectSessionInUrl` on (the admin has no `?code=` links of its own); Google is a redirect back to `/`, `onAuthStateChange` → `GET /me` → non-admins signed out; reset-pin calls `/auth/admin/reset-pin`; `.env.example` added. Skipped until T14.8: signing in with the dev project and bouncing a non-admin Google account (needs T14.0 and the Google provider, which stays off while social sign-in is hidden; until then the admin can only be checked once Google is configured on the dev project).
 Depends on: T14.2
 Goal: the admin console signs James in with Google through Supabase.
 Files: `apps/admin-web/src/lib/supabase.ts` (replaces `lib/firebase.ts`), `src/context/AdminAuthContext.tsx`, `src/lib/api.ts`, `src/pages/auth/Callback.tsx` or an in-place `detectSessionInUrl` handler, `.env.example`, `package.json`

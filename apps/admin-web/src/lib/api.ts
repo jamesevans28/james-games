@@ -1,6 +1,6 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8787";
 
-import { auth } from "./firebase";
+import { getAccessToken } from "./supabase";
 
 type RequestOptions = RequestInit & { skipJson?: boolean };
 
@@ -15,9 +15,8 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  // Get Firebase token if available
-  const user = auth.currentUser;
-  const token = user ? await user.getIdToken() : null;
+  // The Supabase access token, when signed in
+  const token = await getAccessToken();
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -210,7 +209,7 @@ export const adminApi = {
   listNameChanges: (limit = 50) =>
     request<{ items: NameChange[] }>(`/admin/screen-names?limit=${limit}`, { method: "GET" }),
   resetUserPin: (userId: string, newPin: string) =>
-    request<{ success: boolean; message: string }>(`/auth/firebase/admin/reset-pin`, {
+    request<{ success: boolean; message: string }>(`/auth/admin/reset-pin`, {
       method: "POST",
       body: JSON.stringify({ userId, newPin }),
     }),

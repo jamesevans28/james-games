@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router";
+import { Navigate, useLocation } from "react-router";
 import { useAdminAuth } from "../context/AdminAuthContext";
 
 export function LoginPage() {
   const { signInWithGoogle, user, loading } = useAdminAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -19,13 +18,12 @@ export function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
+      // A redirect: the page leaves for Google and comes back to "/" signed in.
       await signInWithGoogle();
-      await navigate(redirectPath, { replace: true });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Sign in failed. Make sure you have admin access.",
       );
-    } finally {
       setSubmitting(false);
     }
   };
