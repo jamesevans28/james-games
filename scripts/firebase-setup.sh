@@ -31,7 +31,13 @@ command -v gcloud >/dev/null || { echo "Install gcloud: https://cloud.google.com
 ((DRY)) || gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q "@" || { echo "Run: gcloud auth login"; exit 1; }
 
 say "2/6 Creating the Firebase project ($PROJECT)"
-if ((DRY)) || ! firebase projects:list 2>/dev/null | grep -q " $PROJECT "; then
+# Match the project *id* exactly: display names can repeat (the old flingo-fun
+# project was renamed "games4james", which fooled a plain grep).
+project_exists() {
+  firebase projects:list --json 2>/dev/null |
+    node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{const r=JSON.parse(d||"{}").result||[];process.exit(r.some(p=>p.projectId===process.argv[1])?0:1)})' "$PROJECT"
+}
+if ((DRY)) || ! project_exists; then
   if ! run firebase projects:create "$PROJECT" --display-name "Games4James"; then
     echo "The id '$PROJECT' may be taken. Re-run with: G4J_FIREBASE_PROJECT=games4james-app $0"
     exit 1
