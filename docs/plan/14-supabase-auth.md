@@ -71,7 +71,7 @@ Steps:
 
 ## T14.2 API: account flows on Supabase
 
-Status: todo
+Status: done (2026-10-11). Routes at `/auth/*` (`authController.ts`, `auth.routes.ts`, `auth.routes.test.ts`); `registerUsername` writes the row in a transaction with savepoints per screen-name try, so a failed Supabase upgrade rolls it back (tested). The add-email routes are gone (404, tested). `scripts/view-auth-user.ts` (`npm run auth:view -w apps/backend-api`) prints counts or one user's type and providers, never emails. `git grep "auth/firebase"` now matches only the clients (T14.3, T14.5) and done plan history.
 Depends on: T14.1
 Goal: every `/auth/*` route works against Supabase Auth; the email feature is gone; routes lose the `/firebase` segment.
 Files: `src/services/userService.ts`, `src/controllers/authController.ts` (renamed from `firebaseAuthController.ts`), `src/routes/auth.routes.ts`, `src/routes/index.ts`, `src/routes/auth.routes.test.ts`, `src/services/throttle.ts` (unchanged), `docs/api.md` if present

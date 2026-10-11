@@ -1,4 +1,4 @@
-// Firebase auth routes. attachUser runs globally (src/index.ts), so req.user is the
+// Auth routes (Supabase, Phase 14). attachUser runs globally (src/index.ts), so req.user is the
 // verified bearer token's user wherever a route needs it.
 import { Router } from "express";
 import {
@@ -8,7 +8,7 @@ import {
   linkProvider,
   changePin,
   adminResetUserPin,
-} from "../controllers/firebaseAuthController.js";
+} from "../controllers/authController.js";
 import { me } from "../controllers/usersController.js";
 import { requireAdmin, requireAuth, requireRegisteredAccount } from "../middleware/authGuards.js";
 

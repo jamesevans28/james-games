@@ -38,7 +38,7 @@ function tooManyTries(res: Response, retryAfterSec: number) {
 }
 
 /**
- * POST /auth/firebase/register-anonymous (bearer: the anonymous user's ID token).
+ * POST /auth/register-anonymous (bearer: the anonymous user's ID token).
  * Creates the row with a generated screen name; idempotent.
  */
 export async function registerAnonymous(req: Request, res: Response) {
@@ -59,7 +59,7 @@ export async function registerAnonymous(req: Request, res: Response) {
 }
 
 /**
- * POST /auth/firebase/register-username { username, pin, screenName? }
+ * POST /auth/register-username { username, pin, screenName? }
  * (bearer: the current, usually anonymous, user). Returns a one-time `tokenHash` the
  * client exchanges with `verifyOtp` for a session on the same user id.
  */
@@ -96,7 +96,7 @@ export async function registerWithUsername(req: Request, res: Response) {
 }
 
 /**
- * POST /auth/firebase/login-username { username, pin } (public).
+ * POST /auth/login-username { username, pin } (public).
  * Returns a one-time `tokenHash` the client exchanges with `verifyOtp` for a session.
  */
 export async function loginWithUsername(req: Request, res: Response) {
@@ -131,7 +131,7 @@ export async function loginWithUsername(req: Request, res: Response) {
 }
 
 /**
- * POST /auth/firebase/link-provider (bearer: the access token issued after the client
+ * POST /auth/link-provider (bearer: the access token issued after the client
  * linked or signed in with Google/Apple). Providers and email come from that token.
  */
 export async function linkProvider(req: Request, res: Response) {
@@ -154,7 +154,7 @@ export async function linkProvider(req: Request, res: Response) {
   }
 }
 
-/** POST /auth/firebase/change-pin { currentPin, newPin } (username+PIN accounts). */
+/** POST /auth/change-pin { currentPin, newPin } (username+PIN accounts). */
 export async function changePin(req: Request, res: Response) {
   const auth = req.user;
   if (!auth) return res.status(401).json({ error: "unauthorized" });
@@ -185,7 +185,7 @@ export async function changePin(req: Request, res: Response) {
   }
 }
 
-/** POST /auth/firebase/admin/reset-pin { userId, newPin } (requireAdmin). */
+/** POST /auth/admin/reset-pin { userId, newPin } (requireAdmin). */
 export async function adminResetUserPin(req: Request, res: Response) {
   const { userId, newPin } = bodyOf(req);
   if (typeof userId !== "string" || !userId || newPin === undefined) {

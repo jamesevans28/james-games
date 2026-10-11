@@ -1,6 +1,6 @@
 import { Router } from "express";
 import billingRoutes from "./billing.routes.js";
-import firebaseAuthRoutes from "./firebaseAuth.routes.js";
+import authRoutes from "./auth.routes.js";
 import usersRoutes from "./users.routes.js";
 import scoresRoutes from "./scores.routes.js";
 import followersRoutes from "./followers.routes.js";
@@ -14,17 +14,17 @@ import dailyRoutes from "./daily.routes.js";
 import shareRoutes from "./share.routes.js";
 import { requireAuth } from "../middleware/authGuards.js";
 import { changeScreenName, me } from "../controllers/usersController.js";
-import { deleteMe } from "../controllers/firebaseAuthController.js";
+import { deleteMe } from "../controllers/authController.js";
 
 const router = Router();
 
-// The signed-in user's own account. GET /auth/firebase/me is the same handler.
+// The signed-in user's own account. GET /auth/me is the same handler.
 router.get("/me", requireAuth, me);
 router.patch("/me/screen-name", requireAuth, changeScreenName);
 router.delete("/me", requireAuth, deleteMe); // T7.8 account deletion
 
-// Firebase auth routes
-router.use("/auth/firebase", firebaseAuthRoutes);
+// Sign-in and account flows (Supabase Auth, Phase 14)
+router.use("/auth", authRoutes);
 
 router.use("/users", usersRoutes);
 router.use("/scores", scoresRoutes);
