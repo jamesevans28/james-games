@@ -45,8 +45,8 @@ export async function getUserByUsername(username: string): Promise<User | null> 
  * Inserts a user; returns null when the id already exists. Any other unique
  * violation (username, screen name) is thrown for the caller to handle.
  */
-export async function insertUser(row: NewUser): Promise<User | null> {
-  const [created] = await getDb()
+export async function insertUser(row: NewUser, db: Db = getDb()): Promise<User | null> {
+  const [created] = await db
     .insert(users)
     .values(row)
     .onConflictDoNothing({ target: users.id })
@@ -57,8 +57,9 @@ export async function insertUser(row: NewUser): Promise<User | null> {
 export async function updateUser(
   id: string,
   patch: Partial<Omit<NewUser, "id" | "createdAt">>,
+  db: Db = getDb(),
 ): Promise<User | null> {
-  const [row] = await getDb()
+  const [row] = await db
     .update(users)
     .set({ ...patch, updatedAt: new Date() })
     .where(eq(users.id, id))

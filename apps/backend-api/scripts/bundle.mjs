@@ -28,7 +28,7 @@ const result = await build({
   legalComments: "none",
   // The Lambda runtime ships the AWS SDK; pglite is only used by tests.
   external: ["@aws-sdk/*", "@electric-sql/pglite"],
-  // Some CommonJS dependencies (firebase-admin) call require() and use __dirname.
+  // CommonJS dependencies (express and its middleware) call require() on Node built-ins.
   banner: {
     js: [
       'import { createRequire as __cr } from "node:module";',

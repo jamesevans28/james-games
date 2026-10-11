@@ -21,6 +21,8 @@ const IDENTIFYING_KEYS = new Set([
   "token",
   "idtoken",
   "customtoken",
+  "tokenhash",
+  "accesstoken",
   "pin",
   "pinhash",
   "password",

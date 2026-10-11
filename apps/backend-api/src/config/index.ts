@@ -20,10 +20,12 @@ export const config = {
   stripeWebhookSecret: (process.env.STRIPE_WEBHOOK_SECRET || "").trim(),
   /** The Authorization value RevenueCat sends (we check "Bearer <this>"), T12.3. */
   revenueCatWebhookAuth: (process.env.REVENUECAT_WEBHOOK_AUTH || "").trim(),
-  // Firebase configuration
-  firebase: {
-    projectId: (process.env.FIREBASE_PROJECT_ID || "").trim(),
-    clientEmail: (process.env.FIREBASE_CLIENT_EMAIL || "").trim(),
-    privateKey: (process.env.FIREBASE_PRIVATE_KEY || "").trim(),
+  /**
+   * Supabase Auth (Phase 14). The URL gives the token issuer and key set; the secret key
+   * (sb_secret_… or the legacy service_role JWT) is for the admin API only.
+   */
+  supabase: {
+    url: (process.env.SUPABASE_URL || "").trim().replace(/\/+$/, ""),
+    secretKey: (process.env.SUPABASE_SECRET_KEY || "").trim(),
   },
 };

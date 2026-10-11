@@ -1,7 +1,7 @@
 import type { AuthUser } from "../middleware/authGuards.js";
 import type { User } from "../db/schema.js";
 
-// attachUser sets req.user from the verified Firebase ID token (undefined when signed out).
+// attachUser sets req.user from the verified Supabase access token (undefined when signed out).
 declare global {
   namespace Express {
     interface Request {

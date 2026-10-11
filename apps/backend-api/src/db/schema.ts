@@ -1,7 +1,7 @@
 /**
  * The Games4James database (Supabase Postgres, plan T6.2). Drizzle owns the
  * schema: change it here, run `npm run db:generate -w apps/backend-api`, commit
- * the SQL in drizzle/. Times are timestamptz; ids are Firebase uids (users) or
+ * the SQL in drizzle/. Times are timestamptz; ids are Supabase Auth user ids (users) or
  * manifest ids (games).
  */
 import { sql } from "drizzle-orm";
@@ -33,7 +33,7 @@ export const supporterSource = pgEnum("supporter_source", ["stripe", "apple", "g
 export const users = pgTable(
   "users",
   {
-    /** Firebase uid. */
+    /** Supabase Auth user id (a UUID; no foreign key, so tests can use short ids). */
     id: text("id").primaryKey(),
     /** Login name for username+PIN accounts (never shown publicly). */
     username: text("username"),

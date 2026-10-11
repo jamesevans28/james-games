@@ -1,23 +1,8 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { eq, like } from "drizzle-orm";
 import { startTestApp, type TestApp } from "../test/app.js";
 import { getUserById } from "../repos/usersRepo.js";
-import * as firebase from "../services/firebaseAuthService.js";
 import { authAttempts, bestScores, follows, plays, userStickers } from "../db/schema.js";
-
-// Firebase Admin is faked: the harness verifies tokens, these stand in for the rest.
-vi.mock("../services/firebaseAuthService.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../services/firebaseAuthService.js")>();
-  return {
-    ...actual,
-    createCustomToken: vi.fn((uid: string) => Promise.resolve(`custom-token-for-${uid}`)),
-    setUserClaims: vi.fn(() => Promise.resolve()),
-    updateFirebaseUserEmail: vi.fn(() => Promise.resolve()),
-    checkEmailVerified: vi.fn(() => Promise.resolve(true)),
-    getFirebaseUser: vi.fn(() => Promise.resolve(null)),
-    deleteFirebaseUser: vi.fn(() => Promise.resolve()),
-  };
-});
 
 describe("/auth/firebase routes", () => {
   let api: TestApp;
@@ -26,7 +11,7 @@ describe("/auth/firebase routes", () => {
   });
   afterAll(() => api.close());
   beforeEach(async () => {
-    vi.clearAllMocks();
+    api.authAdmin.calls.length = 0;
     // Every request comes from 127.0.0.1, so start each test with a clean throttle.
     await api.db.delete(authAttempts);
   });
@@ -97,7 +82,7 @@ describe("/auth/firebase routes", () => {
     expect((await api.request("GET", "/me", { as: "no-row" })).status).toBe(404);
   });
 
-  it("register-username upgrades an anonymous account; login-username mints a token", async () => {
+  it("register-username upgrades an anonymous account; login-username mints a sign-in", async () => {
     await api.request("POST", "/auth/firebase/register-anonymous", {
       as: "kid-1",
       accountType: "anonymous",
@@ -110,14 +95,15 @@ describe("/auth/firebase routes", () => {
     expect(reg.status).toBe(200);
     expect(reg.body).toEqual({
       ok: true,
-      customToken: "custom-token-for-kid-1",
+      tokenHash: "token-hash-for-tilly_1@pin.games4james.com",
       screenName: "Rocket Star",
       accountType: "username_pin",
     });
-    expect(firebase.setUserClaims).toHaveBeenCalledWith("kid-1", {
-      accountType: "username_pin",
-      username: "tilly_1",
-    });
+    // The same auth user becomes the PIN account, then gets a one-time sign-in.
+    expect(api.authAdmin.calls).toEqual([
+      { name: "convertToPinAccount", args: ["kid-1", "tilly_1"] },
+      { name: "mintSignIn", args: ["tilly_1@pin.games4james.com"] },
+    ]);
     const row = await getUserById("kid-1");
     expect(row).toMatchObject({ username: "tilly_1", accountType: "username_pin" });
     expect(row?.pinHash).toBeTruthy();
@@ -140,15 +126,14 @@ describe("/auth/firebase routes", () => {
     expect(ok.status).toBe(200);
     expect(ok.body).toEqual({
       ok: true,
-      customToken: "custom-token-for-kid-1",
+      tokenHash: "token-hash-for-tilly_1@pin.games4james.com",
       userId: "kid-1",
       screenName: "Rocket Star",
       accountType: "username_pin",
     });
-    expect(firebase.createCustomToken).toHaveBeenLastCalledWith("kid-1", {
-      accountType: "username_pin",
-      username: "tilly_1",
-    });
+    expect(api.authAdmin.callsTo("mintSignIn").at(-1)).toEqual(["tilly_1@pin.games4james.com"]);
+    // Failed sign-ins mint nothing.
+    expect(api.authAdmin.callsTo("mintSignIn")).toHaveLength(2);
   });
 
   it("register-username rejects a taken username (any case) and bad input", async () => {
@@ -160,7 +145,7 @@ describe("/auth/firebase routes", () => {
     });
     expect(taken.status).toBe(409);
     expect(taken.body.code).toBe("username_taken");
-    expect(firebase.createCustomToken).not.toHaveBeenCalled();
+    expect(api.authAdmin.calls).toEqual([]);
 
     const badPin = await api.request("POST", "/auth/firebase/register-username", {
       as: "thief",
@@ -237,28 +222,9 @@ describe("/auth/firebase routes", () => {
       accountType: "linked",
       email: "family@example.com",
     });
-    expect(firebase.setUserClaims).toHaveBeenCalledWith("google-kid", { accountType: "linked" });
-  });
-
-  it("add-email and check-email-verified update the row", async () => {
-    await api.addUser({ id: "mail-kid" });
-    const added = await api.request("POST", "/auth/firebase/add-email", {
-      as: "mail-kid",
-      body: { email: "grownup@example.com" },
-    });
-    expect(added.body).toEqual({ ok: true, email: "grownup@example.com", emailVerified: false });
-    expect(firebase.updateFirebaseUserEmail).toHaveBeenCalledWith(
-      "mail-kid",
-      "grownup@example.com",
-    );
-    const checked = await api.request("POST", "/auth/firebase/check-email-verified", {
-      as: "mail-kid",
-    });
-    expect(checked.body).toEqual({ ok: true, emailVerified: true });
-    expect(await getUserById("mail-kid")).toMatchObject({
-      email: "grownup@example.com",
-      emailVerified: true,
-    });
+    expect(api.authAdmin.calls).toEqual([
+      { name: "setAccountType", args: ["google-kid", "linked"] },
+    ]);
   });
 
   it("login-username: 5 wrong PINs in 15 minutes, then 429 (even with the right PIN)", async () => {
@@ -386,7 +352,7 @@ describe("/auth/firebase routes", () => {
     expect(bad).toMatchObject({ status: 400, body: { error: "New PIN must be 6 digits" } });
   });
 
-  it("DELETE /me removes the account, keeps plays anonymised, and deletes the Firebase user", async () => {
+  it("DELETE /me removes the account, keeps plays anonymised, and deletes the auth user", async () => {
     expect((await api.request("DELETE", "/me")).status).toBe(401);
     await api.request("POST", "/auth/firebase/register-username", {
       as: "bye-kid",
@@ -406,7 +372,7 @@ describe("/auth/firebase routes", () => {
 
     const res = await api.request("DELETE", "/me", { as: "bye-kid" });
     expect(res).toEqual({ status: 200, body: { ok: true } });
-    expect(firebase.deleteFirebaseUser).toHaveBeenCalledWith("bye-kid");
+    expect(api.authAdmin.callsTo("deleteAuthUser")).toEqual([["bye-kid"]]);
 
     expect(await getUserById("bye-kid")).toBeNull();
     const [kept] = await api.db.select().from(plays).where(eq(plays.id, play!.id));
@@ -424,12 +390,12 @@ describe("/auth/firebase routes", () => {
     expect(await getUserById("pal")).not.toBeNull();
   });
 
-  it("DELETE /me keeps everything when Firebase can't delete the user", async () => {
+  it("DELETE /me keeps everything when Supabase can't delete the auth user", async () => {
     await api.addUser({ id: "stay-kid" });
-    vi.mocked(firebase.deleteFirebaseUser).mockRejectedValueOnce(new Error("firebase down"));
+    api.authAdmin.failNext("deleteAuthUser");
     const res = await api.request("DELETE", "/me", { as: "stay-kid" });
     expect(res.status).toBe(500);
-    expect(JSON.stringify(res.body)).not.toContain("firebase down");
+    expect(JSON.stringify(res.body)).not.toContain("supabase_admin");
     expect(await getUserById("stay-kid")).not.toBeNull();
   });
 });

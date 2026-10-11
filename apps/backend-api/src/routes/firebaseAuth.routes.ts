@@ -7,8 +7,6 @@ import {
   registerAnonymous,
   linkProvider,
   changePin,
-  addEmail,
-  checkEmailVerifiedStatus,
   adminResetUserPin,
 } from "../controllers/firebaseAuthController.js";
 import { me } from "../controllers/usersController.js";
@@ -25,8 +23,6 @@ router.post("/register-username", requireAuth, registerWithUsername);
 router.get("/me", requireAuth, me); // same handler and shape as GET /me
 router.post("/link-provider", requireAuth, linkProvider);
 router.post("/change-pin", requireAuth, requireRegisteredAccount, changePin);
-router.post("/add-email", requireAuth, addEmail);
-router.post("/check-email-verified", requireAuth, checkEmailVerifiedStatus);
 
 // Admin
 router.post("/admin/reset-pin", requireAdmin, adminResetUserPin);
