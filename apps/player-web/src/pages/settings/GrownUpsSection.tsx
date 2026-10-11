@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../lib/queryClient";
-import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useAuth } from "../../context/AuthProvider";
 import { brand } from "../../config/brand";
 import { useSupporter } from "../../hooks/useSupporter";
 import { adapters } from "../../platform/adapters";

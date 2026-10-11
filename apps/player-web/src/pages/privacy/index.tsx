@@ -22,8 +22,8 @@ export default function PrivacyPage() {
       <InfoSection title="What we keep">
         <InfoList>
           <li>
-            A player id from our sign-in service (Google Firebase). It&rsquo;s a random code, not
-            your name.
+            A player id from our sign-in service (Supabase). It&rsquo;s a random code, not your
+            name.
           </li>
           <li>Your screen name and avatar. Other players see these on leaderboards.</li>
           <li>Your scores and the games you&rsquo;ve played.</li>
@@ -31,13 +31,12 @@ export default function PrivacyPage() {
             If you make an account: your username, and your PIN scrambled so nobody can read it, not
             even us.
           </li>
-          <li>
-            An email address, only if you{" "}
-            {features.socialSignIn
-              ? "sign in with Google or Apple or add one yourself"
-              : "add one yourself"}
-            . We use it for signing in. Other players never see it.
-          </li>
+          {features.socialSignIn && (
+            <li>
+              An email address, only if you sign in with Google or Apple. We use it for signing in.
+              Other players never see it.
+            </li>
+          )}
           <li>Your friend code, your friends list and anyone you&rsquo;ve blocked.</li>
           <li>The stickers you&rsquo;ve collected.</li>
           <li>Your settings, like sound and whether friends can see when you&rsquo;re online.</li>
@@ -47,7 +46,7 @@ export default function PrivacyPage() {
           </li>
         </InfoList>
         <p className="text-ink-2">
-          It&rsquo;s stored with Supabase (our database) and Google Firebase (sign-in).
+          It&rsquo;s stored with Supabase, which runs our database and our sign-in.
         </p>
       </InfoSection>
 

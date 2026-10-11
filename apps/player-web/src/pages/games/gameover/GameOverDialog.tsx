@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { adapters } from "../../../platform/adapters";
-import { useAuth } from "../../../context/FirebaseAuthProvider";
+import { useAuth } from "../../../context/AuthProvider";
 import { cheerFor } from "../../../utils/cheer";
 import StickerMoment from "../../../components/stickers/StickerMoment";
 import Confetti from "./Confetti";

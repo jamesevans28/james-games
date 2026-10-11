@@ -16,7 +16,7 @@ import Sticker from "../../components/stickers/Sticker";
 import StickerBook from "../../components/stickers/StickerBook";
 import { ExperienceBar } from "../../components/ExperienceBar";
 import Seo from "../../components/Seo";
-import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useAuth } from "../../context/AuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { useFriendAction } from "../../hooks/useFriends";
 import { friendErrorMessage } from "../../utils/friends";

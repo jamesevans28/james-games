@@ -11,7 +11,7 @@ import { adapters } from "./platform/adapters";
 import { GrownUpGateHost } from "./components/GrownUpLink";
 import { useScoreQueueFlusher } from "./hooks/useScoreQueueFlusher";
 import { useNativeBackButton } from "./platform/backButton";
-import { AuthProvider } from "./context/FirebaseAuthProvider";
+import { AuthProvider } from "./context/AuthProvider";
 import { GameCatalogProvider } from "./context/GameCatalogProvider";
 import PageTransition from "./components/PageTransition";
 
@@ -19,7 +19,8 @@ import PageTransition from "./components/PageTransition";
 // page is its own chunk, fetched on first visit (and precached by the service worker).
 const PlayGame = lazy(() => import("./pages/games/PlayGame"));
 const LeaderboardPage = lazy(() => import("./pages/leaderboard/[gameId]"));
-const LoginPage = lazy(() => import("./pages/firebase-login"));
+const LoginPage = lazy(() => import("./pages/login"));
+const AuthCallback = lazy(() => import("./pages/auth/Callback"));
 const SettingsScreen = lazy(() => import("./pages/settings"));
 const AvatarSelect = lazy(() => import("./pages/settings/AvatarSelect"));
 const FollowersPage = lazy(() => import("./pages/followers"));
@@ -52,6 +53,7 @@ function AppRoutes() {
             <Route path="/support" element={<SupportPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<LoginPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
               path="/settings"
               element={

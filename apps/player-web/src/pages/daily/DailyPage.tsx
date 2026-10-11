@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router";
 import Seo from "../../components/Seo";
 import Sticker from "../../components/stickers/Sticker";
 import { ProfileAvatar } from "../../components/profile";
-import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useAuth } from "../../context/AuthProvider";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";
 import { SITE_URL } from "../../utils/seoKeywords";
 import { brand, makersLine } from "../../config/brand";

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "../context/FirebaseAuthProvider";
+import { useAuth } from "../context/AuthProvider";
 import { fetchSupporterStatus } from "../lib/api";
 import { queryKeys } from "../lib/queryClient";
 

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuth } from "../context/FirebaseAuthProvider";
+import { useAuth } from "../context/AuthProvider";
 import { postHighScore } from "../lib/api";
 import { flushQueue, outcomeForError, readQueue } from "../lib/scoreQueue";
 import { adapters } from "../platform/adapters";

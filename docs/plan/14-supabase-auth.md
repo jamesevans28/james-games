@@ -89,7 +89,7 @@ Steps:
 
 ## T14.3 Player web: supabase-js client and the auth provider
 
-Status: todo
+Status: done in code (2026-10-11). The client is `@supabase/auth-js` 2.117.2 on its own (the auth half of supabase-js 2.117.2), loaded as a lazy chunk: the full supabase-js chunk was 214 kB (55 kB gzipped) against 99 kB (23 kB gzipped). Build: main chunk 305.34 kB → 304.06 kB (95.55 → 95.73 kB gzipped, flat), the auth chunk 123.25 kB Firebase (36.21 kB gzipped) → 99.46 kB (23.00 kB gzipped). `detectSessionInUrl` is off because friend links use `?code=`; `/auth/callback` exchanges the code itself. The Firebase-removal part of T14.4 is done here too (plugin, `capacitor.config.ts` block, Gradle/SPM entries, google-services, `build-android.yml`, `docs/native-setup.md`); the native sheets throw `social_sign_in_unavailable` until T14.4. Skipped until T14.8: the Browser-pane checks (guest, PIN sign-up keeps the best score, PIN sign-in, delete), which need the `games4james-dev` project from T14.0.
 Depends on: T14.2
 Goal: the app signs in through Supabase with the same screens and the same `useAuth()` surface, so pages and games do not change.
 Files: `src/lib/supabase.ts` (new, replaces `lib/firebase.ts`), `src/context/AuthProvider.tsx` (renamed from `FirebaseAuthProvider.tsx`; update every import), `src/pages/login.tsx` (renamed from `firebase-login.tsx`), `src/pages/auth/Callback.tsx` (new), `src/App.tsx`, `src/lib/api.ts`, `src/pages/settings/SettingsScreen.tsx`, `src/utils/errorCode.ts` (+ test), `src/platform/adapters/{web,native}.ts`, `vite.config.ts`, `vite-env.d.ts`, `.env.example`, `package.json`

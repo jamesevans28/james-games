@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ProfileAvatar } from "../../components/profile";
-import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useAuth } from "../../context/AuthProvider";
 import { updatePreferences } from "../../lib/api";
 import { AVATARS, SUPPORTER_AVATARS, avatarFor } from "../../config/avatars";
 import { useSupporter } from "../../hooks/useSupporter";

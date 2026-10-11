@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchRatingSummary, submitRating, type RatingSummary } from "../lib/api";
 import { isSigninRequired } from "../lib/apiError";
 import { queryKeys } from "../lib/queryClient";
-import { useAuth } from "../context/FirebaseAuthProvider";
+import { useAuth } from "../context/AuthProvider";
 
 function validRating(n: unknown): number | null {
   return typeof n === "number" && Number.isFinite(n) && n > 0 ? n : null;

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { type GameMeta } from "../../games";
-import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useAuth } from "../../context/AuthProvider";
 import { useGameRatings } from "../../hooks/useGameRatings";
 import { useRatingPrompt } from "../../hooks/useRatingPrompt";
 import { PROMPT_AFTER_PLAYS, readRatingPromptState } from "../../lib/ratingPrompt";

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchDaily, type DailyBoardEntry } from "../../lib/api";
 import { queryKeys } from "../../lib/queryClient";
 import { allGames, type GameMeta } from "../../games";
-import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useAuth } from "../../context/AuthProvider";
 import { dailyGameFor, localDay } from "./dailyRules";
 
 export type DailyView = {

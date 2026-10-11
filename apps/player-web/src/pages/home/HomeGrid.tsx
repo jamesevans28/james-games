@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import Seo from "../../components/Seo";
 import GameTile from "../../components/feed/GameTile";
-import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useAuth } from "../../context/AuthProvider";
 import { useCatalog } from "../../context/GameCatalogProvider";
 import { filterByBetaAccess } from "../../hooks/useGameCatalog";
 import { usePresenceReporter } from "../../hooks/usePresenceReporter";

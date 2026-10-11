@@ -10,7 +10,7 @@ import {
 } from "../../lib/api";
 import { isApiError } from "../../lib/apiError";
 import { queryKeys } from "../../lib/queryClient";
-import { useAuth } from "../../context/FirebaseAuthProvider";
+import { useAuth } from "../../context/AuthProvider";
 import { ProfileAvatar } from "../../components/profile";
 import { barHeights, familyErrorText, formatPlayTime, weekdayOf } from "./familyFormat";
 

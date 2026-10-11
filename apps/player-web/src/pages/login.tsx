@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
-import { useAuth } from "../context/FirebaseAuthProvider";
+import { useAuth } from "../context/AuthProvider";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { brand } from "../config/brand";
@@ -10,7 +10,7 @@ import { errorMessage } from "../utils/errorCode";
 
 type AuthMode = "login" | "register";
 
-export default function FirebaseLoginPage() {
+export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -42,7 +42,7 @@ export default function FirebaseLoginPage() {
     setMode(getInitialMode());
   }, [location.pathname]);
 
-  // Show loading while Firebase initializes
+  // Show loading while the sign-in service starts
   if (!initialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-paper">

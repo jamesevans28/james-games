@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router";
 import { type ReactElement } from "react";
-import { useAuth } from "../context/FirebaseAuthProvider";
+import { useAuth } from "../context/AuthProvider";
 
 // Guard for routes that require any authentication (including anonymous).
 export function RequireAuth({ children }: { children: ReactElement }) {
@@ -44,32 +44,6 @@ export function RequireRegistered({ children }: { children: ReactElement }) {
   if (user.isAnonymous || user.accountType === "anonymous") {
     return (
       <Navigate to="/login" replace state={{ from: loc.pathname, reason: "account_required" }} />
-    );
-  }
-
-  return children;
-}
-
-// Guard for routes that require a linked account with verified email.
-export function RequireVerifiedEmail({ children }: { children: ReactElement }) {
-  const { user, loading, initialized } = useAuth();
-  const loc = useLocation();
-
-  if (!initialized || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
-  }
-
-  if (!user.email || !user.emailVerified) {
-    return (
-      <Navigate to="/settings" replace state={{ from: loc.pathname, reason: "email_required" }} />
     );
   }
 
