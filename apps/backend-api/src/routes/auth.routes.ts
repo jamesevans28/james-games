@@ -8,6 +8,7 @@ import {
   linkProvider,
   changePin,
   adminResetUserPin,
+  syncEmail,
 } from "../controllers/authController.js";
 import { me } from "../controllers/usersController.js";
 import { requireAdmin, requireAuth, requireRegisteredAccount } from "../middleware/authGuards.js";
@@ -23,6 +24,7 @@ router.post("/register-username", requireAuth, registerWithUsername);
 router.get("/me", requireAuth, me); // same handler and shape as GET /me
 router.post("/link-provider", requireAuth, linkProvider);
 router.post("/change-pin", requireAuth, requireRegisteredAccount, changePin);
+router.post("/sync-email", requireAuth, requireRegisteredAccount, syncEmail);
 
 // Admin
 router.post("/admin/reset-pin", requireAdmin, adminResetUserPin);

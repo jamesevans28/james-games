@@ -21,7 +21,7 @@ test("errorMessage turns Supabase auth codes into friendly text and hides raw au
     Object.assign(new Error(message), { __isAuthError: true, code, status: 400 });
   assert.equal(
     errorMessage(authError("otp_expired", "Email link is invalid or has expired"), "fallback"),
-    "That took a bit too long. Please try again.",
+    "That code didn't work, or it ran out. Please try again.",
   );
   assert.equal(
     errorMessage(authError("identity_already_exists", "Identity is already linked"), "fallback"),
@@ -30,6 +30,10 @@ test("errorMessage turns Supabase auth codes into friendly text and hides raw au
   assert.equal(
     errorMessage(authError("over_request_rate_limit", "Request rate limit reached"), "x"),
     "Too many tries. Take a break and try again in a little while.",
+  );
+  assert.equal(
+    errorMessage(authError("email_exists", "A user with this email already exists"), "x"),
+    "That email is already on another account.",
   );
   assert.equal(errorMessage(authError("some_new_code", "internal detail"), "fallback"), "fallback");
   assert.equal(errorMessage(authError(undefined, "internal detail"), "fallback"), "fallback");

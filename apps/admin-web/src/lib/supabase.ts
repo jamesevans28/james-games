@@ -1,6 +1,6 @@
 /**
- * Supabase Auth for the admin console (Phase 14): Google sign-in only, as a redirect
- * back to this site. `@supabase/auth-js` on its own (the auth half of supabase-js).
+ * Supabase Auth for the admin console (Phase 14): an emailed 6-digit code, or Google
+ * (a redirect back to this site) once that provider is set up. `@supabase/auth-js` on its own (the auth half of supabase-js).
  * Admin status is never read from the token: the API checks `users.admin` on `GET /me`.
  */
 import { AuthClient, type Session } from "@supabase/auth-js";
@@ -26,6 +26,21 @@ export async function signInWithGoogle(): Promise<void> {
     provider: "google",
     options: { redirectTo: window.location.origin + "/" },
   });
+  if (error) throw error;
+}
+
+/** Unknown addresses answer like known ones, so the form can't be used to probe emails. */
+const UNKNOWN_EMAIL_CODES = new Set(["otp_disabled", "user_not_found", "signup_disabled"]);
+
+/** Emails a 6-digit code to an address already on an account (never creates one). */
+export async function sendEmailCode(email: string): Promise<void> {
+  const { error } = await auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  if (error && !UNKNOWN_EMAIL_CODES.has(error.code ?? "")) throw error;
+}
+
+/** Signs in with the emailed code; onAuthStateChange then loads the account. */
+export async function verifyEmailCode(email: string, code: string): Promise<void> {
+  const { error } = await auth.verifyOtp({ email, token: code, type: "email" });
   if (error) throw error;
 }
 

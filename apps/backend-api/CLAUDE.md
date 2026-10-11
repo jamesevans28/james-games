@@ -25,7 +25,7 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 | Prefix        | Routes                                                                                                                                                                                             |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/me`         | GET current user, PATCH screen-name, DELETE (account)                                                                                                                                              |
-| `/auth`       | register-anonymous, register-username, login-username (both return a one-time `tokenHash` for `verifyOtp`), me (same as `/me`), link-provider, change-pin, admin/reset-pin                         |
+| `/auth`       | register-anonymous, register-username, login-username (both return a one-time `tokenHash` for `verifyOtp`), me (same as `/me`), link-provider, change-pin, sync-email, admin/reset-pin             |
 | `/users`      | GET screen-name/check, POST screen-name, POST preferences, PATCH settings, GET streak, POST streak/checkin, GET :userId                                                                            |
 | `/scores`     | GET :gameId (leaderboard), POST / (submit, auth)                                                                                                                                                   |
 | `/experience` | GET summary (POST runs returns 410; XP comes from POST /scores)                                                                                                                                    |
@@ -62,7 +62,7 @@ Supabase Postgres (project in ap-southeast-2) through Drizzle ORM (Phase 6). The
 
 ## Environment variables (names only)
 
-`DATABASE_URL`, `DATABASE_URL_MIGRATIONS` (migrations only), `STRIPE_WEBHOOK_SECRET` (T12.2), `REVENUECAT_WEBHOOK_AUTH` (T12.3), `APP_BASE_URL`, `PUBLIC_SITE_ORIGIN` (share links; defaults to https://games4james.com), `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (Supabase Auth; local values come from the `games4james-dev` project via `scripts/supabase-auth-setup.mjs`), `CORS_ALLOWED_ORIGINS`. Production values are set by `deploy-api.yml` from GitHub secrets.
+`DATABASE_URL`, `DATABASE_URL_MIGRATIONS` (migrations only), `STRIPE_WEBHOOK_SECRET` (T12.2), `REVENUECAT_WEBHOOK_AUTH` (T12.3), `APP_BASE_URL`, `PUBLIC_SITE_ORIGIN` (share links; defaults to https://games4james.com), `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (Supabase Auth; local values come from `games4james`, or `games4james-dev` once it exists, via `scripts/supabase-auth-setup.mjs`), `CORS_ALLOWED_ORIGINS`. Production values are set by `deploy-api.yml` from GitHub secrets.
 
 ## Deploy
 

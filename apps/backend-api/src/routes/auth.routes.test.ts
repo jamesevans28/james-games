@@ -95,14 +95,14 @@ describe("/auth routes", () => {
     expect(reg.status).toBe(200);
     expect(reg.body).toEqual({
       ok: true,
-      tokenHash: "token-hash-for-tilly_1@pin.games4james.com",
+      tokenHash: "token-hash-for-kid-1",
       screenName: "Rocket Star",
       accountType: "username_pin",
     });
     // The same auth user becomes the PIN account, then gets a one-time sign-in.
     expect(api.authAdmin.calls).toEqual([
       { name: "convertToPinAccount", args: ["kid-1", "tilly_1"] },
-      { name: "mintSignIn", args: ["tilly_1@pin.games4james.com"] },
+      { name: "mintSignIn", args: ["kid-1"] },
     ]);
     const row = await getUserById("kid-1");
     expect(row).toMatchObject({ username: "tilly_1", accountType: "username_pin" });
@@ -126,12 +126,12 @@ describe("/auth routes", () => {
     expect(ok.status).toBe(200);
     expect(ok.body).toEqual({
       ok: true,
-      tokenHash: "token-hash-for-tilly_1@pin.games4james.com",
+      tokenHash: "token-hash-for-kid-1",
       userId: "kid-1",
       screenName: "Rocket Star",
       accountType: "username_pin",
     });
-    expect(api.authAdmin.callsTo("mintSignIn").at(-1)).toEqual(["tilly_1@pin.games4james.com"]);
+    expect(api.authAdmin.callsTo("mintSignIn").at(-1)).toEqual(["kid-1"]);
     // Failed sign-ins mint nothing.
     expect(api.authAdmin.callsTo("mintSignIn")).toHaveLength(2);
   });
@@ -384,14 +384,46 @@ describe("/auth routes", () => {
       body: { username: "flaky_kid", pin: "123456", screenName: "Flaky Kid" },
     });
     expect(retry.status).toBe(200);
-    expect(retry.body.tokenHash).toBe("token-hash-for-flaky_kid@pin.games4james.com");
+    expect(retry.body.tokenHash).toBe("token-hash-for-flaky");
   });
 
-  it("the old Firebase routes and the email routes are gone", async () => {
+  it("sync-email copies the confirmed email from the token onto the row", async () => {
+    await api.addUser({ id: "mail-kid", username: "mail_kid" });
+    const noEmail = await api.request("POST", "/auth/sync-email", { as: "mail-kid" });
+    expect(noEmail).toMatchObject({ status: 400, body: { code: "no_email" } });
+    // A PIN account's synthetic address is never treated as an email.
+    const synthetic = await api.request("POST", "/auth/sync-email", {
+      as: "mail-kid",
+      email: "mail_kid@pin.games4james.com",
+    });
+    expect(synthetic.status).toBe(400);
+    const guest = await api.request("POST", "/auth/sync-email", {
+      as: "mail-kid",
+      accountType: "anonymous",
+      email: "grownup@example.com",
+    });
+    expect(guest.status).toBe(403);
+
+    const ok = await api.request("POST", "/auth/sync-email", {
+      as: "mail-kid",
+      email: "grownup@example.com",
+      body: { email: "ignored@example.com" },
+    });
+    expect(ok.body).toEqual({ ok: true, email: "grownup@example.com", emailVerified: true });
+    expect(await getUserById("mail-kid")).toMatchObject({
+      email: "grownup@example.com",
+      emailVerified: true,
+    });
+    const me = await api.request("GET", "/me", { as: "mail-kid", email: "grownup@example.com" });
+    expect(me.body.user).toMatchObject({ email: "grownup@example.com", emailVerified: true });
+  });
+
+  it("the old Firebase routes and the old email routes are gone", async () => {
     for (const path of [
       "/auth/firebase/register-anonymous",
       "/auth/add-email",
       "/auth/check-email-verified",
+      "/auth/firebase/sync-email",
     ]) {
       expect((await api.request("POST", path, { as: "anyone" })).status).toBe(404);
     }

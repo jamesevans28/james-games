@@ -42,7 +42,7 @@ Copy `.env.example` to `.env.local` (gitignored). Never commit values.
 | Variable                        | Meaning                                                                                            |
 | ------------------------------- | -------------------------------------------------------------------------------------------------- |
 | `VITE_API_BASE_URL`             | Backend origin. Local `http://localhost:8787`, prod `https://api.games4james.com`                  |
-| `VITE_SUPABASE_URL`             | Supabase project URL (`games4james-dev` locally, `games4james` in production)                      |
+| `VITE_SUPABASE_URL`             | Supabase project URL (`games4james`; `games4james-dev` locally once it exists)                     |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | That project's publishable key (`sb_publishable_…`); `scripts/supabase-auth-setup.mjs` writes both |
 
 CI sets the same names from GitHub repo variables plus `VITE_BUILD_NUMBER`.

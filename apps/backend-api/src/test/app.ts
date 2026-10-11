@@ -54,7 +54,7 @@ type AdminCall = {
   [K in keyof AuthAdmin]: { name: K; args: Parameters<AuthAdmin[K]> };
 }[keyof AuthAdmin];
 
-/** Records every admin call; `mintSignIn` returns `token-hash-for-<email>`. */
+/** Records every admin call; `mintSignIn` returns `token-hash-for-<uid>`. */
 export function fakeAuthAdmin() {
   const calls: AdminCall[] = [];
   const failing = new Set<keyof AuthAdmin>();

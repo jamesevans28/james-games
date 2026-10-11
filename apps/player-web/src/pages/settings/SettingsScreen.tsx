@@ -7,6 +7,7 @@ import { useOnlineStatus } from "../../hooks/useOnlineStatus";
 import { OfflineBanner } from "../../components/OfflineBanner";
 import { errorMessage } from "../../utils/errorCode";
 import DeleteAccountSection from "./DeleteAccountSection";
+import EmailSection from "./EmailSection";
 import FriendsPrivacySection from "./FriendsPrivacySection";
 import FamilySection from "./FamilySection";
 import GrownUpsSection from "./GrownUpsSection";
@@ -270,6 +271,9 @@ export default function SettingsScreen() {
       <FriendsPrivacySection />
       <FamilySection />
       <GrownUpsSection />
+
+      {/* A grown-up's email (username + PIN accounts): sign-in codes if the PIN is lost */}
+      {isUsernamePin && <EmailSection />}
 
       {/* PIN Change Section (only for username+PIN accounts) */}
       {isUsernamePin && (

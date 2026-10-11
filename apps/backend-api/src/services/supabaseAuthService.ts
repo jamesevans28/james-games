@@ -65,8 +65,11 @@ export type AuthAccountType = "username_pin" | "linked";
 export interface AuthAdmin {
   /** Gives the auth user (usually anonymous) its synthetic email and the PIN account type. */
   convertToPinAccount(uid: string, username: string): Promise<void>;
-  /** A one-time token hash the client turns into a session with `verifyOtp`. No email is sent. */
-  mintSignIn(email: string): Promise<string>;
+  /**
+   * A one-time token hash the client turns into a session with `verifyOtp`, for the auth
+   * user's current email (synthetic, or the grown-up's once one is attached). No email is sent.
+   */
+  mintSignIn(uid: string): Promise<string>;
   setAccountType(uid: string, accountType: AuthAccountType): Promise<void>;
   /** Deletes the auth user; one that is already gone counts as deleted. */
   deleteAuthUser(uid: string): Promise<void>;
@@ -112,7 +115,11 @@ const supabaseAdmin: AuthAdmin = {
     });
     check(error);
   },
-  async mintSignIn(email) {
+  async mintSignIn(uid) {
+    const found = await admin().getUserById(uid);
+    check(found.error);
+    const email = found.data.user?.email;
+    if (!email) throw new SupabaseAdminError("user_without_email", undefined);
     const { data, error } = await admin().generateLink({
       type: "magiclink",
       email,
@@ -144,7 +151,7 @@ export function setAuthAdminForTests(fake: AuthAdmin | null): void {
 
 export const convertToPinAccount: AuthAdmin["convertToPinAccount"] = (uid, username) =>
   authAdmin.convertToPinAccount(uid, username);
-export const mintSignIn: AuthAdmin["mintSignIn"] = (email) => authAdmin.mintSignIn(email);
+export const mintSignIn: AuthAdmin["mintSignIn"] = (uid) => authAdmin.mintSignIn(uid);
 export const setAccountType: AuthAdmin["setAccountType"] = (uid, accountType) =>
   authAdmin.setAccountType(uid, accountType);
 export const deleteAuthUser: AuthAdmin["deleteAuthUser"] = (uid) => authAdmin.deleteAuthUser(uid);

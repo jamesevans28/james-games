@@ -18,13 +18,20 @@ export function errorCode(err: unknown): string {
  */
 const AUTH_MESSAGES: Record<string, string> = {
   anonymous_provider_disabled: "Playing as a guest is switched off right now. Try again later.",
-  otp_expired: "That took a bit too long. Please try again.",
+  otp_expired: "That code didn't work, or it ran out. Please try again.",
   identity_already_exists: "That account is already joined to a different player.",
   over_request_rate_limit: "Too many tries. Take a break and try again in a little while.",
   session_expired: "You were signed out. Please sign in again.",
   refresh_token_not_found: "You were signed out. Please sign in again.",
   access_denied: "Sign-in was cancelled.",
   social_sign_in_unavailable: "That sign-in isn't available in the app yet.",
+  email_exists: "That email is already on another account.",
+  email_address_invalid: "That email address can't be used. Try another one?",
+  over_email_send_rate_limit: "We've sent too many emails for now. Try again in an hour.",
+  // Supabase's built-in sender only reaches the project's team until our own mail server is set up.
+  email_address_not_authorized:
+    "We can't send email to that address yet. Ask a grown-up to tell us.",
+  same_email: "That's already the email on this account.",
 };
 
 /** Supabase's AuthError (and our redirect errors) carry this flag. */

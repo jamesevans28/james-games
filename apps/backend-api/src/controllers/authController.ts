@@ -10,6 +10,7 @@ import {
   loginWithUsername as loginWithUsernameFor,
   registerAnonymous as registerAnonymousFor,
   registerUsername,
+  syncEmail as syncEmailFor,
   UserError,
 } from "../services/userService.js";
 import { isValidPin, isValidUsername } from "../services/usernamePolicy.js";
@@ -182,6 +183,22 @@ export async function changePin(req: Request, res: Response) {
     return res.json({ ok: true });
   } catch (e) {
     return replyWithError(res, "auth_change_pin_failed", e);
+  }
+}
+
+/**
+ * POST /auth/sync-email (bearer: the access token issued after the client confirmed the
+ * grown-up's email with its code). The address comes from that token, never the body.
+ */
+export async function syncEmail(req: Request, res: Response) {
+  const auth = req.user;
+  if (!auth) return res.status(401).json({ error: "unauthorized" });
+  try {
+    const user = await syncEmailFor(auth.userId, { email: auth.email });
+    log.info("auth_email_confirmed");
+    return res.json({ ok: true, email: user.email, emailVerified: user.emailVerified });
+  } catch (e) {
+    return replyWithError(res, "auth_sync_email_failed", e);
   }
 }
 

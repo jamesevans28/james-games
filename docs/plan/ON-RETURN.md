@@ -8,7 +8,7 @@ Claude worked through the plan unattended on 9 Oct 2026. **All code for Phases 6
 npm install
 ```
 
-Sign-in uses the free `games4james-dev` Supabase project, so run `node scripts/supabase-auth-setup.mjs` once first (see `docs/supabase-auth-setup.md`). Then run these three, each in its own terminal tab:
+Sign-in uses Supabase (your `games4james` project until a `games4james-dev` one exists), so run `node scripts/supabase-auth-setup.mjs` once first (see `docs/supabase-auth-setup.md`). Then run these three, each in its own terminal tab:
 
 ```bash
 npm run local:server
@@ -22,7 +22,7 @@ npm run local:web
 npm run local:admin
 ```
 
-`local:server` is the API on a local database (sign-in through `games4james-dev`). `local:web` is the app at http://localhost:3000, and `local:admin` is the admin at http://localhost:3100.
+`local:server` is the API on a local database (sign-in through Supabase). `local:web` is the app at http://localhost:3000, and `local:admin` is the admin at http://localhost:3100.
 
 Things to try:
 
@@ -39,7 +39,7 @@ Things to try:
 ### Now (unblocks everything else)
 
 1. **Node 24.** Run `nvm install 24`, so `npm` commands run without the `npx -p node@24` wrapper.
-2. **Supabase Auth (T14.0), about 10 minutes.** Firebase is gone (Phase 14, code done 11 Oct). Create the free `games4james-dev` project and a Supabase access token, then run `node scripts/supabase-auth-setup.mjs --dry-run` and `node scripts/supabase-auth-setup.mjs` ([docs/supabase-auth-setup.md](../supabase-auth-setup.md)); it also moves both projects to ES256 signing keys (dashboard fallback in the doc). Google and Apple sign-in are hidden for players, but **the admin console signs in with Google**, so it needs a Google OAuth client and `--google` before you can use it (same doc). Then T14.8: the end-to-end check on the local stack.
+2. **Supabase Auth (T14.0), about 5 minutes.** Firebase is gone (Phase 14, code done 11 Oct). Save a Supabase access token to `~/.config/games4james/supabase-access-token`, then run `node scripts/supabase-auth-setup.mjs --dry-run` and `node scripts/supabase-auth-setup.mjs` ([docs/supabase-auth-setup.md](../supabase-auth-setup.md)). It configures your `games4james` project (local development shares it until you make a `games4james-dev` one), moves it to ES256 signing keys and sets up the emailed sign-in codes. Then make yourself admin: add your email in the player app's Settings, set `admin` on your row, sign in to the admin with an emailed code. Before players add emails, set up a mail server (same doc, "Email delivery"). Then T14.8: the end-to-end check.
 3. ~~**Supabase project (T6.1).**~~ Done 11 Oct: connected, migrated and seeded. The strings are in `apps/backend-api/.env.local`.
 4. ~~**GitHub secrets.**~~ Done 11 Oct: `DATABASE_URL` and `DATABASE_URL_MIGRATIONS` set, housekeeping green.
 5. **The art (Phase 8), the main thing blocking relaunch.** Make the covers using [docs/art/README.md](../art/README.md):

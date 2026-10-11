@@ -164,6 +164,20 @@ Steps:
 5. DECISIONS: the dated entry for this phase (below) is already there; add any sub-decisions made on the way (`linkIdentityWithIdToken` vs merge, Lambda size).
    Done when: `git grep -n -i firebase -- ':!docs/plan/DECISIONS.md' ':!docs/plan/14-supabase-auth.md' ':!docs/archive' ':!docs/plan/06-sql-data-layer-supabase.md' ':!docs/plan/13-relaunch.md'` returns only lines that explain what was removed; CI green on `main`.
 
+## T14.9 Email through Supabase (added 2026-10-11 by James)
+
+Status: done in code (2026-10-11); the real run of the setup script, the mail server and the checks below need James's access token (see DECISIONS, "Email through Supabase").
+Depends on: T14.2, T14.3, T14.5
+Goal: a grown-up can attach an email to a username + PIN account and sign in with an emailed code; the admin console signs in with an emailed code; one Supabase project serves production and local development until a dev project exists.
+Files: `apps/backend-api/src/services/{supabaseAuthService,userService}.ts`, `controllers/authController.ts`, `routes/auth.routes.ts` (+ test), `apps/player-web/src/lib/supabase.ts`, `context/AuthProvider.tsx`, `pages/settings/EmailSection.tsx`, `pages/auth/EmailCodeSignIn.tsx`, `pages/login.tsx`, `pages/{privacy,parents}`, `utils/errorCode.ts`, `apps/admin-web/src/{config.ts,lib/supabase.ts,context/AdminAuthContext.tsx,pages/LoginPage.tsx}`, `scripts/supabase-auth-setup.mjs`, `docs/supabase-auth-setup.md`
+Steps:
+
+1. API: `mintSignIn(uid)` looks up the auth user's current email; `POST /auth/sync-email` (registered accounts) stores the confirmed email from the token.
+2. Player: Settings section (send code → confirm code → sync), login "Sign in with an email code", `useAuth()` gains `addEmail`, `confirmEmail`, `sendEmailCode`, `signInWithEmailCode`; friendly messages for the email error codes; privacy and parents text.
+3. Admin: emailed-code sign-in; Google hidden behind `adminConfig.googleSignIn`.
+4. Script: email settings and code-only templates, optional `SMTP_*`, single-project mode, token from `~/.config/games4james/supabase-access-token`, `--env-dir`.
+   Done when: tests cover sync-email and the by-id mint; lint, typecheck, format pass; after the real run, James adds his email in Settings (code arrives), signs out, signs in with an email code, and signs in to the admin with an email code.
+
 ## T14.8 End-to-end check and numbers
 
 Status: todo

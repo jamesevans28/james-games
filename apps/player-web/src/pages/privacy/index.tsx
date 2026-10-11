@@ -31,12 +31,11 @@ export default function PrivacyPage() {
             If you make an account: your username, and your PIN scrambled so nobody can read it, not
             even us.
           </li>
-          {features.socialSignIn && (
-            <li>
-              An email address, only if you sign in with Google or Apple. We use it for signing in.
-              Other players never see it.
-            </li>
-          )}
+          <li>
+            A grown-up&rsquo;s email address, only if one is added in Settings
+            {features.socialSignIn ? " or comes from Google or Apple sign-in" : ""}. We only use it
+            to email sign-in codes. Other players never see it.
+          </li>
           <li>Your friend code, your friends list and anyone you&rsquo;ve blocked.</li>
           <li>The stickers you&rsquo;ve collected.</li>
           <li>Your settings, like sound and whether friends can see when you&rsquo;re online.</li>

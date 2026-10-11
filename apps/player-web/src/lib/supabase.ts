@@ -97,6 +97,49 @@ export async function signInWithTokenHash(tokenHash: string): Promise<Session> {
   return required(data.session);
 }
 
+// ---------------------------------------------------------------------------
+// A grown-up's email: attached with a code, then usable to sign in with a code
+// ---------------------------------------------------------------------------
+
+/** Unknown addresses look the same as known ones, so the form can't be used to test emails. */
+const UNKNOWN_EMAIL_CODES = new Set(["otp_disabled", "user_not_found", "signup_disabled"]);
+
+/**
+ * Emails a 6-digit sign-in code to an address already on an account (never creates
+ * one). Resolves the same way whether or not the address is known.
+ */
+export async function sendEmailSignInCode(email: string): Promise<void> {
+  const { error } = await (
+    await auth()
+  ).signInWithOtp({ email, options: { shouldCreateUser: false } });
+  if (error && !UNKNOWN_EMAIL_CODES.has(error.code ?? "")) throw error;
+}
+
+export async function signInWithEmailCode(email: string, code: string): Promise<Session> {
+  const { data, error } = await (await auth()).verifyOtp({ email, token: code, type: "email" });
+  if (error) throw error;
+  return required(data.session);
+}
+
+/** Starts attaching (or changing) the signed-in account's email: Supabase emails it a code. */
+export async function requestEmailChange(email: string): Promise<void> {
+  const { error } = await (await auth()).updateUser({ email });
+  if (error) throw error;
+}
+
+/**
+ * Confirms the new email with its code, then refreshes the session so the access token
+ * carries the confirmed address (the API reads it from there, never from the client).
+ */
+export async function confirmEmailChange(email: string, code: string): Promise<Session> {
+  const a = await auth();
+  const verified = await a.verifyOtp({ email, token: code, type: "email_change" });
+  if (verified.error) throw verified.error;
+  const refreshed = await a.refreshSession();
+  if (refreshed.error) throw refreshed.error;
+  return required(refreshed.data.session);
+}
+
 /** Signs out on this device even when the server can't be reached. */
 export async function signOut(): Promise<void> {
   const a = await auth();

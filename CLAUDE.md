@@ -39,12 +39,12 @@ npm run typecheck           # tsc --noEmit across workspaces
 npm test                    # Vitest, all projects (root vitest.config.ts); test:coverage for coverage
 ```
 
-**Local stack:** sign-in through the free `games4james-dev` Supabase project and an on-disk Postgres via pglite, with data in `apps/backend-api/.local/`. The dev project's keys live in the three `.env.local` files (`node scripts/supabase-auth-setup.mjs` writes them; see `docs/supabase-auth-setup.md`). Start them in this order, or use the launch configs of the same names:
+**Local stack:** sign-in through Supabase (the `games4james` project for now; a `games4james-dev` one if it is created later) and an on-disk Postgres via pglite, with data in `apps/backend-api/.local/`. The project's keys live in the three `.env.local` files (`node scripts/supabase-auth-setup.mjs` writes them; see `docs/supabase-auth-setup.md`). Start them in this order, or use the launch configs of the same names:
 
 ```bash
 npm run local:server        # API on :8787 on the local database (migrated and seeded on start)
 npm run local:web           # player web on :3000
-npm run local:admin         # admin on :3100 (Google sign-in, so only once Google is on for the dev project)
+npm run local:admin         # admin on :3100 (sign in with an emailed code; needs users.admin)
 ```
 
 Fully offline: `supabase start` (Docker) runs a local Auth server; point the same env names at `http://127.0.0.1:54321`. Optional.

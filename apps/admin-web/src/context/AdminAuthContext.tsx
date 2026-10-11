@@ -1,12 +1,23 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { adminApi, normalizeAccount, type AdminAccount } from "../lib/api";
-import { auth, signInWithGoogle, signOut as supabaseSignOut, type Session } from "../lib/supabase";
+import {
+  auth,
+  sendEmailCode,
+  signInWithGoogle,
+  signOut as supabaseSignOut,
+  verifyEmailCode,
+  type Session,
+} from "../lib/supabase";
 
 type AdminAuthContextType = {
   user: AdminAccount | null;
   session: Session | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  /** Emails a 6-digit code (answers the same for unknown addresses). */
+  sendEmailCode: (email: string) => Promise<void>;
+  /** Signs in with the code; false when the account isn't an admin (it is signed out again). */
+  signInWithEmailCode: (email: string, code: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -24,17 +35,18 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const hydrate = useCallback(async () => {
+  const hydrate = useCallback(async (): Promise<boolean> => {
     try {
       const payload = await adminApi.fetchMe().catch(() => null);
       const account = normalizeAccount(payload);
       if (account?.admin) {
         setUser(account);
-      } else {
-        setUser(null);
-        // Not an admin, sign out
-        await supabaseSignOut();
+        return true;
       }
+      setUser(null);
+      // Not an admin, sign out
+      await supabaseSignOut();
+      return false;
     } finally {
       setLoading(false);
     }
@@ -67,6 +79,18 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const handleSendEmailCode = useCallback(async (email: string) => {
+    await sendEmailCode(email.trim());
+  }, []);
+
+  const handleSignInWithEmailCode = useCallback(
+    async (email: string, code: string) => {
+      await verifyEmailCode(email.trim(), code.trim());
+      return hydrate();
+    },
+    [hydrate],
+  );
+
   const handleSignOut = useCallback(async () => {
     await supabaseSignOut();
     setUser(null);
@@ -83,10 +107,21 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       session,
       loading,
       signInWithGoogle: handleSignInWithGoogle,
+      sendEmailCode: handleSendEmailCode,
+      signInWithEmailCode: handleSignInWithEmailCode,
       signOut: handleSignOut,
       refresh,
     }),
-    [user, session, loading, handleSignInWithGoogle, handleSignOut, refresh],
+    [
+      user,
+      session,
+      loading,
+      handleSignInWithGoogle,
+      handleSendEmailCode,
+      handleSignInWithEmailCode,
+      handleSignOut,
+      refresh,
+    ],
   );
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>;

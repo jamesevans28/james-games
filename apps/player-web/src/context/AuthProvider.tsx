@@ -8,8 +8,12 @@ import React, {
   useRef,
 } from "react";
 import {
+  confirmEmailChange,
   currentSession,
   getAccessToken,
+  requestEmailChange,
+  sendEmailSignInCode,
+  signInWithEmailCode,
   isAnonymousSession,
   linkedProviders,
   onAuthChange,
@@ -118,6 +122,20 @@ type AuthContextType = {
    * Change PIN for username+PIN users
    */
   changePin: (currentPin: string, newPin: string) => Promise<void>;
+  /**
+   * Attach (or change) a grown-up's email on a username + PIN account. Supabase emails
+   * the address a 6-digit code; finish with confirmEmail(email, code).
+   */
+  addEmail: (email: string) => Promise<void>;
+  /** Confirms the email with its code, then saves it on the account and refreshes the profile. */
+  confirmEmail: (email: string, code: string) => Promise<void>;
+  /**
+   * Emails a 6-digit sign-in code to an address that is on an account (a forgotten PIN).
+   * Resolves the same way for unknown addresses.
+   */
+  sendEmailCode: (email: string) => Promise<void>;
+  /** Signs in with the emailed code. */
+  signInWithEmailCode: (email: string, code: string) => Promise<void>;
   /**
    * Ensure a valid session exists (restore from token if needed).
    * Used to opportunistically refresh auth before critical actions.
@@ -580,6 +598,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [apiBase],
   );
 
+  // A grown-up's email (attached with a code; then a way back in without the PIN)
+  const handleAddEmail = useCallback(async (email: string) => {
+    await requestEmailChange(email.trim());
+  }, []);
+
+  const handleConfirmEmail = useCallback(
+    async (email: string, code: string) => {
+      setLoading(true);
+      try {
+        const s = await confirmEmailChange(email.trim(), code.trim());
+        setSession(s);
+        const res = await fetch(`${apiBase}/auth/sync-email`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${s.access_token}` },
+        });
+        if (!res.ok) {
+          throw new Error((await readApiError(res)) || "We couldn't save that email. Try again?");
+        }
+        const profile = await fetchProfile(s);
+        if (profile) {
+          setUser(profile);
+          persistSession(profile);
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [apiBase, fetchProfile],
+  );
+
+  const handleSendEmailCode = useCallback(async (email: string) => {
+    await sendEmailSignInCode(email.trim());
+  }, []);
+
+  const handleSignInWithEmailCode = useCallback(
+    async (email: string, code: string) => {
+      setLoading(true);
+      try {
+        await applySession(await signInWithEmailCode(email.trim(), code.trim()));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [applySession],
+  );
+
   const value = useMemo<AuthContextType>(
     () => ({
       user,
@@ -598,6 +662,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshProfile: handleRefreshProfile,
       getToken: handleGetToken,
       changePin: handleChangePin,
+      addEmail: handleAddEmail,
+      confirmEmail: handleConfirmEmail,
+      sendEmailCode: handleSendEmailCode,
+      signInWithEmailCode: handleSignInWithEmailCode,
       ensureSession: handleEnsureSession,
     }),
     [
@@ -617,6 +685,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       handleRefreshProfile,
       handleGetToken,
       handleChangePin,
+      handleAddEmail,
+      handleConfirmEmail,
+      handleSendEmailCode,
+      handleSignInWithEmailCode,
       handleEnsureSession,
     ],
   );

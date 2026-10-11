@@ -23,7 +23,6 @@ import {
   hashPin,
   mintSignIn,
   setAccountType,
-  syntheticEmail,
   verifyPin,
 } from "./supabaseAuthService.js";
 import { toPublicProfile, type PublicProfile } from "./publicProfile.js";
@@ -213,7 +212,7 @@ export async function registerUsername(
     throw err;
   }
 
-  const tokenHash = await mintSignIn(syntheticEmail(username));
+  const tokenHash = await mintSignIn(uid);
   return { user, tokenHash };
 }
 
@@ -237,8 +236,8 @@ export async function loginWithUsername(
     await verifyPin(pin, await dummyPinHash());
     return null;
   }
-  if (!(await verifyPin(pin, user.pinHash)) || !user.username) return null;
-  const tokenHash = await mintSignIn(syntheticEmail(user.username));
+  if (!(await verifyPin(pin, user.pinHash))) return null;
+  const tokenHash = await mintSignIn(user.id);
   return { user, tokenHash };
 }
 
@@ -253,6 +252,20 @@ export async function linkProvider(
   };
   const user = (await updateUser(uid, patch)) ?? (await createWithGeneratedName(uid, patch)).user;
   await setAccountType(uid, "linked");
+  return user;
+}
+
+/**
+ * POST /auth/sync-email: after a grown-up confirmed an email with Supabase's code, the
+ * fresh access token carries it (Supabase only puts confirmed addresses there). Copies
+ * it onto the row; the client never sends the address itself.
+ */
+export async function syncEmail(uid: string, token: { email?: string }): Promise<User> {
+  if (!token.email) {
+    throw new UserError(400, "no_email", "Confirm the email with its code first.");
+  }
+  const user = await updateUser(uid, { email: token.email, emailVerified: true });
+  if (!user) throw notFound();
   return user;
 }
 
