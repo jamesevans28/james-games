@@ -40,11 +40,11 @@ Things to try:
 
 1. **Node 24.** Run `nvm install 24`, so `npm` commands run without the `npx -p node@24` wrapper.
 2. ~~**Supabase Auth (T14.0).**~~ Done 11 Oct: the script configured `games4james`, ES256 keys are on, and guest, username + PIN, sign-out, sign-in and delete were checked end to end against it.
-   - **Production secret.** Add the GitHub secret `SUPABASE_SECRET_KEY` (the deploy needs it; the variables are already set).
+   - **Production secret.** Add the GitHub secret `SUPABASE_SECRET_KEY` (the deploy needs it; the variables are already set). The daily housekeeping job uses it too, to delete idle guests' Supabase auth users (T14.10).
    - **Mail server.** Pick Resend or Amazon SES, add its DNS records for `games4james.com`, and rerun the script with `SMTP_*` ([docs/supabase-auth-setup.md](../supabase-auth-setup.md), "Email delivery"). Until then nobody can sign in by emailed code, and that includes you in the admin console. Then make yourself admin: add your email in the player app's Settings and set `admin` on your row.
    - **T14.8.** Claude finishes the end-to-end check (admin sign-in, numbers) once the mail server exists.
 3. ~~**Supabase project (T6.1).**~~ Done 11 Oct: connected, migrated and seeded. The strings are in `apps/backend-api/.env.local`.
-4. ~~**GitHub secrets.**~~ Done 11 Oct: `DATABASE_URL` and `DATABASE_URL_MIGRATIONS` set, housekeeping green. Add the variable `SUPABASE_URL` and secret `SUPABASE_SECRET_KEY` (same values as `apps/backend-api/.env.local`) when you can: the daily job then also deletes idle guests' Supabase auth users (T14.10). Deploy API needs them at relaunch anyway.
+4. ~~**GitHub secrets.**~~ Done 11 Oct: `DATABASE_URL` and `DATABASE_URL_MIGRATIONS` set, housekeeping green.
 5. **The art (Phase 8), the main thing blocking relaunch.** Make the covers using [docs/art/README.md](../art/README.md):
    ```bash
    node scripts/art/generate.mjs --dry-run covers

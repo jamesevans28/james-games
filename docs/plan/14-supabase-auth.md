@@ -180,7 +180,7 @@ Steps:
 
 ## T14.10 Housekeeping deletes idle guests' Supabase auth users (added 2026-10-11)
 
-Status: done in code (2026-10-11). Tests on pglite with the recording fake admin (`listUsers` added to the fake). The daily job needs the `SUPABASE_URL` variable and `SUPABASE_SECRET_KEY` secret in GitHub (the ones `deploy-api.yml` uses); until then it logs `authSkipReason: "not_configured"` and does the database half only.
+Status: done in code (2026-10-11). Tests on pglite with the recording fake admin (`listUsers` added to the fake). The daily job needs the `SUPABASE_SECRET_KEY` secret in GitHub (the `SUPABASE_URL` variable is set; both are the ones `deploy-api.yml` uses); until then it logs `authSkipReason: "not_configured"` and does the database half only.
 Depends on: T6.9, T14.2
 Goal: every guest is a Supabase anonymous user, so deleting idle guests' rows (T6.9) is not enough; their auth users must go too, along with anonymous auth users that never got a row (the tab closed before `register-anonymous`).
 Files: `apps/backend-api/src/db/{housekeeping,housekeeping.run,url}.ts` (+ tests), `services/supabaseAuthService.ts` (`listUsers` on `AuthAdmin`, `listAuthUsers`), `src/test/app.ts`, `.github/workflows/db-housekeeping.yml`
