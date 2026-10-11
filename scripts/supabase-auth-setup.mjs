@@ -170,6 +170,12 @@ function readToken() {
 }
 
 const token = readToken();
+if (token?.startsWith("sb_")) {
+  fail(
+    "That is a project API key (sb_…), not a personal access token. Create one under\n" +
+      "Supabase → Account → Access tokens (it starts with sbp_) and save that instead.",
+  );
+}
 if (!token && !dryRun) {
   fail(
     "No access token. Supabase → Account → Access tokens, then save it (outside the repo) to\n" +
