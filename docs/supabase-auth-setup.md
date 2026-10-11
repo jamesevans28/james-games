@@ -59,10 +59,10 @@ The sender address needs the mail service's DNS records (SPF/DKIM) for `games4ja
 
 ## Set it up, MANUAL (James), about 5 minutes
 
-1. **Create a personal access token.** Supabase → Account → Access tokens → Generate. Save it outside the repo, readable only by you (paste it in place of `<token>`; nothing prints it):
+1. **Create a personal access token.** Supabase → Account → Access tokens → Generate, and copy it. Then save it from the clipboard, outside the repo and readable only by you (nothing prints it, and it stays out of your shell history):
 
    ```bash
-   mkdir -p ~/.config/games4james && umask 077 && printf '%s' '<token>' > ~/.config/games4james/supabase-access-token
+   mkdir -p ~/.config/games4james && umask 077 && pbpaste > ~/.config/games4james/supabase-access-token
    ```
 
    (`export SUPABASE_ACCESS_TOKEN=…` in a terminal works too.)
