@@ -75,7 +75,9 @@ jobs:
             --zip-file fileb://bundle.zip
           aws lambda wait function-updated --function-name "$LAMBDA_FUNCTION_NAME"
 
-      # Node 24 runtime, 512 MB and 10 s: firebase-admin cold starts are slow on 128 MB / 3 s.
+      # Node 24 runtime, 512 MB and 10 s. Firebase is gone (Phase 14) and the bundle loads in
+      # about 60 ms, but bcrypt PIN checks and share-card rendering (resvg) are CPU-bound and
+      # Lambda CPU scales with memory, so it stays at 512 MB until T14.8 measures otherwise.
       - name: Update Lambda configuration
         if: ${{ !inputs.migrate_only }}
         run: |
@@ -91,9 +93,8 @@ jobs:
                 "DATABASE_URL": "'"${{ secrets.DATABASE_URL }}"'",
                 "STRIPE_WEBHOOK_SECRET": "'"${{ secrets.STRIPE_WEBHOOK_SECRET }}"'",
                 "REVENUECAT_WEBHOOK_AUTH": "'"${{ secrets.REVENUECAT_WEBHOOK_AUTH }}"'",
-                "FIREBASE_PROJECT_ID": "'"${{ secrets.FIREBASE_PROJECT_ID }}"'",
-                "FIREBASE_CLIENT_EMAIL": "'"${{ secrets.FIREBASE_CLIENT_EMAIL }}"'",
-                "FIREBASE_PRIVATE_KEY": "'"${{ secrets.FIREBASE_PRIVATE_KEY }}"'",
+                "SUPABASE_URL": "'"${{ vars.SUPABASE_URL }}"'",
+                "SUPABASE_SECRET_KEY": "'"${{ secrets.SUPABASE_SECRET_KEY }}"'",
                 "CORS_ALLOWED_ORIGINS": "'"${{ vars.CORS_ALLOWED_ORIGINS }}"'"
               }
             }'

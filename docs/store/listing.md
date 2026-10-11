@@ -54,7 +54,7 @@ Needed: 6.7" and 6.1" iPhone, an Android phone, and optionally a 12.9" iPad. Tak
 
 | Data                                                   | Collected? | Linked to the user? | Used for tracking? | Purpose                               |
 | ------------------------------------------------------ | ---------- | ------------------- | ------------------ | ------------------------------------- |
-| User ID (Firebase uid)                                 | Yes        | Yes                 | No                 | App functionality                     |
+| User ID (Supabase uid)                                 | Yes        | Yes                 | No                 | App functionality                     |
 | Name (screen name, made up; username for sign-in)      | Yes        | Yes                 | No                 | App functionality                     |
 | Email (only if a grown-up adds one for sign-in)        | Optional   | Yes                 | No                 | App functionality, account management |
 | Gameplay content (scores, plays, stickers)             | Yes        | Yes                 | No                 | App functionality                     |

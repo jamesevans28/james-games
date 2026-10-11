@@ -39,7 +39,7 @@ Things to try:
 ### Now (unblocks everything else)
 
 1. **Node 24.** Run `nvm install 24`, so `npm` commands run without the `npx -p node@24` wrapper.
-2. ~~**Firebase project (T6.0).**~~ Dropped 11 Oct: auth moves to Supabase ([docs/plan/14-supabase-auth.md](14-supabase-auth.md)). Your part is T14.0: create the free `games4james-dev` project, a Supabase access token for the setup script, and switch both projects to ES256 JWT signing keys. Claude scripts the rest. Google and Apple sign-in are hidden for now (`features.socialSignIn`), so no Google Cloud work is needed.
+2. **Supabase Auth (T14.0), about 10 minutes.** Firebase is gone (Phase 14, code done 11 Oct). Create the free `games4james-dev` project and a Supabase access token, then run `node scripts/supabase-auth-setup.mjs --dry-run` and `node scripts/supabase-auth-setup.mjs` ([docs/supabase-auth-setup.md](../supabase-auth-setup.md)); it also moves both projects to ES256 signing keys (dashboard fallback in the doc). Google and Apple sign-in are hidden for players, but **the admin console signs in with Google**, so it needs a Google OAuth client and `--google` before you can use it (same doc). Then T14.8: the end-to-end check on the local stack.
 3. ~~**Supabase project (T6.1).**~~ Done 11 Oct: connected, migrated and seeded. The strings are in `apps/backend-api/.env.local`.
 4. ~~**GitHub secrets.**~~ Done 11 Oct: `DATABASE_URL` and `DATABASE_URL_MIGRATIONS` set, housekeeping green.
 5. **The art (Phase 8), the main thing blocking relaunch.** Make the covers using [docs/art/README.md](../art/README.md):
@@ -78,7 +78,7 @@ Things to try:
 
 14. **Stripe (T12.2).** Set up the family supporter Payment Link and webhook ([docs/stripe-setup.md](../stripe-setup.md)). Until then, "For grown-ups" points to Ko-fi.
 15. **Native apps (Phase 10).**
-    - Install Xcode and Android Studio and add the Firebase iOS and Android apps ([docs/native-setup.md](../native-setup.md)). The Android build already passes on GitHub (Actions → Build Android gives an APK).
+    - Install Xcode and Android Studio ([docs/native-setup.md](../native-setup.md)); no Firebase apps any more. The Android build already passes on GitHub (Actions → Build Android gives an APK).
     - Enrol in the Apple Developer Program (US$99/yr) and Google Play (US$25).
     - The listing text is drafted in [docs/store/listing.md](../store/listing.md), and the Kids-category checklist is [docs/store/kids-compliance.md](../store/kids-compliance.md).
     - When the apps are live, set up the store product and RevenueCat (stripe-setup.md, "In the store apps").

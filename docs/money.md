@@ -6,7 +6,7 @@ Where the money comes from and goes, one row per month. Claude updates the suppo
 
 - AWS Billing → Bills, plus a **budget alert at A$5/month**. MANUAL: James, Billing → Budgets → Create budget → monthly cost budget, A$5, email alert at 80% and 100%.
 - Supabase → Organization → Billing (free plan limits: 500 MB database, 5 GB egress).
-- Firebase → Usage and billing (Spark plan, free).
+- Supabase sign-in is part of the same free plan as the database (50,000 monthly active users).
 - Ko-fi → Dashboard → Payments.
 - Stripe (once T12.2 ships) → Payments.
 - App Store Connect → Payments and Financial Reports; Play Console → Earnings (after T12.3).

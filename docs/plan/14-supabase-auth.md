@@ -151,7 +151,7 @@ Steps:
 
 ## T14.7 CI/CD, relaunch runbook and the plan
 
-Status: todo
+Status: done in code (2026-10-11). Workflows use `SUPABASE_URL` (variable), `SUPABASE_SECRET_KEY` (secret), `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`; Lambda stays 512 MB / 10 s (DECISIONS). Runbook T13.3 is "Supabase Auth production settings"; T13.6 also deletes the `flingo-fun` Google Cloud project; T10.3 points at T14.4; store docs, money, README and copilot instructions updated. The remaining `firebase` matches explain what was removed or are dated plan history. "CI green on `main`" happens when the PR merges.
 Depends on: T14.1–T14.6
 Goal: every pipeline, runbook and plan file says Supabase, and the Firebase leftovers are gone.
 Files: `.github/workflows/{deploy-api,deploy-web,deploy-admin,ci}.yml`, `docs/relaunch-log.md`, `docs/plan/13-relaunch.md`, `docs/plan/10-capacitor.md`, `docs/plan/06-sql-data-layer-supabase.md`, `docs/store/{kids-compliance,listing}.md`, `docs/money.md`, `.github/copilot-instructions.md`, `docs/plan/ON-RETURN.md`, `DECISIONS.md`
