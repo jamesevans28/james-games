@@ -26,7 +26,12 @@ function auth(): Promise<GoTrueClient> {
   client ??= import("@supabase/auth-js").then(({ AuthClient }) => {
     const url = import.meta.env.VITE_SUPABASE_URL;
     const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    if (!url || !key) throw new Error("supabase_not_configured");
+    if (!url || !key) {
+      // A code, so the log says why (VITE_SUPABASE_* missing from .env.local).
+      throw Object.assign(new Error("supabase_not_configured"), {
+        code: "supabase_not_configured",
+      });
+    }
     return new AuthClient({
       url: `${url.replace(/\/+$/, "")}/auth/v1`,
       // The same headers supabase-js's createClient sends to Auth.

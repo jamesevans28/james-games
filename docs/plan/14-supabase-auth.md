@@ -138,7 +138,7 @@ Steps:
 
 ## T14.6 Local stack and environment
 
-Status: todo
+Status: done in code (2026-10-11). `local:auth`, its launch config and `firebase.json` are gone; `local:server` reads `SUPABASE_*` from `apps/backend-api/.env.local`, `local:web`/`local:admin` read `VITE_SUPABASE_*` from theirs (only `VITE_API_BASE_URL` stays inline); root, player, admin and API `CLAUDE.md` and `ON-RETURN.md` updated; offline `supabase start` documented in `docs/supabase-auth-setup.md`. Smoke check in the Browser pane (preview build, no keys): the app loads, signed-out pages render, `/auth/callback?error=access_denied` shows "Sign-in was cancelled." Skipped until T14.8: the T14.3 checks on the stack (needs the dev project). The remaining `emulator` matches are the Android emulator and the dated relaunch pre-flight record.
 Depends on: T14.3, T14.5
 Goal: `npm run local:*` works without the Firebase emulator or Java; the docs say what to put in `.env.local`.
 Files: root `package.json` scripts, `.claude/launch.json`, root `CLAUDE.md`, `apps/*/CLAUDE.md`, `apps/*/.env.example`, `docs/plan/ON-RETURN.md` "Try it first"

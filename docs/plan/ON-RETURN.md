@@ -2,17 +2,13 @@
 
 Claude worked through the plan unattended on 9 Oct 2026. **All code for Phases 6–13 is written, tested and merged to `main`.** That's about 640 automated tests, with CI green. What's left needs your accounts, your consoles, your art, or your say-so. Answer the questions inline or in chat; Claude reads this file at the start of the next session.
 
-## Try it first (10 minutes, no accounts needed)
+## Try it first (10 minutes, after the T14.0 setup below)
 
 ```bash
 npm install
 ```
 
-Then run these four, each in its own terminal tab:
-
-```bash
-npm run local:auth
-```
+Sign-in uses the free `games4james-dev` Supabase project, so run `node scripts/supabase-auth-setup.mjs` once first (see `docs/supabase-auth-setup.md`). Then run these three, each in its own terminal tab:
 
 ```bash
 npm run local:server
@@ -26,7 +22,7 @@ npm run local:web
 npm run local:admin
 ```
 
-`local:auth` is a fake Firebase. `local:server` is the API on a local database. `local:web` is the app at http://localhost:3000, and `local:admin` is the admin at http://localhost:3100.
+`local:server` is the API on a local database (sign-in through `games4james-dev`). `local:web` is the app at http://localhost:3000, and `local:admin` is the admin at http://localhost:3100.
 
 Things to try:
 

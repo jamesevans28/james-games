@@ -39,14 +39,15 @@ npm run typecheck           # tsc --noEmit across workspaces
 npm test                    # Vitest, all projects (root vitest.config.ts); test:coverage for coverage
 ```
 
-**Local stack, no cloud accounts needed:** the Firebase Auth emulator plus an on-disk Postgres via pglite, with data in `apps/backend-api/.local/`. Start them in this order, or use the launch configs of the same names:
+**Local stack:** sign-in through the free `games4james-dev` Supabase project and an on-disk Postgres via pglite, with data in `apps/backend-api/.local/`. The dev project's keys live in the three `.env.local` files (`node scripts/supabase-auth-setup.mjs` writes them; see `docs/supabase-auth-setup.md`). Start them in this order, or use the launch configs of the same names:
 
 ```bash
-npm run local:auth          # Firebase Auth emulator on :9099 (needs the firebase CLI and Java)
 npm run local:server        # API on :8787 on the local database (migrated and seeded on start)
-npm run local:web           # player web on :3000 talking to both
-npm run local:admin         # admin on :3100
+npm run local:web           # player web on :3000
+npm run local:admin         # admin on :3100 (Google sign-in, so only once Google is on for the dev project)
 ```
+
+Fully offline: `supabase start` (Docker) runs a local Auth server; point the same env names at `http://127.0.0.1:54321`. Optional.
 
 Use it to check UI changes end to end: sign up, play, scores, settings. Delete `apps/backend-api/.local/` for a fresh database.
 
@@ -72,9 +73,9 @@ The Browser pane launch config is `.claude/launch.json` (`player-web`). Use a 37
 - `flingo.fun` is dead. The brand is Games4James at https://games4james.com (API at https://api.games4james.com).
 - "Word Rush with Tom": Tom was a placeholder. The kids are Tilly and Harvey.
 - DynamoDB is being replaced by Supabase Postgres (Phase 6) with **no data migration**: this is a full reset for the summer 2026/27 relaunch (Phase 13). Do not add DynamoDB code, and do not write shims that carry prototype data forward.
-- Firebase is going entirely (Phase 14, `docs/plan/14-supabase-auth.md`): auth moves to Supabase Auth. Don't configure the old `flingo-fun` project and don't create a new Firebase one.
+- Firebase is gone entirely (Phase 14, `docs/plan/14-supabase-auth.md`): auth is Supabase Auth (guest, username + PIN; Google and Apple are in the code but hidden behind `features.socialSignIn`). Don't add Firebase back; the old `flingo-fun` project is deleted in T13.6.
 - Deploys stay manual until relaunch (Phase 13). Never run the deploy workflow unless James asks.
-- Cognito is gone. Auth is Firebase today and Supabase Auth after Phase 14 (anonymous, username + PIN, Google, Apple).
+- Cognito is gone. Auth is Supabase Auth: anonymous, username + PIN, and Google and Apple (hidden for now).
 - Cut games (Car Crash, Block Breaker, Ready Steady Shoot, Fill the Cup, Ho Ho Home Delivery) are set `inactive`, not deleted (Phase 5).
 
 ## When unsure
