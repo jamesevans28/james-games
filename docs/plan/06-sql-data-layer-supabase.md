@@ -25,7 +25,7 @@ Steps:
 
 ## T6.1 Supabase project (MANUAL, Claude-prepared)
 
-Status: blocked on MANUAL steps 1–4 (Claude's part done 2026-10-09: `.env.example`, CLAUDE.md pooler notes, `npm run db:ping -w apps/backend-api`)
+Status: done 2026-10-11 (project `games4james` in ap-southeast-2, Postgres 17; db:ping ok on both poolers, all migrations applied, 18 games and 100 XP levels seeded). GitHub secrets still to add (ON-RETURN item 4)
 Depends on: T6.0
 Goal: a Supabase project exists and Claude has what it needs to connect. One project serves both local development and, from relaunch, production: there is no old data to protect, and local dev stops using it once T13.2 flips it to prod (local then uses pglite or a local Postgres).
 MANUAL (James):

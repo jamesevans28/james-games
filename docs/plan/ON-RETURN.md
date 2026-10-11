@@ -44,16 +44,7 @@ Things to try:
 
 1. **Node 24.** Run `nvm install 24`, so `npm` commands run without the `npx -p node@24` wrapper.
 2. **Firebase project (T6.0).** Run `firebase login`, then `gcloud auth login`, then `scripts/firebase-setup.sh`. After that, enable Google sign-in and brand the consent screen ([docs/firebase-auth-setup.md](../firebase-auth-setup.md)).
-3. **Supabase project (T6.1).** Create it in the Sydney region and paste both connection strings into `apps/backend-api/.env.local`. Then run:
-   ```bash
-   npm run db:ping -w apps/backend-api
-   ```
-   ```bash
-   npm run db:migrate -w apps/backend-api
-   ```
-   ```bash
-   npm run db:seed -w apps/backend-api
-   ```
+3. ~~**Supabase project (T6.1).**~~ Done 11 Oct: connected, migrated and seeded. The strings are in `apps/backend-api/.env.local`.
 4. **GitHub secrets.** Add `DATABASE_URL` (transaction pooler) and `DATABASE_URL_MIGRATIONS` (session pooler). Then go to Actions → "Database housekeeping" → Run workflow once. It also stops the free Supabase project from pausing.
 5. **The art (Phase 8), the main thing blocking relaunch.** Make the covers using [docs/art/README.md](../art/README.md):
    ```bash
