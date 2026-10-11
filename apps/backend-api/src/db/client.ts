@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import postgres from "postgres";
 import * as schema from "./schema.js";
+import { assertPoolerUrl } from "./url.js";
 
 /** Any Drizzle Postgres database with our schema (postgres-js in the API, pglite in tests). */
 export type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
@@ -17,6 +18,7 @@ export function getDb(): Db {
   if (db) return db;
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is not set (see apps/backend-api/.env.example)");
+  assertPoolerUrl("DATABASE_URL", url);
   const client = postgres(url, { prepare: false, max: 1, idle_timeout: 20 });
   db = drizzle(client, { schema });
   return db;

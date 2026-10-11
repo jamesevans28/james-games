@@ -1,10 +1,18 @@
 /** `npm run db:ping -w apps/backend-api`: checks both connection strings without printing them. */
 import postgres from "postgres";
+import { assertPoolerUrl } from "./url.js";
 
 for (const name of ["DATABASE_URL", "DATABASE_URL_MIGRATIONS"] as const) {
   const url = process.env[name];
   if (!url) {
     console.log(`${name}: not set`);
+    continue;
+  }
+  try {
+    assertPoolerUrl(name, url);
+  } catch (err) {
+    console.log(`${name}: ${(err as Error).message}`);
+    process.exitCode = 1;
     continue;
   }
   const client = postgres(url, { prepare: false, max: 1, connect_timeout: 10 });
