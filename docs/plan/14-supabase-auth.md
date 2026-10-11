@@ -41,7 +41,7 @@ Ids: `users.id` stays `text` and now holds the Supabase user UUID. No foreign ke
 
 ## T14.0 Supabase Auth configuration (Claude-scripted, MANUAL to finish)
 
-Status: todo
+Status: script and doc done (2026-10-11); MANUAL steps 1 and 3 and the real run are James's. `scripts/supabase-auth-setup.mjs` (field names checked against the Management API OpenAPI spec) also does the ES256 signing-key move through `/config/auth/signing-keys`, falling back to the dashboard steps if that fails; `--dry-run` prints both bodies; `scripts/lib/set-env.mjs` is now an importable `setEnv()` so values never go on a command line. The email provider stays on with "Confirm email" on (not "email sign-ups off"): `disable_signup` would block guests too, and the PIN sign-in goes through the email provider; T14.8 can try turning it off. Note: the admin console signs in with Google only, so it needs `--google` on a project before it can be used there (`docs/supabase-auth-setup.md`). Not yet checked (needs the real run): the JWKS curl and the `.env.local` key names.
 Depends on: T6.1 (done)
 Goal: both projects (`games4james`, `games4james-dev`) accept anonymous sign-ins, manual linking, Google (Apple when Phase 10 needs it), issue ES256 tokens, and the keys are in `.env.local` files.
 Files: `scripts/supabase-auth-setup.mjs` (new), `docs/supabase-auth-setup.md` (new, replaces `docs/firebase-auth-setup.md`), `apps/*/.env.example`, `scripts/lib/set-env.mjs` (reuse)
