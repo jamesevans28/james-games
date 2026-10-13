@@ -143,9 +143,14 @@ const staticGamesDir = path.join(publicDir, "static-games");
 await fs.promises.rm(staticGamesDir, { recursive: true, force: true });
 await fs.promises.mkdir(staticGamesDir, { recursive: true });
 
-// Social previews need a raster image; SVG thumbnails fall back to the brand card.
-const previewImage = (thumbnail) =>
-  `${domain}${thumbnail && /\.(png|jpe?g|webp)$/i.test(thumbnail) ? thumbnail : brandJson.ogImage}`;
+// Social previews need a raster image. A processed cover (cover.png from
+// scripts/art/cover.mjs) has a 1200×630 og.png beside it; SVG thumbnails fall
+// back to the brand card.
+const previewImage = (thumbnail) => {
+  if (thumbnail && /\/cover\.png$/.test(thumbnail))
+    return `${domain}${thumbnail.replace(/\/cover\.png$/, "/og.png")}`;
+  return `${domain}${thumbnail && /\.(png|jpe?g|webp)$/i.test(thumbnail) ? thumbnail : brandJson.ogImage}`;
+};
 
 for (const game of publicGames) {
   const url = `${domain}/games/${game.id}`;

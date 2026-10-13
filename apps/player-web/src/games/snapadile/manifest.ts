@@ -18,7 +18,7 @@ export default defineGame({
   input: ["tap"],
   // 1 point a croc; even six crocs at once can't be tapped faster than this.
   scoring: { max: 10_000, perSecondMax: 15, xpMultiplier: 1.93 },
-  cover: "/assets/snapadile/snapadile.jpg",
+  cover: "/assets/snapadile/cover.png",
   createdAt: "2025-09-16T00:00:00.000Z",
   updatedAt: "2025-11-25T00:00:00.000Z",
   seo: {
