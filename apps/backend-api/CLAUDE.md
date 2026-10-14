@@ -17,7 +17,7 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 - `index.ts` builds the Express app (CORS, JSON, `attachUser`, routes). `lambda.ts` wraps it with `serverless-http` and is the Lambda entry; `npm run bundle` makes `bundle/lambda.mjs` and the handler is `lambda.handler`. `dev-server.ts` runs it locally.
 - `routes/` → `controllers/` (HTTP only) → `services/` (rules) → `repos/` (Drizzle queries, one file per area) → Postgres.
 - `middleware/authGuards.ts`: verifies the Supabase access token from `Authorization: Bearer …` (ES256, checked with `jose` against the project JWKS) and sets `req.user`. `requireAuth` and `requireAdmin` guard routes. Admin is a boolean on the user row.
-- `services/supabaseAuthService.ts`: token verification, the Supabase admin calls (`convertToPinAccount`, `mintSignIn`, `setAccountType`, `deleteAuthUser`) and PIN hashing. A PIN account's auth user carries a synthetic `<username>@pin.games4james.com` that is never shown or returned.
+- `services/supabaseAuthService.ts`: token verification, the Supabase admin calls (`convertToPinAccount`, `mintSignIn`, `setAccountType`, `deleteAuthUser`, `listAuthUsers` for housekeeping) and PIN hashing. A PIN account's auth user carries a synthetic `<username>@pin.games4james.com` that is never shown or returned.
 - `config/index.ts`: env. `data/experienceLevels.ts`: the XP curve (seeded into `experience_levels`). `db/`: schema, client, migrate/seed/housekeeping.
 
 ## Route map
