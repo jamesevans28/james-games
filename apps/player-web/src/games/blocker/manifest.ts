@@ -32,6 +32,7 @@ export default defineGame({
     description:
       "Drop blocks, clear lines, chain combos. Easy to start, hard to stop. Free puzzle game, no ads.",
     category: "puzzle",
+    keyphrase: "block puzzle game",
   },
   // Remix mode (T11.2). The default is the normal game.
   remix: [{ key: "traySize", label: "Pieces to pick from", min: 1, max: 4, step: 1, default: 3 }],

@@ -43,6 +43,11 @@ export const manifestSchema = z.strictObject({
       "casual",
       "strategy",
     ]),
+    keyphrase: z
+      .string()
+      .regex(/^[a-z][a-z -]+ game$/, 'lower case, ending in "game"')
+      .max(32)
+      .optional(),
   }),
   sfx: z.array(z.string().regex(/^[a-z0-9-]+$/)).optional(),
   remix: z

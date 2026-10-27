@@ -29,5 +29,6 @@ export default defineGame({
     description:
       "Eat to grow, don't hit the walls (or yourself). Our take on the classic snake game. Free, no ads.",
     category: "arcade",
+    keyphrase: "snake game",
   },
 });

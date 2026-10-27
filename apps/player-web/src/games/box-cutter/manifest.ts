@@ -30,5 +30,6 @@ export default defineGame({
     description:
       "Draw lines to box off the board while dodging the fireball. Free, no ads, very satisfying.",
     category: "arcade",
+    keyphrase: "line drawing arcade game",
   },
 });

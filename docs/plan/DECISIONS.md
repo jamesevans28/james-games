@@ -105,3 +105,11 @@ James, after reviewing the Phase 14 PR. These supersede the two earlier lines of
 - **PIN sign-in mints its one-time token for the auth user's current email, looked up by id**, since an attached email replaces the synthetic `@pin.games4james.com` address.
 - **One Supabase project (`games4james`) for now**; local development signs in there too. The setup script adds the localhost redirects while no `games4james-dev` project exists, and moves local development there when one is created; the apps only read `.env.local`.
 - **Supabase's built-in sender only reaches the project's team**, so a mail server (SMTP, e.g. Resend or SES on a free tier) is required before real players add emails; the script takes `SMTP_*`. Until then players see "We can't send email to that address yet."
+
+## 2026-10-27: SEO review fixes
+
+- **Default SEO tags in `index.html` are removed on boot** (`data-default-seo`, `src/main.tsx`), so each page's `<Seo>` is the only canonical, description and JSON-LD. The `<title>` stays, because React 19 puts each page's title first.
+- **Only `active` games are indexable.** Beta, inactive and unknown game ids are `noindex` with no canonical, in the app and in the static pages crawlers get. Any other unknown path renders "Page not found" (`noindex`). The host still answers 200, so `noindex` stands in for a real 404.
+- **The sitemap lists only indexable pages.** `lastmod` only appears where it's true: each game's manifest `updatedAt`. `changefreq` and `priority` are dropped.
+- **`seo.keyphrase`** (optional, in the manifest) drives game titles: "<title>: free <keyphrase> for kids | Games4James", built by `gameSeoTitle()` and mirrored in `scripts/generate-sitemap.mjs`.
+- Dynamic rendering for crawlers (`infra/cloudfront/bot-rewrite.js`) stays for now. Prerendering one HTML for everyone is the later fix. James's steps: `docs/plan/seo-actions.md`.

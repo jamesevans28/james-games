@@ -28,7 +28,10 @@ function jsonLd(): string {
     publisher: { "@type": "Organization", name: brand.name, url: `${brand.origin}/` },
   };
   return [site, org]
-    .map((data) => `<script type="application/ld+json">${JSON.stringify(data)}</script>`)
+    .map(
+      (data) =>
+        `<script type="application/ld+json" data-default-seo>${JSON.stringify(data)}</script>`,
+    )
     .join("\n    ");
 }
 

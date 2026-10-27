@@ -31,5 +31,6 @@ export default defineGame({
     description:
       "Pick your letters, then guess the hidden words before the clock runs out. Free word game, no ads.",
     category: "word",
+    keyphrase: "word guessing game",
   },
 });

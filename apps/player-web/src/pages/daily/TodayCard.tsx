@@ -14,7 +14,7 @@ export default function TodayCard() {
     >
       <img
         src={game.thumbnail || brand.logoMark}
-        alt=""
+        alt={`${game.title} game cover`}
         width={64}
         height={64}
         decoding="async"

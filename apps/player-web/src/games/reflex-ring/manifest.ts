@@ -28,5 +28,6 @@ export default defineGame({
     description:
       "Tap when the arrow hits the bright segment. It speeds up every round. Free, no ads.",
     category: "reflex",
+    keyphrase: "reaction timing game",
   },
 });
