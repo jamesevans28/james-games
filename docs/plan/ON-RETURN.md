@@ -2,6 +2,8 @@
 
 Claude worked through the plan unattended on 9 Oct 2026, and Phase 14 (auth on Supabase, Firebase removed) landed on 11 Oct. **All code is written, tested and merged to `main`**: about 650 automated tests, CI green. What's left needs your accounts, your consoles, your art, or your say-so. Reviewed against every task file on 11 Oct 2026. Answer the questions inline or in chat; Claude reads this file at the start of the next session.
 
+**SEO (27 Oct 2026):** the checklist from the SEO review is in [`seo-actions.md`](seo-actions.md): words to check, Search Console, www, and links from other sites.
+
 ## Try it first (10 minutes)
 
 ```bash

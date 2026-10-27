@@ -40,54 +40,41 @@ const manifests = JSON.parse(
 if (!Array.isArray(manifests) || manifests.length === 0) {
   throw new Error("public/game-meta.json is empty: run scripts/export-manifests.mts first");
 }
-const publicGames = manifests
-  .filter((m) => m.status === "active")
-  .map((m) => ({
-    id: m.id,
-    title: m.title,
-    description: m.seo?.description || m.description || "",
-    createdAt: m.createdAt || now,
-    updatedAt: m.updatedAt || m.createdAt || now,
-    thumbnail: m.cover || null,
-  }));
+const toGame = (m) => ({
+  id: m.id,
+  title: m.title,
+  tagline: m.tagline || "",
+  description: m.seo?.description || m.description || "",
+  objective: m.objective || "",
+  controls: m.controls || "",
+  note: m.note || "",
+  noteBy: m.noteBy || "",
+  category: m.seo?.category || "casual",
+  keyphrase: m.seo?.keyphrase || "",
+  createdAt: m.createdAt || now,
+  updatedAt: m.updatedAt || m.createdAt || now,
+  thumbnail: m.cover || null,
+});
+const publicGames = manifests.filter((m) => m.status === "active").map(toGame);
+// Beta and inactive games still answer at /games/:id, so crawlers get a noindex page.
+const hiddenGames = manifests.filter((m) => m.status !== "active").map(toGame);
 console.log(`Found ${manifests.length} games, ${publicGames.length} active`);
 
 // ============================================================================
 // Generate sitemap.xml
 // ============================================================================
+// Only indexable pages (leaderboards and profiles are noindex). No changefreq or
+// priority: Google ignores both. lastmod only where it is true: a game's comes from
+// its manifest's updatedAt, so bump that when the game or its cover changes. The
+// home and info pages have none (a build date on every deploy teaches Google to
+// ignore lastmod altogether).
 const sitemapUrls = [
-  // Homepage - highest priority
-  {
-    loc: `${domain}/`,
-    lastmod: now,
-    changefreq: "daily",
-    priority: "1.0",
-  },
-  {
-    loc: `${domain}/privacy`,
-    lastmod: now,
-    changefreq: "monthly",
-    priority: "0.3",
-  },
-  ...["/about", "/parents", "/support"].map((page) => ({
-    loc: `${domain}${page}`,
-    lastmod: now,
-    changefreq: "monthly",
-    priority: "0.4",
-  })),
-  // Individual game pages
+  { loc: `${domain}/` },
+  ...["/about", "/parents", "/support", "/privacy"].map((page) => ({ loc: `${domain}${page}` })),
   ...publicGames.map((game) => ({
     loc: `${domain}/games/${game.id}`,
-    lastmod: game.updatedAt || game.createdAt || now,
-    changefreq: "weekly",
-    priority: "0.8",
-  })),
-  // Leaderboard pages (lower priority, still valuable for SEO)
-  ...publicGames.map((game) => ({
-    loc: `${domain}/leaderboard/${game.id}`,
-    lastmod: now,
-    changefreq: "daily",
-    priority: "0.6",
+    lastmod: game.updatedAt,
+    image: game.thumbnail ? `${domain}${game.thumbnail}` : null,
   })),
 ];
 
@@ -95,16 +82,20 @@ const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${sitemapUrls
-  .map(
-    (u) => `  <url>
-    <loc>${u.loc}</loc>
-    <lastmod>${u.lastmod}</lastmod>
-    <changefreq>${u.changefreq}</changefreq>
-    <priority>${u.priority}</priority>
-  </url>`,
+  .map((u) =>
+    [
+      "  <url>",
+      `    <loc>${u.loc}</loc>`,
+      u.lastmod && `    <lastmod>${u.lastmod}</lastmod>`,
+      u.image && `    <image:image><image:loc>${u.image}</image:loc></image:image>`,
+      "  </url>",
+    ]
+      .filter(Boolean)
+      .join("\n"),
   )
   .join("\n")}
-</urlset>`;
+</urlset>
+`;
 
 await fs.promises.writeFile(path.join(publicDir, "sitemap.xml"), sitemap, "utf8");
 console.log(`Generated sitemap.xml with ${sitemapUrls.length} URLs`);
@@ -126,9 +117,6 @@ Disallow: /signup
 
 # Sitemap location
 Sitemap: ${domain}/sitemap.xml
-
-# Crawl-delay for polite crawling
-Crawl-delay: 1
 `;
 
 await fs.promises.writeFile(path.join(publicDir, "robots.txt"), robots, "utf8");
@@ -152,10 +140,87 @@ const previewImage = (thumbnail) => {
   return `${domain}${thumbnail && /\.(png|jpe?g|webp)$/i.test(thumbnail) ? thumbnail : brandJson.ogImage}`;
 };
 
+// Same format as gameSeoTitle() in src/utils/seoKeywords.ts.
+const seoTitle = (game) =>
+  game.keyphrase
+    ? `${game.title}: free ${game.keyphrase} for kids | ${brandJson.name}`
+    : `${game.title} | ${brandJson.name}`;
+// Tiles and pages show the WebP beside cover.png (displayCover() in src/games/index.ts).
+const displayCover = (cover) => cover.replace(/\/cover\.png$/, "/cover.webp");
+const GENRES = {
+  reflex: "Reflex",
+  puzzle: "Puzzle",
+  word: "Word",
+  arcade: "Arcade",
+  sports: "Sports",
+  memory: "Memory",
+  action: "Action",
+  casual: "Casual",
+  strategy: "Strategy",
+};
+
+// Up to four other games, the same kind first, so every page links onwards.
+const relatedTo = (game) =>
+  [
+    ...publicGames.filter((g) => g.id !== game.id && g.category === game.category),
+    ...publicGames.filter((g) => g.id !== game.id && g.category !== game.category),
+  ].slice(0, 4);
+
+const siteLinks = `<nav>
+    <a href="${domain}/">All games</a> ·
+    <a href="${domain}/about">About us</a> ·
+    <a href="${domain}/parents">For grown-ups</a> ·
+    <a href="${domain}/privacy">Privacy</a>
+  </nav>`;
+
+const staticPage = ({ id, title, desc, url, image, robots, jsonLd, body }) => `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(title)}</title>
+  <meta name="description" content="${escapeHtml(desc)}">
+  <meta name="robots" content="${robots}">
+  <link rel="canonical" href="${url}">
+  <link rel="icon" type="image/svg+xml" href="${brandJson.logoMark}">
+  <meta name="theme-color" content="${brandJson.themeColor}">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="${escapeHtml(brandJson.name)}">
+  <meta property="og:title" content="${escapeHtml(title)}">
+  <meta property="og:description" content="${escapeHtml(desc)}">
+  <meta property="og:url" content="${url}">
+  <meta property="og:image" content="${image}">
+  <meta property="og:image:alt" content="${escapeHtml(title)}">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeHtml(title)}">
+  <meta name="twitter:description" content="${escapeHtml(desc)}">
+  <meta name="twitter:image" content="${image}">
+${
+  jsonLd
+    ? `
+  <script type="application/ld+json">
+${jsonForScript(jsonLd)}
+  </script>`
+    : ""
+}
+  <script>
+    // Humans who open this file directly go to the app. Bots served this page
+    // at /games/:id stay here (the path check stops a redirect loop).
+    if (location.pathname.indexOf("/static-games/") === 0) location.replace("/games/${id}");
+  </script>
+</head>
+<body>
+${body}
+</body>
+</html>
+`;
+
 for (const game of publicGames) {
   const url = `${domain}/games/${game.id}`;
   const desc = game.description || brandJson.description;
-  const title = `${game.title} | ${brandJson.name}`;
+  const title = seoTitle(game);
   const image = previewImage(game.thumbnail);
   const jsonLd = {
     "@context": "https://schema.org",
@@ -166,6 +231,7 @@ for (const game of publicGames) {
     image,
     gamePlatform: ["Web Browser", "Mobile Browser", "PWA"],
     applicationCategory: "Game",
+    genre: GENRES[game.category] || "Casual",
     operatingSystem: "Any",
     offers: {
       "@type": "Offer",
@@ -177,60 +243,87 @@ for (const game of publicGames) {
     publisher: { "@type": "Organization", name: brandJson.name, url: `${domain}/` },
     datePublished: game.createdAt,
     dateModified: game.updatedAt,
+    inLanguage: "en",
     isAccessibleForFree: true,
     playMode: "SinglePlayer",
   };
+  const related = relatedTo(game)
+    .map(
+      (g) =>
+        `      <li><a href="${domain}/games/${g.id}">${escapeHtml(g.title)}</a>: ${escapeHtml(g.tagline)}</li>`,
+    )
+    .join("\n");
+  const cover = game.thumbnail
+    ? `\n    <img src="${domain}${displayCover(game.thumbnail)}" alt="${escapeHtml(`${game.title} game cover`)}" width="512" height="512">`
+    : "";
 
-  const gameHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(title)}</title>
-  <meta name="description" content="${escapeHtml(desc)}">
-  <meta name="robots" content="index, follow">
-  <link rel="canonical" href="${url}">
-  <link rel="icon" type="image/svg+xml" href="${brandJson.logoMark}">
-  <meta name="theme-color" content="${brandJson.themeColor}">
+  const body = `  ${siteLinks}
+  <main>
+    <h1>${escapeHtml(game.title)}</h1>
+    <p><strong>${escapeHtml(game.tagline)}</strong></p>${cover}
+    <p>${escapeHtml(desc)}</p>
+    <p><a href="${url}">Play ${escapeHtml(game.title)} now</a>. It's free, with no ads and nothing to download: it runs in the web browser on phones, tablets and computers.</p>
+${
+  game.objective || game.controls
+    ? `
+    <h2>How to play</h2>
+    ${game.objective ? `<p>${escapeHtml(game.objective)}</p>` : ""}
+    ${game.controls ? `<p>${escapeHtml(game.controls)}</p>` : ""}
+`
+    : ""
+}${
+    game.note
+      ? `
+    <h2>${escapeHtml(game.noteBy ? `${game.noteBy}'s note` : "Designer's note")}</h2>
+    <p>${escapeHtml(game.note)}</p>
+`
+      : ""
+  }
+    <p>Made by ${escapeHtml(makersLine(brandJson.makers))}, a dad and his kids who make little games together.</p>
 
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="${escapeHtml(brandJson.name)}">
-  <meta property="og:title" content="${escapeHtml(title)}">
-  <meta property="og:description" content="${escapeHtml(desc)}">
-  <meta property="og:url" content="${url}">
-  <meta property="og:image" content="${image}">
-  <meta property="og:image:alt" content="${escapeHtml(game.title)}">
+    <h2>More games to try</h2>
+    <ul>
+${related}
+    </ul>
+  </main>`;
 
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${escapeHtml(title)}">
-  <meta name="twitter:description" content="${escapeHtml(desc)}">
-  <meta name="twitter:image" content="${image}">
+  await fs.promises.writeFile(
+    path.join(staticGamesDir, `${game.id}.html`),
+    staticPage({ id: game.id, title, desc, url, image, robots: "index, follow", jsonLd, body }),
+    "utf8",
+  );
+}
 
-  <script type="application/ld+json">
-${jsonForScript(jsonLd)}
-  </script>
-  <script>
-    // Humans who open this file directly go to the app. Bots served this page
-    // at /games/:id stay here (the path check stops a redirect loop).
-    if (location.pathname.indexOf("/static-games/") === 0) location.replace("/games/${game.id}");
-  </script>
-</head>
-<body>
-  <h1>${escapeHtml(game.title)}</h1>
-  <p>${escapeHtml(desc)}</p>
-  <p>Made by ${escapeHtml(makersLine(brandJson.makers))}.</p>
-  <p><a href="${url}">Play ${escapeHtml(game.title)} on ${escapeHtml(brandJson.name)}</a></p>
-</body>
-</html>
-`;
-
-  await fs.promises.writeFile(path.join(staticGamesDir, `${game.id}.html`), gameHtml, "utf8");
+// Beta and resting games: a short page that keeps them out of search results.
+for (const game of hiddenGames) {
+  const url = `${domain}/games/${game.id}`;
+  const body = `  ${siteLinks}
+  <main>
+    <h1>${escapeHtml(game.title)} is having a rest</h1>
+    <p><a href="${domain}/">See all the games on ${escapeHtml(brandJson.name)}</a>.</p>
+  </main>`;
+  await fs.promises.writeFile(
+    path.join(staticGamesDir, `${game.id}.html`),
+    staticPage({
+      id: game.id,
+      title: `${game.title} | ${brandJson.name}`,
+      desc: brandJson.description,
+      url,
+      image: `${domain}${brandJson.ogImage}`,
+      robots: "noindex, follow",
+      jsonLd: null,
+      body,
+    }),
+    "utf8",
+  );
 }
 
 // games-index.html is retired (T1.9/T3.4): the home page (/) is the game listing (T7.1).
 await fs.promises.rm(path.join(publicDir, "games-index.html"), { force: true });
 
-console.log(`Generated ${publicGames.length} static game pages`);
+console.log(
+  `Generated ${publicGames.length} static game pages and ${hiddenGames.length} noindex ones`,
+);
 console.log(
   `SEO generation complete: sitemap.xml (${sitemapUrls.length} URLs), robots.txt, static-games/`,
 );

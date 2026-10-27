@@ -12,6 +12,3 @@ Disallow: /signup
 
 # Sitemap location
 Sitemap: https://games4james.com/sitemap.xml
-
-# Crawl-delay for polite crawling
-Crawl-delay: 1

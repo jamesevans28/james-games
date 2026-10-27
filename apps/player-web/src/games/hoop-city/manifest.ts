@@ -30,6 +30,7 @@ export default defineGame({
     description:
       "Tap to float the ball through hoops as the city scrolls past. Free, no ads, one more go guaranteed.",
     category: "arcade",
+    keyphrase: "ball and hoops game",
   },
   // Remix mode (T11.2). The defaults are the normal game. A 0.6 gap still keeps
   // hoops ~460 px apart (≤ ~6 points/s), inside perSecondMax.

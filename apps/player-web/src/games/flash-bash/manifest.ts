@@ -31,5 +31,6 @@ export default defineGame({
     description:
       "Watch the lights, then copy the pattern. How long a sequence can you remember? Free memory game, no ads.",
     category: "memory",
+    keyphrase: "memory pattern game",
   },
 });

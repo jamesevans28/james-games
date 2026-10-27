@@ -18,6 +18,7 @@ import { getBest } from "../../platform/storage/bestScore";
 import {
   buildGameJsonLd,
   getGameSeoDescription,
+  gameSeoTitle,
   shareImageFor,
   SITE_URL,
 } from "../../utils/seoKeywords";
@@ -314,14 +315,16 @@ export default function PlayGame() {
   return (
     <div className="min-h-screen bg-paper text-ink flex flex-col">
       <Seo
-        title={meta ? `${meta.title} | ${brand.name}` : `${brand.name} | ${brand.tagline}`}
+        title={meta ? gameSeoTitle(meta.id, meta.title) : `${brand.name} | ${brand.tagline}`}
         description={seoDescription}
         url={`${SITE_URL}/games/${meta?.id ?? ""}`}
-        canonical={`${SITE_URL}/games/${meta?.id ?? ""}`}
+        canonical={meta?.status === "active" ? `${SITE_URL}/games/${meta.id}` : undefined}
         image={shareImageFor(meta?.thumbnail)}
         articlePublishedTime={meta?.createdAt}
         articleModifiedTime={meta?.updatedAt}
         jsonLd={jsonLd}
+        // Unknown ids, beta and resting (inactive) games stay out of search results.
+        noindex={meta?.status !== "active"}
       />
 
       <GameHeader

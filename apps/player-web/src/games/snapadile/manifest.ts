@@ -25,6 +25,7 @@ export default defineGame({
     description:
       "Crocs are swimming for your raft! Tap them before they snap. Free, no ads, and great for small fingers.",
     category: "reflex",
+    keyphrase: "crocodile tapping game",
   },
   // Remix mode (T11.2). The defaults are the normal game.
   remix: [

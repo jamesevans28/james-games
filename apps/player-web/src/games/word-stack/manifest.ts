@@ -32,5 +32,6 @@ export default defineGame({
     description:
       "Start with one 5-letter word, then swap in letters to make new ones. Free word puzzle, no ads.",
     category: "word",
+    keyphrase: "word ladder game",
   },
 });

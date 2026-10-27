@@ -33,7 +33,8 @@
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Drop blocks, clear lines, chain combos. Easy to start, hard to stop. Free puzzle game, no ads.",
-      "category": "puzzle"
+      "category": "puzzle",
+      "keyphrase": "block puzzle game"
     },
     "remix": [
       {
@@ -80,7 +81,8 @@
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Draw lines to box off the board while dodging the fireball. Free, no ads, very satisfying.",
-      "category": "arcade"
+      "category": "arcade",
+      "keyphrase": "line drawing arcade game"
     }
   },
   {
@@ -172,7 +174,8 @@
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Blast the space invaders, grab power-ups and survive the waves. Free shooter, no ads.",
-      "category": "action"
+      "category": "action",
+      "keyphrase": "space shooter game"
     }
   },
   {
@@ -208,7 +211,8 @@
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Watch the lights, then copy the pattern. How long a sequence can you remember? Free memory game, no ads.",
-      "category": "memory"
+      "category": "memory",
+      "keyphrase": "memory pattern game"
     }
   },
   {
@@ -244,7 +248,8 @@
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Tap to float the ball through hoops as the city scrolls past. Free, no ads, one more go guaranteed.",
-      "category": "arcade"
+      "category": "arcade",
+      "keyphrase": "ball and hoops game"
     },
     "remix": [
       {
@@ -298,7 +303,8 @@
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Bounce the ball, hit the targets, grab the power-ups. A free paddle game, no ads.",
-      "category": "arcade"
+      "category": "arcade",
+      "keyphrase": "brick breaker game"
     }
   },
   {
@@ -334,7 +340,8 @@
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Tap when the arrow hits the bright segment. It speeds up every round. Free, no ads.",
-      "category": "reflex"
+      "category": "reflex",
+      "keyphrase": "reaction timing game"
     }
   },
   {
@@ -372,7 +379,8 @@
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Eat to grow, don't hit the walls (or yourself). Our take on the classic snake game. Free, no ads.",
-      "category": "arcade"
+      "category": "arcade",
+      "keyphrase": "snake game"
     }
   },
   {
@@ -409,7 +417,8 @@
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Pick your letters, then guess the hidden words before the clock runs out. Free word game, no ads.",
-      "category": "word"
+      "category": "word",
+      "keyphrase": "word guessing game"
     }
   },
   {
@@ -445,7 +454,8 @@
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Start with one 5-letter word, then swap in letters to make new ones. Free word puzzle, no ads.",
-      "category": "word"
+      "category": "word",
+      "keyphrase": "word ladder game"
     }
   },
   {
@@ -685,7 +695,8 @@
     "updatedAt": "2025-11-25T00:00:00.000Z",
     "seo": {
       "description": "Crocs are swimming for your raft! Tap them before they snap. Free, no ads, and great for small fingers.",
-      "category": "reflex"
+      "category": "reflex",
+      "keyphrase": "crocodile tapping game"
     },
     "remix": [
       {

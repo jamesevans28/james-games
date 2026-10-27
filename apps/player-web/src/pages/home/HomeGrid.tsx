@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { Link } from "react-router";
 import Seo from "../../components/Seo";
 import GameTile from "../../components/feed/GameTile";
 import { useAuth } from "../../context/AuthProvider";
@@ -13,7 +14,7 @@ import {
   buildOrganizationJsonLd,
   SITE_URL,
 } from "../../utils/seoKeywords";
-import { brand } from "../../config/brand";
+import { brand, makersLine } from "../../config/brand";
 import TodayCard from "../daily/TodayCard";
 
 /** Tiles in the first row load their covers at once; everything else is lazy. */
@@ -66,7 +67,7 @@ export default function HomeGrid() {
           buildGameCollectionJsonLd(visible),
         ]}
       />
-      <h1 className="sr-only">{brand.name}</h1>
+      <h1 className="sr-only">{brand.name}: free little games for kids</h1>
 
       <TodayCard />
       {fresh.length > 0 && <Section title="New">{grid(fresh, 0, false)}</Section>}
@@ -74,7 +75,39 @@ export default function HomeGrid() {
         <Section title="Play again">{grid(playAgain, fresh.length, false)}</Section>
       )}
       <Section title="All games">{grid(all, fresh.length + playAgain.length, true)}</Section>
+      <AboutBlurb />
     </div>
+  );
+}
+
+/**
+ * A few plain sentences under the grid: the only words on the home page apart from
+ * game titles, so search engines (and grown-ups) can tell what the site is.
+ */
+function AboutBlurb() {
+  return (
+    <section className="pt-8 text-sm text-ink-2 space-y-2">
+      <h2 className="font-display text-base font-extrabold text-ink">
+        Free games for kids, made by a family
+      </h2>
+      <p>
+        {brand.name} is a little collection of free games made by {makersLine()}. Snake, word games,
+        puzzles, memory games and quick tapping games, all made for small fingers.
+      </p>
+      <p>
+        They play in the web browser on phones, tablets and computers: no ads, no downloads and no
+        sign-up needed. Tap a game and play.
+      </p>
+      <p>
+        <Link to="/about" className="font-bold text-brand underline">
+          About us
+        </Link>{" "}
+        ·{" "}
+        <Link to="/parents" className="font-bold text-brand underline">
+          For grown-ups
+        </Link>
+      </p>
+    </section>
   );
 }
 

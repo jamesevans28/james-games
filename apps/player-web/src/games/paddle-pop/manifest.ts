@@ -32,5 +32,6 @@ export default defineGame({
     description:
       "Bounce the ball, hit the targets, grab the power-ups. A free paddle game, no ads.",
     category: "arcade",
+    keyphrase: "brick breaker game",
   },
 });

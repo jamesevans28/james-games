@@ -31,5 +31,6 @@ export default defineGame({
     description:
       "Blast the space invaders, grab power-ups and survive the waves. Free shooter, no ads.",
     category: "action",
+    keyphrase: "space shooter game",
   },
 });
