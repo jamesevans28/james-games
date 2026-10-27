@@ -8,6 +8,7 @@ import { features } from "../config/features";
 import { adapters } from "../platform/adapters";
 import { errorMessage } from "../utils/errorCode";
 import EmailCodeSignIn from "./auth/EmailCodeSignIn";
+import { pinLengthOk } from "../utils/pinRules";
 
 type AuthMode = "login" | "register";
 
@@ -73,8 +74,8 @@ export default function LoginPage() {
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
       errors.push("Username can only contain letters, numbers, and underscores");
     }
-    if (!pin || pin.length !== 6) {
-      errors.push("PIN must be 6 digits");
+    if (!pinLengthOk(mode, pin)) {
+      errors.push(mode === "login" ? "PIN must be 4 to 6 digits" : "PIN must be 6 digits");
     }
     if (!/^\d+$/.test(pin)) {
       errors.push("PIN must be numbers only");
@@ -306,13 +307,15 @@ export default function LoginPage() {
                 placeholder="••••••"
                 autoComplete={mode === "register" ? "new-password" : "current-password"}
               />
-              {triedSubmit && (!pin || pin.length !== 6) && (
-                <div className="text-grape text-xs mt-1 font-medium">PIN must be 6 digits</div>
+              {triedSubmit && !pinLengthOk(mode, pin) && (
+                <div className="text-grape text-xs mt-1 font-medium">
+                  {mode === "login" ? "PIN must be 4 to 6 digits" : "PIN must be 6 digits"}
+                </div>
               )}
               <div className="text-xs text-ink-2 mt-1.5">
                 {mode === "register"
                   ? "Pick 6 numbers you'll remember (not your birthday)."
-                  : "Enter your 6-digit PIN"}
+                  : "Enter your PIN (players from the old site may have 4 digits)"}
               </div>
             </label>
 

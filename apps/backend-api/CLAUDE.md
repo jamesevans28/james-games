@@ -38,7 +38,7 @@ Local setup: copy `apps/backend-api/.env.example` to `.env.local` and fill in va
 
 ## Data layer
 
-Supabase Postgres (project in ap-southeast-2) through Drizzle ORM (Phase 6). The prototype's AWS NoSQL tables (`games4james-*`) are not migrated and are deleted at relaunch (T13.6). **All data lives in Postgres.**
+Supabase Postgres (project in ap-southeast-2) through Drizzle ORM (Phase 6). The prototype's players and high scores were imported once on 2026-10-27 (`npm run legacy:import`, DECISIONS); its AWS NoSQL tables (`games4james-*`) are deleted at relaunch (T13.6). **All data lives in Postgres.**
 
 - `src/db/schema.ts` is the schema. After changing it run `npm run db:generate -w apps/backend-api` and commit the SQL it writes to `drizzle/`. Never edit a migration that has been applied; add a new one.
 - `src/db/client.ts`: `getDb()` (one `postgres` connection per Lambda container) and `setDb()` for tests.

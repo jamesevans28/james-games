@@ -113,3 +113,11 @@ James, after reviewing the Phase 14 PR. These supersede the two earlier lines of
 - **The sitemap lists only indexable pages.** `lastmod` only appears where it's true: each game's manifest `updatedAt`. `changefreq` and `priority` are dropped.
 - **`seo.keyphrase`** (optional, in the manifest) drives game titles: "<title>: free <keyphrase> for kids | Games4James", built by `gameSeoTitle()` and mirrored in `scripts/generate-sitemap.mjs`.
 - Dynamic rendering for crawlers (`infra/cloudfront/bot-rewrite.js`) stays for now. Prerendering one HTML for everyone is the later fix. James's steps: `docs/plan/seo-actions.md`.
+
+## 2026-10-27: Prototype players brought across (reverses the 9 Oct "no migration" rule)
+
+- James asked to bring the prototype's players and high scores across. `npm run legacy:import -w apps/backend-api` (`scripts/migrate-prototype.ts`, logic in `src/services/legacyImport.ts`) ran once against production on 27 Oct: 53 players and 187 high scores. Rerunning skips anyone already imported (`users.prefs.legacyId`); `--undo` removes them.
+- **Username + PIN accounts (9)** get a Supabase sign-in with their old username and PIN hash, so they sign in as before. Sign-in now takes 4 to 6 digits, because prototype PINs may be 4; new PINs stay 6.
+- **Everyone else with a usable score (44)** comes across as a row with id `legacy-<old id>` and no sign-in: their name and best scores show on leaderboards, but nobody can sign in to them.
+- Left out: scores with no account (old name-only entries), scores on games that no longer exist (Over Stack, Reindeer Run) or above the game's limit, accounts with no scores, emails, admin flags and streaks. Screen names that fail today's rules, or are taken, were replaced with generated ones (13), and that includes the makers' own names, which are reserved.
+- The DynamoDB tables are still deleted in T13.6; the import does not need them again.
