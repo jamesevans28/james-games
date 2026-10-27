@@ -18,3 +18,25 @@ export function assertPoolerUrl(name: string, url: string): void {
     );
   }
 }
+
+/**
+ * The Supabase project a database or API URL belongs to: `<ref>` from `<ref>.supabase.co`,
+ * `db.<ref>.supabase.co` or the pooler user `postgres.<ref>`; "local" for a loopback host
+ * (`supabase start`); null when it can't tell. The housekeeping job only deletes auth users
+ * when its database and Supabase URL name the same project (T14.10).
+ */
+export function supabaseProjectRef(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  const host = parsed.hostname.toLowerCase();
+  if (host === "localhost" || host === "127.0.0.1" || host === "[::1]") return "local";
+  const direct = /^(?:db\.)?([a-z0-9]+)\.supabase\.co$/.exec(host);
+  if (direct) return direct[1]!;
+  const pooler = /^postgres\.([a-z0-9]+)$/i.exec(decodeURIComponent(parsed.username));
+  if (pooler && host.endsWith(".pooler.supabase.com")) return pooler[1]!.toLowerCase();
+  return null;
+}

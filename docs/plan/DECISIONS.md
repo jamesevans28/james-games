@@ -105,3 +105,9 @@ James, after reviewing the Phase 14 PR. These supersede the two earlier lines of
 - **PIN sign-in mints its one-time token for the auth user's current email, looked up by id**, since an attached email replaces the synthetic `@pin.games4james.com` address.
 - **One Supabase project (`games4james`) for now**; local development signs in there too. The setup script adds the localhost redirects while no `games4james-dev` project exists, and moves local development there when one is created; the apps only read `.env.local`.
 - **Supabase's built-in sender only reaches the project's team**, so a mail server (SMTP, e.g. Resend or SES on a free tier) is required before real players add emails; the script takes `SMTP_*`. Until then players see "We can't send email to that address yet."
+
+## 2026-10-11 (later): Guests' Supabase auth users are cleaned up daily (T14.10)
+
+- **The daily housekeeping job deletes idle guests' Supabase auth users**, not just their rows: the auth users of guests whose rows it deletes, and anonymous auth users idle for 90 days that never got a row. Otherwise every guest leaves an auth user behind in `games4james` forever.
+- **Only users Supabase lists as `is_anonymous` are deleted**, at most 500 per run, and only when the job's database and Supabase URL are the same project. The admin API has no anonymous filter, so the job reads the whole user list (up to 100,000 users) before deleting; a larger project would need a SQL query on `auth.users` instead.
+- **Rows go first, auth users second.** If an auth delete fails, the user has no row and is picked up as an orphan on a later run, so nothing is left half-deleted for long. Guest rows are not capped (unchanged from T6.9).
