@@ -23,7 +23,7 @@ export default defineGame({
   // level takes at least ~4 s to clear plus the Next level tap → ~600 points/s
   // ceiling; perSecondMax leaves margin. A great run is ~10 levels (~15,000).
   scoring: { max: 100_000, perSecondMax: 1_000, xpMultiplier: 0.03 },
-  cover: "/assets/box-cutter/boxcutter.jpg",
+  cover: "/assets/box-cutter/cover.png",
   createdAt: "2025-12-23T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   seo: {

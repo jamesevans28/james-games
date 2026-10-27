@@ -21,7 +21,7 @@ export default defineGame({
   // targets at least 40° apart → about 7 hits/s, so 14 points/s is the ceiling
   // (auto-tap power-up included). A great run is a few hundred; max leaves room.
   scoring: { max: 5_000, perSecondMax: 15, xpMultiplier: 2.92 },
-  cover: "/assets/reflex-ring/thumbnail.svg",
+  cover: "/assets/reflex-ring/cover.png",
   createdAt: "2025-09-15T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   seo: {

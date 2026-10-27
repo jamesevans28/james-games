@@ -25,7 +25,7 @@ export default defineGame({
   // short run that ends on one big word. Runs have no turn cap: a great run is ~60
   // words (~600 points), so 20,000 (about 2,000 words) is far above any real stack.
   scoring: { max: 20_000, perSecondMax: 30, xpMultiplier: 1.0 },
-  cover: "/assets/word-stack/thumbnail.svg",
+  cover: "/assets/word-stack/cover.png",
   createdAt: "2025-12-26T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   seo: {

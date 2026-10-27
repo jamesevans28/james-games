@@ -73,3 +73,9 @@ Output: apps/player-web/public/assets/word-stack/cover.png
 Subject: a wobbly tower of colourful rectangular blocks with one more block swinging in from the side
 Composition: the tower in the centre, rising from the bottom edge.
 Output: apps/player-web/public/assets/stack-tower/cover.png
+
+### colour-sort
+
+Subject: four glass test tubes standing in a row, each holding a stack of round coloured balls (red, yellow, green, blue, purple), with one ball hopping from one tube to another and a smiling face on that ball
+Composition: the tubes in the centre, standing on the bottom third, the hopping ball above them.
+Output: apps/player-web/public/assets/colour-sort/cover.png

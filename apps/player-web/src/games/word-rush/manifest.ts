@@ -24,7 +24,7 @@ export default defineGame({
   // submit, 2 s before the next board), so ~35 points/s is the ceiling; 60 leaves
   // a margin. A great run is 20 levels at ~80 points (1,600); max leaves lots of room.
   scoring: { max: 20_000, perSecondMax: 60, xpMultiplier: 1.42 },
-  cover: "/assets/word-rush/thumbnail.svg",
+  cover: "/assets/word-rush/cover.png",
   createdAt: "2025-11-05T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   seo: {

@@ -25,7 +25,7 @@ export default defineGame({
   // ≤ ~220 points/s → 250. A great run (a few hundred moves, ~50 points a move) is
   // ~25k, but there is no time limit, so max leaves plenty of room.
   scoring: { max: 500_000, perSecondMax: 250, xpMultiplier: 0.63 },
-  cover: "/assets/blocker/thumbnail.svg",
+  cover: "/assets/blocker/cover.png",
   createdAt: "2025-11-24T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   seo: {

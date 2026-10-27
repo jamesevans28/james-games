@@ -22,7 +22,7 @@ export default defineGame({
   // so no run can score more than 337. At most one apple per move, and moves are never
   // quicker than 80 ms, so 12.5 points/s is a hard ceiling (real play is ~1/s).
   scoring: { max: 340, perSecondMax: 13, xpMultiplier: 18.5 },
-  cover: "/assets/serpento/thumbnail.svg",
+  cover: "/assets/serpento/cover.png",
   createdAt: "2025-11-17T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   seo: {

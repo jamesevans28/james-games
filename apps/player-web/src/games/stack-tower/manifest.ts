@@ -17,7 +17,7 @@ export default defineGame({
   design: { w: 540, h: 960 },
   input: ["tap"],
   scoring: { max: 10_000, perSecondMax: 5, xpMultiplier: 1 },
-  cover: "/assets/stack-tower/cover.svg",
+  cover: "/assets/stack-tower/cover.png",
   createdAt: "2026-10-08T00:00:00.000Z",
   updatedAt: "2026-10-08T00:00:00.000Z",
   seo: {

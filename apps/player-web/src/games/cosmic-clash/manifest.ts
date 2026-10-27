@@ -24,7 +24,7 @@ export default defineGame({
   // ceiling. A wave is 32 aliens = 320 points and takes 10 s+ to clear; a great
   // run is 20–30 waves (6,000–10,000). 100,000 is ~300 waves.
   scoring: { max: 100_000, perSecondMax: 150, xpMultiplier: 0.5 },
-  cover: "/assets/cosmic-clash/thumbnail.svg",
+  cover: "/assets/cosmic-clash/cover.png",
   createdAt: "2025-11-21T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   seo: {

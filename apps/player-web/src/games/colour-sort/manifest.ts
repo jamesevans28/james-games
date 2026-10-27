@@ -25,7 +25,7 @@ export default defineGame({
   // 20. perSecondMax 150 is ~2× the superhuman ceiling. A great run (all 20 levels,
   // mostly within par) is ~2,600, so 0.5 XP a point gives ~1,300 XP for a long run.
   scoring: { max: 3_000, perSecondMax: 150, xpMultiplier: 0.5 },
-  cover: "/assets/colour-sort/cover.svg",
+  cover: "/assets/colour-sort/cover.png",
   createdAt: "2026-10-09T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   seo: {

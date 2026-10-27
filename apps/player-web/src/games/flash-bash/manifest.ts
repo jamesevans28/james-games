@@ -24,7 +24,7 @@ export default defineGame({
   // so (L + 3) / (1.4 + 0.57 L) ≤ ~2.1 points/s even with instant taps; 5 is ~2×.
   // A great run (8 rounds, 24 patterns) scores about 200; max leaves lots of room.
   scoring: { max: 5_000, perSecondMax: 5, xpMultiplier: 4.13 },
-  cover: "/assets/flash-bash/thumbnail.svg",
+  cover: "/assets/flash-bash/cover.png",
   createdAt: "2025-11-04T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   seo: {

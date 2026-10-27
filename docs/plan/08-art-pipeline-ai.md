@@ -50,7 +50,7 @@ Steps:
 
 ## T8.4 Covers for the 11 active games
 
-Status: in-progress (2026-10-13: Snapadile done from a ChatGPT image, which is the style anchor for the rest; processed without `--quantise`, because palette snapping striped the crayon texture. Tiles show `cover.webp` (156 KB) via `displayCover`, and link previews use `og.png`)
+Status: done (2026-10-27: all 13 active and beta games have covers. Snapadile from ChatGPT is the style anchor; the other 12 came from `gpt-image-2` with `--ref` on the anchor, one image each. No `--quantise`. Tiles use `cover.webp`, link previews `og.png`)
 Depends on: T8.2, T8.3, T4.8
 Steps: generate, process, commit covers and OG images; update each manifest's `cover`; delete the old `thumbnail.svg`/`*.jpg` covers (move the four painted ones to `docs/archive/art/`). Update the 15 static SEO pages' `og:image` via regeneration (T3.4 script).
 Done when: the home grid shows 11 covers in one style; `check.mjs` passes; link previews show the new OG images.

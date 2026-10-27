@@ -28,7 +28,7 @@
       "perSecondMax": 250,
       "xpMultiplier": 0.63
     },
-    "cover": "/assets/blocker/thumbnail.svg",
+    "cover": "/assets/blocker/cover.png",
     "createdAt": "2025-11-24T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
@@ -75,7 +75,7 @@
       "perSecondMax": 1000,
       "xpMultiplier": 0.03
     },
-    "cover": "/assets/box-cutter/boxcutter.jpg",
+    "cover": "/assets/box-cutter/cover.png",
     "createdAt": "2025-12-23T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
@@ -111,7 +111,7 @@
       "perSecondMax": 150,
       "xpMultiplier": 0.5
     },
-    "cover": "/assets/colour-sort/cover.svg",
+    "cover": "/assets/colour-sort/cover.png",
     "createdAt": "2026-10-09T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
@@ -167,7 +167,7 @@
       "perSecondMax": 150,
       "xpMultiplier": 0.5
     },
-    "cover": "/assets/cosmic-clash/thumbnail.svg",
+    "cover": "/assets/cosmic-clash/cover.png",
     "createdAt": "2025-11-21T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
@@ -203,7 +203,7 @@
       "perSecondMax": 5,
       "xpMultiplier": 4.13
     },
-    "cover": "/assets/flash-bash/thumbnail.svg",
+    "cover": "/assets/flash-bash/cover.png",
     "createdAt": "2025-11-04T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
@@ -239,7 +239,7 @@
       "perSecondMax": 10,
       "xpMultiplier": 2.15
     },
-    "cover": "/assets/hoop-city/hoopcity.jpg",
+    "cover": "/assets/hoop-city/cover.png",
     "createdAt": "2025-11-28T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
@@ -293,7 +293,7 @@
       "perSecondMax": 50,
       "xpMultiplier": 5.13
     },
-    "cover": "/assets/paddle-pop/paddlepop.jpg",
+    "cover": "/assets/paddle-pop/cover.png",
     "createdAt": "2025-11-05T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
@@ -329,7 +329,7 @@
       "perSecondMax": 15,
       "xpMultiplier": 2.92
     },
-    "cover": "/assets/reflex-ring/thumbnail.svg",
+    "cover": "/assets/reflex-ring/cover.png",
     "createdAt": "2025-09-15T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
@@ -367,7 +367,7 @@
       "perSecondMax": 13,
       "xpMultiplier": 18.5
     },
-    "cover": "/assets/serpento/thumbnail.svg",
+    "cover": "/assets/serpento/cover.png",
     "createdAt": "2025-11-17T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
@@ -404,7 +404,7 @@
       "perSecondMax": 60,
       "xpMultiplier": 1.42
     },
-    "cover": "/assets/word-rush/thumbnail.svg",
+    "cover": "/assets/word-rush/cover.png",
     "createdAt": "2025-11-05T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
@@ -440,7 +440,7 @@
       "perSecondMax": 30,
       "xpMultiplier": 1
     },
-    "cover": "/assets/word-stack/thumbnail.svg",
+    "cover": "/assets/word-stack/cover.png",
     "createdAt": "2025-12-26T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
@@ -474,7 +474,7 @@
       "perSecondMax": 5,
       "xpMultiplier": 1
     },
-    "cover": "/assets/stack-tower/cover.svg",
+    "cover": "/assets/stack-tower/cover.png",
     "createdAt": "2026-10-08T00:00:00.000Z",
     "updatedAt": "2026-10-08T00:00:00.000Z",
     "seo": {
