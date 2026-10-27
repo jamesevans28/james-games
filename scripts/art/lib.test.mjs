@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   atlasJson,
@@ -60,9 +61,13 @@ describe("art lib", () => {
     expect(Object.keys(json.frames)).toEqual(["a", "b", "c"]);
   });
 
-  it("reads 12 cover prompts that all start with the base prompt", () => {
+  it("has a cover prompt for every active and beta game, all starting with the base prompt", () => {
     const covers = readPrompts("covers");
-    expect(covers).toHaveLength(12);
+    const games = JSON.parse(
+      readFileSync(new URL("../../apps/player-web/public/game-meta.json", import.meta.url), "utf8"),
+    );
+    const live = games.filter((g) => g.status !== "inactive").map((g) => g.id);
+    expect(covers.map((c) => c.name).sort()).toEqual([...live].sort());
     for (const c of covers) expect(fullPrompt(c)).toMatch(/^A simple drawing of .+7-year-old/);
   });
 });
