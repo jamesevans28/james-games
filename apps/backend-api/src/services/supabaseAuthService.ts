@@ -61,6 +61,14 @@ export function isSyntheticEmail(email: string | undefined | null): boolean {
 
 export type AuthAccountType = "username_pin" | "linked";
 
+/** An auth user as the daily clean-up sees it (T14.10). No email or metadata. */
+export type AuthUserSummary = {
+  id: string;
+  isAnonymous: boolean;
+  createdAt: Date;
+  lastSignInAt: Date | null;
+};
+
 /** What the account flows need from Supabase's admin API. Route tests swap in a fake. */
 export interface AuthAdmin {
   /** Gives the auth user (usually anonymous) its synthetic email and the PIN account type. */
@@ -73,6 +81,8 @@ export interface AuthAdmin {
   setAccountType(uid: string, accountType: AuthAccountType): Promise<void>;
   /** Deletes the auth user; one that is already gone counts as deleted. */
   deleteAuthUser(uid: string): Promise<void>;
+  /** One page (from 1) of auth users, in Supabase's order. A short page is the last one. */
+  listUsers(page: number, perPage: number): Promise<AuthUserSummary[]>;
 }
 
 /** Supabase errors carry a code and status; only those are ever logged or rethrown. */
@@ -140,6 +150,18 @@ const supabaseAdmin: AuthAdmin = {
     if (error?.code === "user_not_found" || error?.status === 404) return;
     check(error);
   },
+  async listUsers(page, perPage) {
+    // Page by count, not by `nextPage`: auth-js 2.117.2 reads only the first digit of the
+    // page numbers in the Link header.
+    const { data, error } = await admin().listUsers({ page, perPage });
+    check(error);
+    return data.users.map((u) => ({
+      id: u.id,
+      isAnonymous: u.is_anonymous === true,
+      createdAt: new Date(u.created_at),
+      lastSignInAt: u.last_sign_in_at ? new Date(u.last_sign_in_at) : null,
+    }));
+  },
 };
 
 let authAdmin: AuthAdmin = supabaseAdmin;
@@ -155,6 +177,8 @@ export const mintSignIn: AuthAdmin["mintSignIn"] = (uid) => authAdmin.mintSignIn
 export const setAccountType: AuthAdmin["setAccountType"] = (uid, accountType) =>
   authAdmin.setAccountType(uid, accountType);
 export const deleteAuthUser: AuthAdmin["deleteAuthUser"] = (uid) => authAdmin.deleteAuthUser(uid);
+export const listAuthUsers: AuthAdmin["listUsers"] = (page, perPage) =>
+  authAdmin.listUsers(page, perPage);
 
 // ============================================================================
 // PIN hashing
