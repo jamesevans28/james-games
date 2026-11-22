@@ -14,30 +14,34 @@
     <meta name="apple-mobile-web-app-title" content="%BRAND.name%" />
     <meta name="theme-color" content="%BRAND.themeColor%" />
     <!-- The PWA plugin injects the manifest link at build time -->
+    <!-- Tags marked data-default-seo are the home page's, for crawlers that don't run
+         JavaScript. src/main.tsx removes them on boot so each page's <Seo> is the only set
+         (the title stays: React 19 puts each page's <title> first). -->
     <title>%BRAND.name% | %BRAND.tagline%</title>
-    <meta name="description" content="%BRAND.description%" />
-    <meta name="author" content="%BRAND.makersLine%" />
+    <meta data-default-seo name="description" content="%BRAND.description%" />
+    <meta data-default-seo name="author" content="%BRAND.makersLine%" />
     <meta
+      data-default-seo
       name="robots"
       content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     />
-    <link rel="canonical" href="%BRAND.origin%/" />
+    <link data-default-seo rel="canonical" href="%BRAND.origin%/" />
     <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="%BRAND.name%" />
-    <meta property="og:locale" content="en_AU" />
-    <meta property="og:title" content="%BRAND.name% | %BRAND.tagline%" />
-    <meta property="og:description" content="%BRAND.description%" />
-    <meta property="og:url" content="%BRAND.origin%/" />
-    <meta property="og:image" content="%BRAND.origin%%BRAND.ogImage%" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="%BRAND.name%" />
+    <meta data-default-seo property="og:type" content="website" />
+    <meta data-default-seo property="og:site_name" content="%BRAND.name%" />
+    <meta data-default-seo property="og:locale" content="en_AU" />
+    <meta data-default-seo property="og:title" content="%BRAND.name% | %BRAND.tagline%" />
+    <meta data-default-seo property="og:description" content="%BRAND.description%" />
+    <meta data-default-seo property="og:url" content="%BRAND.origin%/" />
+    <meta data-default-seo property="og:image" content="%BRAND.origin%%BRAND.ogImage%" />
+    <meta data-default-seo property="og:image:width" content="1200" />
+    <meta data-default-seo property="og:image:height" content="630" />
+    <meta data-default-seo property="og:image:alt" content="%BRAND.name%" />
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="%BRAND.name% | %BRAND.tagline%" />
-    <meta name="twitter:description" content="%BRAND.description%" />
-    <meta name="twitter:image" content="%BRAND.origin%%BRAND.ogImage%" />
+    <meta data-default-seo name="twitter:card" content="summary_large_image" />
+    <meta data-default-seo name="twitter:title" content="%BRAND.name% | %BRAND.tagline%" />
+    <meta data-default-seo name="twitter:description" content="%BRAND.description%" />
+    <meta data-default-seo name="twitter:image" content="%BRAND.origin%%BRAND.ogImage%" />
     <!-- Structured data: WebSite + Organization (brand-html plugin) -->
     <!-- %BRAND_JSONLD% -->
   </head>

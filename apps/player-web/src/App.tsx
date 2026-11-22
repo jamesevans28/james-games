@@ -32,6 +32,7 @@ const ParentsPage = lazy(() => import("./pages/parents"));
 const SupportPage = lazy(() => import("./pages/support"));
 const DailyPage = lazy(() => import("./pages/daily/DailyPage"));
 const SharedPlay = lazy(() => import("./pages/share/SharedPlay"));
+const NotFoundPage = lazy(() => import("./pages/NotFound"));
 
 const isHomePath = () => window.location.pathname === "/";
 
@@ -91,6 +92,7 @@ function AppRoutes() {
             <Route path="/daily" element={<DailyPage />} />
             <Route path="/s/:playId" element={<SharedPlay />} />
             <Route path="/leaderboard/:gameId" element={<LeaderboardPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
       </Suspense>

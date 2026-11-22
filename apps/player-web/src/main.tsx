@@ -20,6 +20,11 @@ import "./index.css";
 // A saved run changes boards, ratings, XP and the profile: refetch whatever is on screen.
 onScoreSaved((result) => invalidateAfterRun(result.gameId));
 
+// index.html carries the home page's tags for crawlers that don't run JavaScript. Each
+// page renders its own <Seo>, so drop these first: two canonicals (one always the home
+// page) tell Google every page is a copy of the home page.
+document.head.querySelectorAll("[data-default-seo]").forEach((el) => el.remove());
+
 // Inside the iOS/Android app, load native storage etc. before anything reads it (T10.1).
 void initAdapters().then(() => {
   startWebAnalytics();

@@ -111,3 +111,19 @@ James, after reviewing the Phase 14 PR. These supersede the two earlier lines of
 - **The daily housekeeping job deletes idle guests' Supabase auth users**, not just their rows: the auth users of guests whose rows it deletes, and anonymous auth users idle for 90 days that never got a row. Otherwise every guest leaves an auth user behind in `games4james` forever.
 - **Only users Supabase lists as `is_anonymous` are deleted**, at most 500 per run, and only when the job's database and Supabase URL are the same project. The admin API has no anonymous filter, so the job reads the whole user list (up to 100,000 users) before deleting; a larger project would need a SQL query on `auth.users` instead.
 - **Rows go first, auth users second.** If an auth delete fails, the user has no row and is picked up as an orphan on a later run, so nothing is left half-deleted for long. Guest rows are not capped (unchanged from T6.9).
+
+## 2026-10-27: SEO review fixes
+
+- **Default SEO tags in `index.html` are removed on boot** (`data-default-seo`, `src/main.tsx`), so each page's `<Seo>` is the only canonical, description and JSON-LD. The `<title>` stays, because React 19 puts each page's title first.
+- **Only `active` games are indexable.** Beta, inactive and unknown game ids are `noindex` with no canonical, in the app and in the static pages crawlers get. Any other unknown path renders "Page not found" (`noindex`). The host still answers 200, so `noindex` stands in for a real 404.
+- **The sitemap lists only indexable pages.** `lastmod` only appears where it's true: each game's manifest `updatedAt`. `changefreq` and `priority` are dropped.
+- **`seo.keyphrase`** (optional, in the manifest) drives game titles: "<title>: free <keyphrase> for kids | Games4James", built by `gameSeoTitle()` and mirrored in `scripts/generate-sitemap.mjs`.
+- Dynamic rendering for crawlers (`infra/cloudfront/bot-rewrite.js`) stays for now. Prerendering one HTML for everyone is the later fix. James's steps: `docs/plan/seo-actions.md`.
+
+## 2026-10-27: Prototype players brought across (reverses the 9 Oct "no migration" rule)
+
+- James asked to bring the prototype's players and high scores across. `npm run legacy:import -w apps/backend-api` (`scripts/migrate-prototype.ts`, logic in `src/services/legacyImport.ts`) ran once against production on 27 Oct: 53 players and 187 high scores. Rerunning skips anyone already imported (`users.prefs.legacyId`); `--undo` removes them.
+- **Username + PIN accounts (9)** get a Supabase sign-in with their old username and PIN hash, so they sign in as before. Sign-in now takes 4 to 6 digits, because prototype PINs may be 4; new PINs stay 6.
+- **Everyone else with a usable score (44)** comes across as a row with id `legacy-<old id>` and no sign-in: their name and best scores show on leaderboards, but nobody can sign in to them.
+- Left out: scores with no account (old name-only entries), scores on games that no longer exist (Over Stack, Reindeer Run) or above the game's limit, accounts with no scores, emails, admin flags and streaks. Screen names that fail today's rules, or are taken, were replaced with generated ones (13), and that includes the makers' own names, which are reserved.
+- The DynamoDB tables are still deleted in T13.6; the import does not need them again.

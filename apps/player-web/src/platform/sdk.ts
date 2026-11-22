@@ -51,7 +51,11 @@ export type GameManifest = {
   cover: string;
   createdAt: string;
   updatedAt: string;
-  seo: { description: string; category: GameCategory };
+  /**
+   * `keyphrase` is what the game is, in the words people search with ("snake game").
+   * Page titles read "<title>: free <keyphrase> for kids".
+   */
+  seo: { description: string; category: GameCategory; keyphrase?: string };
   /** Recorded effects in public/assets/<id>/sfx/<name>.mp3, played by host.audio.play(name). */
   sfx?: string[];
   remix?: RemixKnob[];

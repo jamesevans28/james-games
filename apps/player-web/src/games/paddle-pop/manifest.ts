@@ -25,12 +25,13 @@ export default defineGame({
   // ceiling is never sustained; real play is 2–5 points/s. A great run (4–5 min) is
   // around 1,500; max leaves lots of room.
   scoring: { max: 20_000, perSecondMax: 50, xpMultiplier: 5.13 },
-  cover: "/assets/paddle-pop/paddlepop.jpg",
+  cover: "/assets/paddle-pop/cover.png",
   createdAt: "2025-11-05T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   seo: {
     description:
       "Bounce the ball, hit the targets, grab the power-ups. A free paddle game, no ads.",
     category: "arcade",
+    keyphrase: "brick breaker game",
   },
 });

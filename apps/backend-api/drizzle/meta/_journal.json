@@ -29,6 +29,13 @@
       "when": 1791507014152,
       "tag": "0003_flat_silver_fox",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794294937063,
+      "tag": "0004_lock_public_schema",
+      "breakpoints": true
     }
   ]
 }

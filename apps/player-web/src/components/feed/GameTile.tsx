@@ -23,7 +23,7 @@ export default function GameTile({ game, badge, eager = false }: GameTileProps) 
       <div className="relative aspect-square bg-paper-2 border-b-2 border-edge">
         <img
           src={game.thumbnail || brand.logoMark}
-          alt=""
+          alt={`${game.title} game cover`}
           width={512}
           height={512}
           loading={eager ? "eager" : "lazy"}

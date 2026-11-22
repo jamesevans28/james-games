@@ -8,7 +8,7 @@ export default function LandingHero({ meta }: { meta: GameMeta }) {
       <div className="card mx-auto aspect-square w-full max-w-sm overflow-hidden bg-paper-2 p-0">
         <img
           src={meta.thumbnail || brand.logoSquare}
-          alt=""
+          alt={`${meta.title} game cover`}
           width={512}
           height={512}
           decoding="async"

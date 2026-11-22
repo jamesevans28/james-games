@@ -23,13 +23,14 @@ export default defineGame({
   // ≤ 5.2 points/s, ×2 margin → 10. A great five-minute run is about 1,200; max is
   // over an hour of flawless play.
   scoring: { max: 20_000, perSecondMax: 10, xpMultiplier: 2.15 },
-  cover: "/assets/hoop-city/hoopcity.jpg",
+  cover: "/assets/hoop-city/cover.png",
   createdAt: "2025-11-28T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   seo: {
     description:
       "Tap to float the ball through hoops as the city scrolls past. Free, no ads, one more go guaranteed.",
     category: "arcade",
+    keyphrase: "ball and hoops game",
   },
   // Remix mode (T11.2). The defaults are the normal game. A 0.6 gap still keeps
   // hoops ~460 px apart (≤ ~6 points/s), inside perSecondMax.

@@ -23,6 +23,15 @@ export type GameMeta = {
   load: () => Promise<GameModule>;
 };
 
+/**
+ * The image to show for a cover. `scripts/art/cover.mjs` writes cover.png (the
+ * 1024 px master the art check requires) and a cover.webp beside it at about a
+ * tenth of the size, so tiles and pages use the WebP.
+ */
+export function displayCover(cover: string): string {
+  return cover.replace(/\/cover\.png$/, "/cover.webp");
+}
+
 export function toGameMeta(m: GameManifest): GameMeta {
   return {
     id: m.id,
@@ -30,7 +39,7 @@ export function toGameMeta(m: GameManifest): GameMeta {
     description: m.description,
     objective: m.objective,
     controls: m.controls,
-    thumbnail: m.cover,
+    thumbnail: displayCover(m.cover),
     xpMultiplier: m.scoring.xpMultiplier,
     createdAt: m.createdAt,
     updatedAt: m.updatedAt,

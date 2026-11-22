@@ -28,12 +28,13 @@
       "perSecondMax": 250,
       "xpMultiplier": 0.63
     },
-    "cover": "/assets/blocker/thumbnail.svg",
+    "cover": "/assets/blocker/cover.png",
     "createdAt": "2025-11-24T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Drop blocks, clear lines, chain combos. Easy to start, hard to stop. Free puzzle game, no ads.",
-      "category": "puzzle"
+      "category": "puzzle",
+      "keyphrase": "block puzzle game"
     },
     "remix": [
       {
@@ -75,12 +76,13 @@
       "perSecondMax": 1000,
       "xpMultiplier": 0.03
     },
-    "cover": "/assets/box-cutter/boxcutter.jpg",
+    "cover": "/assets/box-cutter/cover.png",
     "createdAt": "2025-12-23T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Draw lines to box off the board while dodging the fireball. Free, no ads, very satisfying.",
-      "category": "arcade"
+      "category": "arcade",
+      "keyphrase": "line drawing arcade game"
     }
   },
   {
@@ -111,7 +113,7 @@
       "perSecondMax": 150,
       "xpMultiplier": 0.5
     },
-    "cover": "/assets/colour-sort/cover.svg",
+    "cover": "/assets/colour-sort/cover.png",
     "createdAt": "2026-10-09T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
@@ -167,12 +169,13 @@
       "perSecondMax": 150,
       "xpMultiplier": 0.5
     },
-    "cover": "/assets/cosmic-clash/thumbnail.svg",
+    "cover": "/assets/cosmic-clash/cover.png",
     "createdAt": "2025-11-21T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Blast the space invaders, grab power-ups and survive the waves. Free shooter, no ads.",
-      "category": "action"
+      "category": "action",
+      "keyphrase": "space shooter game"
     }
   },
   {
@@ -203,12 +206,13 @@
       "perSecondMax": 5,
       "xpMultiplier": 4.13
     },
-    "cover": "/assets/flash-bash/thumbnail.svg",
+    "cover": "/assets/flash-bash/cover.png",
     "createdAt": "2025-11-04T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Watch the lights, then copy the pattern. How long a sequence can you remember? Free memory game, no ads.",
-      "category": "memory"
+      "category": "memory",
+      "keyphrase": "memory pattern game"
     }
   },
   {
@@ -239,12 +243,13 @@
       "perSecondMax": 10,
       "xpMultiplier": 2.15
     },
-    "cover": "/assets/hoop-city/hoopcity.jpg",
+    "cover": "/assets/hoop-city/cover.png",
     "createdAt": "2025-11-28T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Tap to float the ball through hoops as the city scrolls past. Free, no ads, one more go guaranteed.",
-      "category": "arcade"
+      "category": "arcade",
+      "keyphrase": "ball and hoops game"
     },
     "remix": [
       {
@@ -293,12 +298,13 @@
       "perSecondMax": 50,
       "xpMultiplier": 5.13
     },
-    "cover": "/assets/paddle-pop/paddlepop.jpg",
+    "cover": "/assets/paddle-pop/cover.png",
     "createdAt": "2025-11-05T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Bounce the ball, hit the targets, grab the power-ups. A free paddle game, no ads.",
-      "category": "arcade"
+      "category": "arcade",
+      "keyphrase": "brick breaker game"
     }
   },
   {
@@ -329,12 +335,13 @@
       "perSecondMax": 15,
       "xpMultiplier": 2.92
     },
-    "cover": "/assets/reflex-ring/thumbnail.svg",
+    "cover": "/assets/reflex-ring/cover.png",
     "createdAt": "2025-09-15T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Tap when the arrow hits the bright segment. It speeds up every round. Free, no ads.",
-      "category": "reflex"
+      "category": "reflex",
+      "keyphrase": "reaction timing game"
     }
   },
   {
@@ -367,12 +374,13 @@
       "perSecondMax": 13,
       "xpMultiplier": 18.5
     },
-    "cover": "/assets/serpento/thumbnail.svg",
+    "cover": "/assets/serpento/cover.png",
     "createdAt": "2025-11-17T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Eat to grow, don't hit the walls (or yourself). Our take on the classic snake game. Free, no ads.",
-      "category": "arcade"
+      "category": "arcade",
+      "keyphrase": "snake game"
     }
   },
   {
@@ -404,12 +412,13 @@
       "perSecondMax": 60,
       "xpMultiplier": 1.42
     },
-    "cover": "/assets/word-rush/thumbnail.svg",
+    "cover": "/assets/word-rush/cover.png",
     "createdAt": "2025-11-05T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Pick your letters, then guess the hidden words before the clock runs out. Free word game, no ads.",
-      "category": "word"
+      "category": "word",
+      "keyphrase": "word guessing game"
     }
   },
   {
@@ -440,12 +449,13 @@
       "perSecondMax": 30,
       "xpMultiplier": 1
     },
-    "cover": "/assets/word-stack/thumbnail.svg",
+    "cover": "/assets/word-stack/cover.png",
     "createdAt": "2025-12-26T00:00:00.000Z",
     "updatedAt": "2026-10-09T00:00:00.000Z",
     "seo": {
       "description": "Start with one 5-letter word, then swap in letters to make new ones. Free word puzzle, no ads.",
-      "category": "word"
+      "category": "word",
+      "keyphrase": "word ladder game"
     }
   },
   {
@@ -474,7 +484,7 @@
       "perSecondMax": 5,
       "xpMultiplier": 1
     },
-    "cover": "/assets/stack-tower/cover.svg",
+    "cover": "/assets/stack-tower/cover.png",
     "createdAt": "2026-10-08T00:00:00.000Z",
     "updatedAt": "2026-10-08T00:00:00.000Z",
     "seo": {
@@ -680,12 +690,13 @@
       "perSecondMax": 15,
       "xpMultiplier": 1.93
     },
-    "cover": "/assets/snapadile/snapadile.jpg",
+    "cover": "/assets/snapadile/cover.png",
     "createdAt": "2025-09-16T00:00:00.000Z",
     "updatedAt": "2025-11-25T00:00:00.000Z",
     "seo": {
       "description": "Crocs are swimming for your raft! Tap them before they snap. Free, no ads, and great for small fingers.",
-      "category": "reflex"
+      "category": "reflex",
+      "keyphrase": "crocodile tapping game"
     },
     "remix": [
       {

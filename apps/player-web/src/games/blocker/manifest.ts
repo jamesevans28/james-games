@@ -25,13 +25,14 @@ export default defineGame({
   // ≤ ~220 points/s → 250. A great run (a few hundred moves, ~50 points a move) is
   // ~25k, but there is no time limit, so max leaves plenty of room.
   scoring: { max: 500_000, perSecondMax: 250, xpMultiplier: 0.63 },
-  cover: "/assets/blocker/thumbnail.svg",
+  cover: "/assets/blocker/cover.png",
   createdAt: "2025-11-24T00:00:00.000Z",
   updatedAt: "2026-10-09T00:00:00.000Z",
   seo: {
     description:
       "Drop blocks, clear lines, chain combos. Easy to start, hard to stop. Free puzzle game, no ads.",
     category: "puzzle",
+    keyphrase: "block puzzle game",
   },
   // Remix mode (T11.2). The default is the normal game.
   remix: [{ key: "traySize", label: "Pieces to pick from", min: 1, max: 4, step: 1, default: 3 }],

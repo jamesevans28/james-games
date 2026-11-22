@@ -22,6 +22,18 @@ export function shareImageFor(thumbnail?: string | null): string {
 }
 
 /**
+ * A game page's title: "Serpento: free snake game for kids | Games4James", or just the
+ * name when the manifest has no keyphrase. scripts/generate-sitemap.mjs writes the same
+ * format into the static pages crawlers get, so change both together.
+ */
+export function gameSeoTitle(gameId: string, title: string): string {
+  const keyphrase = getManifest(gameId)?.seo.keyphrase;
+  return keyphrase
+    ? `${title}: free ${keyphrase} for kids | ${brand.name}`
+    : `${title} | ${brand.name}`;
+}
+
+/**
  * Get game description optimized for SEO (under 160 chars)
  */
 export function getGameSeoDescription(gameId: string, fallback?: string): string {

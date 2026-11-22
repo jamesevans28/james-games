@@ -15,12 +15,15 @@ export default function InfoPage({
   description,
   intro,
   children,
+  noindex,
 }: {
   path: string;
   title: string;
   description: string;
   intro: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
+  /** Keep the page out of search results (the not-found page). */
+  noindex?: boolean;
 }) {
   const { hash } = useLocation();
 
@@ -36,7 +39,8 @@ export default function InfoPage({
         title={`${title} | ${brand.name}`}
         description={description}
         url={siteUrl(path)}
-        canonical={siteUrl(path)}
+        canonical={noindex ? undefined : siteUrl(path)}
+        noindex={noindex}
       />
       <h1 className="text-3xl font-extrabold mb-2">{title}</h1>
       <div className="text-base text-ink-2 mb-6">{intro}</div>
